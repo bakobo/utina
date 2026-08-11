@@ -131,3 +131,87 @@ same bytes — one is an operational fact, the other a finding that propagates.
 identifier and different bytes, is that a refusal (no derivable order) or a
 duplicity conviction (competitors at a coordinate)? Wall 6 and wall 7 both reach
 it and they discharge differently.
+
+---
+
+## QL4 — Is an amendment a restatement of the law, or a delta on it? **DIVERGENT**
+
+**Span:** `custos-4.2.md:2266-2272` (amendments "judged under the Constitution in
+force before them"); 3001-3003 (a ratified document's clauses "are the GARD's law
+for every position at and after the effectuation coordinate"); 1199-1203 (a
+clause is "the committed unit of law").
+
+**Where it bit:** `Constitution.at`, deciding what the clause set becomes when an
+enactment is consumed.
+
+Custos says an amendment is judged under prior law, and it says the successor's
+clauses become the law from effectuation onward. It never says what happens to
+the *predecessor's* clauses. Two readings:
+
+- **Reading A — the enactment commits the complete clause set in force after
+  it,** replacing the prior edition wholesale. Permitted by 3001-3003, which is
+  edition-shaped: it speaks of "this document's clauses" becoming "the GARD's
+  law", not of clauses being added to a pool. Section 17's whole succession
+  apparatus — predecessor digest, ratifying enactment, effectuation coordinate
+  (3039-3042) — is the machinery of editions superseding editions.
+- **Reading B — the enactment adds clauses to the law in force.** Permitted by
+  the absence of any repeal language; Custos supplies no committed way to say
+  "clause A1 is repealed", and thesmo `m2-gamma` reads it this way explicitly,
+  confessing in its own module docstring that "it does not repeal."
+
+**Pinned: A.** Under B, Acme's A1 and B1 both govern ordinary acts after the
+board is seated, so `governing("open-bank-account")` has two answers and the
+engine must either refuse every ordinary act forever or invent a precedence rule
+— and inventing one is what 1874-1876 forbids by name. A is the only reading in
+which the demo's central act is evaluable at all.
+
+**Divergence:** engines disagree on every domain that amends. Under A the law
+after an amendment is exactly what the amendment committed; under B it is that
+plus everything ever enacted, and every act kind governed by both a superseded
+and a successor clause becomes an uncommitted precedence seam. The two engines
+return different findings for the same act on the same bytes.
+
+**Ask Custos:** does an enactment commit a whole edition or a delta? If a delta,
+what is the committed form of a repeal, and what orders two in-force clauses that
+govern one act class? Section 17's succession record reads as edition-shaped, but
+§18's GEL event grammar never says a later enactment displaces an earlier one.
+
+---
+
+## QL5 — Is the founding law in force at its own coordinate? **convergent**
+
+**Span:** `custos-4.2.md:2270-2274` — "law never applies to itself at a
+coordinate, only to its successor at the next … The recursion's base case is
+genesis, constructed rather than judged."
+
+**Where it bit:** `Constitution.at`, choosing the interval over which law events
+are consumed.
+
+Read as a uniform rule, "law never applies to itself at a coordinate" excludes
+the inception event's own law at the inception coordinate, which leaves a domain
+ungoverned at its own genesis and makes the base case vacuous. The sentence that
+follows rescues it: genesis is "constructed rather than judged."
+
+- **Reading A — the rule is uniform, and law binds strictly after its own
+  coordinate, genesis included.** Permitted by the bare sentence at 2270-2272.
+- **Reading B — genesis is exempt.** The founding law binds at and after its own
+  coordinate because it is constructed rather than judged; every later enactment
+  binds strictly after its own, because it is judged. Permitted by 2272-2274 and
+  by 1079-1093, where the founding law is sealed at inception and the gAID is
+  defined in terms of it.
+
+**Pinned: B**, implemented as: the inception event's clauses take force at its
+own coordinate; an enactment's clauses take force strictly after its own.
+
+**Convergent**, but only just, and only because of what the exemption is *for*.
+Under A a domain has no law at its inception coordinate, so every question asked
+there refuses; under B it has its founding law. That is a visible difference —
+it is logged as convergent rather than divergent because Reading A makes the
+inception coordinate uninhabitable by any question at all, and a reading under
+which no domain can ever be governed at genesis is not a lawful reading of a
+document whose section 5 constructs the identifier out of the founding law.
+
+**Ask Custos:** confirm that "constructed rather than judged" is the intended
+exemption, and that the interval is `[genesis, p]` for founding law and
+`[genesis, p)` for enactments. The engine turns on this and the text states it
+only by implication.

@@ -93,4 +93,26 @@ Name the unknown-clause error e.state.clause-unknown.f = decision:
     input because a clause id naming a clause that is not in force at this position is
     well-formed and may well be in force at another; what is wrong is the law's condition
     here, not the caller's bytes.
+
+Refuse a self-contradictory edition rather than order it = decision:
+  id: d2wq7h
+  why: >
+    Two clauses in one edition governing one act kind, or one clause id committed twice,
+    leaves governing() and clause() with two answers where the contract allows one. Chose to
+    raise e.state.clause-ambiguous.f when the edition is folded, over picking the first match
+    in canonical order. Rejected picking because the canonical order is ours by wall 6 default
+    rather than the domain's by commitment, so first-match would let OUR tiebreak decide whose
+    authority rules an act — which is precisely the uncommitted composition seam 1874-1876
+    says an evaluator refuses rather than legislates.
+
+Mint e.input.malformed.law.f under the contract's reserved branch = decision:
+  id: k3ynf8
+  why: >
+    Committed bytes that will not read as law need an error, and the contract reserves
+    e.input.malformed.f for "committed bytes will not parse as the event they claim to be" —
+    but that code belongs to the substrate agent's surface, not this one. Chose a deeper
+    sub-descriptor under the same branch over sharing the reserved literal across two modules.
+    Rejected sharing because two module-scope declarations of one code invite them to drift in
+    title and detail; the deeper code still prefix-matches e.input.malformed for any caller who
+    wants the whole branch.
 ```
