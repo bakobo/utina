@@ -117,7 +117,7 @@ def _takes_force(event: Event, position: Position) -> bool:
     if event.kind == "inception":
         return True
     if event.kind == "enactment":
-        return event.position < position
+        return bool(event.position < position)
     return False
 
 
