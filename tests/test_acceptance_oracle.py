@@ -14,10 +14,20 @@ bare opinions — which is precisely the engine this one must not be.
 
 import pytest
 
-from utina.fold import Constitution, evaluate
-from utina.fold.finding import Affirmed, Defeated, Pending
-from utina.fold.question import Committed, Proposal
-from utina.fold.refusal import Refusal
+# The oracle is written before the engine, outside-in: it names the API the fold
+# must grow, and skips with that reason until the modules exist. Inner unit tests
+# are the ones driven red-to-green; this one goes from skipped to passing, and the
+# day it can be collected is the day the engine is feature-complete against the
+# demo. Do not weaken a case to make it collect sooner.
+pytest.importorskip(
+    "utina.fold.question",
+    reason="the fold has no Constitution yet — see docs/demo-script.md for what it owes",
+)
+
+from utina.fold import Constitution, evaluate  # noqa: E402
+from utina.fold.finding import Affirmed, Defeated, Pending  # noqa: E402
+from utina.fold.question import Committed, Proposal  # noqa: E402
+from utina.fold.refusal import Refusal  # noqa: E402
 
 
 # --- The law -----------------------------------------------------------------
