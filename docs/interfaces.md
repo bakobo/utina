@@ -227,6 +227,25 @@ class Substrate(Protocol):
 `rotate` exists because Custos binds law-amending enactments to anchor in an
 establishment event: Acme's board-seating amendment rides a rotation.
 
+## The endorsement body — field names are contract, not preference
+
+An endorsement's field names are load-bearing across the enact/slots seam: if the writer
+and the predicate disagree on a name, every slot silently reads PENDING and every decision
+is pending forever. Names are the dossier specification's, so the later move to real ACDC
+endorsements is a re-encoding rather than a rename.
+
+```python
+{"i": AID,          # issuer — the endorser, and the slot's expected party
+ "disp": str,       # "endorse" | "decline"
+ "act": str,        # "issue" | "revoke"
+ "said": SAID}      # the subject: the decision this endorsement is about
+```
+
+A slot is ENDORSED only when a committed, signed endorsement carries `i` equal to the
+slot's endorser, `disp == "endorse"`, `act == "issue"`, and `said` equal to the subject.
+Anything else — including anything unverifiable — is PENDING. `disp == "decline"` with a
+matching `i` and `said` is DECLINED.
+
 ## `utina.enact` — the constructor's verb
 
 ```python
@@ -247,11 +266,16 @@ Every raised error uses a `bakobo.errors.ErrorCode` declared as a module-scope
 literal, `<sorter>.<descriptor>[.<sub>].<disposition>`, classified by the
 obstacle rather than by the component, disposition trailing. Reserve this branch:
 
+`bakobo.errors` enforces a **closed descriptor set** — `env`, `feature`, `grant`, `id`,
+`input`, `party`, `proof`, `rule`, `self`, `state` — and requires at least one
+sub-descriptor. `e.law.*` and a bare `e.input.malformed.f` are both refused at import.
+Governance rules live under `rule`.
+
 | Code | Meaning |
 |---|---|
-| `e.input.malformed.f` | committed bytes will not parse as the event they claim to be |
+| `e.input.event-malformed.f` | committed bytes will not parse as the event they claim to be |
 | `e.state.ground-missing.f` | a finding was constructed without its ground |
 | `e.state.order-ambient.f` | the walk was asked to consume an uncommitted order |
-| `e.law.clause-unknown.f` | a clause id that the law in force does not define |
+| `e.rule.clause-unknown.f` | a clause id that the law in force does not define |
 
 A refusal is **not** an error and never raises.
