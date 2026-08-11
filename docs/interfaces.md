@@ -74,11 +74,19 @@ class Citation:
     clause: str
     declination: Declination | None = None  # set when a signed no defeated it
     reason: str = ""
+    defeater_class: DefeaterClass = DefeaterClass.AUTHORITY   # binding at :1641-1646
+    subcode: str = ""                                          # canonical selection key
 
 @dataclass(frozen=True)
 class RequirementElement:
     endorser: AID
     clause: str
+    kind: str = "endorsement"          # binding at :1585-1586
+    species: Species = Species.ABSENT
+
+@dataclass(frozen=True)
+class Proof:                           # ground for SelfConvicted
+    package: SAID
 
 @dataclass(frozen=True)
 class Declination:

@@ -20,8 +20,8 @@ import pytest
 # day it can be collected is the day the engine is feature-complete against the
 # demo. Do not weaken a case to make it collect sooner.
 pytest.importorskip(
-    "utina.fold.question",
-    reason="the fold has no Constitution yet — see docs/demo-script.md for what it owes",
+    "utina.fold.evaluate",
+    reason="the fold has no evaluate() yet — see docs/demo-script.md for what it owes",
 )
 
 from utina.fold.finding import Affirmed, Defeated, Pending
