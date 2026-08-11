@@ -41,10 +41,10 @@ def imported_roots(tree: ast.AST) -> set[str]:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 roots.add(alias.name.partition(".")[0])
-        elif isinstance(node, ast.ImportFrom):
-            # node.module is None for `from . import x`; level > 0 is relative.
-            if node.level == 0 and node.module is not None:
-                roots.add(node.module.partition(".")[0])
+        # node.module is None for `from . import x`; level > 0 is relative, and a
+        # relative import cannot reach outside the package.
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module is not None:
+            roots.add(node.module.partition(".")[0])
     return roots
 
 
