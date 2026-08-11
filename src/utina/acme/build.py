@@ -69,7 +69,7 @@ def build(*, values: FoldValues) -> Acme:
 
     # D4 — the amendment that seats the board, judged under the law it replaces
     # and anchored in an establishment event (custos-4.2.md:2085-2087).
-    seat = name("seat-the-board", constructor.enact_amendment(BOARD_LAW))
+    seat = name("seat-the-board", constructor.enact_amendment(BOARD_LAW, act=AMEND))
     constructor.endorse(MARTA, seat)
     seated = constructor.endorse(DEV, seat)
     mark("d4", seated)

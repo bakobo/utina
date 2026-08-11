@@ -64,7 +64,7 @@ class Constructor:
         self._founded = True
         return event
 
-    def enact_amendment(self, law: Mapping[str, object]) -> Event:
+    def enact_amendment(self, law: Mapping[str, object], *, act: str | None = None) -> Event:
         """Commit a successor law, anchored in an establishment event.
 
         custos-4.2.md:2085-2087 designates an enactment amending law as a class
@@ -72,9 +72,20 @@ class Constructor:
         committed and then a rotation seals it. The rotation is the substrate's
         and never enters the corpus (this.i @jdie6v); the binding it creates is
         answerable through :meth:`anchoring_event`.
+
+        ``act`` names the class of act this amendment performs, so that the fold
+        can find the clause that governs amending the law and judge the amendment
+        under the law it replaces. The domain supplies the name — "amending the
+        operating agreement" is Acme's phrase, and a constructor that invented one
+        would be legislating a class no clause governs. A domain that designates
+        none commits none, and the fold then refuses to appraise the enactment,
+        which is the honest answer rather than a guessed one.
         """
         self._require_founded()
-        event = self._emit("enactment", {"t": "enact", "i": self.gaid, "law": law}, self.gaid)
+        body: dict[str, object] = {"t": "enact", "i": self.gaid, "law": law}
+        if act is not None:
+            body["act"] = act
+        event = self._emit("enactment", body, self.gaid)
         self._anchored[event.said] = self.substrate.rotate(self.gaid, event.said)
         return event
 

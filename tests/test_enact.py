@@ -177,6 +177,24 @@ def test_an_amendment_commits_the_successor_law(founded):
     assert event.body["law"] == successor
 
 
+def test_an_amendment_names_the_class_of_act_it_performs(founded):
+    """Amending the law is itself an act, and a clause governs it by class.
+
+    Without the class in committed bytes the fold cannot find the clause that
+    rules an amendment, so the one question the demo turns on — was the
+    board-seating amendment lawful under the law it replaced? — has no governing
+    clause and refuses. The domain names its own class, because "amending the
+    operating agreement" is Acme's phrase and not the constructor's.
+    """
+    event = founded.enact_amendment(LAW, act="amend-operating-agreement")
+    assert event.body["act"] == "amend-operating-agreement"
+
+
+def test_an_amendment_that_names_no_class_commits_none(founded):
+    """A domain that has not designated an amendment class does not get one invented."""
+    assert "act" not in founded.enact_amendment(LAW).body
+
+
 def test_an_amendment_anchors_in_an_establishment_event(founded):
     """custos-4.2.md:2085-2087 — an enactment amending law SHALL anchor in one."""
     event = founded.enact_amendment(LAW)

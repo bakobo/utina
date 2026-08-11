@@ -103,10 +103,20 @@ class CommittedEvent(Protocol):
     (this.i @e3qd53).
     """
 
-    said: SAID
-    kind: str
-    position: Position
-    body: Mapping[str, object]
+    # Read-only members, so that a frozen dataclass satisfies the protocol: a
+    # mutable attribute would require the implementation to be assignable too,
+    # and every committed value in the fold is frozen by construction.
+    @property
+    def said(self) -> SAID: ...
+
+    @property
+    def kind(self) -> str: ...
+
+    @property
+    def position(self) -> Position: ...
+
+    @property
+    def body(self) -> Mapping[str, object]: ...
 
 
 @dataclasses.dataclass(frozen=True)

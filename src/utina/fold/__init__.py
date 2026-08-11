@@ -18,4 +18,13 @@ FORBIDDEN_IMPORTS = frozenset(
     {"keri", "keria", "cesride", "parside", "hio", "blake3", "lmdb"}
 )
 
-__all__ = ["FORBIDDEN_IMPORTS"]
+# The fold's public surface: what it is asked, and what answers. The value types
+# stay in their own modules — a caller who wants Affirmed knows it is a finding —
+# but the two names an application actually calls are re-exported here, because
+# the acceptance oracle's import is the contract's own statement of that surface.
+# Imported after FORBIDDEN_IMPORTS so the constant is bound before any submodule
+# that reads it during its own import.
+from utina.fold.constitution import Constitution  # noqa: E402
+from utina.fold.evaluate import evaluate  # noqa: E402
+
+__all__ = ["FORBIDDEN_IMPORTS", "Constitution", "evaluate"]
