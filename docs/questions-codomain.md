@@ -148,3 +148,56 @@ construction, and — if it is — what an evaluator returns for a question whos
 committed requirement space is empty. U4 in the requirements audit argues that
 such a question is malformed rather than satisfiable, which would make a refusal
 the answer; that inference is ours, not the document's.
+
+---
+
+## QC5 — The refusal record has no committed form *(convergent; deliberately open)*
+
+**Where it bit:** the shape of `utina.fold.refusal.Refusal`.
+
+Custos requires a refusal to name its ground (`:277-278`) and says what a refusal
+*is* (`:1898-1900`), but §16 holds the record's form expressly open. So a value
+had to be invented: `Refusal { missing, detail }`, carrying no self-addressing
+identifier and never committed to the GEL.
+
+- **Reading A — a typed value outside the codomain, with a named ground.**
+  Permitted by `:1883-1894` and by the naming rule at `:2047-2055`.
+- **Reading B — an exception with a message.** Permitted because no clause
+  commits a form at all.
+
+**Pinned: A**, because `:1899-1900` calls a refusal a fact "recorded as an
+operational fact" and you cannot record what you threw.
+
+**Convergent:** both readings refuse the same invocations on the same committed
+inputs, and Custos owes byte-equality only for the *decision* to refuse
+(`:31-34`), not for the record. Logged because the reading is ours and a reader
+comparing utina to the document will find a type the document does not describe.
+See U3 in `../../thesmo-demo/audit-spec-requirements.md`.
+
+---
+
+## QC6 — "Citing-clause bytes" has no stated flattening *(convergent here; DIVERGENT for anyone else)*
+
+**Where it bit:** `RequirementElement.sort_key`, and it bit softly because the
+interface contract gives each element one clause rather than a list.
+
+The canonical order compares "citing-clause **bytes**" (`:1650-1651`) and the
+element carries "the list of citing clauses" (`:1648-1649`). A list has to be
+flattened to bytes before it can be compared as bytes, and the document nowhere
+says how — no separator, no length prefix, no ordering within the list.
+
+- **Reading A — join the clause identifiers with a separator below every
+  character an identifier can carry**, so the flattening is injective. thesmo's
+  `m1-alpha` pinned `\x00`.
+- **Reading B — compare the lists element-wise**, which needs the list's own
+  order pinned first, and the document does not pin that either.
+
+**Not pinned, because utina does not reach it:** each of our requirement elements
+cites exactly one clause, so its bytes are that clause's bytes and every lawful
+reading agrees. An engine whose elements cite two clauses would face a genuine
+divergence — `["A1","B2"]` and `["A1B","2"]` flatten identically under a
+separator-free join — and two conforming engines would order their requirement
+sets differently.
+
+**Ask Custos:** state the flattening, or drop "bytes" and compare the clause list
+lexicographically as a sequence of identifiers.
