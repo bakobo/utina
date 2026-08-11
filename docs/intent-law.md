@@ -84,15 +84,19 @@ Order clause sub-blocks by clause SAID, and confess the digest = decision:
     accepted: our law head is not the law head a KERI-native engine computes from the same
     clauses, which is exactly the openness 1478-1481 confesses.
 
-Name the unknown-clause error e.state.clause-unknown.f = decision:
+Name the unknown-clause error e.rule.clause-unknown.f = decision:
   id: f6mb8y
   why: >
-    docs/interfaces.md reserves e.law.clause-unknown.f, which is not a legal Bakobo error
-    code: law is not one of the ten first descriptors and the validator rejects it at import
-    time. Chose the state descriptor — the condition of the target — over input. Rejected
-    input because a clause id naming a clause that is not in force at this position is
-    well-formed and may well be in force at another; what is wrong is the law's condition
-    here, not the caller's bytes.
+    The edition of docs/interfaces.md this commission built against reserved
+    e.law.clause-unknown.f, which is not a legal Bakobo error code: law is not one of the ten
+    first descriptors and the validator rejects it at import time. Chose e.state as the
+    repair. The contract has since been corrected to e.rule.clause-unknown.f, which is legal
+    and which the contract rationalizes in the same breath — governance rules live under
+    rule, and a clause id is the identity of a governance rule — so the repair is spent and
+    integration adopted the contract's spelling. Rejected keeping e.state, which would have
+    left two spellings of one condition alive in a repo whose codes are globally unique;
+    rejected e.input, because a clause id that is not in force here is well-formed and may
+    be in force at another position, so the obstacle is never the caller's bytes.
 
 Refuse a self-contradictory edition rather than order it = decision:
   id: d2wq7h

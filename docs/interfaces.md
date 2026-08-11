@@ -303,14 +303,35 @@ obstacle rather than by the component, disposition trailing. Reserve this branch
 
 `bakobo.errors` enforces a **closed descriptor set** — `env`, `feature`, `grant`, `id`,
 `input`, `party`, `proof`, `rule`, `self`, `state` — and requires at least one
-sub-descriptor. `e.law.*` and a bare `e.input.malformed.f` are both refused at import.
+sub-descriptor. `e.law.*` and a bare `e.input.f` are both refused at import.
+`e.input.malformed.f` is legal, because `malformed` is the sub-descriptor.
 Governance rules live under `rule`.
+
+The table below is the whole set utina declares, reconciled at integration. The
+one collision was `clause-unknown`, which the law commission shipped as
+`e.state.clause-unknown.f` against an earlier edition of this file that reserved
+the illegal `e.law.clause-unknown.f`; the code below is the one spelling.
 
 | Code | Meaning |
 |---|---|
-| `e.input.event-malformed.f` | committed bytes will not parse as the event they claim to be |
+| `e.input.malformed.f` | a value handed to the fold is not the kind of thing it claims to be |
+| `e.input.malformed.law.f` | committed bytes presented as law will not read as law |
+| `e.input.format.slot-weight.f` | a slot weight is not an exact rational |
+| `e.input.range.slot-weight.f` | a slot weight is not greater than zero |
+| `e.input.missing.group-slots.f` | a composition rule names no endorser |
+| `e.input.multi.slot-endorser.f` | a composition rule slots one endorser twice |
+| `e.input.not-canonical.f` | a value has no canonical byte image |
 | `e.state.ground-missing.f` | a finding was constructed without its ground |
 | `e.state.order-ambient.f` | the walk was asked to consume an uncommitted order |
+| `e.state.clause-ambiguous.f` | the law in force names one clause id or act kind twice |
+| `e.state.domain-incepted.f` | the domain this constructor writes for already exists |
+| `e.state.domain-unincepted.f` | a verb was used before the domain was incepted |
+| `e.state.subject-unknown.f` | a disposition names a subject nothing committed |
+| `e.state.label-unknown.f` | the demo record has no beat by that name |
+| `e.state.name-unknown.f` | the demo record committed no act by that name |
+| `e.id.alias-taken.f` | an alias already has key state |
+| `e.id.aid-unknown.f` | an identifier has no key state to sign or verify under |
+| `e.proof.signature-unverifiable.f` | an event's own signature does not stand up |
 | `e.rule.clause-unknown.f` | a clause id that the law in force does not define |
 
 A refusal is **not** an error and never raises.

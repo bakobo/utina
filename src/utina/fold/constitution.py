@@ -56,14 +56,18 @@ LAW_FIELD = "law"
 #: makes authoritative there.
 CLAUSES_FIELD = "clauses"
 
-#: A clause id the law in force does not define. The obstacle is the law's
-#: condition at this position, not the caller's bytes: "B2" is a well-formed
-#: clause id that is simply not in force yet, and will be at a later coordinate.
-#: (``docs/interfaces.md`` reserves ``e.law.clause-unknown.f`` for this, which is
-#: not a legal Bakobo code — ``law`` is not one of the ten first descriptors and
-#: the validator rejects it at import time. See ``docs/intent-law.md`` @f6mb8y.)
+#: A clause id the law in force does not define. Not the caller's bytes: "B2" is
+#: a well-formed clause id that is simply not in force yet, and will be at a
+#: later coordinate. It is the contract's reserved code, and ``rule`` is the
+#: descriptor because governance rules live there and a clause id is the
+#: identity of a governance rule. (The law commission read an earlier
+#: ``docs/interfaces.md`` that reserved ``e.law.clause-unknown.f``, which is not
+#: a legal Bakobo code — ``law`` is outside the closed descriptor set and the
+#: validator rejects it at import — and chose ``e.state`` as the repair. The
+#: contract has since been corrected to a legal code, so the repair is spent.
+#: See ``this.i`` @f6mb8y.)
 CLAUSE_UNKNOWN = ErrorCode(
-    code="e.state.clause-unknown.f",
+    code="e.rule.clause-unknown.f",
     title="The law in force at this position does not define that clause.",
     detail=(
         "No clause {clause} is in force at this position. A clause is in force "

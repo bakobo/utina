@@ -224,10 +224,14 @@ def test_clause_returns_the_clause_in_force():
 
 
 def test_a_clause_the_law_in_force_does_not_define_refuses():
-    """B2 exists, but not yet. The obstacle is the law's condition here."""
+    """B2 exists, but not yet.
+
+    The code is the contract's, ``e.rule.clause-unknown.f``: governance rules
+    live under ``rule``, and a clause id is the identity of a governance rule.
+    """
     with pytest.raises(BakoboError) as raised:
         Constitution.at(corpus(), INCEPTION).clause("B2")
-    assert raised.value.code == "e.state.clause-unknown.f"
+    assert raised.value.code == "e.rule.clause-unknown.f"
     assert "B2" in str(raised.value)
 
 

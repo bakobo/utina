@@ -132,11 +132,13 @@ is not mergeable by machine.*
         material we were handed, so it sorts under e.input; the closest standing descriptor for
         a norm we enforce is e.rule. Rejected minting `law`, which would not have imported, and
         rejected e.state, which describes the condition of the target rather than the shape of
-        what arrived. Two of the four codes docs/interfaces.md reserves cannot be declared as
-        written: `e.law.clause-unknown.f` names a descriptor outside the closed set, and
-        `e.input.malformed.f` has no sub-descriptor, which the validator refuses because "a
-        first descriptor is a category rather than one condition's identity". The other two
-        are legal. Ours are `e.input.format.slot-weight.f`, `e.input.range.slot-weight.f`,
+        what arrived. One code in the edition of docs/interfaces.md this commission read could
+        not be declared as written — `e.law.clause-unknown.f` names a descriptor outside the
+        closed set — and the corrected contract spells it `e.rule.clause-unknown.f`, which
+        integration adopted. `e.input.malformed.f` was recorded here as illegal for want of a
+        sub-descriptor; that reading was wrong, `malformed` is the sub-descriptor and the code
+        imports, which is why the codomain commission declares and uses it. Ours are
+        `e.input.format.slot-weight.f`, `e.input.range.slot-weight.f`,
         `e.input.missing.group-slots.f` and `e.input.multi.slot-endorser.f`; slots.py declares
         none at all, because everything it cannot verify is PENDING rather than an error.
 ```
