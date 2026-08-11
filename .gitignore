@@ -1,8 +1,14 @@
+
+.coverage
+docs/**/*.html
+docs/**/*.pdf
+.ignored/
+# markdown is the only tracked source of truth. Render into docs/, never the root.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+# Rendered doc artifacts are derived from the markdown next to them; the
+# See dev/standards/repo-layout.md, "Rendered doc artifacts".
 /.tick
 .tick.lock
-
-# Rendered doc artifacts are derived from the markdown next to them; the
-# markdown is the only tracked source of truth. Render into docs/, never the root.
-# See dev/standards/repo-layout.md, "Rendered doc artifacts".
-docs/**/*.pdf
-docs/**/*.html
+.venv/

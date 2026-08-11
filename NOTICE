@@ -1,0 +1,42 @@
+utina
+Copyright 2026 Bakobo
+
+This product includes software developed at Bakobo (https://github.com/bakobo).
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+------------------------------------------------------------------------------
+Derived work
+------------------------------------------------------------------------------
+
+Portions of utina are derived from bakobo/thesmo (https://github.com/bakobo/thesmo),
+Copyright 2026 Bakobo, licensed under the Apache License, Version 2.0.
+
+thesmo is a deliberately blind implementation of the Custos specification: its
+implementers read the ratified specification and nothing else, so that where two
+independent readings disagree, the disagreement is evidence about the document
+rather than about the readers. utina is not blind and makes no such claim. Where
+utina carries a reading pinned by thesmo, it carries it because that reading is
+defensible, not because it was independently derived here.
+
+Specific provenance is recorded per module in the source. As of this writing:
+
+  - The finding codomain, the closed appraisal triple, the transition system and
+    the two upward currents derive from thesmo's `m1-alpha` reading of the
+    finding-codomain chapter.
+  - The byte-canonical encoding derives from thesmo's `m1-beta` reading.
+  - The canonical-order log walk derives, as an algorithm rather than as source,
+    from thesmo's `m2-gamma` reading of the GEL grammar chapter.
+
+------------------------------------------------------------------------------
+Specifications implemented, not redistributed
+------------------------------------------------------------------------------
+
+Custos (https://github.com/Nicholas-Keystate/custos) is licensed by its author
+under the Community Specification License 1.0. utina implements it. No part of
+the specification text is redistributed here; citations in comments and
+documentation identify spans by line for the reader's benefit.
+
+The KERI, ACDC and CESR specifications, and the dossier specification
+(https://github.com/trustoverip/kswg-dossier-specification), are likewise
+implemented or referenced rather than redistributed.
