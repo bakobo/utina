@@ -71,6 +71,11 @@ wheels = [
 ]
 
 [[package]]
+name = "bakobo-errors"
+version = "0.0.0"
+source = { git = "https://github.com/bakobo/errors#45f42ae4259cce144fe1d668c9c176d869c3023a" }
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -371,6 +376,9 @@ wheels = [
 name = "utina"
 version = "0.0.0"
 source = { editable = "." }
+dependencies = [
+    { name = "bakobo-errors" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -381,6 +389,7 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "bakobo-errors", git = "https://github.com/bakobo/errors" }]
 
 [package.metadata.requires-dev]
 dev = [

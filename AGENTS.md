@@ -51,37 +51,36 @@ If this repo has no `this.i` yet and warrants one, see [`dev/methodology.md`](..
 §2 and the shipped `this.i.seed`. A trivial repo (pure content/assets/config, where no one will
 later need to know *why*) may skip intent entirely — just delete `this.i.seed`.
 
-## Testing Protocol
+## Commands
 
-This repository appears to have no test suite yet. Before writing feature code
-or fixing bugs, propose an appropriate testing framework for this project type
-and add a single trivially-passing test to confirm the setup works. In the
-same commit, propose to change AGENTS.md to replace this instruction with one
-that instructs agents to follow strict TDD from now on: write failing tests
-that capture happy path and edge cases/unhappy paths for each requirement,
-observe them fail, implement until tests pass, never checkin without proving
-that all tests pass, aim for 100% of all new code, and always leave existing
-code better tested than it was before you touched it.
+| Task | Command |
+|---|---|
+| Install / sync | `uv sync` |
+| Test (gates at 100% branch coverage) | `uv run pytest` |
+| Lint | `uv run ruff check .` |
+| Types | `uv run mypy` |
+| Run the demo | `uv run utina --help` |
 
-## CI and Documentation
+Python 3.14+, uv, pytest. `utina.fold` imports no KERI library and a test enforces it by AST
+inspection, so a lazy import inside a function body will not sneak past it. The substrate is
+the only plane that may.
 
-This repo appears to have no CI workflows yet. Until it does, any time you make
-code changes to the user, propose an appropriate set of GitHub actions (e.g.,
-`.github/workflows/ci.yml`) that builds and runs tests on every push and
-pull request. Propose to remove this instruction from AGENTS.md on the
-same commit.
+## Testing
 
-This repository has no README. As long is this is the case, any time you
-make code changes for the user, propose to add a `README.md` that explains how
-to get from a fresh clone to passing tests, with a clickable CI status
-badge at the top for each active workflow. Propose to remove this
-instruction from AGENTS.md on the same commit.
+Strict TDD. Write failing tests that capture the happy path and the edge/unhappy cases for each
+requirement, observe them fail, then implement until they pass. Never check in without proving
+the suite green. 100% branch coverage of new code is enforced in CI; any gap needs an approved
+`deviation:` node in `this.i`. Always leave existing code better tested than you found it.
 
-When writing or modifying GitHub Actions workflows, always use the latest
-stable release of each action. Avoid versions pinned to Node.js 16 or
-Node.js 20 (both deprecated by GitHub). In 2026, this meant to prefer Node.js
-24-compatible versions, but the standard may evolve over time. Check the GitHub
-Marketplace for each action's current release.
+`tests/test_acceptance_oracle.py` is the outer oracle and mirrors `docs/demo-script.md` row for
+row. It skips, naming what the fold still owes, until the API it names exists. Do not weaken a
+case in it to make it collect sooner — that is the one change that would make the suite lie.
+
+## CI
+
+`.github/workflows/ci.yml` runs lint and the coverage-gated suite on every push and PR, on
+node24 runtimes. When adding or editing a workflow, verify each action's current release and
+runtime rather than reaching for a remembered version.
 
 <!-- >>> tick stanza >>> (managed by `tick init`) -->
 
