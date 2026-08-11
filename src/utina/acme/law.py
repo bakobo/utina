@@ -44,7 +44,17 @@ UNGOVERNED_ACT = "declare-dividend"
 
 
 def slot(endorser: str, weight: Fraction) -> Mapping[str, object]:
-    return {"endorser": endorser, "weight": weight}
+    """One committed slot: who may act, and the share of authority they hold.
+
+    The weight commits as an exact rational **string** — ``"1/2"`` — which is
+    ``docs/interfaces.md``'s shape for the law body and what
+    ``utina.fold.clause`` parses. It is written here rather than left to the
+    encoder because the fold reads the committed value, not the committed bytes,
+    and the two have to be the same thing. The bytes are unchanged either way:
+    the canonical encoder writes a ``Fraction`` as ``"1/2"`` too, so no
+    identifier moves.
+    """
+    return {"endorser": endorser, "weight": f"{weight.numerator}/{weight.denominator}"}
 
 
 def clause(

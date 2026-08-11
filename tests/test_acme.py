@@ -51,8 +51,9 @@ def clause(law, clause_id):
 
 
 def weights(law, clause_id):
+    """The clause's weights, parsed. Committed as exact rational strings."""
     slots = clause(law, clause_id)["group"]["slots"]
-    return {slot["endorser"]: slot["weight"] for slot in slots}
+    return {slot["endorser"]: Fraction(slot["weight"]) for slot in slots}
 
 
 # --- The law, in both states -------------------------------------------------
@@ -96,10 +97,18 @@ def test_no_clause_governs_a_distribution():
 
 @pytest.mark.parametrize("law", [FOUNDING_LAW, BOARD_LAW], ids=["state-one", "state-two"])
 def test_every_weight_is_an_exact_rational(law):
-    """@ta7vle — a float in the committed bytes would make unity undecidable."""
+    """@ta7vle — a float in the committed bytes would make unity undecidable.
+
+    The committed form is the exact rational *string* ``docs/interfaces.md``
+    rules for the law body, because the fold parses the committed value and not
+    the committed bytes. A float would not survive the round trip and is what
+    this guards against; a Fraction object would survive the encoder and then
+    fail to read as law, which is the seam integration had to close.
+    """
     for entry in law["clauses"]:
         for slot in entry["group"]["slots"]:
-            assert isinstance(slot["weight"], Fraction)
+            assert isinstance(slot["weight"], str)
+            assert Fraction(slot["weight"]).denominator in (2, 3)
 
 
 def test_a_weight_commits_as_a_rational_string_not_a_decimal():

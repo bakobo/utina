@@ -24,11 +24,10 @@ pytest.importorskip(
     reason="the fold has no evaluate() yet — see docs/demo-script.md for what it owes",
 )
 
+from utina.fold import Constitution, evaluate
 from utina.fold.finding import Affirmed, Defeated, Pending
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal
-
-from utina.fold import Constitution, evaluate
 
 # --- The law -----------------------------------------------------------------
 

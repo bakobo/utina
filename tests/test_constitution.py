@@ -84,10 +84,10 @@ def _ensure_siblings() -> None:
 _ensure_siblings()
 
 from bakobo.errors import BakoboError  # noqa: E402
-from utina.fold.triple import Position  # noqa: E402
 
 from utina.fold.constitution import Constitution  # noqa: E402
 from utina.fold.corpus import Corpus, Event  # noqa: E402
+from utina.fold.triple import Position  # noqa: E402
 
 
 def slots(*pairs):
@@ -135,7 +135,7 @@ EVENTS = [
         said="E0-inception",
         kind="inception",
         position=INCEPTION,
-        body={"clauses": STATE_ONE},
+        body={"law": {"clauses": STATE_ONE}},
     ),
     Event(said="E1-act", kind="act", position=Position(1), body={}),
     Event(said="E2-endorse", kind="endorsement", position=Position(2), body={}),
@@ -143,7 +143,7 @@ EVENTS = [
         said="E4-seat-board",
         kind="enactment",
         position=AMENDMENT,
-        body={"clauses": STATE_TWO},
+        body={"law": {"clauses": STATE_TWO}},
     ),
 ]
 
@@ -275,7 +275,14 @@ def test_two_clauses_governing_one_act_kind_refuse():
         clause("C2", ["approve-budget"], (DEV, "1/1")),
     ]
     conflicted = Corpus.load(
-        [Event(said="E0", kind="inception", position=INCEPTION, body={"clauses": both})]
+        [
+            Event(
+                said="E0",
+                kind="inception",
+                position=INCEPTION,
+                body={"law": {"clauses": both}},
+            )
+        ]
     )
     with pytest.raises(BakoboError) as raised:
         Constitution.at(conflicted, INCEPTION)
@@ -289,7 +296,14 @@ def test_one_clause_id_committed_twice_refuses():
         clause("C1", ["hire-vp-sales"], (DEV, "1/1")),
     ]
     conflicted = Corpus.load(
-        [Event(said="E0", kind="inception", position=INCEPTION, body={"clauses": twice})]
+        [
+            Event(
+                said="E0",
+                kind="inception",
+                position=INCEPTION,
+                body={"law": {"clauses": twice}},
+            )
+        ]
     )
     with pytest.raises(BakoboError) as raised:
         Constitution.at(conflicted, INCEPTION)
@@ -299,7 +313,14 @@ def test_one_clause_id_committed_twice_refuses():
 
 def test_a_law_event_whose_clauses_are_not_a_list_refuses():
     broken = Corpus.load(
-        [Event(said="E0", kind="inception", position=INCEPTION, body={"clauses": "A1"})]
+        [
+            Event(
+                said="E0",
+                kind="inception",
+                position=INCEPTION,
+                body={"law": {"clauses": "A1"}},
+            )
+        ]
     )
     with pytest.raises(BakoboError) as raised:
         Constitution.at(broken, INCEPTION)
@@ -307,8 +328,25 @@ def test_a_law_event_whose_clauses_are_not_a_list_refuses():
 
 
 def test_a_law_event_with_no_clauses_field_refuses():
-    broken = Corpus.load([Event(said="E0", kind="inception", position=INCEPTION, body={})])
+    broken = Corpus.load(
+        [Event(said="E0", kind="inception", position=INCEPTION, body={"law": {}})]
+    )
     with pytest.raises(BakoboError) as raised:
         Constitution.at(broken, INCEPTION)
     assert raised.value.code == "e.input.malformed.law.f"
     assert "clauses" in str(raised.value)
+
+
+def test_a_law_event_carrying_no_law_at_all_refuses():
+    """The envelope seam: the law body sits under ``law``, not at the body's root.
+
+    A law event that carries no law is bytes claiming to be an enactment and
+    committing nothing, which is refused rather than read as an empty edition —
+    an empty edition governs nothing and would silently turn every question into
+    a refusal.
+    """
+    broken = Corpus.load([Event(said="E0", kind="inception", position=INCEPTION, body={})])
+    with pytest.raises(BakoboError) as raised:
+        Constitution.at(broken, INCEPTION)
+    assert raised.value.code == "e.input.malformed.law.f"
+    assert "law" in str(raised.value)

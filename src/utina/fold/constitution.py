@@ -35,13 +35,26 @@ DIVERGENT: thesmo's ``m2-gamma`` reads the same spans additively.
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from bakobo.errors import ErrorCode  # type: ignore[import-untyped]
 
-from utina.fold.clause import Clause
+from utina.fold.clause import MALFORMED_LAW, Clause
 from utina.fold.corpus import Corpus, Event
 from utina.fold.triple import LawHead, Position
+
+#: Where an inception or an enactment carries the law it commits. The event body
+#: is the constructor's envelope — ``t``, ``i``, the committed coordinate, the
+#: identifier — and the law body of ``docs/interfaces.md`` sits inside it under
+#: this one key. Reading the envelope as though it were the law is the failure
+#: the contract warned about in as many words: "disagree on a key and the
+#: Constitution folds to nothing, with no error."
+LAW_FIELD = "law"
+
+#: The clause set inside the law body. The one field ``docs/interfaces.md``
+#: makes authoritative there.
+CLAUSES_FIELD = "clauses"
 
 #: A clause id the law in force does not define. The obstacle is the law's
 #: condition at this position, not the caller's bytes: "B2" is a well-formed
@@ -121,6 +134,16 @@ def _takes_force(event: Event, position: Position) -> bool:
     return False
 
 
+def _edition_committed_by(event: Event) -> tuple[Clause, ...]:
+    """The clause set a law event commits, read out of the constructor's envelope."""
+    law = event.body.get(LAW_FIELD)
+    if not isinstance(law, Mapping):
+        raise MALFORMED_LAW(
+            field=LAW_FIELD, expected="a mapping carrying the clauses this event commits"
+        )
+    return Clause.edition_from_committed(law.get(CLAUSES_FIELD))
+
+
 def _refuse_a_contradictory_edition(clauses: tuple[Clause, ...]) -> None:
     """Fail closed where the committed edition names one thing twice."""
     ids: set[str] = set()
@@ -154,7 +177,7 @@ class Constitution:
         edition: tuple[Clause, ...] = ()
         for event in corpus.upto(position):
             if _takes_force(event, position):
-                edition = Clause.edition_from_committed(event.body.get("clauses"))
+                edition = _edition_committed_by(event)
         _refuse_a_contradictory_edition(edition)
         head = hashlib.sha256(_canonical_bytes(edition)).hexdigest()
         return cls(law_head=LawHead(said=head), clauses=edition)

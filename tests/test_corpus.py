@@ -50,9 +50,9 @@ def _ensure_triple() -> None:
 _ensure_triple()
 
 from bakobo.errors import BakoboError  # noqa: E402
-from utina.fold.triple import Position  # noqa: E402
 
 from utina.fold.corpus import Corpus, Event  # noqa: E402
+from utina.fold.triple import Position  # noqa: E402
 
 
 def event(said: str, seq: int, kind: str = "act") -> Event:

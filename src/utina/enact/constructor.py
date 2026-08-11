@@ -25,6 +25,14 @@ from .errors import (
     SUBJECT_UNKNOWN,
 )
 
+#: The registry operation an endorsement commits. ``docs/interfaces.md`` makes
+#: every endorsement an MxN group counts carry ``act`` of ``"issue"``, and the
+#: fold's slot predicate reads exactly that field: an endorsement without it is
+#: not refused, it is silently PENDING, so the field is the seam and not a
+#: decoration. This domain commits no revocation operator — a party who changes
+#: their mind declines, which is another issuance.
+ISSUANCE = "issue"
+
 
 class Constructor:
     """The writing plane for one governed domain."""
@@ -104,7 +112,7 @@ class Constructor:
             raise SUBJECT_UNKNOWN(aid=aid, subject=subject)
         return self._emit(
             "endorsement",
-            {"t": "end", "i": aid, "disp": disposition, "said": subject},
+            {"t": "end", "i": aid, "act": ISSUANCE, "disp": disposition, "said": subject},
             aid,
         )
 
