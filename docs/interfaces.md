@@ -190,6 +190,33 @@ The walk derives its order from committed bytes alone — anchoring order first,
 then intra-anchor order as the anchoring event states. Arrival order, storage
 order and any ambient sequence are forbidden inputs.
 
+## The law body — the other silent seam
+
+`utina.acme` writes the committed law and `utina.fold.constitution` reads it. Same hazard
+as the endorsement body: disagree on a key and the Constitution folds to nothing, with no
+error. This shape is authoritative.
+
+```python
+{"clauses": [
+    {"id": "A1",
+     "governs": ["open-bank-account", "hire-vp-sales", ...],
+     "group": {"operator": "MxN",
+               "slots": [{"endorser": "acme:marta", "weight": "1/2"},
+                         {"endorser": "acme:dev",   "weight": "1/2"}]}},
+    ...
+]}
+```
+
+`weight` is a **string** in the committed body — `"1/2"`, `"1/3"` — parsed to
+`fractions.Fraction` on the way in. A float in committed bytes would make canonical bytes
+platform-dependent and unity undecidable, which defeats the replay property outright.
+
+**An amendment replaces the law; it does not add to it.** The clause set in force at a
+position is the one the most recent enactment committed, not the union of every enactment
+so far. Under the additive reading A1 and B1 would both govern ordinary acts and
+`governing()` would have two answers — see QL4 in the questions register. Custos does not
+settle it; utina pins replacement.
+
 ## `utina.fold.evaluate` — the entry point
 
 ```python
