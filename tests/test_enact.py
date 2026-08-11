@@ -1,0 +1,230 @@
+"""The constructor's verb: every act performed onto the record, nothing judged.
+
+The asymmetry this file exists to defend is the demo's centerpiece. An
+endorsement and a declination are both signed committed events; an unsigned or
+absent slot is not a decision by anybody. So there is no way through this API
+to express "Dev said no" except by producing Dev's signed declination, and the
+tests below are what make that a property rather than a hope.
+
+Nothing here returns a finding, because nothing here judges.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+
+import pytest
+from bakobo.errors import BakoboError
+
+from utina.enact import Constructor
+from utina.substrate import FacadeSubstrate
+
+LAW: Mapping[str, object] = {"clauses": ()}
+GAID = "acme:gaid"
+
+
+@pytest.fixture
+def constructor(substrate, values):
+    return Constructor(substrate, GAID, values=values)
+
+
+@pytest.fixture
+def founded(constructor):
+    constructor.incept_domain(LAW)
+    constructor.substrate.incept("acme:marta")
+    constructor.substrate.incept("acme:dev")
+    return constructor
+
+
+# --- Inception ---------------------------------------------------------------
+
+
+def test_incepting_the_domain_commits_its_founding_law(constructor):
+    event = constructor.incept_domain(LAW)
+    assert event.kind == "inception"
+    assert event.body["law"] == LAW
+    assert event.body["i"] == GAID
+    assert event.position.seq == 0
+
+
+def test_incepting_the_domain_brings_its_identifier_into_being(constructor):
+    """The gAID must exist before it can sign, and founding is where it starts."""
+    constructor.incept_domain(LAW)
+    assert constructor.substrate.sign(GAID, {"t": "act"})
+
+
+def test_a_domain_is_founded_once(constructor):
+    constructor.incept_domain(LAW)
+    with pytest.raises(BakoboError) as caught:
+        constructor.incept_domain(LAW)
+    assert caught.value.code == "e.state.domain-incepted.f"
+
+
+@pytest.mark.parametrize(
+    ("verb", "argument"),
+    [("propose", "open-bank-account"), ("enact_amendment", LAW)],
+    ids=["propose", "enact_amendment"],
+)
+def test_nothing_may_be_committed_before_the_domain_exists(constructor, verb, argument):
+    with pytest.raises(BakoboError) as caught:
+        getattr(constructor, verb)(argument)
+    assert caught.value.code == "e.state.domain-unincepted.f"
+
+
+# --- Every event, whatever its kind ------------------------------------------
+
+
+def test_every_event_carries_its_own_coordinate_in_its_committed_bytes(founded):
+    """S2: the fold's order has to come from the bytes, so the bytes carry it."""
+    act = founded.propose("open-bank-account")
+    endorsement = founded.endorse("acme:marta", act.said)
+    assert [event.body["s"] for event in founded.emitted] == [0, 1, 2]
+    assert [event.position.seq for event in founded.emitted] == [0, 1, 2]
+    assert endorsement.body["s"] == endorsement.position.seq
+
+
+def test_every_event_is_identified_by_a_digest_of_its_own_bytes(founded):
+    act = founded.propose("open-bank-account")
+    assert act.said == founded.substrate.said(act.body)
+    assert act.body["d"] == act.said
+
+
+def test_every_event_carries_a_signature_that_verifies(founded):
+    act = founded.propose("open-bank-account")
+    endorsement = founded.endorse("acme:marta", act.said)
+    for event, signer in ((act, GAID), (endorsement, "acme:marta")):
+        assert founded.substrate.verify(signer, event.body, event.body["sig"])
+
+
+def test_emitted_is_the_record_in_the_order_it_was_made(founded):
+    act = founded.propose("open-bank-account")
+    endorsement = founded.endorse("acme:marta", act.said)
+    assert founded.emitted == (founded.emitted[0], act, endorsement)
+
+
+# --- Endorsement and declination ---------------------------------------------
+
+
+def test_an_endorsement_names_its_subject_and_its_disposition(founded):
+    act = founded.propose("open-bank-account")
+    endorsement = founded.endorse("acme:marta", act.said)
+    assert endorsement.kind == "endorsement"
+    assert endorsement.body["disp"] == "endorse"
+    assert endorsement.body["said"] == act.said
+    assert endorsement.body["i"] == "acme:marta"
+
+
+def test_a_declination_is_the_same_signed_act_with_the_other_disposition(founded):
+    """@7szbfw — one emitter, one committed field between yes and no."""
+    act = founded.propose("open-bank-account")
+    yes = founded.endorse("acme:marta", act.said)
+    no = founded.decline("acme:dev", act.said)
+    differing = {
+        key for key in yes.body if yes.body[key] != no.body.get(key)
+    }
+    assert differing == {"disp", "i", "s", "d", "sig"}
+    assert no.body["disp"] == "decline"
+    assert no.kind == yes.kind == "endorsement"
+
+
+def test_a_declination_is_signed_by_the_party_who_declined(founded):
+    """A no nobody signed is not a no. This is the whole asymmetry."""
+    act = founded.propose("open-bank-account")
+    no = founded.decline("acme:dev", act.said)
+    assert founded.substrate.verify("acme:dev", no.body, no.body["sig"])
+    assert not founded.substrate.verify("acme:marta", no.body, no.body["sig"])
+
+
+def test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it(founded):
+    """The absent slot has no constructor, and that absence is deliberate."""
+    verbs = {name for name in dir(founded) if not name.startswith("_")}
+    assert verbs == {
+        "anchoring_event",
+        "decline",
+        "emitted",
+        "enact_amendment",
+        "endorse",
+        "gaid",
+        "incept_domain",
+        "propose",
+        "substrate",
+    }
+
+
+@pytest.mark.parametrize("verb", ["endorse", "decline"], ids=["endorse", "decline"])
+def test_a_disposition_on_an_uncommitted_subject_is_refused(founded, verb):
+    """Fail closed: a slot cannot be spent against something nobody committed."""
+    with pytest.raises(BakoboError) as caught:
+        getattr(founded, verb)("acme:marta", "E" + "x" * 43)
+    assert caught.value.code == "e.state.subject-unknown.f"
+
+
+@pytest.mark.parametrize("verb", ["endorse", "decline"], ids=["endorse", "decline"])
+def test_a_disposition_from_an_identifier_with_no_key_state_is_refused(founded, verb):
+    act = founded.propose("open-bank-account")
+    with pytest.raises(BakoboError) as caught:
+        getattr(founded, verb)("acme:ghost", act.said)
+    assert caught.value.code == "e.id.aid-unknown.f"
+
+
+# --- Amendment ---------------------------------------------------------------
+
+
+def test_an_amendment_commits_the_successor_law(founded):
+    successor: Mapping[str, object] = {"clauses": ({"id": "B1"},)}
+    event = founded.enact_amendment(successor)
+    assert event.kind == "enactment"
+    assert event.body["law"] == successor
+
+
+def test_an_amendment_anchors_in_an_establishment_event(founded):
+    """custos-4.2.md:2085-2087 — an enactment amending law SHALL anchor in one."""
+    event = founded.enact_amendment(LAW)
+    assert founded.substrate.anchor_of(event.said) is not None
+
+
+def test_the_anchor_seals_the_enactment_that_rides_it(founded):
+    event = founded.enact_amendment(LAW)
+    rotation = founded.anchoring_event(event.said)
+    assert rotation.kind == "rotation"
+    assert rotation.body["a"] == ({"d": event.said},)
+
+
+def test_an_unanchored_said_has_no_anchoring_event(founded):
+    act = founded.propose("open-bank-account")
+    assert founded.anchoring_event(act.said) is None
+
+
+# --- Fail closed on the substrate itself -------------------------------------
+
+
+class LyingSubstrate:
+    """A substrate whose signatures do not verify — the case that must not pass."""
+
+    def __init__(self, honest: FacadeSubstrate) -> None:
+        self._honest = honest
+
+    def said(self, body):
+        return self._honest.said(body)
+
+    def sign(self, aid, body):
+        return self._honest.sign(aid, body)
+
+    def incept(self, alias):
+        return self._honest.incept(alias)
+
+    def rotate(self, aid, anchor):
+        return self._honest.rotate(aid, anchor)
+
+    def verify(self, aid, body, signature):
+        return False
+
+
+def test_an_event_whose_own_signature_does_not_verify_is_never_produced(values):
+    """Fail closed: unverifiable bytes must not become a committed act."""
+    lying = LyingSubstrate(FacadeSubstrate(values=values))
+    constructor = Constructor(lying, GAID, values=values)
+    with pytest.raises(BakoboError) as caught:
+        constructor.incept_domain(LAW)
+    assert caught.value.code == "e.proof.signature-unverifiable.f"
+    assert constructor.emitted == ()
