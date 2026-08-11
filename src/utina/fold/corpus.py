@@ -20,7 +20,7 @@ component is 3094-3095's anchoring order. The second is wall 6's default —
 the site's clause commits a different derivable order" (2905-2915) — standing in
 for 3095's intra-anchor seal-list order, which has been flattened away by the
 time an event reaches the fold. That substitution is a guess, and it is logged
-as QL1 in ``docs/questions-law.md`` because two conforming engines can order two
+as Q11 in ``docs/custos-questions.md`` because two conforming engines can order two
 events sealed into one rotation differently.
 """
 
@@ -37,7 +37,7 @@ from utina.fold.triple import Position
 #: bytes. Their canonical keys collide, so the only thing that could separate
 #: them is the order they turned up in, and consuming that is what 3097-3099
 #: forbids by name. Refusing here rather than picking is the fail-closed reading;
-#: QL3 in ``docs/questions-law.md`` records that wall 7 permits reading the same
+#: Q13 in ``docs/custos-questions.md`` records that wall 7 permits reading the same
 #: stimulus as a duplicity conviction instead.
 ORDER_AMBIENT = ErrorCode(
     code="e.state.order-ambient.f",
@@ -87,7 +87,7 @@ class Corpus:
         An event presented more than once folds once: 3087-3089 makes the
         self-addressing identifier the identity and the coordinate merely a
         location, so a repeat presentation is one event arriving again rather
-        than a competitor (QL2). Two *different* events under one identifier are
+        than a competitor (Q12). Two *different* events under one identifier are
         the collision this cannot resolve, and it refuses.
         """
         seen: dict[str, Event] = {}

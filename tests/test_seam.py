@@ -85,7 +85,7 @@ def test_the_declination_at_d3_is_read_as_a_spent_slot(acme):
 
 
 def test_a_proposal_binds_to_the_latest_act_and_never_aggregates(acme):
-    """S4 on the demo's own log, where the aggregating reading would be fatal.
+    """Q26 on the demo's own log, where the aggregating reading would be fatal.
 
     Acme tables ``approve-budget`` twice: once at D5, where Marta and Nina carry
     it, and again at D6, where Marta endorses and Dev declines. Both tablings are

@@ -9,9 +9,9 @@ verdicts is precisely the engine utina must not be, so groundlessness is a
 construction failure and not a validation result a caller may ignore.
 
 Two pins are exercised here and logged as guesses in
-``docs/questions-codomain.md``: species collates by the document's own
-enumeration order (QC1), and an empty subcode sorts after every non-empty one
-(QC3) even though it is the lexicographic minimum.
+``docs/custos-questions.md``: species collates by the document's own
+enumeration order (Q5), and an empty subcode sorts after every non-empty one
+(Q7) even though it is the lexicographic minimum.
 """
 
 import dataclasses
@@ -158,7 +158,7 @@ def test_defeated_carries_a_citation_naming_the_clause_that_defeats_it() -> None
 
 
 def test_a_defeat_defaults_to_the_authority_class_and_says_so_where_it_matters() -> None:
-    """QC2's pin: a threshold that cannot reach unity is a power not conferred."""
+    """Q6's pin: a threshold that cannot reach unity is a power not conferred."""
     assert Citation(clause="A1").defeater_class is DefeaterClass.AUTHORITY
     assert DefeaterClass.CRYPTO.rank < DefeaterClass.AUTHORITY.rank
     assert DefeaterClass.AUTHORITY.rank < DefeaterClass.MERIT.rank
@@ -233,7 +233,7 @@ def test_within_a_class_the_citation_identifier_decides() -> None:
 
 
 def test_an_empty_subcode_orders_last_though_it_is_the_lexicographic_minimum() -> None:
-    """QC3: :1778-1779 says "orders last", and :1767-1769 would put it first."""
+    """Q7: :1778-1779 says "orders last", and :1767-1769 would put it first."""
     bare = Citation(clause="A1")
     coded = Citation(clause="A1", subcode="b")
     assert select_defeat([bare, coded]) is coded
@@ -264,7 +264,7 @@ def test_a_requirement_element_carries_its_kind_and_its_discharge_species() -> N
 
 
 def test_the_species_rank_is_the_documents_own_enumeration_order() -> None:
-    """QC1's pin: :1560-1561 enumerates them, and byte order would disagree."""
+    """Q5's pin: :1560-1561 enumerates them, and byte order would disagree."""
     ranked = sorted(PendingSpecies, key=lambda s: s.rank)
     assert [s.name_ for s in ranked] == [
         "absent",
@@ -275,7 +275,7 @@ def test_the_species_rank_is_the_documents_own_enumeration_order() -> None:
 
 
 def test_a_pending_finding_that_names_nothing_missing_is_not_constructible() -> None:
-    """QC4's pin: an undischargeable requirement set is not a ground."""
+    """Q8's pin: an undischargeable requirement set is not a ground."""
     with pytest.raises(BakoboError) as raised:
         Pending(requirement=())
     assert raised.value.is_exactly("e.state.ground-missing.f")

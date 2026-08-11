@@ -20,7 +20,7 @@ recursion's base case is genesis, constructed rather than judged" (2272-2274). A
 founding law judged under its predecessor would have no predecessor, so the
 inception event's clauses take force at their own coordinate while every later
 enactment takes force strictly after its own. That asymmetry is the fold's whole
-succession rule, and it is logged as QL5 because the text states it by
+succession rule, and it is logged as Q15 because the text states it by
 implication rather than outright.
 
 **Editions, not deltas.** An enactment commits the complete clause set in force
@@ -28,7 +28,7 @@ after it, replacing its predecessor wholesale rather than adding to it. Custos
 supplies no committed form for a repeal, so under the additive reading Acme's A1
 and B1 both govern ordinary acts after the board is seated and ``governing`` has
 two answers where it may have one — an uncommitted precedence seam, which
-1874-1876 says an evaluator refuses rather than legislates. Logged as QL4, and
+1874-1876 says an evaluator refuses rather than legislates. Logged as Q14, and
 DIVERGENT: thesmo's ``m2-gamma`` reads the same spans additively.
 """
 

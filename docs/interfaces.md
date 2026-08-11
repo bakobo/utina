@@ -231,7 +231,7 @@ an enactment that names none is refused rather than judged under a guessed one.
 **An amendment replaces the law; it does not add to it.** The clause set in force at a
 position is the one the most recent enactment committed, not the union of every enactment
 so far. Under the additive reading A1 and B1 would both govern ordinary acts and
-`governing()` would have two answers — see QL4 in the questions register. Custos does not
+`governing()` would have two answers — see Q14 in the questions register. Custos does not
 settle it; utina pins replacement.
 
 ## `utina.fold.evaluate` — the entry point

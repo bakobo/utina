@@ -109,7 +109,7 @@ def test_the_said_of_a_body_ignores_whatever_the_identifier_field_held(substrate
 
 
 def test_the_said_of_a_body_ignores_its_signature(substrate):
-    """S5: a signature is an attachment, so signing may not move the identifier."""
+    """Q27: a signature is an attachment, so signing may not move the identifier."""
     body = {"t": "act", "act": "open-bank-account"}
     assert substrate.said(body) == substrate.said({**body, "sig": "0B0.whatever"})
 

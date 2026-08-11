@@ -17,17 +17,17 @@ The four values and their grounds are at ``:1514-1533``; the ruled payloads at
 ``:1641-1660``; canonical selection among simultaneous defeats at ``:1766-1779``.
 
 Four readings are pinned here, each with an entry in
-``docs/questions-codomain.md``:
+``docs/custos-questions.md``:
 
 - **affirmed carries a payload** (Q4 in ``custos-questions.md``). The payload
   enumeration presents itself as complete and omits affirmed, while ``:1516-1518``
   gives affirmed a ground — the evidence bundle and the clause set. The Ground
   Axiom outranks an enumeration that dropped a row.
-- **species collates by the document's own enumeration order** (QC1), not by the
+- **species collates by the document's own enumeration order** (Q5), not by the
   bytes of its name, which would order ``expired/abandoned`` before ``window-open``.
-- **a signed declination defeats under the authority class** (QC2). A threshold
+- **a signed declination defeats under the authority class** (Q6). A threshold
   is a statement about who may act.
-- **an empty subcode orders last** (QC3), though it is the lexicographic minimum
+- **an empty subcode orders last** (Q7), though it is the lexicographic minimum
   the selection sentence asks for.
 
 Refusal is deliberately **not** here, and is not a ``Finding``: see
@@ -100,7 +100,7 @@ class PendingSpecies(Enum):
 
     Each carries the document's own enumeration rank, because the four-field
     canonical order ends in species (``:1650-1651``) and the document never says
-    how one species compares to another — QC1.
+    how one species compares to another — Q5.
     """
 
     ABSENT = (0, "absent", "cured by the arrival of the missing evidence")
@@ -190,7 +190,7 @@ class Citation:
     defeater class and its citation … Neither is reconstructible from a bare
     verdict." The class defaults to ``authority`` because the demo's defeats are
     thresholds that cannot reach unity, and a threshold is a statement about who
-    may act — QC2, and this.i @jaabkd. A caller whose defeat is cryptographic,
+    may act — Q6, and this.i @jaabkd. A caller whose defeat is cryptographic,
     meritorious or superseding must say so; the default will not guess it right.
 
     ``subcode`` is "the defeat's discriminator within its citation, assigned by
@@ -238,7 +238,7 @@ class Citation:
     def selection_key(self) -> tuple[int, str, bool, str]:
         """The canonical-selection key of ``:1766-1779``.
 
-        The third component is QC3's repair: the sentence says an empty subcode
+        The third component is Q7's repair: the sentence says an empty subcode
         "orders last", and an empty string is the lexicographic minimum, so the
         presence of a subcode has to be compared before the subcode itself.
         """

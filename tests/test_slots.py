@@ -37,7 +37,7 @@ class Ev:
 
     The real Event satisfies ``slots.CommittedEvent`` unchanged; this exists so the
     predicate could be driven red-to-green while the corpus was being written in
-    another worktree (``docs/intent-slots.md`` @yenp2x).
+    another worktree (``this.i`` @yenp2x).
     """
 
     said: str
@@ -181,7 +181,7 @@ def test_an_event_with_no_body_at_all_is_pending_rather_than_an_error():
 
 @pytest.mark.parametrize("order", ["endorse-first", "decline-first"])
 def test_a_declination_is_decisive_whatever_the_committed_order(order):
-    """questions-slots.md S5: pinned fail-closed, and the pin is not confident."""
+    """custos-questions.md Q20: pinned fail-closed, and the pin is not confident."""
     endorsement = signed("EAct1", MARTA)
     declination = signed("EAct2", MARTA, disp="decline")
     events = (
@@ -191,7 +191,7 @@ def test_a_declination_is_decisive_whatever_the_committed_order(order):
 
 
 def test_a_revoked_declination_releases_the_slot_again():
-    """questions-slots.md S3, reading A: a retracted act is as if never committed."""
+    """custos-questions.md Q18, reading A: a retracted act is as if never committed."""
     events = [
         signed("EAct1", MARTA, disp="decline"),
         Ev(said="EAct2", body={"i": MARTA, "revokes": "EAct1"}),

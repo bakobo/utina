@@ -61,7 +61,7 @@ __all__ = [
 
 # The committed field names are the dossier specification's, so that swapping this
 # encoding for real ACDC edge groups is a substrate change and not a rewrite
-# (``this.i`` @ta7vle, ``docs/intent-slots.md`` @pj3xhi). They are literals here so
+# (``this.i`` @ta7vle and @pj3xhi). They are literals here so
 # the seam with ``utina.enact`` is one line to reconcile.
 
 ENDORSEMENT_KIND = "endorsement"
@@ -79,7 +79,7 @@ ACT_FIELD = "act"
 REVOKES_FIELD = "revokes"
 """Names an earlier act of the same issuer's that no longer stands. utina's facade
 substrate has no TEL to revoke an endorsement through, so the retraction is committed
-as an ordinary event; see ``docs/questions-slots.md`` S3, which is a guess."""
+as an ordinary event; see ``docs/custos-questions.md`` Q18, which is a guess."""
 
 ENDORSE = "endorse"
 DECLINE = "decline"
@@ -92,14 +92,14 @@ does not commit."""
 _PRECEDENCE = ((DECLINE, Disposition.DECLINED), (ENDORSE, Disposition.ENDORSED))
 """Which committed act decides a slot when an endorser has committed both. A
 declination is examined first and so wins whatever the order, which is the reading
-that never grants authority (``docs/questions-slots.md`` S5)."""
+that never grants authority (``docs/custos-questions.md`` Q20)."""
 
 
 class CommittedEvent(Protocol):
     """The read-only view of a committed event that the predicate needs.
 
     A structural protocol rather than an import of ``utina.fold.corpus.Event``, which
-    the real Event satisfies unchanged (``docs/intent-slots.md`` @yenp2x). The
+    the real Event satisfies unchanged (``this.i`` @yenp2x). The
     position is absent on purpose: the caller hands in the events at or before the
     appraisal coordinate, so this module never sees an ordering question and cannot
     get one wrong.
@@ -137,7 +137,7 @@ def classify(
     A declination is decisive: where an endorser has committed both an endorsement
     and a declination naming ``subject``, the slot is DECLINED whatever the committed
     order, because the reading that never grants authority is the one to take when
-    the specification does not say (``docs/questions-slots.md`` S5).
+    the specification does not say (``docs/custos-questions.md`` Q20).
     """
     committed = tuple(events)
     retracted = _retracted(committed)

@@ -237,7 +237,7 @@ def _resolve(corpus: Corpus, question: Question, at: Position) -> _Subject | Ref
 def _latest_act(corpus: Corpus, act: str, at: Position) -> Event | None:
     """The most recent committed act of class ``act`` at or before ``at``.
 
-    **Latest wins** (S4 in the register). The alternative reading treats every
+    **Latest wins** (Q26 in the register). The alternative reading treats every
     endorsement of an act *class* as evidence for one prospective question, and
     that reading is quietly catastrophic: a decision re-tabled because it was
     contested would inherit the endorsements of the tabling it replaced and come
@@ -371,7 +371,7 @@ def _citation(clause: Clause, classified: Sequence[SlotDisposition]) -> Citation
 def _defeater_class() -> DefeaterClass:
     """The class every defeat utina can currently reach is defeated under.
 
-    ``authority`` (``:1771-1776``, and QC2 in the register): a threshold is a
+    ``authority`` (``:1771-1776``, and Q6 in the register): a threshold is a
     statement about who may act, so a decision that can no longer reach unity is
     one whose actor lacks the invoked power. It is computed by a named function
     rather than taken from the type's default, because the day this engine can

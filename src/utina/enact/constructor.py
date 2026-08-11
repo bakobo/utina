@@ -132,7 +132,7 @@ class Constructor:
 
         The order is the point. The coordinate goes into the bytes before the
         identifier is computed, so the fold's canonical order is derivable from
-        committed bytes alone (S2). The identifier goes in before the signature,
+        committed bytes alone (Q24). The identifier goes in before the signature,
         so the signature commits to it. And the signature is verified before the
         event is recorded, because an event whose own signature does not stand
         up confers no authority and must not reach the record.

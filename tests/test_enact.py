@@ -75,7 +75,7 @@ def test_nothing_may_be_committed_before_the_domain_exists(constructor, verb, ar
 
 
 def test_every_event_carries_its_own_coordinate_in_its_committed_bytes(founded):
-    """S2: the fold's order has to come from the bytes, so the bytes carry it."""
+    """Q24: the fold's order has to come from the bytes, so the bytes carry it."""
     act = founded.propose("open-bank-account")
     endorsement = founded.endorse("acme:marta", act.said)
     assert [event.body["s"] for event in founded.emitted] == [0, 1, 2]

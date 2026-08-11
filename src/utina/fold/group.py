@@ -193,7 +193,7 @@ class Group:
         refusal, opposite consequence, because the group changed.
 
         ``docs/custos-questions.md`` Q1 records that Custos does not settle which
-        finding an unreachable group produces, and ``docs/questions-slots.md`` S1
+        finding an unreachable group produces, and ``docs/custos-questions.md`` Q16
         records that §9:1966 leans the other way from the pin. This method answers
         only the arithmetic question; the codomain question is the evaluator's.
         """

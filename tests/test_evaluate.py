@@ -501,11 +501,11 @@ def test_a_proposal_is_judged_under_the_law_in_force_at_the_position(founded):
     assert finding.clauses == ("B1",)
 
 
-# --- S4: what a prospective question binds to ----------------------------------
+# --- Q26: what a prospective question binds to ----------------------------------
 
 
 def test_a_proposal_binds_to_the_latest_committed_act_of_that_kind(founded):
-    """S4, pinned: latest wins.
+    """Q26, pinned: latest wins.
 
     The alternative reading — that a proposal aggregates every endorsement of the
     act *kind* — is the one that quietly destroys the demo. Under it the second

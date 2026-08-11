@@ -3,9 +3,9 @@
 Two kinds of fold value live here, and the difference is deliberate.
 
 ``utina.enact`` and ``utina.acme`` are parameterized over a small ``FoldValues``
-protocol rather than importing ``utina.fold`` (this.i @tvaq2s, recorded in
-``docs/intent-substrate.md``), so the writing plane can be built and fully
-exercised while the fold is still under construction by its own commissions.
+protocol rather than importing ``utina.fold`` (``this.i`` @tvaq2s), so the
+writing plane can be built and fully exercised while the fold is still under
+construction by its own commissions.
 The unit tests in this directory therefore drive Acme with **doubles** — thin
 stand-ins for ``Position``, ``Event`` and ``Corpus`` that exist only to be
 constructed and ordered.

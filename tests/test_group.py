@@ -258,7 +258,7 @@ def test_outstanding_keeps_the_committed_order_rather_than_sorting():
 
 
 def test_a_group_whose_weights_cannot_reach_unity_is_permitted_and_unreachable():
-    """questions-slots.md S7: the fold does not rule on the wisdom of committed law."""
+    """custos-questions.md Q22: the fold does not rule on the wisdom of committed law."""
     group = Group("MxN", (Slot(MARTA, THIRD), Slot(DEV, THIRD)))
     assert not group.reachable({})
     assert not group.satisfied_by({MARTA, DEV})

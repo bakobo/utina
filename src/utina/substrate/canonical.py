@@ -41,8 +41,8 @@ def digest(data: bytes) -> str:
 
     Blake2b-256 in a KERI-shaped envelope: a one-character code and 43
     characters of unpadded base64url. It is deliberately not KERI's Blake3
-    primitive, because the facade claims no cryptographic dependency; S1 in
-    ``docs/questions-substrate.md`` records the departure and its consequence,
+    primitive, because the facade claims no cryptographic dependency; Q23 in
+    ``docs/custos-questions.md`` records the departure and its consequence,
     which is that utina's identifiers and a keripy engine's will differ over
     identical committed bytes.
     """

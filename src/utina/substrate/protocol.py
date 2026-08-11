@@ -45,7 +45,7 @@ class Substrate(Protocol):
         at a placeholder of the identifier's own length, and with any signature
         removed. So this is idempotent over a sealed, signed event: the SAID of
         a signed event equals the SAID of the same event before it was signed
-        (this.i @ff4jzv; S5 in ``docs/questions-substrate.md``).
+        (this.i @ff4jzv; Q27 in ``docs/custos-questions.md``).
         """
         ...
 
