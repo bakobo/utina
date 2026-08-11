@@ -82,7 +82,7 @@ class RequirementElement:
     endorser: AID
     clause: str
     kind: str = "endorsement"          # binding at :1585-1586
-    species: Species = Species.ABSENT
+    species: PendingSpecies = PendingSpecies.ABSENT
 
 @dataclass(frozen=True)
 class Proof:                           # ground for SelfConvicted
@@ -218,6 +218,15 @@ error. This shape is authoritative.
 `weight` is a **string** in the committed body — `"1/2"`, `"1/3"` — parsed to
 `fractions.Fraction` on the way in. A float in committed bytes would make canonical bytes
 platform-dependent and unity undecidable, which defeats the replay property outright.
+The encoder writes a `Fraction` as `"1/2"` too, so committing the object rather than the
+string produces identical bytes and an unreadable law: the fold parses the committed
+*value*, and the two have to be the same thing.
+
+That shape is the **law body**, and it rides inside the event body under the key `law` —
+`{"t": "icp"|"enact", "i": gAID, "law": {"clauses": [...]}}`. An enactment also carries
+`"act"`, the class of act amending the law is, so the fold can find the clause that
+governs it and judge the amendment under the law it replaces. The domain names that class;
+an enactment that names none is refused rather than judged under a guessed one.
 
 **An amendment replaces the law; it does not add to it.** The clause set in force at a
 position is the one the most recent enactment committed, not the union of every enactment
@@ -229,7 +238,13 @@ settle it; utina pins replacement.
 
 ```python
 def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | Refusal: ...
+def appraisal_triple(corpus: Corpus, question: Question, *, at: Position) -> AppraisalTriple: ...
+
+UNREACHABLE_YIELDS: type[Finding] = Defeated
 ```
+
+`utina.fold` re-exports `evaluate` and `Constitution`; everything else is imported
+from the module that owns it.
 
 Order of operations, and it matters:
 
@@ -240,10 +255,28 @@ Order of operations, and it matters:
    unexamined, so compute the whole space before returning anything.
 3. Classify every slot's disposition from committed evidence at or before `at`.
 4. If the endorsed weights reach unity — `Affirmed`.
-5. Else if unity is unreachable — `Defeated`, citing the declination that spent
-   the slot.
+5. Else if unity is unreachable — whatever `UNREACHABLE_YIELDS` names, which is
+   `Defeated`, citing the declination that spent the slot. Custos does not settle
+   this and `:1966` leans the other way; Q1 in `custos-questions.md` records the
+   pin and the one-line change that flips it.
 6. Else — `Pending`, with the outstanding slots as typed requirement elements,
    canonically ordered.
+
+**Which law judges which question.** A `Committed` question is judged under the law in
+force at the subject act's own coordinate — the past is recomputed under the law in force
+then, and an amendment is answerable under the law it replaces. A `Proposal` asks whether
+an act may be performed now, so the law in force at `at` rules it, and it binds to the
+**latest** committed act of that class at or before `at`. It never aggregates endorsements
+across two tablings of one act class: a re-tabled decision would otherwise inherit the
+endorsements of the tabling it replaced.
+
+The evaluator populates `kind`, `species`, `defeater_class` and `subcode` rather than
+leaning on their defaults. A requirement element for an untouched slot is
+`("endorsement", ABSENT)`; for a spent slot under the flipped reading it is
+`("endorsement", EXPIRED_ABANDONED)`, whose cure is re-presentation. A threshold defeat is
+`AUTHORITY` — a threshold is a statement about who may act — and its `subcode` is the
+declining endorser, who is the discriminator the cited clause's own committed slot
+enumeration supplies.
 
 ## `utina.substrate` — the facade
 
@@ -287,7 +320,9 @@ matching `i` and `said` is DECLINED.
 class Constructor:
     def __init__(self, substrate: Substrate, gaid: AID) -> None: ...
     def incept_domain(self, founding_law: Mapping[str, object]) -> Event: ...
-    def enact_amendment(self, law: Mapping[str, object]) -> Event: ...
+    def enact_amendment(
+        self, law: Mapping[str, object], *, act: str | None = None
+    ) -> Event: ...
     def propose(self, act: str) -> Event: ...
     def endorse(self, aid: AID, subject: SAID) -> Event: ...
     def decline(self, aid: AID, subject: SAID) -> Event: ...
