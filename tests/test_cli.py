@@ -188,6 +188,15 @@ def test_the_centerpiece_contrast_differs_only_on_the_reachable_row():
     assert "endorsed             1/2   of 1" in six
 
 
+def test_a_class_with_nothing_tabled_is_pending_over_the_whole_requirement_space():
+    """C1 in docs/questions-cli.md: pending is pinned, and the screen shows why we ask."""
+    out = screen("eval", "open-bank-account", "--at", "inception")
+    assert "PENDING" in out
+    assert "nothing of this class has been tabled at this position" in out
+    assert out.count("cured by the arrival of the missing evidence") == 2
+    assert "endorsed               0   of 1" in out
+
+
 def test_a_refusal_looks_different_in_kind_from_a_finding():
     out = screen("eval", "declare-dividend", "--at", "d8")
     assert "REFUSED" in out
