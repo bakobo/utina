@@ -51,8 +51,8 @@ def constructor_over(record: Acme) -> Constructor:
     ``self._founded``. All three are set here from the committed record.
 
     This reaches into another package's internals, and it is the smaller of the two
-    wrongs available (this.i @cladpt, and the tick against ``utina.enact`` for a public
-    ``Constructor.resume``). The alternative is to re-implement ``_emit`` in the CLI,
+    wrongs available (this.i @cladpt; ~7h6j is the tick against ``utina.enact`` for a
+    public ``Constructor.resume``). The alternative is to re-implement ``_emit`` in the CLI,
     which would copy the committed byte layout — the field order, the
     coordinate-before-identifier rule, the signature-verified-before-recorded rule —
     across a seam that fails silently when the copies drift. ``tests/test_cli.py`` pins
