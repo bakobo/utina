@@ -382,7 +382,7 @@ def _gloss(event: Event) -> str:
     if event.kind == "inception":
         return "the founding law of the domain"
     if event.kind == "enactment":
-        return f"a successor law, amending under the class {event.body.get(ACT_FIELD)}"
+        return f"a successor law, enacted as {event.body.get(ACT_FIELD)}"
     if event.kind == "act":
         return f"an act of the class {event.body.get(ACT_FIELD)}"
     verb = "endorses" if event.body.get(DISPOSITION_FIELD) == ENDORSE else "declines"
@@ -418,7 +418,7 @@ def replay_screen(
         "",
         field(
             style,
-            "committed",
+            "canonical",
             f"{abbrev(straight.law_head.said, 16):<25}"
             f"over {len(canonical)} canonical bytes, {len(straight.clauses)} clauses",
         ),
@@ -463,9 +463,11 @@ def enact_screen(
     """A committed act, and what the record says about its subject because of it."""
     disposition = str(event.body.get(DISPOSITION_FIELD))
     verb = "endorses" if disposition == ENDORSE else "declines"
-    committed = " ".join(
-        f"{name}={event.body.get(name)}"
-        for name in (ISSUER_FIELD, ACT_FIELD, DISPOSITION_FIELD)
+    committed = (
+        f"{ISSUER_FIELD}={event.body.get(ISSUER_FIELD)} "
+        f"{ACT_FIELD}={event.body.get(ACT_FIELD)} "
+        f"{DISPOSITION_FIELD}={disposition} "
+        f"{SUBJECT_FIELD}={abbrev(str(event.body.get(SUBJECT_FIELD)))}"
     )
     lines = [
         MARGIN
@@ -483,7 +485,7 @@ def enact_screen(
             style,
             "signature",
             f"{abbrev(str(event.body.get('sig')), 16)} "
-            "(verified by the substrate before the event was recorded)",
+            "(the substrate verified it before recording)",
             indent=4,
         ),
         "",

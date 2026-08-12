@@ -340,6 +340,10 @@ def test_no_screen_is_wider_than_the_projector():
         ["eval", "hire-vp-sales", "--at", "d3"],
         ["eval", "declare-dividend", "--at", "d8"],
         ["eval", "open-bank-account", "--at", "d1"],
+        ["log"],
+        ["replay", "--at", "board-seated"],
+        ["enact", "endorse", "--as", "acme:nina", "--on", "approve-budget-retabled"],
+        ["demo", "--no-pause"],
     ):
         for line in screen(*argv).splitlines():
             assert len(line) <= 96, (argv, line)
@@ -452,7 +456,7 @@ def test_log_glosses_each_kind_of_committed_event():
     out = screen("log")
     assert "the founding law of the domain" in out
     assert "an act of the class open-bank-account" in out
-    assert "a successor law, amending under the class amend-operating-agreement" in out
+    assert "a successor law, enacted as amend-operating-agreement" in out
     assert "acme:marta endorses" in out
     assert "acme:dev declines" in out
 
@@ -488,7 +492,8 @@ def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
     out = screen("enact", "endorse", "--as", "acme:nina", "--on", "approve-budget-retabled")
     assert "ENACTED" in out
     assert "acme:nina endorses" in out
-    assert "verified by the substrate before the event was recorded" in out
+    assert "the substrate verified it before recording" in out
+    assert "said=E978mpa1QdIW..." in out
     assert "before" in out and "PENDING" in out
     assert "after" in out and "AFFIRMED" in out
     assert "nothing here is written to disk" in out
