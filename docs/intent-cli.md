@@ -265,6 +265,17 @@ Rejected for now: extending the no-truncation rule to event SAIDs and digests = 
     one a later commission should extend. Revisit as its own commission, with the log screen's
     layout in scope.
 
+    RULED 2026-08-13 by the maintainer, and the ruling narrows the scope rather than merely
+    deferring it: party identifiers are where the risk concentrates, because the attack the
+    truncation enables is a man in the middle — a reader satisfied by a matching prefix accepts
+    a substituted party. An event SAID, law head or clause digest carries less, because no
+    reader forms a belief about WHO someone is from one. So the no-truncation rule is a rule
+    about actors, and the remaining truncations are a legibility question rather than a
+    security one. That does not make them free — the replay screen's pattern of printing the
+    machine's verdict instead of inviting the eye stays the right one to extend — but it does
+    mean a later commission may weigh layout against them honestly, which it could not do while
+    the argument was framed as security.
+
 Exit status reports whether the command answered, not what it answered = decision:
   id: clexit
   why: >
