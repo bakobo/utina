@@ -26,14 +26,16 @@ from typing import TextIO
 from bakobo.errors import BakoboError  # type: ignore[import-untyped]
 
 from utina.acme import Acme
+from utina.cli.aliases import Aliases, aliases_over
 from utina.cli.appraisal import appraise, question_from, resolve_subject
-from utina.cli.errors import COMMAND_MALFORMED
+from utina.cli.errors import ALIAS_UNKNOWN, COMMAND_MALFORMED
 from utina.cli.render import (
     enact_screen,
     eval_screen,
     law_screen,
     log_screen,
     replay_screen,
+    whois_screen,
 )
 from utina.cli.style import RED, Style
 from utina.cli.world import RealValues, constructor_over, world
@@ -54,8 +56,14 @@ positions
 
 identifiers
   --said and --on take the name the record commits an act under (seat-the-board),
-  any unambiguous prefix of an identifier, or the whole thing. The 12-character
-  prefix the screens print is a valid handle.
+  any unambiguous prefix of an identifier, or the whole thing.
+
+parties
+  Screens name a party by a COIA alias -- 9-marta-as-founder -- and never by a
+  piece of its identifier, because a prefix is not a safe way to decide that two
+  identifiers are the same. The 9 flag marks a demo environment. Inside these
+  screens the scope is always Acme, so the columns drop it. To see the identifier
+  behind an alias, ask for it: utina whois 9-marta-as-founder.
 
 colour
   On when the output is a terminal. NO_COLOR turns it off, FORCE_COLOR turns it on
@@ -66,6 +74,7 @@ examples
   utina eval hire-vp-sales --at d3
   utina eval --said seat-the-board --at d4
   utina replay --at board-seated
+  utina whois 9-marta-as-founder
   utina enact endorse --as acme:nina --on approve-budget-retabled
 """
 
@@ -178,6 +187,12 @@ def build_parser(console: Console) -> _Parser:
     replay.add_argument("--at", required=True, metavar="POSITION")
     replay.add_argument("--seed", type=int, default=7, metavar="N")
 
+    whois = commands.add_parser(
+        "whois", out=console.out, parents=[backend],
+        help="the full identifier behind an alias",
+    )
+    whois.add_argument("party", metavar="ALIAS-OR-PREFIX")
+
     enact = commands.add_parser(
         "enact", out=console.out, parents=[backend],
         help="commit a signed endorsement or declination",
@@ -204,6 +219,16 @@ def _world(args: argparse.Namespace) -> AbstractContextManager[Acme]:
     return world(args.substrate, store=args.store)
 
 
+def _aliases(record: Acme) -> Aliases:
+    """The display names for this record's parties.
+
+    The composition root's half of this.i @clcoia. Built here, in the CLI, from the
+    identifiers inception returned — which is why an alias cannot reach the fold, the
+    constructor or the committed bytes, and why both substrates render identically.
+    """
+    return aliases_over(record.aids)
+
+
 def _actor(record: Acme, name: str) -> str:
     """The identifier a party is addressed by, from the alias a person typed.
 
@@ -227,7 +252,9 @@ def law_command(args: argparse.Namespace, console: Console) -> int:
     with _world(args) as record:
         label, position = _position(record, args.at)
         law = Constitution.at(record.corpus, position)
-        console.out.write(law_screen(law, label, position, console.style))
+        console.out.write(
+            law_screen(law, label, position, _aliases(record), console.style)
+        )
     return 0
 
 
@@ -236,7 +263,7 @@ def eval_command(args: argparse.Namespace, console: Console) -> int:
         question = question_from(record.saids, record.events, args.act, args.said)
         label, position = _position(record, args.at)
         appraisal = appraise(record.corpus, question, at=position, label=label)
-        console.out.write(eval_screen(appraisal, console.style))
+        console.out.write(eval_screen(appraisal, _aliases(record), console.style))
     return 0
 
 
@@ -244,7 +271,32 @@ def log_command(args: argparse.Namespace, console: Console) -> int:
     with _world(args) as record:
         label, position = _position(record, args.at)
         console.out.write(
-            log_screen(record.corpus.upto(position), label, position, console.style)
+            log_screen(
+                record.corpus.upto(position),
+                label,
+                position,
+                _aliases(record),
+                console.style,
+            )
+        )
+    return 0
+
+
+def whois_command(args: argparse.Namespace, console: Console) -> int:
+    """The one place a party's full identifier appears (this.i @clwhoi).
+
+    Removing the prefix from every screen removes the only way an audience could see an
+    identifier at all, and sometimes seeing one is the point. So it is an explicit act
+    rather than a glance: this is the pill's expand affordance, where verification is
+    allowed to happen because the reader asked for it.
+    """
+    with _world(args) as record:
+        aliases = _aliases(record)
+        identifier = aliases.resolve(args.party)
+        if identifier is None:
+            raise ALIAS_UNKNOWN(query=args.party, known=aliases.known())
+        console.out.write(
+            whois_screen(identifier, aliases, args.substrate, console.style)
         )
     return 0
 
@@ -280,7 +332,9 @@ def enact_command(args: argparse.Namespace, console: Console) -> int:
         after = appraise(
             corpus, Committed(subject), at=event.position, label="after this act"
         )
-        console.out.write(enact_screen(event, before, after, console.style))
+        console.out.write(
+            enact_screen(event, before, after, _aliases(record), console.style)
+        )
     return 0
 
 
@@ -301,6 +355,7 @@ COMMANDS: Mapping[str, Callable[[argparse.Namespace, Console], int]] = {
     "eval": eval_command,
     "log": log_command,
     "replay": replay_command,
+    "whois": whois_command,
     "enact": enact_command,
     "demo": demo_command,
 }

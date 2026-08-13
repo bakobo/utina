@@ -11,6 +11,15 @@ Assumptions the three share, because they are not what is being chosen: about 10
 columns, ANSI colour when the stream is a terminal and nothing when it is not (shown
 here in the plain form), ASCII only, and the ground on the screen every time.
 
+One thing changed under all three after they were written, and it is not a choice
+between them. Every candidate named its parties `acme:marta` and `acme:dev` — under
+keripy, `EPFtMUsnh_BZ...`. A truncated identifier beside a name invites a reader to
+decide two identifiers are the same by comparing what they can see, and it cannot
+support that decision (`this.i` @clcoia, and `amp-diff.md` §4.3.8). Parties are now
+named by a COIA alias in all three, the unscoped form in columns and the scoped form
+in prose and in the ground. Nothing else about the three renderings moved, so the
+comparison below is still between the same three shapes.
+
 **Candidate A ships as the default.** The reasoning is at the end.
 
 ---
@@ -31,8 +40,8 @@ utina eval hire-vp-sales --at d3
   subject     E1rffWC9X3TbAvOb7uva7RUxD1CvqcQ6ovLHW64URWxY
 
   slot              weight   disposition   committed act
-  acme:marta           1/2   endorsed      E0knXw2hGgUl...
-  acme:dev             1/2   declined      Ei1G09hY6yu2...
+  9-marta-as-founder   1/2   endorsed      E0knXw2hGgUl...
+  9-dev-as-founder     1/2   declined      Ei1G09hY6yu2...
                     ------
   endorsed             1/2   of 1          unity not reached
   reachable            1/2   of 1          unity unreachable: a declined slot is spent
@@ -40,11 +49,11 @@ utina eval hire-vp-sales --at d3
   ground
     clause      A1
     defeater    authority (the actor lacked the invoked power)
-    subcode     acme:dev
-    citation    the declination Ei1G09hY6yu2... committed by acme:dev
-    reason      Unity is unreachable under clause A1: acme:dev committed a signed
-                declination, which spends that slot's weight, and the weight that can
-                still arrive no longer reaches unity.
+    subcode     9-dev-as-founder-at-acme
+    citation    the declination Ei1G09hY6yu2... committed by 9-dev-as-founder-at-acme
+    reason      Unity is unreachable under clause A1: 9-dev-as-founder-at-acme committed
+                a signed declination, which spends that slot's weight, and the weight
+                that can still arrive no longer reaches unity.
 ```
 
 Good at: the verdict is unmissable and the two sum rows sit directly under the slots
@@ -68,23 +77,23 @@ utina eval hire-vp-sales --at d3
   Defeated.
 
   Acme may not hire a VP of Sales at position d3. Clause A1 governs acts of this class
-  and carries when its endorsed slots reach a weight of 1. acme:marta endorsed, which
-  contributes 1/2. acme:dev committed a signed declination, which contributes nothing
-  and spends the slot, so the 1/2 it held can never arrive. The most this decision can
-  still reach is 1/2, and it needs 1.
+  and carries when its endorsed slots reach a weight of 1. 9-marta-as-founder-at-acme
+  endorsed, which contributes 1/2. 9-dev-as-founder-at-acme committed a signed
+  declination, which contributes nothing and spends the slot, so the 1/2 it held can
+  never arrive. The most this decision can still reach is 1/2, and it needs 1.
 
   The ground
 
       clause        A1, in force at d3 under the law head 932f0ab892df...
       defeater      authority - the actor lacked the invoked power
-      citation      the declination Ei1G09hY6yu2... committed by acme:dev
-      subcode       acme:dev
+      citation      the declination Ei1G09hY6yu2... committed by 9-dev-as-founder-at-acme
+      subcode       9-dev-as-founder-at-acme
 
   The arithmetic
 
-      acme:marta    1/2    endorsed    counts
-      acme:dev      1/2    declined    spent
-                                       endorsed 1/2, reachable 1/2, unity 1
+      9-marta-as-founder   1/2   endorsed   counts
+      9-dev-as-founder     1/2   declined   spent
+                                            endorsed 1/2, reachable 1/2, unity 1
 ```
 
 Good at: it stands alone. A screenshot of this in a slide deck, or pasted into an email
@@ -109,17 +118,18 @@ utina eval hire-vp-sales --at d3
 
   clause A1   MxN over 2 slots, satisfied at unity = 1         law head 932f0ab892df...
 
-      acme:marta   1/2   endorsed   [##########..........]  +1/2
-      acme:dev     1/2   declined   [....................]  spent, and unreclaimable
-                                    ----
-      endorsed                      [##########..........]   1/2 of 1
-      reachable                     [##########..........]   1/2 of 1   <- the ceiling
+      9-marta-as-founder   1/2   endorsed   [##########..........]  +1/2
+      9-dev-as-founder     1/2   declined   [....................]  spent, unreclaimable
+                                            ----
+      endorsed                              [##########..........]   1/2 of 1
+      reachable                             [##########..........]   1/2 of 1  <- ceiling
 
   Unity is 1. The ceiling is 1/2. No arrangement of the acts that can still arrive
   reaches it, so:
 
-  DEFEATED    clause A1, authority (the actor lacked the invoked power), subcode acme:dev
-              cited: the declination Ei1G09hY6yu2... committed by acme:dev
+  DEFEATED    clause A1, authority (the actor lacked the invoked power)
+              subcode 9-dev-as-founder-at-acme
+              cited: the declination Ei1G09hY6yu2... committed by 9-dev-as-founder-at-acme
 ```
 
 Good at: it argues rather than asserts, and the gauge makes the centerpiece visual —

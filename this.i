@@ -602,6 +602,30 @@ Make Custos's replayable governance useful to a real organization = goal:
         because keripy 2.0.0-dev6 is a moving target and a demo that cannot be rebuilt from its
         manifest is not replayable.
 
+    utina.coia is standalone and stdlib-only, so the move out stays cheap = decision:
+      id: 6b3ntq
+      why: >
+        COIA (~/code/me/coia, whose coia.py is the normative oracle) is implemented here because
+        the demo needed human-readable party names, and tick ~6s25 holds the open question of
+        whether it belongs in heti as shared machinery instead. A module built to be moved and a
+        module built in place differ, so the shape was chosen for the move: utina.coia imports
+        nothing from utina, takes who, role and scope as arguments rather than reaching into the
+        Acme record for them, and is tested against the spec's own published examples as
+        hardcoded vectors, so the tests travel with the code rather than staying behind. A
+        fitness test asserts the no-utina-imports property by AST inspection, because it is the
+        property that would rot first and silently.
+        Chose the standard library over the third-party `regex` package that the oracle uses for
+        its \p{...} classes, implementing the same Unicode property tests with unicodedata
+        categories and explicit code-point sets for the two binary properties (Dash and
+        Quotation_Mark). Rejected adding `regex` as a runtime dependency: this repo carries
+        exactly two by decision, a display-only convenience is the worst possible reason to make
+        it three, and a module intended to be liftable into another repo is more liftable with no
+        dependencies at all. Tradeoff accepted: the property sets are enumerated in source rather
+        than resolved from the Unicode database, so a future Unicode revision could add a dash
+        this module does not know about. A dev-only script cross-checks every vector against the
+        oracle in an ephemeral environment; it is deliberately outside CI, because it depends on
+        a path outside this repo.
+
     The keripy substrate imposes one key order, and it is the same order three times = decision:
       id: fy5lwj
       why: >

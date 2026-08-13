@@ -7,12 +7,20 @@ Moves to `utina/docs/demo-script.md` when the repo exists.
 
 ## Parties
 
-| Party | Role | AID |
-|---|---|---|
-| Marta Reyes | founder | `acme:marta` (facade AID; real AID after the keripy commission) |
-| Dev Patel | founder | `acme:dev` |
-| Nina Adeyemi | outside director, seated at E4 | `acme:nina` |
-| Acme, Inc. | the governed domain (gAID) | `acme:gaid` |
+| Party | Role | Alias, as the screens show it | AID |
+|---|---|---|---|
+| Marta Reyes | founder | `9-marta-as-founder` | `acme:marta` under the facade; a real prefix under keripy |
+| Dev Patel | founder | `9-dev-as-founder` | `acme:dev` |
+| Nina Adeyemi | outside director, seated at E4 | `9-nina-as-director` | `acme:nina` |
+| Acme, Inc. | the governed domain (gAID) | `9-acme-as-governed-domain` | `acme:gaid` |
+
+The middle column is what every screen prints. It is a [COIA](https://github.com/dhh1128/coia)
+alias — a display name local to Acme, carrying no security claim and never entering a
+committed byte — and the `9` marks a demo environment with no real-world consequence.
+Screens never print a piece of an AID, because a prefix cannot support the comparison it
+invites; the AID itself is one command away, `utina whois 9-marta-as-founder`. Inside
+these screens every party is at Acme, so the columns drop the shared scope and the law
+screen's header states it. The reasoning is `docs/intent-cli.md` @clcoia.
 
 ## The law, expressed as weighted slot groups
 

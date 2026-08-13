@@ -55,6 +55,7 @@ the board-seating amendment is anchored by a seal in a real rotation.
 ```sh
 uv run utina demo --no-pause                                    # the facade
 uv run utina demo --substrate keripy --no-pause                 # real KERI
+uv run utina whois 9-marta-as-founder --substrate keripy        # the prefix behind a name
 uv run utina log --substrate keripy --store /tmp/acme-kel       # leave the key log on disk
 uv run python tools/read-keri-log.py /tmp/acme-kel              # read it with keripy alone
 ```

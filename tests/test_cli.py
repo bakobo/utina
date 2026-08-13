@@ -110,7 +110,7 @@ def test_law_at_inception_shows_both_founding_clauses_with_slots_and_weights():
     out = screen("law", "--at", "inception")
     assert "LAW IN FORCE AT inception" in out
     assert "clause A1" in out and "clause A2" in out
-    assert "acme:marta 1/2, acme:dev 1/2" in out
+    assert "9-marta-as-founder 1/2, 9-dev-as-founder 1/2" in out
     assert "open-bank-account, hire-vp-sales, approve-budget" in out
     assert "unity 1" in out
 
@@ -126,8 +126,8 @@ def test_law_shows_the_head_that_identifies_the_edition():
 def test_law_after_the_amendment_shows_the_board_clauses_and_the_retained_bar():
     out = screen("law", "--at", "board-seated")
     assert "clause B1" in out and "clause B2" in out
-    assert "acme:marta 1/2, acme:dev 1/2, acme:nina 1/2" in out
-    assert "acme:marta 1/3, acme:dev 1/3, acme:nina 1/3" in out
+    assert "9-marta-as-founder 1/2, 9-dev-as-founder 1/2, 9-nina-as-director 1/2" in out
+    assert "9-marta-as-founder 1/3, 9-dev-as-founder 1/3, 9-nina-as-director 1/3" in out
     # B1's slots oversum, so unity does not need everyone; B2's do not.
     assert "sum to 3/2" in out
     assert "every slot is required" in out
@@ -164,7 +164,7 @@ def test_an_affirmed_screen_carries_its_clause_endorsements_and_bundle():
 def test_a_pending_screen_names_the_slot_that_would_discharge_it_and_the_cure():
     out = screen("eval", "hire-vp-sales", "--at", "d2")
     assert "PENDING" in out
-    assert "acme:dev" in out
+    assert "9-dev-as-founder-at-acme" in out
     assert "endorsement under clause A1" in out
     assert "absent" in out
     assert "cured by the arrival of the missing evidence" in out
@@ -175,7 +175,7 @@ def test_a_defeated_screen_carries_the_clause_class_subcode_and_declination():
     out = screen("eval", "hire-vp-sales", "--at", "d3")
     assert "DEFEATED" in out
     assert "authority (the actor lacked the invoked power)" in out
-    assert "subcode" in out and "acme:dev" in out
+    assert "subcode" in out and "9-dev-as-founder-at-acme" in out
     assert "Ei1G09hY6yu2" in out
     assert "unity unreachable" in out
 
@@ -414,34 +414,42 @@ def test_a_terminal_is_coloured():
 
 
 def test_a_self_convicted_finding_renders_its_proof():
-    from utina.cli.render import ground_of
-    from utina.cli.style import Style
-    from utina.fold.finding import Proof, SelfConvicted
-
-    lines = ground_of(SelfConvicted(proof=Proof(package="Eproof")), Style(False))
-    assert any("Eproof" in line for line in lines)
-    assert any("none carried" in line for line in lines)
-
-
-def test_a_self_convicted_finding_renders_the_contradicting_pair():
+    from utina.cli.aliases import aliases_over
     from utina.cli.render import ground_of
     from utina.cli.style import Style
     from utina.fold.finding import Proof, SelfConvicted
 
     lines = ground_of(
-        SelfConvicted(proof=Proof(package="Eproof", pair=("Eone", "Etwo"))), Style(False)
+        SelfConvicted(proof=Proof(package="Eproof")), aliases_over({}), Style(False)
+    )
+    assert any("Eproof" in line for line in lines)
+    assert any("none carried" in line for line in lines)
+
+
+def test_a_self_convicted_finding_renders_the_contradicting_pair():
+    from utina.cli.aliases import aliases_over
+    from utina.cli.render import ground_of
+    from utina.cli.style import Style
+    from utina.fold.finding import Proof, SelfConvicted
+
+    lines = ground_of(
+        SelfConvicted(proof=Proof(package="Eproof", pair=("Eone", "Etwo"))),
+        aliases_over({}),
+        Style(False),
     )
     assert any("Eone" in line and "Etwo" in line for line in lines)
 
 
 def test_a_defeat_with_no_declination_still_carries_its_ground():
     """A group whose slots cannot sum to unity is defeated by arithmetic, not by a no."""
+    from utina.cli.aliases import aliases_over
     from utina.cli.render import ground_of
     from utina.cli.style import Style
     from utina.fold.finding import Citation, Defeated
 
     lines = ground_of(
         Defeated(citation=Citation(clause="A1", reason="The slots cannot reach unity.")),
+        aliases_over({}),
         Style(False),
     )
     assert any("A1" in line for line in lines)
@@ -476,8 +484,8 @@ def test_log_glosses_each_kind_of_committed_event():
     assert "the founding law of the domain" in out
     assert "an act of the class open-bank-account" in out
     assert "a successor law, enacted as amend-operating-agreement" in out
-    assert "acme:marta endorses" in out
-    assert "acme:dev declines" in out
+    assert "9-marta-as-founder endorses" in out
+    assert "9-dev-as-founder declines" in out
 
 
 # --- utina replay -------------------------------------------------------------
@@ -504,14 +512,112 @@ def test_replay_names_a_disagreement_rather_than_hiding_it():
     assert "not committed" in replay_verdict(b"one", b"other")
 
 
+# --- utina whois ----------------------------------------------------------------
+
+
+@pytest.mark.parametrize("backend", NAMES)
+def test_whois_prints_the_alias_the_full_identifier_and_the_substrate(backend: str):
+    """this.i @clwhoi: the one place a party's identifier appears, and it appears whole."""
+    out = screen("whois", "9-marta-as-founder", "--substrate", backend)
+    with world(backend) as record:
+        marta = record.aid("acme:marta")
+    assert "9-marta-as-founder-at-acme" in out
+    assert marta in out
+    assert f"{marta}..." not in out
+    assert backend in out
+    assert "carries no security claim" in " ".join(out.split())
+    assert "never on a piece of it" in " ".join(out.split())
+
+
+@pytest.mark.parametrize(
+    "typed",
+    [
+        "9-marta-as-founder",
+        "9-marta-as-founder-at-acme",
+        "Marta as Founder at Acme",
+        "9 MARTA AS FOUNDER",
+    ],
+    ids=["short", "scoped", "natural", "shouted"],
+)
+def test_whois_accepts_every_form_a_narrator_might_type(typed: str):
+    assert "9-marta-as-founder-at-acme" in screen("whois", typed)
+
+
+def test_whois_accepts_an_identifier_prefix_because_typing_one_is_still_fine():
+    with world() as record:
+        marta = record.aid("acme:marta")
+    assert marta in screen("whois", marta[:6])
+
+
+def test_whois_refuses_a_name_this_domain_does_not_have():
+    status, _, err = shell("whois", "9-nobody-as-nothing")
+    assert status == 2
+    assert "e.input.unknown.alias.f" in err
+    assert "9-marta-as-founder" in err
+    assert "Retrying will not help" in err
+
+
+def test_whois_refuses_an_ambiguous_prefix_rather_than_picking_a_party():
+    status, _, err = shell("whois", "acme:")
+    assert status == 2
+    assert "e.input.multi.alias-prefix.f" in err
+
+
+# --- the property this whole commission is for -----------------------------------
+
+
+@pytest.mark.parametrize("backend", NAMES)
+def test_no_screen_anywhere_shows_a_truncated_party_identifier(backend: str):
+    """The mechanical check: grep every screen for a prefix of a party's identifier.
+
+    A truncated identifier beside a name is the antipattern @clcoia removes — it invites
+    an equality decision it cannot support (amp-diff 4.3.8, pill-design 2.1). This walks
+    every command on both substrates and asserts that no prefix of any party identifier
+    appears followed by an ellipsis, at any length. What may still be truncated is the
+    digest of a committed event, which is @clsaid's recorded gap and not a party.
+    """
+    with world(backend) as record:
+        parties = list(record.aids.values())
+
+    for argv in (
+        ["law", "--at", "inception"],
+        ["law", "--at", "board-seated"],
+        ["eval", "hire-vp-sales", "--at", "d2"],
+        ["eval", "hire-vp-sales", "--at", "d3"],
+        ["eval", "approve-budget", "--at", "d6"],
+        ["eval", "amend-operating-agreement", "--at", "d7"],
+        ["eval", "declare-dividend", "--at", "d8"],
+        ["eval", "open-bank-account", "--at", "inception"],
+        ["log"],
+        ["replay", "--at", "board-seated"],
+        ["whois", "9-nina-as-director"],
+        ["enact", "endorse", "--as", "acme:nina", "--on", "approve-budget-retabled"],
+        ["demo", "--no-pause"],
+    ):
+        out = screen(*argv, "--substrate", backend)
+        for identifier in parties:
+            for keep in range(4, len(identifier)):
+                assert f"{identifier[:keep]}..." not in out, (backend, argv, identifier)
+
+
+@pytest.mark.parametrize("backend", NAMES)
+def test_the_slot_column_is_the_same_on_both_substrates(backend: str):
+    """The demo's claim, made visible: the screen does not say which engine is under it."""
+    out = screen("eval", "hire-vp-sales", "--at", "d3", "--substrate", backend)
+    assert "  9-marta-as-founder   1/2   endorsed" in out
+    assert "  9-dev-as-founder     1/2   declined" in out
+
+
 # --- utina enact ---------------------------------------------------------------
 
 
 def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
     out = screen("enact", "endorse", "--as", "acme:nina", "--on", "approve-budget-retabled")
     assert "ENACTED" in out
-    assert "acme:nina endorses" in out
-    assert "the substrate verified it before recording" in out
+    assert "9-nina-as-director-at-acme endorses" in out
+    # The signature is printed whole and therefore wraps, so the sentence beside it is
+    # matched against the screen with its line breaks flattened.
+    assert "the substrate verified it before recording" in " ".join(out.split())
     assert "said=E978mpa1QdIW..." in out
     assert "before" in out and "PENDING" in out
     assert "after" in out and "AFFIRMED" in out
@@ -520,7 +626,7 @@ def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
 
 def test_enact_can_commit_a_declination_that_defeats():
     out = screen("enact", "decline", "--as", "acme:nina", "--on", "approve-budget-retabled")
-    assert "acme:nina declines" in out
+    assert "9-nina-as-director-at-acme declines" in out
     assert "DEFEATED" in out
 
 
@@ -650,18 +756,41 @@ def test_a_permanent_error_carries_its_detail_and_its_hint():
 
 
 def test_the_default_substrate_is_the_facade():
-    """this.i @dxs27r: the fallback has to be a flag, so it may not be a default."""
+    """this.i @dxs27r: the fallback has to be a flag, so it may not be a default.
+
+    The slot lists no longer say which substrate produced them — that is the point of
+    @clcoia — so the discriminator is the law head, which digests different bytes on
+    each. Screen equality against the facade and inequality against keripy is a
+    stronger statement than the alias assertion this used to make anyway.
+    """
     parser_default = screen("law", "--at", "inception")
-    explicit = screen("law", "--at", "inception", "--substrate", "facade")
-    assert parser_default == explicit
-    assert "acme:marta 1/2, acme:dev 1/2" in parser_default
+    assert parser_default == screen("law", "--at", "inception", "--substrate", "facade")
+    assert parser_default != screen("law", "--at", "inception", "--substrate", "keripy")
 
 
-def test_the_keripy_substrate_writes_the_law_under_real_prefixes():
-    """The same screen, over identifiers no one could have written down."""
+def test_the_keripy_substrate_writes_the_law_under_identifiers_nobody_could_predict():
+    """The same screen, over identifiers no one could have written down.
+
+    This asserted that keripy's slot list rendered a truncated 44-character prefix.
+    That rendering is gone by decision (@clcoia) rather than by accident, so the case
+    is restated as what it was always for: the screen is substrate-independent, and the
+    real prefixes are still underneath, reachable by asking.
+    """
     out = screen("law", "--at", "inception", "--substrate", "keripy")
-    assert "acme:marta" not in out
-    assert re.search(r"slots\s+E[A-Za-z0-9_-]{11}\.\.\. 1/2, E[A-Za-z0-9_-]{11}\.\.\. 1/2", out)
+    assert "9-marta-as-founder 1/2, 9-dev-as-founder 1/2" in out
+    assert not re.search(r"E[A-Za-z0-9_-]{11}\.\.\. 1/2", out)
+
+    marta = _whois_identifier("9-marta-as-founder")
+    assert len(marta) == 44 and marta.startswith("E")
+    assert marta != _whois_identifier("9-dev-as-founder")
+
+
+def _whois_identifier(alias: str) -> str:
+    """The identifier `utina whois` reports for an alias, under keripy."""
+    out = screen("whois", alias, "--substrate", "keripy")
+    return next(
+        line.split()[-1] for line in out.splitlines() if line.strip().startswith("identifier")
+    )
 
 
 def test_every_query_answers_the_same_way_on_either_substrate():
