@@ -106,6 +106,28 @@ def test_the_guard_catches_a_keri_import_planted_in_a_pure_plane() -> None:
     assert offenders_in("import hio\nimport lmdb\n", "fold/corpus.py") == {"hio", "lmdb"}
 
 
+def test_the_backend_is_exempt_and_the_exemption_is_not_empty() -> None:
+    """The exemption is by filename, and it guards something real.
+
+    A quarantine around a module that imports no KERI library would pass
+    forever and mean nothing, so the second assertion is the one that matters:
+    the exempt file really does reach for keripy.
+    """
+    exempt = [
+        path
+        for path in sorted((SRC / "substrate").rglob("*.py"))
+        if path.name.startswith(EXEMPT)
+    ]
+    assert exempt, "no keri*.py backend; the exemption would be a dead rule"
+    assert all(path not in quarantined_modules() for path in exempt)
+    assert any(
+        offenders_in(path.read_text(encoding="utf-8"), str(path)) for path in exempt
+    ), (
+        "the exempt backend imports no KERI library, which means the quarantine "
+        "guards nothing and the demo is not writing real KERI data"
+    )
+
+
 def test_imported_roots_reads_all_three_import_shapes() -> None:
     """The helper's own branches: absolute, from-import, and relative."""
     tree = ast.parse(

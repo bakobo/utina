@@ -178,7 +178,8 @@ def test_a_signature_does_not_verify_as_another_party(conformant, marta):
 def test_an_unknown_identifier_verifies_nothing(conformant, marta):
     """Fail closed and total: no authority, and no exception either."""
     signature = conformant.sign(marta, BODY)
-    assert not conformant.verify("EGhostGhostGhostGhostGhostGhostGhostGhostGho", BODY, signature)
+    ghost = "EGhostGhostGhostGhostGhostGhostGhostGhostGho"
+    assert not conformant.verify(ghost, BODY, signature)
     assert not conformant.verify("", BODY, signature)
 
 
