@@ -38,6 +38,18 @@ class FacadeSubstrate:
         self._kel_seq: dict[AID, int] = {}
         self._anchors: dict[SAID, SAID] = {}
 
+    def __enter__(self) -> FacadeSubstrate:
+        """A lifecycle this backend does not need, and its sibling does.
+
+        The facade holds three dictionaries and nothing to close. It is a context
+        manager anyway so that a composition root writes one ``with`` and does not
+        have to know which backend is behind it.
+        """
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        return None
+
     # -- identity -------------------------------------------------------------
 
     def incept(self, alias: str) -> AID:

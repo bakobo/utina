@@ -37,6 +37,18 @@ ALIAS_TAKEN = ErrorCode(
     hint="Incept each party once, and hold the identifier the first inception returned.",
 )
 
+SUBSTRATE_UNKNOWN = ErrorCode(
+    code="e.feature.substrate-unknown.f",
+    title="This build carries no substrate by that name.",
+    detail=(
+        "A substrate called {name} was asked for, and the ones this build carries are "
+        "{known}. Guessing at which was meant would silently decide what kind of "
+        "identifier the whole record is written under."
+    ),
+    args=("name", "known"),
+    hint="Pass one of the listed names. The facade is the default and needs no flag.",
+)
+
 AID_UNKNOWN = ErrorCode(
     code="e.id.aid-unknown.f",
     title="This substrate holds no key state for that identifier.",
