@@ -29,6 +29,7 @@ from bakobo.errors import BakoboError  # type: ignore[import-untyped]
 
 from utina.cli import Console, main, run
 from utina.cli.world import world
+from utina.substrate import NAMES
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
@@ -116,7 +117,8 @@ def test_law_at_inception_shows_both_founding_clauses_with_slots_and_weights():
 
 def test_law_shows_the_head_that_identifies_the_edition():
     out = screen("law", "--at", "inception")
-    head = world().values  # touched so the fixture cost is visible in the test
+    with world() as record:
+        head = record.values  # touched so the fixture cost is visible in the test
     assert head is not None
     assert "932f0ab892df" in out
 
@@ -226,7 +228,8 @@ def test_a_said_may_be_given_as_a_prefix_of_the_identifier():
 
 
 def test_a_said_may_be_given_in_full():
-    full = world().said("seat-the-board")
+    with world() as record:
+        full = record.said("seat-the-board")
     out = screen("eval", "--said", full, "--at", "d4")
     assert "AFFIRMED" in out
 
@@ -251,7 +254,8 @@ def test_a_said_committed_after_the_position_is_refused():
 
 
 def test_an_endorsement_is_not_an_act_and_cannot_be_appraised():
-    endorsement = world().events[2].said
+    with world() as record:
+        endorsement = record.events[2].said
     out = screen("eval", "--said", endorsement, "--at", "d9")
     assert "REFUSED" in out
     assert "act class" in out
@@ -291,28 +295,32 @@ def test_the_rendered_arithmetic_implies_the_folds_verdict(
     from utina.cli.appraisal import appraise
     from utina.fold.group import Disposition
 
-    record = world()
-    label = argv[argv.index("--at") + 1]
-    appraisal = appraise(
-        record.corpus, _question(record, argv), at=record.at(label), label=label
-    )
-    assert appraisal.clause is not None
-    held = {one.endorser: one.disposition for one in appraisal.slots}
-    satisfied = appraisal.clause.group.satisfied(held)
-    reachable = appraisal.clause.group.reachable(held)
+    with world() as record:
+        label = argv[argv.index("--at") + 1]
+        appraisal = appraise(
+            record.corpus, _question(record, argv), at=record.at(label), label=label
+        )
+        assert appraisal.clause is not None
+        held = {one.endorser: one.disposition for one in appraisal.slots}
+        satisfied = appraisal.clause.group.satisfied(held)
+        reachable = appraisal.clause.group.reachable(held)
 
-    assert satisfied is (verdict == "AFFIRMED")
-    assert (not reachable) is (verdict == "DEFEATED")
-    assert Disposition.PENDING in held.values() or satisfied or not reachable
-    assert appraisal.clause.id in screen(*argv)
+        assert satisfied is (verdict == "AFFIRMED")
+        assert (not reachable) is (verdict == "DEFEATED")
+        assert Disposition.PENDING in held.values() or satisfied or not reachable
+        assert appraisal.clause.id in screen(*argv)
     assert beat
 
 
 def test_the_clause_the_screen_shows_is_the_clause_the_finding_cites():
+    with world() as record:
+        _each_beat_cites_what_it_shows(record)
+
+
+def _each_beat_cites_what_it_shows(record):
     from utina.cli.appraisal import appraise
     from utina.fold.finding import Affirmed, Defeated, Pending
 
-    record = world()
     for _, argv, _ in BEATS:
         label = argv[argv.index("--at") + 1]
         appraisal = appraise(
@@ -343,7 +351,9 @@ def test_the_d3_screen_is_the_committed_candidate():
     assert printed == expected
 
 
-def test_no_screen_is_wider_than_the_projector():
+@pytest.mark.parametrize("backend", NAMES)
+def test_no_screen_is_wider_than_the_projector(backend):
+    """Both substrates: a 44-character prefix must not push a line off the edge."""
     for argv in (
         ["law", "--at", "board-seated"],
         ["eval", "hire-vp-sales", "--at", "d3"],
@@ -354,8 +364,8 @@ def test_no_screen_is_wider_than_the_projector():
         ["enact", "endorse", "--as", "acme:nina", "--on", "approve-budget-retabled"],
         ["demo", "--no-pause"],
     ):
-        for line in screen(*argv).splitlines():
-            assert len(line) <= 96, (argv, line)
+        for line in screen(*argv, "--substrate", backend).splitlines():
+            assert len(line) <= 96, (backend, argv, line)
 
 
 def test_screens_carry_no_emoji_and_no_box_drawing():
@@ -537,14 +547,14 @@ def test_the_constructor_adapter_continues_the_committed_record():
     """this.i @cladpt: the deviation is pinned, so it cannot rot unnoticed."""
     from utina.cli.world import constructor_over
 
-    record = world()
-    constructor = constructor_over(record)
-    assert constructor.emitted == record.events
+    with world() as record:
+        constructor = constructor_over(record)
+        assert constructor.emitted == record.events
 
-    event = constructor.endorse("acme:nina", record.said("approve-budget-retabled"))
-    assert event.position.seq == len(record.events)
-    sealed = {key: value for key, value in event.body.items() if key != "sig"}
-    assert record.substrate.verify("acme:nina", sealed, event.body["sig"])
+        event = constructor.endorse("acme:nina", record.said("approve-budget-retabled"))
+        assert event.position.seq == len(record.events)
+        sealed = {key: value for key, value in event.body.items() if key != "sig"}
+        assert record.substrate.verify("acme:nina", sealed, event.body["sig"])
 
 
 # --- utina demo ----------------------------------------------------------------
@@ -627,9 +637,79 @@ def test_a_permanent_error_carries_its_detail_and_its_hint():
     from utina.cli.style import Style
 
     try:
-        world().at("nowhere")
+        with world() as record:
+            record.at("nowhere")
     except BakoboError as error:
         rendered = render_error(error, Style(False))
     assert "Retrying will not help" in rendered
     assert "nowhere" in rendered
     assert "The labels are inception" in rendered
+
+
+# --- choosing a substrate ------------------------------------------------------
+
+
+def test_the_default_substrate_is_the_facade():
+    """this.i @dxs27r: the fallback has to be a flag, so it may not be a default."""
+    parser_default = screen("law", "--at", "inception")
+    explicit = screen("law", "--at", "inception", "--substrate", "facade")
+    assert parser_default == explicit
+    assert "acme:marta 1/2, acme:dev 1/2" in parser_default
+
+
+def test_the_keripy_substrate_writes_the_law_under_real_prefixes():
+    """The same screen, over identifiers no one could have written down."""
+    out = screen("law", "--at", "inception", "--substrate", "keripy")
+    assert "acme:marta" not in out
+    assert re.search(r"slots\s+E[A-Za-z0-9_-]{11}\.\.\. 1/2, E[A-Za-z0-9_-]{11}\.\.\. 1/2", out)
+
+
+def test_every_query_answers_the_same_way_on_either_substrate():
+    """The verdicts are the engine's, and the engine cannot tell which it is on."""
+    for argv in (
+        ["eval", "open-bank-account", "--at", "d1"],
+        ["eval", "hire-vp-sales", "--at", "d3"],
+        ["eval", "approve-budget", "--at", "d6"],
+        ["eval", "amend-operating-agreement", "--at", "d7"],
+        ["eval", "declare-dividend", "--at", "d8"],
+    ):
+        verdicts = {
+            screen(*argv, "--substrate", backend).split()[0] for backend in NAMES
+        }
+        assert len(verdicts) == 1, (argv, verdicts)
+
+
+def test_a_narrator_still_types_an_alias_under_keripy():
+    """@crrtzf: nobody is typing a 44-character prefix in front of an audience."""
+    out = screen(
+        "enact", "endorse", "--as", "acme:nina", "--on", "approve-budget-retabled",
+        "--substrate", "keripy",
+    )
+    assert "endorses" in out
+    assert "acme:nina" not in out  # the record commits the identifier, not the name
+
+
+def test_a_substrate_nobody_ships_is_refused_by_the_parser():
+    status, _, err = shell("law", "--at", "inception", "--substrate", "quantum")
+    assert status == 2
+    assert "quantum" in err
+
+
+def test_the_demo_carries_its_substrate_into_every_beat():
+    """An audience told the record is real KERI can read the flag on each beat."""
+    from utina.cli.demo import BEATS, PROLOGUE
+
+    out = screen("demo", "--no-pause", "--substrate", "keripy")
+    assert out.count("--substrate keripy") == len(PROLOGUE) + len(BEATS)
+    assert "--substrate" not in screen("demo", "--no-pause")
+
+
+def test_the_demo_walks_every_beat_on_keripy_and_exits_zero():
+    """M5's own criterion, and the one a demo morning actually depends on."""
+    from utina.cli.demo import BEATS, PROLOGUE
+
+    status, out, err = shell("demo", "--no-pause", "--substrate", "keripy")
+    assert status == 0, err
+    assert [beat.id.upper() for beat in PROLOGUE + BEATS] == re.findall(
+        r"BEAT (\S+)", out
+    )

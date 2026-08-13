@@ -17,6 +17,7 @@ sake of an annotation the writing plane would then be entitled to read.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from types import TracebackType
 from typing import Any, Protocol
 
 #: An identifier. ``"acme:marta"`` under the facade; a real prefix under keripy.
@@ -107,6 +108,31 @@ class Substrate(Protocol):
         Rotations stay out of the corpus the fold folds (this.i @jdie6v), so the
         binding an anchored enactment claims is answerable here or nowhere.
         """
+        ...
+
+
+class OpenSubstrate(Substrate, Protocol):
+    """A substrate that also has a lifecycle, which is every concrete one.
+
+    ``Substrate`` is the six governance answers and nothing else: that is what
+    the writing plane is written against, and it should not have to know that
+    one backend owns a keystore and two LMDB environments. Opening and closing
+    is a construction contract, so it is named here rather than folded into the
+    protocol above — the composition root writes one ``with`` and every backend
+    honours it, including the facade, which has nothing to close.
+    """
+
+    def __enter__(self) -> Substrate:
+        """The substrate, ready to answer."""
+        ...
+
+    def __exit__(
+        self,
+        kind: type[BaseException] | None,
+        error: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        """Release whatever was held, whether or not the block succeeded."""
         ...
 
 

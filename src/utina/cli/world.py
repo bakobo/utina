@@ -12,12 +12,15 @@ what does not survive is an act committed by ``utina enact``, which is a propert
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
+from pathlib import Path
 
-from utina.acme import GAID, Acme, build
+from utina.acme import Acme, build
 from utina.enact import Constructor
 from utina.fold.corpus import Corpus, Event
 from utina.fold.triple import Position
+from utina.substrate import FACADE, substrate_named
 
 __all__ = ["RealValues", "constructor_over", "world"]
 
@@ -37,9 +40,23 @@ class RealValues:
         return Corpus.load(events)
 
 
-def world() -> Acme:
-    """Acme's law and committed log, folded over the real types."""
-    return build(values=RealValues())
+@contextmanager
+def world(substrate: str = FACADE, *, store: Path | None = None) -> Iterator[Acme]:
+    """Acme's law and committed log, folded over the real types.
+
+    A context manager because one of the backends holds a keystore and two LMDB
+    environments and has to close them, and because a command that asked the
+    fold a question after the key log was shut would get PENDING for an answer
+    rather than an error. The facade opens and closes nothing; the ``with`` is
+    written once here so no command has to know which it got.
+
+    ``substrate`` defaults to the facade by decision (this.i @dxs27r): a demo
+    runs in the morning, and the fallback from a keripy fault has to be a flag
+    somebody can type rather than a git operation performed in front of an
+    audience.
+    """
+    with substrate_named(substrate, store=store) as backend:
+        yield build(values=RealValues(), substrate=backend)
 
 
 def constructor_over(record: Acme) -> Constructor:
@@ -58,7 +75,7 @@ def constructor_over(record: Acme) -> Constructor:
     across a seam that fails silently when the copies drift. ``tests/test_cli.py`` pins
     the invariants so this cannot rot unnoticed.
     """
-    constructor = Constructor(record.substrate, GAID, values=record.values)
+    constructor = Constructor(record.substrate, record.gaid, values=record.values)
     constructor._emitted = list(record.events)
     constructor._saids = {event.said for event in record.events}
     constructor._founded = True

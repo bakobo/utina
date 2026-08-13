@@ -8,7 +8,16 @@ Python facade backend; the keripy backend arrives as its own commission.
 from .canonical import SAID_LENGTH, SAID_PLACEHOLDER, canonical_bytes, digest
 from .errors import AID_UNKNOWN, ALIAS_TAKEN, NOT_CANONICAL, SUBSTRATE_UNKNOWN
 from .facade import FacadeSubstrate
-from .protocol import AID, SAID, Corpus, Event, FoldValues, Position, Substrate
+from .protocol import (
+    AID,
+    SAID,
+    Corpus,
+    Event,
+    FoldValues,
+    OpenSubstrate,
+    Position,
+    Substrate,
+)
 from .select import FACADE, KERIPY, NAMES, substrate_named
 
 __all__ = [
@@ -27,6 +36,7 @@ __all__ = [
     "Event",
     "FacadeSubstrate",
     "FoldValues",
+    "OpenSubstrate",
     "Position",
     "Substrate",
     "canonical_bytes",

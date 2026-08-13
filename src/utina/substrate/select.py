@@ -17,7 +17,7 @@ from pathlib import Path
 
 from .errors import SUBSTRATE_UNKNOWN
 from .facade import FacadeSubstrate
-from .protocol import Substrate
+from .protocol import OpenSubstrate
 
 #: The pure-Python backend. The default everywhere, by decision (this.i @dxs27r).
 FACADE = "facade"
@@ -29,7 +29,7 @@ KERIPY = "keripy"
 NAMES = (FACADE, KERIPY)
 
 
-def substrate_named(name: str, *, store: Path | None = None) -> Substrate:
+def substrate_named(name: str, *, store: Path | None = None) -> OpenSubstrate:
     """The substrate ``name`` selects, ready to be entered as a context manager.
 
     ``store`` is where a backend that keeps a database keeps it. ``None`` means

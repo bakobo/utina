@@ -17,6 +17,7 @@ import base64
 import hashlib
 import hmac
 from collections.abc import Mapping
+from types import TracebackType
 
 from .canonical import SAID_PLACEHOLDER, canonical_bytes, digest
 from .errors import AID_UNKNOWN, ALIAS_TAKEN
@@ -47,7 +48,12 @@ class FacadeSubstrate:
         """
         return self
 
-    def __exit__(self, *_: object) -> None:
+    def __exit__(
+        self,
+        kind: type[BaseException] | None,
+        error: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         return None
 
     # -- identity -------------------------------------------------------------
