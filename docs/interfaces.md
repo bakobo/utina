@@ -289,11 +289,27 @@ class Substrate(Protocol):
     def sign(self, aid: AID, body: Mapping[str, object]) -> str: ...
     def verify(self, aid: AID, body: Mapping[str, object], signature: str) -> bool: ...
     def incept(self, alias: str) -> AID: ...
-    def rotate(self, aid: AID, anchor: SAID) -> Event: ...
+    def rotate(self, aid: AID, anchor: SAID) -> SAID: ...
+    def anchoring_event(self, said: SAID) -> SAID | None: ...
 ```
 
 `rotate` exists because Custos binds law-amending enactments to anchor in an
-establishment event: Acme's board-seating amendment rides a rotation.
+establishment event: Acme's board-seating amendment rides a rotation. It returns
+the establishment event's identifier rather than a committed `Event`, because a
+key-log sequence number and a corpus position are different ordering spaces and
+must never be compared (this.i @ygjwyw). `anchoring_event` answers the binding
+that creates, since rotations stay out of the corpus.
+
+A substrate owns canonicalization outright, and callers may not rely on mapping
+insertion order reaching the bytes: the facade sorts, keripy's `Saider` digests
+in insertion order, and the keripy backend therefore imposes its own single
+order across `said`, `sign` and `verify` (this.i @fy5lwj). An `alias` is not an
+identifier — `incept` returns the identifier to use, and under keripy that is a
+prefix nobody can know beforehand, so the composition root incepts every party
+before it builds a `Constructor` (this.i @crrtzf). Construction is otherwise the
+implementation's own business: the keripy backend holds a keystore and an event
+database for its whole life, so it is a context manager and the composition root
+owns the `with`.
 
 ## The endorsement body — field names are contract, not preference
 

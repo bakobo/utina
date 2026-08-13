@@ -38,12 +38,20 @@ class Constructor:
     """The writing plane for one governed domain."""
 
     def __init__(self, substrate: Substrate, gaid: AID, *, values: FoldValues) -> None:
+        """Take a gAID that already exists, because under keripy it must.
+
+        A keripy prefix is a digest of its own inception event and is unknowable
+        before ``incept`` returns it, so the composition root incepts every party
+        and hands this a real identifier (this.i @crrtzf). A ``Constructor``
+        built over an unincepted gAID is not refused here — it fails at the first
+        verb, where signing as an identifier the substrate holds no key state for
+        is refused by the substrate itself.
+        """
         self.substrate = substrate
         self.gaid = gaid
         self._values = values
         self._emitted: list[Event] = []
         self._saids: set[SAID] = set()
-        self._anchored: dict[SAID, Event] = {}
         self._founded = False
 
     @property
@@ -57,7 +65,6 @@ class Constructor:
         """Bring the domain into being under a founding law."""
         if self._founded:
             raise DOMAIN_INCEPTED(gaid=self.gaid)
-        self.substrate.incept(self.gaid)
         event = self._emit(
             "inception", {"t": "icp", "i": self.gaid, "law": founding_law}, self.gaid
         )
@@ -86,7 +93,7 @@ class Constructor:
         if act is not None:
             body["act"] = act
         event = self._emit("enactment", body, self.gaid)
-        self._anchored[event.said] = self.substrate.rotate(self.gaid, event.said)
+        self.substrate.rotate(self.gaid, event.said)
         return event
 
     def propose(self, act: str) -> Event:
@@ -107,9 +114,14 @@ class Constructor:
         """
         return self._dispose(aid, subject, "decline")
 
-    def anchoring_event(self, said: SAID) -> Event | None:
-        """The establishment event that sealed ``said``, if one did."""
-        return self._anchored.get(said)
+    def anchoring_event(self, said: SAID) -> SAID | None:
+        """The identifier of the establishment event that sealed ``said``.
+
+        Asked of the substrate rather than remembered here, because the seal is
+        the substrate's own record and a second copy of it in this object would
+        be a cache that can disagree with the key log it claims to describe.
+        """
+        return self.substrate.anchoring_event(said)
 
     # -- internals ------------------------------------------------------------
 

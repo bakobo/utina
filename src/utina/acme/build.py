@@ -14,7 +14,7 @@ second budget vote is a second committed act (this.i @w5yqab).
 from __future__ import annotations
 
 from utina.enact import Constructor
-from utina.substrate import FacadeSubstrate, FoldValues
+from utina.substrate import FacadeSubstrate, FoldValues, Substrate
 
 from .law import (
     AMENDMENT_ACTS,
@@ -33,12 +33,21 @@ BANK_ACCOUNT, HIRE, BUDGET = ORDINARY_ACTS
 AMEND = AMENDMENT_ACTS[0]
 
 
-def build(*, values: FoldValues) -> Acme:
-    """Drive Acme's whole story and return the record it produced."""
-    substrate = FacadeSubstrate(values=values)
+def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
+    """Drive Acme's whole story and return the record it produced.
+
+    This is the composition root, and inception happens here rather than inside
+    the constructor's first verb: under keripy an identifier is a digest of its
+    own inception event, so it cannot be named before it exists (this.i @crrtzf).
+    The order of these four calls is load-bearing — keripy derives each party's
+    keys from the salt and a sequentially assigned index — so it is written once,
+    here, and never varied.
+    """
+    substrate = FacadeSubstrate() if substrate is None else substrate
+    gaid = substrate.incept(GAID)
     for party in (MARTA, DEV, NINA):
         substrate.incept(party)
-    constructor = Constructor(substrate, GAID, values=values)
+    constructor = Constructor(substrate, gaid, values=values)
 
     saids: dict[str, str] = {}
     labels: dict[str, int] = {}

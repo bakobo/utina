@@ -46,11 +46,23 @@ class Substrate(Protocol):
         removed. So this is idempotent over a sealed, signed event: the SAID of
         a signed event equals the SAID of the same event before it was signed
         (this.i @ff4jzv; Q27 in ``docs/custos-questions.md``).
+
+        The substrate owns canonicalization outright, because it owns the
+        digest. A caller may not rely on mapping insertion order reaching, or
+        not reaching, the bytes — implementations disagree about that, and an
+        implementation that let two conventions meet would produce a signature
+        failure wearing a digest's clothes (this.i @fy5lwj).
         """
         ...
 
     def sign(self, aid: AID, body: Mapping[str, object]) -> str:
-        """Sign ``body`` as ``aid``, under that identifier's current key state."""
+        """Sign ``body`` as ``aid``, under that identifier's current key state.
+
+        The returned string is opaque above this seam. An implementation whose
+        key state moves is expected to pack the coordinate it signed under into
+        it, so that :meth:`verify` keeps answering the same way after a
+        rotation (this.i @zk27gz).
+        """
         ...
 
     def verify(self, aid: AID, body: Mapping[str, object], signature: str) -> bool:
@@ -58,20 +70,42 @@ class Substrate(Protocol):
 
         Fail closed and total: anything unverifiable — an unknown identifier, a
         malformed signature, a key state that never existed — is ``False``, and
-        never an exception a caller might be tempted to treat as a maybe.
+        never an exception a caller might be tempted to treat as a maybe. A real
+        KERI library raises on malformed CESR and on an unknown prefix, so a
+        conforming implementation over one wraps rather than propagates.
         """
         ...
 
     def incept(self, alias: str) -> AID:
-        """Bring an identifier into being, and return the identifier to use."""
+        """Bring an identifier into being, and return the identifier to use.
+
+        The alias is a name for the caller's convenience and the return value is
+        the identifier. They are the same string under the facade and different
+        under keripy, where a prefix is a digest of the inception event and
+        cannot be known before this call returns; a caller that hardcodes the
+        alias breaks there rather than here (this.i @crrtzf).
+        """
         ...
 
-    def rotate(self, aid: AID, anchor: SAID) -> Event:
+    def rotate(self, aid: AID, anchor: SAID) -> SAID:
         """Rotate ``aid``, sealing ``anchor`` into the establishment event.
 
-        This exists because Custos binds law-amending enactments to anchor in
-        an establishment event (custos-4.2.md:2085-2087): Acme's board-seating
-        amendment rides a rotation.
+        Returns that establishment event's identifier. This exists because
+        Custos binds law-amending enactments to anchor in an establishment event
+        (custos-4.2.md:2085-2087): Acme's board-seating amendment rides a
+        rotation.
+
+        It returns an identifier rather than a committed ``Event`` because the
+        rotation's own sequence number lives in the key log's ordering space,
+        which must never be compared with a corpus position (this.i @ygjwyw).
+        """
+        ...
+
+    def anchoring_event(self, said: SAID) -> SAID | None:
+        """The establishment event that sealed ``said``, if one did.
+
+        Rotations stay out of the corpus the fold folds (this.i @jdie6v), so the
+        binding an anchored enactment claims is answerable here or nowhere.
         """
         ...
 

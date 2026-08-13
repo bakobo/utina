@@ -140,7 +140,7 @@ def test_the_successor_law_is_committed_by_the_amendment(acme_double):
 
 def test_the_amendment_anchors_in_an_establishment_event(acme_double):
     """custos-4.2.md:2085-2087, and the reason Substrate has a rotate at all."""
-    assert acme_double.substrate.anchor_of(acme_double.said("seat-the-board")) is not None
+    assert acme_double.substrate.anchoring_event(acme_double.said("seat-the-board")) is not None
 
 
 def test_every_committed_event_has_a_distinct_identifier(acme_double):

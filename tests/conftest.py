@@ -106,8 +106,8 @@ def values() -> DoubleValues:
 
 
 @pytest.fixture
-def substrate(values: DoubleValues) -> FacadeSubstrate:
-    return FacadeSubstrate(values=values)
+def substrate() -> FacadeSubstrate:
+    return FacadeSubstrate()
 
 
 @pytest.fixture(scope="session")

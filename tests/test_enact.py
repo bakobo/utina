@@ -25,7 +25,8 @@ GAID = "acme:gaid"
 
 @pytest.fixture
 def constructor(substrate, values):
-    return Constructor(substrate, GAID, values=values)
+    """The gAID exists before the constructor does (this.i @crrtzf)."""
+    return Constructor(substrate, substrate.incept(GAID), values=values)
 
 
 @pytest.fixture
@@ -47,10 +48,13 @@ def test_incepting_the_domain_commits_its_founding_law(constructor):
     assert event.position.seq == 0
 
 
-def test_incepting_the_domain_brings_its_identifier_into_being(constructor):
-    """The gAID must exist before it can sign, and founding is where it starts."""
-    constructor.incept_domain(LAW)
-    assert constructor.substrate.sign(GAID, {"t": "act"})
+def test_founding_a_domain_whose_identifier_was_never_incepted_is_refused(substrate, values):
+    """@crrtzf: the composition root incepts, so an unincepted gAID fails closed."""
+    constructor = Constructor(substrate, "acme:never-incepted", values=values)
+    with pytest.raises(BakoboError) as caught:
+        constructor.incept_domain(LAW)
+    assert caught.value.code == "e.id.aid-unknown.f"
+    assert constructor.emitted == ()
 
 
 def test_a_domain_is_founded_once(constructor):
@@ -198,14 +202,15 @@ def test_an_amendment_that_names_no_class_commits_none(founded):
 def test_an_amendment_anchors_in_an_establishment_event(founded):
     """custos-4.2.md:2085-2087 — an enactment amending law SHALL anchor in one."""
     event = founded.enact_amendment(LAW)
-    assert founded.substrate.anchor_of(event.said) is not None
+    assert founded.substrate.anchoring_event(event.said) is not None
 
 
-def test_the_anchor_seals_the_enactment_that_rides_it(founded):
+def test_the_anchor_the_constructor_reports_is_the_substrate_s_own(founded):
+    """@ygjwyw: the binding is asked of the key log, never cached beside it."""
     event = founded.enact_amendment(LAW)
-    rotation = founded.anchoring_event(event.said)
-    assert rotation.kind == "rotation"
-    assert rotation.body["a"] == ({"d": event.said},)
+    assert founded.anchoring_event(event.said) == founded.substrate.anchoring_event(
+        event.said
+    )
 
 
 def test_an_unanchored_said_has_no_anchoring_event(founded):
@@ -234,14 +239,17 @@ class LyingSubstrate:
     def rotate(self, aid, anchor):
         return self._honest.rotate(aid, anchor)
 
+    def anchoring_event(self, said):
+        return self._honest.anchoring_event(said)
+
     def verify(self, aid, body, signature):
         return False
 
 
 def test_an_event_whose_own_signature_does_not_verify_is_never_produced(values):
     """Fail closed: unverifiable bytes must not become a committed act."""
-    lying = LyingSubstrate(FacadeSubstrate(values=values))
-    constructor = Constructor(lying, GAID, values=values)
+    lying = LyingSubstrate(FacadeSubstrate())
+    constructor = Constructor(lying, lying.incept(GAID), values=values)
     with pytest.raises(BakoboError) as caught:
         constructor.incept_domain(LAW)
     assert caught.value.code == "e.proof.signature-unverifiable.f"
