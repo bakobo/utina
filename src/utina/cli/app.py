@@ -17,8 +17,10 @@ import argparse
 import os
 import sys
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
+from pathlib import Path
 from typing import TextIO
 
 from bakobo.errors import BakoboError  # type: ignore[import-untyped]
@@ -38,6 +40,7 @@ from utina.cli.world import RealValues, constructor_over, world
 from utina.fold.constitution import Constitution
 from utina.fold.question import Committed
 from utina.fold.triple import Position
+from utina.substrate import FACADE, NAMES
 
 __all__ = ["Console", "main", "run"]
 
@@ -136,40 +139,56 @@ def build_parser(console: Console) -> _Parser:
         epilog=_EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    backend = _Parser(add_help=False, out=console.out)
+    backend.add_argument(
+        "--substrate", choices=NAMES, default=FACADE, metavar="NAME",
+        help="which substrate writes the record (default: %(default)s)",
+    )
+    backend.add_argument(
+        "--store", type=Path, default=None, metavar="DIR",
+        help="where a keripy key log is kept, for another KERI tool to read",
+    )
+
     commands = parser.add_subparsers(dest="command", metavar="COMMAND")
 
     law = commands.add_parser(
-        "law", out=console.out, help="the law in force at a position"
+        "law", out=console.out, parents=[backend],
+        help="the law in force at a position",
     )
     law.add_argument("--at", required=True, metavar="POSITION")
 
     evaluate = commands.add_parser(
-        "eval", out=console.out, help="appraise a proposal or a committed act"
+        "eval", out=console.out, parents=[backend],
+        help="appraise a proposal or a committed act",
     )
     evaluate.add_argument("act", nargs="?", metavar="ACT-CLASS")
     evaluate.add_argument("--said", metavar="TOKEN")
     evaluate.add_argument("--at", required=True, metavar="POSITION")
 
     log = commands.add_parser(
-        "log", out=console.out, help="the committed events in canonical order"
+        "log", out=console.out, parents=[backend],
+        help="the committed events in canonical order",
     )
     log.add_argument("--at", metavar="POSITION")
 
     replay = commands.add_parser(
-        "replay", out=console.out, help="refold the log and print the canonical digest"
+        "replay", out=console.out, parents=[backend],
+        help="refold the log and print the canonical digest",
     )
     replay.add_argument("--at", required=True, metavar="POSITION")
     replay.add_argument("--seed", type=int, default=7, metavar="N")
 
     enact = commands.add_parser(
-        "enact", out=console.out, help="commit a signed endorsement or declination"
+        "enact", out=console.out, parents=[backend],
+        help="commit a signed endorsement or declination",
     )
     enact.add_argument("disposition", choices=("endorse", "decline"))
     enact.add_argument("--as", dest="actor", required=True, metavar="AID")
     enact.add_argument("--on", dest="subject", required=True, metavar="TOKEN")
 
     demo = commands.add_parser(
-        "demo", out=console.out, help="walk the ten beats of docs/demo-script.md"
+        "demo", out=console.out, parents=[backend],
+        help="walk the ten beats of docs/demo-script.md",
     )
     demo.add_argument("--no-pause", dest="no_pause", action="store_true")
     demo.add_argument("--beat", metavar="ID")
@@ -180,6 +199,23 @@ def build_parser(console: Console) -> _Parser:
 # --- the commands -------------------------------------------------------------
 
 
+def _world(args: argparse.Namespace) -> AbstractContextManager[Acme]:
+    """Acme, built by whichever substrate the command line asked for."""
+    return world(args.substrate, store=args.store)
+
+
+def _actor(record: Acme, name: str) -> str:
+    """The identifier a party is addressed by, from the alias a person typed.
+
+    Under the facade they are the same string. Under keripy the alias is a name
+    and the identifier is a prefix (this.i @crrtzf), and a narrator is not going
+    to type a prefix. Anything the record does not know as an alias goes through
+    untouched, so an identifier still works — and an identifier nobody incepted
+    is refused by the substrate rather than guessed at here.
+    """
+    return record.aids.get(name, name)
+
+
 def _position(record: Acme, label: str | None) -> tuple[str, Position]:
     """The coordinate a command was pointed at, and what to call it on screen."""
     if label is None:
@@ -188,39 +224,39 @@ def _position(record: Acme, label: str | None) -> tuple[str, Position]:
 
 
 def law_command(args: argparse.Namespace, console: Console) -> int:
-    record = world()
-    label, position = _position(record, args.at)
-    law = Constitution.at(record.corpus, position)
-    console.out.write(law_screen(law, label, position, console.style))
+    with _world(args) as record:
+        label, position = _position(record, args.at)
+        law = Constitution.at(record.corpus, position)
+        console.out.write(law_screen(law, label, position, console.style))
     return 0
 
 
 def eval_command(args: argparse.Namespace, console: Console) -> int:
-    record = world()
-    question = question_from(record.saids, record.events, args.act, args.said)
-    label, position = _position(record, args.at)
-    appraisal = appraise(record.corpus, question, at=position, label=label)
-    console.out.write(eval_screen(appraisal, console.style))
+    with _world(args) as record:
+        question = question_from(record.saids, record.events, args.act, args.said)
+        label, position = _position(record, args.at)
+        appraisal = appraise(record.corpus, question, at=position, label=label)
+        console.out.write(eval_screen(appraisal, console.style))
     return 0
 
 
 def log_command(args: argparse.Namespace, console: Console) -> int:
-    record = world()
-    label, position = _position(record, args.at)
-    console.out.write(
-        log_screen(record.corpus.upto(position), label, position, console.style)
-    )
+    with _world(args) as record:
+        label, position = _position(record, args.at)
+        console.out.write(
+            log_screen(record.corpus.upto(position), label, position, console.style)
+        )
     return 0
 
 
 def replay_command(args: argparse.Namespace, console: Console) -> int:
-    record = world()
-    label, position = _position(record, args.at)
-    straight = Constitution.at(record.corpus, position)
-    shuffled = Constitution.at(record.permuted_corpus(seed=args.seed), position)
-    console.out.write(
-        replay_screen(straight, shuffled, label, position, args.seed, console.style)
-    )
+    with _world(args) as record:
+        label, position = _position(record, args.at)
+        straight = Constitution.at(record.corpus, position)
+        shuffled = Constitution.at(record.permuted_corpus(seed=args.seed), position)
+        console.out.write(
+            replay_screen(straight, shuffled, label, position, args.seed, console.style)
+        )
     return 0
 
 
@@ -231,27 +267,33 @@ def enact_command(args: argparse.Namespace, console: Console) -> int:
     fold what the record says about the subject now — which is the whole demonstration
     that a constructor cannot act except by producing the evidence of its act.
     """
-    record = world()
-    subject = resolve_subject(record.saids, record.events, args.subject)
-    _, end = _position(record, None)
-    before = appraise(record.corpus, Committed(subject), at=end, label=LATEST)
+    with _world(args) as record:
+        subject = resolve_subject(record.saids, record.events, args.subject)
+        _, end = _position(record, None)
+        before = appraise(record.corpus, Committed(subject), at=end, label=LATEST)
 
-    constructor = constructor_over(record)
-    verb = constructor.endorse if args.disposition == "endorse" else constructor.decline
-    event = verb(args.actor, subject)
+        constructor = constructor_over(record)
+        verb = constructor.endorse if args.disposition == "endorse" else constructor.decline
+        event = verb(_actor(record, args.actor), subject)
 
-    corpus = RealValues().corpus(constructor.emitted)
-    after = appraise(
-        corpus, Committed(subject), at=event.position, label="after this act"
-    )
-    console.out.write(enact_screen(event, before, after, console.style))
+        corpus = RealValues().corpus(constructor.emitted)
+        after = appraise(
+            corpus, Committed(subject), at=event.position, label="after this act"
+        )
+        console.out.write(enact_screen(event, before, after, console.style))
     return 0
 
 
 def demo_command(args: argparse.Namespace, console: Console) -> int:
     from utina.cli.demo import walk
 
-    return walk(console, beat=args.beat, pause=not args.no_pause)
+    return walk(
+        console,
+        beat=args.beat,
+        pause=not args.no_pause,
+        substrate=args.substrate,
+        store=args.store,
+    )
 
 
 COMMANDS: Mapping[str, Callable[[argparse.Namespace, Console], int]] = {

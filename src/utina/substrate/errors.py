@@ -37,6 +37,31 @@ ALIAS_TAKEN = ErrorCode(
     hint="Incept each party once, and hold the identifier the first inception returned.",
 )
 
+STORE_NOT_OURS = ErrorCode(
+    code="e.state.store-not-ours.f",
+    title="That directory was not made by this substrate.",
+    detail=(
+        "A key log store was asked for at {store}, that directory already exists, and it "
+        "carries no {marker}, so this substrate did not create it. Emptying it for a fresh "
+        "deterministic run would delete whatever is actually in there."
+    ),
+    args=("store", "marker"),
+    hint="Point the store at a path this substrate owns, or an empty one, or one that does "
+    "not exist yet.",
+)
+
+SUBSTRATE_UNKNOWN = ErrorCode(
+    code="e.feature.substrate-unknown.f",
+    title="This build carries no substrate by that name.",
+    detail=(
+        "A substrate called {name} was asked for, and the ones this build carries are "
+        "{known}. Guessing at which was meant would silently decide what kind of "
+        "identifier the whole record is written under."
+    ),
+    args=("name", "known"),
+    hint="Pass one of the listed names. The facade is the default and needs no flag.",
+)
+
 AID_UNKNOWN = ErrorCode(
     code="e.id.aid-unknown.f",
     title="This substrate holds no key state for that identifier.",

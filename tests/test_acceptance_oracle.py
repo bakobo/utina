@@ -24,6 +24,7 @@ pytest.importorskip(
     reason="the fold has no evaluate() yet — see docs/demo-script.md for what it owes",
 )
 
+from utina.acme import DEV, MARTA, NINA
 from utina.fold import Constitution, evaluate
 from utina.fold.finding import Affirmed, Defeated, Pending
 from utina.fold.question import Committed, Proposal
@@ -36,7 +37,7 @@ def test_state_one_requires_both_founders(acme):
     """Clause A1: two slots at w=1/2, so unity needs both."""
     law = Constitution.at(acme.corpus, acme.at("inception"))
     group = law.clause("A1").group
-    assert {slot.endorser for slot in group.slots} == {"acme:marta", "acme:dev"}
+    assert {slot.endorser for slot in group.slots} == {acme.aid(MARTA), acme.aid(DEV)}
     assert sum(slot.weight for slot in group.slots) == 1
     assert not group.satisfied_by(set())
 
@@ -47,12 +48,14 @@ def test_amendment_redistributes_ordinary_authority_but_not_amendment_authority(
     after = Constitution.at(acme.corpus, acme.at("board-seated"))
 
     assert len(after.clause("B1").group.slots) == 3
-    assert after.clause("B1").group.satisfied_by({"acme:marta", "acme:nina"})
+    assert after.clause("B1").group.satisfied_by({acme.aid(MARTA), acme.aid(NINA)})
 
     # Ordinary authority is now distributed; amendment authority is not.
-    assert not after.clause("B2").group.satisfied_by({"acme:marta", "acme:nina"})
-    assert after.clause("B2").group.satisfied_by({"acme:marta", "acme:dev", "acme:nina"})
-    assert before.clause("A2").group.satisfied_by({"acme:marta", "acme:dev"})
+    assert not after.clause("B2").group.satisfied_by({acme.aid(MARTA), acme.aid(NINA)})
+    assert after.clause("B2").group.satisfied_by(
+        {acme.aid(MARTA), acme.aid(DEV), acme.aid(NINA)}
+    )
+    assert before.clause("A2").group.satisfied_by({acme.aid(MARTA), acme.aid(DEV)})
 
 
 # --- The beats ---------------------------------------------------------------
@@ -69,7 +72,7 @@ def test_d2_one_slot_untouched_is_pending_naming_the_slot(acme):
     """Pending is 'not yet', and it must name what would discharge it."""
     finding = evaluate(acme.corpus, Proposal("hire-vp-sales"), at=acme.at("d2"))
     assert isinstance(finding, Pending)
-    assert [element.endorser for element in finding.requirement] == ["acme:dev"]
+    assert [element.endorser for element in finding.requirement] == [acme.aid(DEV)]
 
 
 def test_d3_declination_under_two_slots_makes_unity_unreachable(acme):
@@ -77,7 +80,7 @@ def test_d3_declination_under_two_slots_makes_unity_unreachable(acme):
     finding = evaluate(acme.corpus, Proposal("hire-vp-sales"), at=acme.at("d3"))
     assert isinstance(finding, Defeated)
     assert finding.citation.clause == "A1"
-    assert finding.citation.declination.endorser == "acme:dev"
+    assert finding.citation.declination.endorser == acme.aid(DEV)
 
 
 def test_d4_the_amendment_is_judged_under_the_law_it_replaces(acme):
@@ -97,7 +100,7 @@ def test_d6_the_same_declination_under_three_slots_is_only_pending(acme):
     """The centerpiece, second half. Same signed no, opposite verdict."""
     finding = evaluate(acme.corpus, Proposal("approve-budget"), at=acme.at("d6"))
     assert isinstance(finding, Pending)
-    assert [element.endorser for element in finding.requirement] == ["acme:nina"]
+    assert [element.endorser for element in finding.requirement] == [acme.aid(NINA)]
 
 
 def test_d7_the_retained_amendment_bar_bites(acme):

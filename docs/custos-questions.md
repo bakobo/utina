@@ -62,6 +62,7 @@ before the fold can still be followed. The per-commission files are gone.
 | Q29 | which law judges a prospective question | DIVERGENT | new at integration |
 | Q30 | what act class does an enactment perform | DIVERGENT | new at integration |
 | Q31 | what is a threshold defeat's subcode | DIVERGENT | new at integration |
+| Q32 | must an endorsement be an ACDC issuance in a registry | DIVERGENT | new at the keripy substrate |
 
 ---
 
@@ -1274,6 +1275,64 @@ is a payload field, so the findings differ directly.
 purpose of `:1776–1779`, or does the subcode require a clause to commit a defeat
 enumeration explicitly — and if the latter, what makes canonical selection total
 for a clause that commits none?
+
+
+---
+
+## Q32 — Must an endorsement be an ACDC issuance in a registry? **DIVERGENT**
+
+*Found building the keripy substrate. Logged before the code that depends on the
+guess, and the guess is knowingly the cheaper of the two readings.*
+
+**Span:** §9's single BCP-14 keyword — the composition rule MUST be committed,
+and MAY be expressed in the ACDC edge grammar as the dossier specification
+profiles it — read against the endorsement's own committed shape, where a slot
+is discharged by an act carrying `act` of `"issue"` and a `disp`.
+
+**Where it bit:** `utina.substrate.keripy`, and `utina.enact.Constructor._dispose`
+above it. `"issue"` is the name of a registry operation. If it *means* one, then
+an endorsement is an ACDC issued into a transaction event log and the substrate
+owes a registry, a schema and a TEL; if it is only a committed field naming what
+class of act the endorsement performs, then a signed body carrying that field is
+a conforming endorsement and no registry exists at all.
+
+- **Reading A — a committed field.** `act` is one more field in a signed body,
+  chosen to name the operation an ACDC encoding would perform, so that the move
+  to ACDCs is a re-encoding rather than a rename. Nothing in §9 requires a
+  registry, and the only MAY in the section is permissive about the *edge
+  grammar*, not mandatory about issuance.
+- **Reading B — a registry operation.** An act of the class `issue` is the ACDC
+  issuance it is named after. The endorsement is a credential, its authority is
+  the issuer's, and its revocability is the registry's — which is why `disp` and
+  `act` are separate fields in the first place.
+
+**Pinned: A.** Measured against keripy 2.0.0-dev6, B costs a registry pinned to
+v1 inside a v2 KEL (the v2 defaults raise `SerializeError` on `vcp`), a
+three-step anchor dance through the transaction-event verifier before `issue()`
+will run at all, a resolvable schema, and two further sources of
+nondeterminism — a random registry nonce and a wall-clock `dt` on every
+credential. None of it is reached by any beat of `docs/demo-script.md`:
+revocation is out of scope by construction, since a party who changes their mind
+declines, which is another issuance.
+
+**This is the honest long-term shape and we are knowingly not building it
+tonight.** The dossier alignment (this.i @ta7vle) makes real ACDC edge groups the
+destination, and real issuance is what an edge group would carry. `docs/interfaces.md`
+already chose the field names so the swap is a re-encoding, and this entry exists
+so the gap is on the record rather than in a commit message. this.i @65buz7.
+
+**Divergence:** everything about the committed bytes of an endorsement, and
+therefore its SAID. Under A an endorsement is a body in the corpus; under B it is
+a credential whose issuance is a TEL event anchored in the issuer's KEL, and the
+corpus holds — something else, which Custos does not say either. Two conforming
+engines do not merely disagree on a verdict here; they disagree about what the
+evidence *is*.
+
+**Ask Custos:** does an endorsement's `act` of `"issue"` denote an ACDC issuance
+in a credential registry, or is it a committed classification of the act with no
+registry implied? If the former, what is the committed form the fold folds — the
+credential, the TEL event, or the anchoring KEL event — and how does an evaluator
+with no network resolve the schema that issuance requires?
 
 ---
 

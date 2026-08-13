@@ -16,10 +16,12 @@ from __future__ import annotations
 
 import textwrap
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from utina.acme import LABEL_UNKNOWN
 from utina.cli.render import MARGIN, RULE, WRAP
+from utina.substrate import FACADE
 
 if TYPE_CHECKING:  # pragma: no cover - the import exists only for the annotation
     from utina.cli.app import Console
@@ -133,22 +135,41 @@ def _named(identifier: str) -> Beat:
     )
 
 
-def walk(console: Console, *, beat: str | None = None, pause: bool = True) -> int:
-    """Walk the beats, echoing each command and running it through the query CLI."""
+def walk(
+    console: Console,
+    *,
+    beat: str | None = None,
+    pause: bool = True,
+    substrate: str = FACADE,
+    store: Path | None = None,
+) -> int:
+    """Walk the beats, echoing each command and running it through the query CLI.
+
+    The substrate the walk was given is passed down into every beat, and shown
+    in the echoed command line rather than hidden. An audience being told the
+    record is real KERI can then read, on each beat, the flag that made it so.
+    """
     from utina.cli.app import run
 
     sequence = PROLOGUE + BEATS if beat is None else (_named(beat),)
     status = 0
     for index, one in enumerate(sequence):
-        for line in _announce(one):
+        argv = one.argv + _backend_argv(substrate, store)
+        for line in _announce(one, argv):
             console.out.write(line + "\n")
-        status = max(status, run(one.argv, console))
+        status = max(status, run(argv, console))
         if pause and index < len(sequence) - 1:
             console.pause()
     return status
 
 
-def _announce(beat: Beat) -> list[str]:
+def _backend_argv(substrate: str, store: Path | None) -> tuple[str, ...]:
+    """The backend flags a beat inherits, written only when they say something."""
+    argv = () if substrate == FACADE else ("--substrate", substrate)
+    return argv if store is None else (*argv, "--store", str(store))
+
+
+def _announce(beat: Beat, argv: tuple[str, ...]) -> list[str]:
     """The card that introduces a beat, and the command as though it were typed."""
     return [
         "",
@@ -158,6 +179,6 @@ def _announce(beat: Beat) -> list[str]:
             beat.narration, width=WRAP, initial_indent=MARGIN, subsequent_indent=MARGIN
         ),
         "",
-        f"{MARGIN}$ utina {' '.join(beat.argv)}",
+        f"{MARGIN}$ utina {' '.join(argv)}",
         "",
     ]

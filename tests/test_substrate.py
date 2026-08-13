@@ -151,9 +151,9 @@ def test_rotating_an_unincepted_identifier_is_refused(substrate):
 # --- Signing and verifying ---------------------------------------------------
 
 
-def test_a_signature_is_reproducible(substrate, values):
+def test_a_signature_is_reproducible(substrate):
     """Two substrates, same seed material, same bytes — this is what replay needs."""
-    other = FacadeSubstrate(values=values)
+    other = FacadeSubstrate()
     substrate.incept("acme:marta")
     other.incept("acme:marta")
     body = {"t": "end", "disp": "endorse"}
@@ -200,15 +200,19 @@ def test_a_malformed_signature_verifies_nothing(substrate, signature):
 # --- Rotation ----------------------------------------------------------------
 
 
-def test_a_rotation_is_an_establishment_event_carrying_the_anchor(substrate):
-    """custos-4.2.md:2085-2087 — an enactment amending law anchors in one of these."""
+def test_a_rotation_returns_the_establishment_event_it_created(substrate):
+    """custos-4.2.md:2085-2087 — an enactment amending law anchors in one of these.
+
+    @ygjwyw: an identifier comes back, not a committed Event. The rotation's own
+    sequence number is a key-log coordinate, and a key-log coordinate inside a
+    fold Position is a comparison waiting to be made against a corpus position,
+    which would mean nothing and say nothing.
+    """
     substrate.incept("acme:gaid")
     anchor = substrate.said({"t": "enact"})
-    event = substrate.rotate("acme:gaid", anchor)
-    assert event.kind == "rotation"
-    assert event.body["t"] == "rot"
-    assert event.body["a"] == ({"d": anchor},)
-    assert event.said == substrate.said(event.body)
+    said = substrate.rotate("acme:gaid", anchor)
+    assert isinstance(said, str)
+    assert len(said) == len(SAID_PLACEHOLDER)
 
 
 def test_a_rotation_advances_the_key_state(substrate):
@@ -230,12 +234,12 @@ def test_a_signature_made_before_a_rotation_still_verifies_after_it(substrate):
     assert substrate.verify("acme:gaid", body, signature)
 
 
-def test_rotation_coordinates_climb_the_identifier_s_own_key_log(substrate):
+def test_each_rotation_is_its_own_establishment_event(substrate):
+    """The facade's key log climbs, so two rotations are two distinct events."""
     substrate.incept("acme:gaid")
     first = substrate.rotate("acme:gaid", substrate.said({"t": "enact", "n": 1}))
     second = substrate.rotate("acme:gaid", substrate.said({"t": "enact", "n": 2}))
-    assert (first.position.seq, second.position.seq) == (1, 2)
-    assert first.body["s"] == 1
+    assert first != second
 
 
 def test_the_anchor_binding_is_recorded_and_answerable(substrate):
@@ -243,5 +247,5 @@ def test_the_anchor_binding_is_recorded_and_answerable(substrate):
     substrate.incept("acme:gaid")
     anchor = substrate.said({"t": "enact"})
     rotation = substrate.rotate("acme:gaid", anchor)
-    assert substrate.anchor_of(anchor) == rotation.said
-    assert substrate.anchor_of("E" + "z" * 43) is None
+    assert substrate.anchoring_event(anchor) == rotation
+    assert substrate.anchoring_event("E" + "z" * 43) is None

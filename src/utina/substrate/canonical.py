@@ -33,7 +33,20 @@ SAID_PLACEHOLDER = "#" * SAID_LENGTH
 
 def canonical_bytes(value: object) -> bytes:
     """The one byte-image of ``value``, or a refusal to produce any."""
-    return _encode(value, "the body").encode("utf-8")
+    return json.dumps(canonical_json(value), separators=(",", ":")).encode("utf-8")
+
+
+def canonical_json(value: object, path: str = "the body") -> object:
+    """``value`` as JSON-ready data: mappings sorted, and nothing inexact.
+
+    The same admissions and the same refusals as :func:`canonical_bytes`, one
+    step earlier — a structure of ``dict``, ``list``, ``str``, ``int``, ``bool``
+    and ``None`` rather than the bytes they serialize to. A substrate that hands
+    a body to somebody else's serializer needs exactly this: the encoder's
+    refusal of a float, and its ordering, without the encoder's bytes, since the
+    other serializer will produce its own (this.i @fy5lwj).
+    """
+    return _canonical(value, path)
 
 
 def digest(data: bytes) -> str:
@@ -50,33 +63,33 @@ def digest(data: bytes) -> str:
     return "E" + base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
 
 
-def _encode(value: object, path: str) -> str:
+def _canonical(value: object, path: str) -> object:
     # bool before int: bool is an int subclass, and the naive order writes True
     # as 1, which silently changes a committed disposition into a number.
     if isinstance(value, bool):
-        return "true" if value else "false"
+        return value
     if isinstance(value, int):
-        return str(value)
+        return value
     if isinstance(value, Fraction):
-        return json.dumps(f"{value.numerator}/{value.denominator}")
+        return f"{value.numerator}/{value.denominator}"
     if isinstance(value, str):
-        return json.dumps(value)
+        return value
     if value is None:
-        return "null"
+        return None
     if isinstance(value, Mapping):
-        return _encode_mapping(value, path)
+        return _canonical_mapping(value, path)
     # str is a Sequence, so this test only runs once strings are already handled.
     if isinstance(value, Sequence):
-        items = ",".join(_encode(item, f"{path}[{i}]") for i, item in enumerate(value))
-        return f"[{items}]"
+        return [_canonical(item, f"{path}[{i}]") for i, item in enumerate(value)]
     raise NOT_CANONICAL(kind=type(value).__name__, path=path)
 
 
-def _encode_mapping(value: Mapping[object, object], path: str) -> str:
-    pairs = []
-    for key in sorted(_keys(value, path)):
-        pairs.append(f"{json.dumps(key)}:{_encode(value[key], f'{path}.{key}')}")
-    return "{" + ",".join(pairs) + "}"
+def _canonical_mapping(value: Mapping[object, object], path: str) -> dict[str, object]:
+    """Sorted, so that mapping insertion order cannot reach a digest."""
+    return {
+        key: _canonical(value[key], f"{path}.{key}")
+        for key in sorted(_keys(value, path))
+    }
 
 
 def _keys(value: Mapping[object, object], path: str) -> list[str]:

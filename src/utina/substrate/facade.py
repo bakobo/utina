@@ -17,10 +17,11 @@ import base64
 import hashlib
 import hmac
 from collections.abc import Mapping
+from types import TracebackType
 
 from .canonical import SAID_PLACEHOLDER, canonical_bytes, digest
 from .errors import AID_UNKNOWN, ALIAS_TAKEN
-from .protocol import AID, SAID, Event, FoldValues
+from .protocol import AID, SAID
 
 #: Domain separation for derived key material, so a key can never be mistaken
 #: for a digest of anything else this module computes.
@@ -33,11 +34,27 @@ _SIG_CODE = "0B"
 class FacadeSubstrate:
     """The demo's substrate. Implements :class:`~utina.substrate.Substrate`."""
 
-    def __init__(self, *, values: FoldValues) -> None:
-        self._values = values
+    def __init__(self) -> None:
         self._key_index: dict[AID, int] = {}
         self._kel_seq: dict[AID, int] = {}
         self._anchors: dict[SAID, SAID] = {}
+
+    def __enter__(self) -> FacadeSubstrate:
+        """A lifecycle this backend does not need, and its sibling does.
+
+        The facade holds three dictionaries and nothing to close. It is a context
+        manager anyway so that a composition root writes one ``with`` and does not
+        have to know which backend is behind it.
+        """
+        return self
+
+    def __exit__(
+        self,
+        kind: type[BaseException] | None,
+        error: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        return None
 
     # -- identity -------------------------------------------------------------
 
@@ -48,33 +65,23 @@ class FacadeSubstrate:
         self._kel_seq[alias] = 0
         return alias
 
-    def rotate(self, aid: AID, anchor: SAID) -> Event:
+    def rotate(self, aid: AID, anchor: SAID) -> SAID:
         self._require_known(aid)
         self._key_index[aid] += 1
         self._kel_seq[aid] += 1
-        seq = self._kel_seq[aid]
         body: dict[str, object] = {
             "t": "rot",
             "i": aid,
-            "s": seq,
+            "s": self._kel_seq[aid],
             "k": (self._key_id(aid),),
             "a": ({"d": anchor},),
         }
         said = self.said(body)
         self._anchors[anchor] = said
-        return self._values.event(
-            said=said,
-            kind="rotation",
-            position=self._values.position(seq),
-            body={**body, "d": said},
-        )
+        return said
 
-    def anchor_of(self, said: SAID) -> SAID | None:
-        """The establishment event that sealed ``said``, if one did.
-
-        Rotations stay out of the corpus the fold folds (this.i @jdie6v), so
-        the binding an anchored enactment claims is answerable here or nowhere.
-        """
+    def anchoring_event(self, said: SAID) -> SAID | None:
+        """The establishment event that sealed ``said``, if one did."""
         return self._anchors.get(said)
 
     # -- committed bytes ------------------------------------------------------

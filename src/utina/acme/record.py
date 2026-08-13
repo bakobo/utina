@@ -11,9 +11,10 @@ import random
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from utina.substrate import SAID, Corpus, Event, FoldValues, Position, Substrate
+from utina.substrate import AID, SAID, Corpus, Event, FoldValues, Position, Substrate
 
 from .errors import LABEL_UNKNOWN, NAME_UNKNOWN
+from .law import GAID
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,7 @@ class Acme:
     corpus: Corpus
     labels: Mapping[str, int]
     saids: Mapping[str, SAID]
+    aids: Mapping[str, AID]
     substrate: Substrate
     values: FoldValues
 
@@ -32,6 +34,23 @@ class Acme:
         if label not in self.labels:
             raise LABEL_UNKNOWN(label=label, known=", ".join(sorted(self.labels)))
         return self.values.position(self.labels[label])
+
+    @property
+    def gaid(self) -> AID:
+        """The governed domain's identifier, as inception returned it."""
+        return self.aids[GAID]
+
+    def aid(self, alias: str) -> AID:
+        """The identifier ``alias`` names.
+
+        Every caller that used to write ``"acme:marta"`` asks through here. Under
+        the facade the answer is the alias itself; under keripy it is a prefix
+        nobody could have written down beforehand (this.i @crrtzf), and a caller
+        holding the alias would be addressing a party who does not exist.
+        """
+        if alias not in self.aids:
+            raise NAME_UNKNOWN(name=alias, known=", ".join(sorted(self.aids)))
+        return self.aids[alias]
 
     def said(self, name: str) -> SAID:
         """The identifier of the committed event ``name`` names."""

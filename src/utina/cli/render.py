@@ -84,6 +84,11 @@ def abbrev(value: str, keep: int = 12) -> str:
     Truncation from the front rather than an elision through the middle, because
     ``--said`` and ``--on`` accept a prefix: what the screen prints is what the narrator
     can type back (this.i @clhndl).
+
+    Applied to endorsers as well as to event identifiers, because a keripy party
+    is a 44-character prefix and four of those on a slot line would put the law
+    screen off the right-hand edge of the projector. An alias shorter than the
+    handle passes through untouched, so the facade's screens are unchanged.
     """
     if len(value) <= keep:
         return value
@@ -169,7 +174,12 @@ def _arithmetic(appraisal: Appraisal, clause: Clause, style: Style) -> list[str]
     for slot, disposition in zip(clause.group.slots, appraisal.slots, strict=True):
         acted = "-" if disposition.said is None else abbrev(disposition.said)
         lines.append(
-            _row(slot.endorser, rational(slot.weight), disposition.disposition.value, acted)
+            _row(
+                abbrev(slot.endorser),
+                rational(slot.weight),
+                disposition.disposition.value,
+                acted,
+            )
         )
     lines.append(_row("", "------", "", ""))
     lines.append(
@@ -219,7 +229,7 @@ def ground_of(finding: Finding, style: Style) -> list[str]:
             lines.append(
                 field(
                     style,
-                    element.endorser,
+                    abbrev(element.endorser),
                     f"{element.kind} under clause {element.clause}, {element.species.name_}",
                     indent=4,
                 )
@@ -265,7 +275,7 @@ def _defeat_ground(finding: Defeated, style: Style) -> list[str]:
                 style,
                 "citation",
                 f"the declination {abbrev(citation.declination.said)} "
-                f"committed by {citation.declination.endorser}",
+                f"committed by {abbrev(citation.declination.endorser)}",
                 indent=4,
             )
         )
@@ -329,7 +339,7 @@ def law_screen(law: Constitution, label: str, position: Position, style: Style) 
                     style,
                     "slots",
                     ", ".join(
-                        f"{slot.endorser} {rational(slot.weight)}"
+                        f"{abbrev(slot.endorser)} {rational(slot.weight)}"
                         for slot in clause.group.slots
                     ),
                 ),
@@ -387,7 +397,7 @@ def _gloss(event: Event) -> str:
         return f"an act of the class {event.body.get(ACT_FIELD)}"
     verb = "endorses" if event.body.get(DISPOSITION_FIELD) == ENDORSE else "declines"
     return (
-        f"{event.body.get(ISSUER_FIELD)} {verb} "
+        f"{abbrev(str(event.body.get(ISSUER_FIELD)))} {verb} "
         f"{abbrev(str(event.body.get(SUBJECT_FIELD)))}"
     )
 
@@ -464,7 +474,7 @@ def enact_screen(
     disposition = str(event.body.get(DISPOSITION_FIELD))
     verb = "endorses" if disposition == ENDORSE else "declines"
     committed = (
-        f"{ISSUER_FIELD}={event.body.get(ISSUER_FIELD)} "
+        f"{ISSUER_FIELD}={abbrev(str(event.body.get(ISSUER_FIELD)))} "
         f"{ACT_FIELD}={event.body.get(ACT_FIELD)} "
         f"{DISPOSITION_FIELD}={disposition} "
         f"{SUBJECT_FIELD}={abbrev(str(event.body.get(SUBJECT_FIELD)))}"

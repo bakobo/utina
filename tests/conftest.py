@@ -20,13 +20,13 @@ is the one failure that would let the suite lie.
 from __future__ import annotations
 
 import bisect
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
 import pytest
 
-from utina.substrate import FacadeSubstrate
+from utina.substrate import NAMES, FacadeSubstrate, substrate_named
 
 # --- Doubles for the fold's three value types --------------------------------
 #
@@ -106,8 +106,8 @@ def values() -> DoubleValues:
 
 
 @pytest.fixture
-def substrate(values: DoubleValues) -> FacadeSubstrate:
-    return FacadeSubstrate(values=values)
+def substrate() -> FacadeSubstrate:
+    return FacadeSubstrate()
 
 
 @pytest.fixture(scope="session")
@@ -141,15 +141,25 @@ class RealValues:
         return Corpus.load(events)
 
 
-@pytest.fixture(scope="session")
-def acme() -> Any:
-    """Acme's committed law and corpus, built once, over the real fold types.
+@pytest.fixture(params=NAMES, scope="session")
+def acme(request: pytest.FixtureRequest) -> Iterator[Any]:
+    """Acme's committed law and corpus, built once per substrate this build carries.
 
-    Exposes ``.corpus``, ``.at(label)``, ``.said(name)`` and
+    Exposes ``.corpus``, ``.at(label)``, ``.said(name)``, ``.aid(alias)`` and
     ``.permuted_corpus(seed=…)`` — the surface ``tests/test_acceptance_oracle.py``
     binds to. It skips rather than fails while the fold is unbuilt, because the
     oracle's own ``importorskip`` means this fixture is only ever requested once
     the fold exists.
+
+    Parametrized over the backends because that is the demo's actual claim: not
+    that the keripy substrate looks plausible, but that the engine above the seam
+    cannot tell which one it is standing on. Every case the oracle and the seam
+    test state therefore runs twice, once against a pure-Python fixture and once
+    against real KERI identifiers, digests, signatures and key logs.
+
+    The substrate stays open for the fixture's whole life. keripy resolves a
+    verifier's key state out of an LMDB environment, so a closed one would turn
+    every signature into a False and every slot into PENDING.
     """
     pytest.importorskip(
         "utina.fold.corpus",
@@ -157,4 +167,5 @@ def acme() -> Any:
     )
     from utina.acme import build
 
-    return build(values=RealValues())
+    with substrate_named(request.param) as substrate:
+        yield build(values=RealValues(), substrate=substrate)

@@ -19,7 +19,11 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
 
-#: The governed domain.
+#: The governed domain. An *alias*, not an identifier: under keripy a prefix is
+#: a digest of its own inception event and cannot be named beforehand, so the law
+#: below is a function of what inception returned rather than of these strings
+#: (this.i @crrtzf). Under the facade the two coincide, which is exactly the
+#: coincidence that made the seam look thinner than it was.
 GAID = "acme:gaid"
 
 #: Marta Reyes and Dev Patel, founders. Nina Adeyemi, outside director, seated
@@ -71,23 +75,47 @@ def _even(endorsers: Sequence[str], weight: Fraction) -> tuple[Mapping[str, obje
     return tuple(slot(endorser, weight) for endorser in endorsers)
 
 
-#: State 1, from inception. Two slots at a half apiece in both clauses, so every
-#: decision needs both founders.
-FOUNDING_LAW: Mapping[str, object] = {
-    "clauses": (
-        clause("A1", ORDINARY_ACTS, _even(FOUNDERS, Fraction(1, 2))),
-        clause("A2", AMENDMENT_ACTS, _even(FOUNDERS, Fraction(1, 2))),
-    ),
-}
+def founding_law(aids: Mapping[str, str]) -> Mapping[str, object]:
+    """State 1, from inception, over the identifiers ``aids`` names.
 
-#: State 2, after the amendment seats the board. Ordinary authority is
-#: distributed — three slots at a half, so any two reach unity — and the
-#: authority to change the rules is not: three slots at a third, so all three
-#: are needed. That retained bar is the point of the demo.
-BOARD_LAW: Mapping[str, object] = {
-    "clauses": (
-        clause("B1", ORDINARY_ACTS, _even(BOARD, Fraction(1, 2))),
-        clause("B2", AMENDMENT_ACTS, _even(BOARD, Fraction(1, 3))),
-    ),
-    "seats": (NINA,),
-}
+    Two slots at a half apiece in both clauses, so every decision needs both
+    founders. ``aids`` maps each alias above to the identifier inception
+    returned for it; a slot names an identifier, because an endorsement names
+    one and the fold matches the two.
+    """
+    founders = [aids[alias] for alias in FOUNDERS]
+    return {
+        "clauses": (
+            clause("A1", ORDINARY_ACTS, _even(founders, Fraction(1, 2))),
+            clause("A2", AMENDMENT_ACTS, _even(founders, Fraction(1, 2))),
+        ),
+    }
+
+
+def board_law(aids: Mapping[str, str]) -> Mapping[str, object]:
+    """State 2, after the amendment seats the board, over the same identifiers.
+
+    Ordinary authority is distributed — three slots at a half, so any two reach
+    unity — and the authority to change the rules is not: three slots at a
+    third, so all three are needed. That retained bar is the point of the demo.
+    """
+    board = [aids[alias] for alias in BOARD]
+    return {
+        "clauses": (
+            clause("B1", ORDINARY_ACTS, _even(board, Fraction(1, 2))),
+            clause("B2", AMENDMENT_ACTS, _even(board, Fraction(1, 3))),
+        ),
+        "seats": (aids[NINA],),
+    }
+
+
+#: Every party under the substrate whose identifier *is* its alias. The facade's
+#: reading of the law above, and what the law constants below are built over.
+ALIASES: Mapping[str, str] = {name: name for name in (GAID, MARTA, DEV, NINA)}
+
+#: State 1 as the facade sees it, kept as a constant because the demo script and
+#: the unit tests address Acme's founding clauses without building a domain.
+FOUNDING_LAW: Mapping[str, object] = founding_law(ALIASES)
+
+#: State 2 as the facade sees it.
+BOARD_LAW: Mapping[str, object] = board_law(ALIASES)
