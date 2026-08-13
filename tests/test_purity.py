@@ -207,7 +207,8 @@ def imported_modules(tree: ast.AST, package: str) -> set[str]:
 def alias_offenders_in(source: str, filename: str, package: str) -> set[str]:
     """The display-only modules ``source`` imports."""
     named = imported_modules(ast.parse(source, filename=filename), package)
-    return {name for name in named if name == DISPLAY_ONLY or name.startswith(DISPLAY_ONLY + ".")}
+    within = DISPLAY_ONLY + "."
+    return {name for name in named if name == DISPLAY_ONLY or name.startswith(within)}
 
 
 def test_every_alias_quarantined_plane_has_modules() -> None:
