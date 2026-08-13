@@ -93,6 +93,12 @@ Identifiers are abbreviated to a prefix that is also a valid handle = decision:
     unambiguous to a reader and useless as input. The one place the full identifier appears is
     the subject line of an eval screen, where it fits and where a viewer copying it has a
     reason to.
+  superseded_in_part_by: clcoia
+  note: >
+    The half of this decision that renders a PARTY as a truncated prefix is withdrawn by
+    @clcoia: it is a security antipattern, not merely a terse rendering. The half that makes
+    `--said` and `--on` accept a prefix stands, and @clwhoi extends it — a prefix remains a
+    good thing to type and is no longer a good thing to print.
 
 `utina enact` continues the record in memory, and does not persist = decision:
   id: clphmr
@@ -132,6 +138,132 @@ The demo driver computes nothing = constraint:
     behind it, and the demo's own claim — that these are real answers to real questions — is
     the first thing it fails to demonstrate. Rejected letting the driver format even the beat's
     expected verdict, which would have made a beat that regressed still look right.
+
+A party is shown by a COIA alias, never by a truncated identifier = decision:
+  id: clcoia
+  why: >
+    Every screen named its parties with a 12-character prefix and an ellipsis — `acme:marta`
+    under the facade, `EPFtMUsnh_BZ...` under keripy. Both are wrong, and not for the same
+    reason. The facade form is a coincidence: an identifier that happens to read like a name
+    because the facade returns its argument, which teaches an audience that identifiers are
+    legible and makes the keripy screen look like a regression. The keripy form is the real
+    fault. A truncated prefix beside a name invites a reader to decide that two identifiers are
+    the same by comparing what they can see, and it cannot support that decision:
+    `~/code/me/papers/amp-diff.md` section 4.3.8 treats a prefix as an ENTROPY channel —
+    faithful, but unable to amplify a difference — so an attacker who wants to match the twelve
+    characters on the screen grinds twelve characters, which is cheap.
+    `~/code/me/entviz-js/packages/react/docs/pill-design.md` section 2.1 draws the line this
+    repo now holds: recognition is not verification, the collapsed form affords locate, expand
+    and copy, and NO equality decision may be made from it. Section 3.3 rejects the short
+    head-and-tail teaser by name, and is careful that the objection is to the SHORT inline
+    teaser and not to a full value.
+    Chose COIA aliases (`~/code/me/coia/README.md`) as what the screens name a party by, in
+    every position where an identifier used to appear: the slot column, the defeat subcode and
+    citation, the pending requirement, the log gloss and the enact line. Rejected keeping the
+    prefix alongside the alias, which is the antipattern with a label attached and is strictly
+    worse than either alone — it supplies exactly the twelve characters an eye will compare.
+    Rejected showing the full 44-character identifier in the slot column, which is safe but
+    does not fit, and which spends the audience's attention on the one thing they cannot check.
+    Tradeoff accepted: an alias is creator-local, so the screens now show something that is
+    meaningful to Acme and to nobody else. That is what @cldspl is about.
+
+An alias is display-only, and a fitness function enforces it = constraint:
+  id: cldspl
+  why: >
+    COIA is explicit that an alias is a private nickname: it delivers Zooko's human-meaningful
+    corner "only for the person who creates it", it "is not a commitment to meaning" for anyone
+    else, it "can evolve without warning to suit its creator's fancy", and parsing someone
+    else's alias for strong meaning is named in the spec as a dangerous antipattern. An alias
+    therefore carries no security claim and must never acquire one by accident. Driving
+    constraint: an alias must never enter committed bytes, must never be an input to the fold,
+    and must never affect a finding. Chose to make that structural rather than careful — the
+    alias table lives in `utina.cli`, the display plane, and is built at the CLI's composition
+    root from the identifiers inception returned, so `utina.fold`, `utina.enact` and
+    `utina.acme` cannot see it at all. `tests/test_purity.py` gains a second quarantine of the
+    same shape as the KERI one and by AST inspection for the same reason: a lazy import inside
+    a function body is exactly how this boundary would erode. `utina.cli` is the one exempt
+    plane, because it is the plane whose entire job is display. Rejected hanging the alias off
+    the `Acme` record in `utina.acme`, which is the obvious home and which would put a
+    display-only string one attribute away from the code that writes committed bytes.
+
+Acme's demo identifiers carry COIA flag 9 = decision:
+  id: clflg9
+  why: >
+    COIA's flag 9 means the aliased identifier belongs to an experimental, test or demo
+    environment with no real-world consequences to reputation, governance or cost, and must not
+    be used where consequential production side effects are intended. That is a literal
+    description of Acme: the log is rebuilt from committed bytes on every invocation, the
+    keripy salt is a fixture in the source, and no decision on any screen binds anybody. Chose
+    to carry the flag rather than to omit it, so that the aliases the audience reads are the
+    aliases the spec would actually produce here, and so the screens say out loud that this is
+    a demo instead of leaving a viewer to infer it from the company being fictional. Rejected
+    flag 0 (unverified), which would be false: every party was incepted by this process, so
+    there is no MITM to warn about. Rejected the unflagged form, which is the one COIA reserves
+    for identifiers that are verified, public and usable in production, and which is the single
+    most misleading thing these screens could claim.
+
+The short alias in columns, the full alias where there is room = decision:
+  id: clscop
+  why: >
+    Truncating an alias is safe and truncating an identifier is not, and the asymmetry is the
+    whole of @clcoia: an alias makes no security claim, so shortening it costs nothing that was
+    ever there. Within Acme's own screens the scope is constant — everything on them is at
+    Acme — so COIA's empty-scope form is not an abbreviation of the alias but a legitimate
+    alias in its own right, and `9-marta-as-founder` is eighteen characters, which is the slot
+    column's existing budget. Chose the short form in the arithmetic table and the law screen's
+    slot list, and the full scoped form wherever the line has room for it: `utina whois`, the
+    law screen's header, and the ground block. Chose to state the constant scope once, in the
+    law screen header, so the short form is disclosed rather than merely convenient. Rejected
+    the full form everywhere, which overflows the law screen's slot line at 106 columns.
+    Rejected a per-screen truncation of the full form, which would put an ellipsis back on the
+    screen and blur the one distinction this commission exists to teach.
+
+`utina whois` is the one place a full identifier appears = decision:
+  id: clwhoi
+  why: >
+    Removing the prefix from the screens removes the only way an audience could see an
+    identifier at all, and sometimes seeing one is the point — a viewer who wants to check
+    Acme's log against another KERI tool needs the real prefix. Chose an explicit command over
+    a flag or a wider column: `utina whois <alias-or-prefix>` prints the alias, the full
+    untruncated identifier, and the substrate that produced it. This is the pill's expand
+    affordance (pill-design section 2.1): verification routes through a deliberate act, never
+    through a glance at a table. The query is normalized before lookup exactly as COIA's
+    Comparing section requires, so a narrator may type `Marta as Founder at Acme` or
+    `9-marta-as-founder` or a raw prefix and reach the same party. Rejected a `--full` flag on
+    every command, which is a branch on every screen and a token to fumble on stage; rejected
+    printing the identifier in a footer, which is a table by another name.
+
+Rejected for now: a fingerprint tag beside the alias = decision:
+  id: clnotg
+  why: >
+    A five-character Crockford base32 tag over a domain-separated digest of the identifier is
+    the right long-term answer to the question an alias cannot answer — whether two aliases
+    that read alike label the same bytes — and it is the rejection test amp-diff argues for: a
+    discrete channel, injective on its input, in an alphabet with no confusable glyphs.
+    Rejected for this commission on schedule grounds and stated here rather than left implicit.
+    Nobody verifies an identifier during the demo; the tag would be a channel nobody reads.
+    Adding one the night before means a new column budget on the widest screen, which is the
+    law screen, and a wrapped line at nine in the morning. Revisit when a screen exists whose
+    job is comparison; `utina whois` is where it would land first.
+
+Rejected for now: extending the no-truncation rule to event SAIDs and digests = decision:
+  id: clsaid
+  why: >
+    @clcoia removes the truncated PARTY identifier. The screens still print a truncated event
+    SAID, law head, clause digest, evidence bundle and signature — `932f0ab892df...` — and the
+    same amp-diff argument reaches them: a reader comparing two law heads by their first twelve
+    characters is making the equality decision section 2.1 forbids. Rejected acting on it now,
+    for two reasons that are about this change rather than about the argument. COIA aliases
+    exist for ACTORS and the spec says so — a hash is "passive and stuck in a single, static
+    role" and the conventions "make less sense" for it — so there is no alias to put in a
+    digest's place, and the replacement would have to be invented: a committed name where the
+    record has one, a coordinate where it does not. That is a redesign of the log screen's
+    columns rather than a substitution into them, and the brief for this commission asks that
+    everything else keep working exactly as it does now. Note the mitigation already present:
+    the replay screen does not ask a viewer to compare its two heads by eye, it prints the
+    machine's own verdict on the comparison (`IDENTICAL`), which is the correct pattern and the
+    one a later commission should extend. Revisit as its own commission, with the log screen's
+    layout in scope.
 
 Exit status reports whether the command answered, not what it answered = decision:
   id: clexit
