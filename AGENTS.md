@@ -60,10 +60,13 @@ later need to know *why*) may skip intent entirely — just delete `this.i.seed`
 | Lint | `uv run ruff check .` |
 | Types | `uv run mypy` |
 | Run the demo | `uv run utina --help` |
+| Run the demo on real KERI | `uv run utina demo --substrate keripy --no-pause` |
 
-Python 3.14+, uv, pytest. `utina.fold` imports no KERI library and a test enforces it by AST
-inspection, so a lazy import inside a function body will not sneak past it. The substrate is
-the only plane that may.
+Python 3.14+, uv, pytest. No plane above the substrate imports a KERI library — not
+`utina.fold`, `utina.enact`, `utina.acme` or `utina.cli` — and `tests/test_purity.py`
+enforces it by AST inspection, so a lazy import inside a function body will not sneak past
+it. `src/utina/substrate/keri*.py` is the one exempt place, and the facade stays the
+default so that `--substrate facade` loads no KERI library at all.
 
 ## Testing
 

@@ -43,6 +43,29 @@ nothing and imports no KERI library, enforced by a test. `utina.enact` is the
 constructor's verb — it produces committed events. `utina.substrate` holds everything
 KERI-facing behind one interface.
 
+## Two substrates, one engine
+
+That interface has two implementations, and the same suite runs against both. The
+default is a pure-Python facade: deterministic, dependency-free, and honest that its
+signatures are keyed MACs rather than public-key signatures. `--substrate keripy` swaps
+in [keripy](https://github.com/bakobo/keripy), and then every identifier is a real KERI
+prefix, every digest is Blake3-256 over KERI's own JSON, every signature is Ed25519, and
+the board-seating amendment is anchored by a seal in a real rotation.
+
+```sh
+uv run utina demo --no-pause                                    # the facade
+uv run utina demo --substrate keripy --no-pause                 # real KERI
+uv run utina log --substrate keripy --store /tmp/acme-kel       # leave the key log on disk
+uv run python tools/read-keri-log.py /tmp/acme-kel              # read it with keripy alone
+```
+
+The last of those imports no utina code. It is the only claim in this repository that
+utina's own tests cannot make.
+
+Nothing above `utina/substrate/keri*.py` may import a KERI library, so `--substrate
+facade` loads none of it; `tests/test_purity.py` enforces that by reading the source
+rather than by trusting the convention.
+
 ## Status
 
 **Pre-alpha, under active construction.** The working demo models a company that starts
