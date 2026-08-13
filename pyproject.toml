@@ -15,14 +15,17 @@ classifiers = [
     "Topic :: Security :: Cryptography",
 ]
 
-# The only runtime dependency is Bakobo's error-code machinery, which has no
-# dependencies of its own and refuses an illegal code where it is declared.
-# utina.fold imports no KERI library and a test enforces it: Custos §1.4 axiom 2
-# closes the fold's inputs at three committed values, so producing those values
-# from CESR streams is the substrate's job. keripy arrives as a substrate-only
-# dependency when that commission lands; until then the facade backend is pure.
+# Two runtime dependencies. Bakobo's error-code machinery has no dependencies of
+# its own and refuses an illegal code where it is declared. keripy is the real
+# KERI implementation behind `--substrate keripy`, and it is quarantined: Custos
+# §1.4 axiom 2 closes the fold's inputs at three committed values, so no plane
+# above the substrate may import it and tests/test_purity.py enforces that by AST
+# inspection over utina.fold, utina.enact, utina.acme and utina.cli (this.i
+# @343xvm). Pinned by commit, not by version — 2.0.0-dev6 is a moving target, and
+# a demo that cannot be rebuilt from its manifest is not replayable.
 dependencies = [
     "bakobo-errors",
+    "keri",
 ]
 
 [project.urls]
@@ -70,3 +73,4 @@ files = ["src/utina"]
 
 [tool.uv.sources]
 bakobo-errors = { git = "https://github.com/bakobo/errors" }
+keri = { git = "https://github.com/bakobo/keripy", rev = "7da1e64a1df971ab34d622e2f30c541e7c48305c" }
