@@ -18,7 +18,7 @@ from __future__ import annotations
 from fractions import Fraction
 
 from conftest import RealValues
-from utina.acme import DEV, MARTA, build
+from utina.acme import DEV, MARTA, NINA, build
 from utina.fold import evaluate
 from utina.fold.constitution import Constitution
 from utina.fold.finding import Affirmed, Pending
@@ -69,7 +69,7 @@ def test_the_slot_predicate_reads_the_endorsements_the_constructor_wrote(acme):
 
     held = dispositions(law.clause("A1").group, committed, subject)
 
-    assert held == {MARTA: Disposition.ENDORSED, DEV: Disposition.ENDORSED}
+    assert held == {acme.aid(MARTA): Disposition.ENDORSED, acme.aid(DEV): Disposition.ENDORSED}
 
 
 def test_the_declination_at_d3_is_read_as_a_spent_slot(acme):
@@ -80,7 +80,7 @@ def test_the_declination_at_d3_is_read_as_a_spent_slot(acme):
 
     held = dispositions(law.clause("A1").group, committed, subject)
 
-    assert held == {MARTA: Disposition.ENDORSED, DEV: Disposition.DECLINED}
+    assert held == {acme.aid(MARTA): Disposition.ENDORSED, acme.aid(DEV): Disposition.DECLINED}
     assert not law.clause("A1").group.reachable(held)
 
 
@@ -112,7 +112,7 @@ def test_a_proposal_binds_to_the_latest_act_and_never_aggregates(acme):
     finding = evaluate(acme.corpus, Proposal("approve-budget"), at=acme.at("d6"))
 
     assert isinstance(finding, Pending)
-    assert [element.endorser for element in finding.requirement] == ["acme:nina"]
+    assert [element.endorser for element in finding.requirement] == [acme.aid(NINA)]
 
     # The counterfactual, computed rather than asserted: pooled across both
     # tablings, Nina's slot reads endorsed and the group reaches unity.

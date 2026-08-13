@@ -243,7 +243,28 @@ def test_every_named_event_is_in_the_corpus(acme_double):
 
 
 def test_the_gaid_signs_for_the_domain(acme_double):
-    assert acme_double.events[0].body["i"] == GAID
+    assert acme_double.events[0].body["i"] == acme_double.gaid
+    assert acme_double.gaid == acme_double.aid(GAID)
+
+
+def test_a_party_is_addressed_by_the_identifier_inception_returned(acme_double):
+    """@crrtzf: the alias is a name for a party, and the identifier is the party.
+
+    They coincide under the facade, which is the coincidence that let callers
+    write the alias and appear to be right.
+    """
+    assert acme_double.aid(MARTA) == MARTA
+    founding = acme_double.events[0].body["law"]
+    assert set(weights(founding, "A1")) == {
+        acme_double.aid(MARTA),
+        acme_double.aid(DEV),
+    }
+
+
+def test_an_alias_nobody_incepted_is_named_rather_than_guessed_at(acme_double):
+    with pytest.raises(BakoboError) as caught:
+        acme_double.aid("acme:mallory")
+    assert caught.value.code == "e.state.name-unknown.f"
 
 
 # --- Determinism and permutation ---------------------------------------------

@@ -18,14 +18,14 @@ from utina.substrate import FacadeSubstrate, FoldValues, Substrate
 
 from .law import (
     AMENDMENT_ACTS,
-    BOARD_LAW,
     DEV,
-    FOUNDING_LAW,
     GAID,
     MARTA,
     NINA,
     ORDINARY_ACTS,
     UNGOVERNED_ACT,
+    board_law,
+    founding_law,
 )
 from .record import Acme
 
@@ -44,10 +44,9 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     here, and never varied.
     """
     substrate = FacadeSubstrate() if substrate is None else substrate
-    gaid = substrate.incept(GAID)
-    for party in (MARTA, DEV, NINA):
-        substrate.incept(party)
-    constructor = Constructor(substrate, gaid, values=values)
+    aids = {alias: substrate.incept(alias) for alias in (GAID, MARTA, DEV, NINA)}
+    marta, dev, nina = aids[MARTA], aids[DEV], aids[NINA]
+    constructor = Constructor(substrate, aids[GAID], values=values)
 
     saids: dict[str, str] = {}
     labels: dict[str, int] = {}
@@ -61,46 +60,46 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
         labels[label] = event.position.seq  # type: ignore[attr-defined]
 
     # Inception. The founding law commits A1 and A2, both unanimous.
-    mark("inception", constructor.incept_domain(FOUNDING_LAW))
+    mark("inception", constructor.incept_domain(founding_law(aids)))
     name("inception", constructor.emitted[0])
 
     # D1 — both founders endorse opening a bank account.
     bank = name(BANK_ACCOUNT, constructor.propose(BANK_ACCOUNT))
-    constructor.endorse(MARTA, bank)
-    mark("d1", constructor.endorse(DEV, bank))
+    constructor.endorse(marta, bank)
+    mark("d1", constructor.endorse(dev, bank))
 
     # D2, D3 — Marta endorses the hire; Dev signs a declination against it.
     # One committed act, two beats, because a slot may go from pending to
     # declined without the act being retabled.
     hire = name(HIRE, constructor.propose(HIRE))
-    mark("d2", constructor.endorse(MARTA, hire))
-    mark("d3", constructor.decline(DEV, hire))
+    mark("d2", constructor.endorse(marta, hire))
+    mark("d3", constructor.decline(dev, hire))
 
     # D4 — the amendment that seats the board, judged under the law it replaces
     # and anchored in an establishment event (custos-4.2.md:2085-2087).
-    seat = name("seat-the-board", constructor.enact_amendment(BOARD_LAW, act=AMEND))
-    constructor.endorse(MARTA, seat)
-    seated = constructor.endorse(DEV, seat)
+    seat = name("seat-the-board", constructor.enact_amendment(board_law(aids), act=AMEND))
+    constructor.endorse(marta, seat)
+    seated = constructor.endorse(dev, seat)
     mark("d4", seated)
     mark("board-seated", seated)
 
     # D5 — the budget carries on Marta and Nina, with Dev never acting.
     budget = name(BUDGET, constructor.propose(BUDGET))
-    constructor.endorse(MARTA, budget)
-    mark("d5", constructor.endorse(NINA, budget))
+    constructor.endorse(marta, budget)
+    mark("d5", constructor.endorse(nina, budget))
 
     # D6 — the budget is tabled again and Dev declines it. Same signed no as
     # D3, three slots instead of two, and the fold draws the difference.
     retabled = name(f"{BUDGET}-retabled", constructor.propose(BUDGET))
-    constructor.endorse(MARTA, retabled)
-    mark("d6", constructor.decline(DEV, retabled))
+    constructor.endorse(marta, retabled)
+    mark("d6", constructor.decline(dev, retabled))
 
     # D7 — both founders want the amendment; the seated director does not, and
     # under B2 that is enough, because amendment authority was never distributed.
     amend = name(AMEND, constructor.propose(AMEND))
-    constructor.endorse(MARTA, amend)
-    constructor.endorse(DEV, amend)
-    mark("d7", constructor.decline(NINA, amend))
+    constructor.endorse(marta, amend)
+    constructor.endorse(dev, amend)
+    mark("d7", constructor.decline(nina, amend))
 
     # D8 — a question the law is silent about. D9 re-asks D1 from here.
     dividend = constructor.propose(UNGOVERNED_ACT)
@@ -114,6 +113,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
         corpus=values.corpus(events),
         labels=labels,
         saids=saids,
+        aids=aids,
         substrate=substrate,
         values=values,
     )
