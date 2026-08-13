@@ -585,3 +585,110 @@ Make Custos's replayable governance useful to a real organization = goal:
         rather than removal — tests/test_seam.py checks that the real fold types satisfy the
         protocol and that no module of the writing plane imports utina.fold at all, by AST
         inspection rather than by grep, so a lazy import inside a function body cannot pass.
+
+    keripy enters as a substrate-only dependency, quarantined by fitness function = decision:
+      id: 343xvm
+      why: >
+        The demo's claim is that the fold cannot tell which substrate it is on, and a claim of
+        that shape decays the moment a KERI import is convenient somewhere else. Chose to admit
+        keri, keria, hio, lmdb and blake3 into exactly one place — src/utina/substrate/keri*.py —
+        and to widen tests/test_fold_purity.py from the fold alone to every plane above the
+        substrate: utina.fold, utina.enact, utina.acme and utina.cli. Rejected trusting review,
+        because the boundary that matters is the one nobody is looking at during a deadline.
+        Rejected admitting keripy into utina.cli so the composition root could name a Habery:
+        the CLI selects a substrate by name and the substrate package constructs it, which keeps
+        the CLI's import graph free of KERI and makes --substrate facade a real fallback rather
+        than a flag over an already-loaded dependency. Pinned by commit rather than by version,
+        because keripy 2.0.0-dev6 is a moving target and a demo that cannot be rebuilt from its
+        manifest is not replayable.
+
+    The keripy substrate imposes one key order, and it is the same order three times = decision:
+      id: fy5lwj
+      why: >
+        keripy's Saider.saidify digests a mapping in INSERTION order; substrate/canonical.py
+        sorts. Two conventions meeting inside one substrate would look exactly like a signature
+        bug and nothing else — the SAID would be computed over one byte image and the signature
+        over another, and the failure would surface at verify() as a false, with no error and no
+        clue. So the order is decided once: the identifier field first, every remaining field in
+        sorted order, the signature excluded. One helper produces the mapping and said(), sign()
+        and verify() all call it; no method serializes a body it did not build. Rejected relying
+        on the constructor's insertion order, which happens to be stable today and is a
+        byte-level tripwire. Rejected reusing canonical_bytes() for the digest, because the point
+        of the keripy substrate is that a stranger with keripy and nothing of ours recomputes the
+        SAID; that requires KERI's own Blake3 SAID over KERI's own JSON.
+
+    Determinism is pinned by salt, by inception order, and by the stretch tier = decision:
+      id: 7jrbt3
+      why: >
+        KERI key events carry no timestamp — nowIso8601 appears only in key-state notices and
+        peer messages — so a KEL is byte-reproducible once its key material is. Three things fix
+        the key material and all three are explicit: a literal salt, the order in which habs are
+        made (keripy derives each key from the salt plus a sequentially assigned pidx), and the
+        temp flag, because temp=True stretches at a weak tier and temp=False at Argon2's, which
+        yields DIFFERENT identifiers from the same salt. Chose temp=True for tests, where the
+        whole suite then costs milliseconds, and a real on-disk store for the CLI, where an
+        independent KERI tool has to be able to open what we wrote. Tradeoff accepted and stated
+        rather than discovered: the demo's AIDs under --substrate keripy are not the AIDs the
+        test suite computes, because the tier differs. The salt is a demo fixture in the source,
+        which is correct for a fixture and would be a key-management failure in production.
+
+    An endorsement stays a plain signed body anchored in a KEL, not an ACDC in a TEL = decision:
+      id: 65buz7
+      why: >
+        The dossier alignment makes real ACDC issuance the honest long-term encoding of an
+        endorsement, and this is knowingly not that. Measured, the ACDC path on 2.0.0-dev6 costs
+        a registry pinned to v1 inside a v2 KEL (v2 defaults raise SerializeError on vcp), a
+        three-step anchor dance through the transaction-event verifier before issue() will run at
+        all, a resolvable schema, and two more nondeterminism knobs. None of it is needed by any
+        of the ten beats — revocation is out of scope by construction, since a party who changes
+        their mind declines. Chose signed bodies whose field names were already chosen so the
+        move is a re-encoding rather than a rename. Logged as its own question in
+        docs/custos-questions.md so the gap is on the record rather than in a commit message.
+
+    rotate returns an identifier, and the anchor binding is protocol = decision:
+      id: ygjwyw
+      why: >
+        rotate() returned a fold Event whose Position was minted from the substrate's own key-log
+        sequence number. A KEL sequence number and a corpus position are different ordering
+        spaces, and putting one inside the other's type invites a comparison that would be
+        meaningless and silent — a latent defect in the facade before keripy made it obvious.
+        Narrowed rotate to -> SAID, and promoted the facade's anchor_of into the protocol as
+        anchoring_event(said) -> SAID | None, which is where it belonged: rotations stay out of
+        the corpus (@jdie6v), so the binding beat D4 asserts is answerable there or nowhere.
+        Under keripy anchoring_event is a real seal lookup over the KEL, so the protocol gained a
+        method that costs the implementation nothing and the demo everything.
+
+    An alias is not an identifier, so the composition root incepts first = decision:
+      id: crrtzf
+      why: >
+        Constructor.__init__ took a gAID and incept_domain then incepted it, which is coherent
+        only while the substrate returns its argument. A keripy prefix is a digest of the
+        inception event and cannot be known before makeHab returns. Chose to have the composition
+        root incept every party in a fixed order and hand the Constructor a real identifier, and
+        to have Acme's committed law built from the identifiers inception returned rather than
+        from the alias constants. Rejected letting incept_domain assign self.gaid, which leaves
+        __init__ advertising a value that is a lie until a later call. The consequence reaches the
+        acceptance oracle, which addressed the founders by the literal "acme:marta": it now asks
+        the record for the identifier that alias names. That is not a weakened case — the oracle
+        was asserting a facade artifact, and now asserts what it meant.
+
+    A signature carries the establishment event it was made under = decision:
+      id: zk27gz
+      why: >
+        Resolving a verifier's keys from CURRENT key state means a rotation silently invalidates
+        every signature made before it, turning an ENDORSED slot into PENDING with no error —
+        and Acme's gAID rotates at beat D4, mid-record. The protocol says a substrate signature
+        is an opaque string, so the fix fits inside it: the string carries the SAID of the
+        establishment event whose keys signed, and verify resolves THAT event's key state out of
+        the KEL rather than the current one. This is the coordinate half of what keripy's own
+        trans-idx-sig-group carries, in the one field the seam gives us. The fold never looks
+        inside the string; no signature above the substrate changes shape.
+
+    The facade stays the default, and the flag is the switch = decision:
+      id: dxs27r
+      why: >
+        --substrate keripy is opt-in and --substrate facade is what runs when nobody passes
+        anything. A demo runs tomorrow morning; the fallback from a keripy fault has to be a
+        flag a narrator can type, not a git operation performed under an audience. The keripy
+        path is proved by the conformance suite and by the acceptance oracle running twice, so
+        the default is a matter of blast radius rather than of confidence.
