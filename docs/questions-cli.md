@@ -8,7 +8,7 @@ it at integration.*
 
 Most of what the CLI decided is not Custos's business. How wide a column is, whether the
 verdict leads or the arithmetic does, what a screen is painted in — those are taste, and
-they are recorded as this.i nodes in `docs/intent-cli.md`, not here. Two things were not
+they are recorded as this.i nodes, not here. Two things were not
 taste: the CLI made a question reachable that the fold's own register does not cover, and
 building a display of a finding raised a question about what the Ground Axiom binds.
 

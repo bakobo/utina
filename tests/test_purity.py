@@ -232,7 +232,7 @@ def test_a_plane_below_the_display_plane_imports_no_alias_machinery(
         "security claim, and the spec names parsing someone else's alias for strong "
         "meaning as a dangerous antipattern. So it may never enter committed bytes, be "
         "an input to the fold, or affect a finding. Render it in utina.cli, which is the "
-        "one exempt plane. If that is genuinely wrong, change docs/intent-cli.md first — "
+        "one exempt plane. If that is genuinely wrong, change this.i first — "
         "not this test."
     )
 

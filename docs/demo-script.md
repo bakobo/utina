@@ -20,7 +20,7 @@ committed byte — and the `9` marks a demo environment with no real-world conse
 Screens never print a piece of an AID, because a prefix cannot support the comparison it
 invites; the AID itself is one command away, `utina whois 9-marta-as-founder`. Inside
 these screens every party is at Acme, so the columns drop the shared scope and the law
-screen's header states it. The reasoning is `docs/intent-cli.md` @clcoia.
+screen's header states it. The reasoning is `this.i` @clcoia.
 
 ## The law, expressed as weighted slot groups
 

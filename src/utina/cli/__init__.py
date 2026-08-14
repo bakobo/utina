@@ -5,7 +5,7 @@ Nothing here computes governance. Every verdict on a screen came out of
 resolves what a person typed, asks one question, and renders the answer with the ground
 the answer carries.
 
-``docs/intent-cli.md`` holds the decisions. ``docs/render-candidates.md`` holds the three
+``this.i`` holds the decisions. ``docs/render-candidates.md`` holds the three
 renderings of the D3 screen the default was chosen from.
 """
 
