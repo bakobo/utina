@@ -821,6 +821,11 @@ Make Custos's replayable governance useful to a real organization = goal:
 
     `utina enact` adopts an existing record through attributes `utina.enact` does not expose = deviation:
       id: cladpt
+      discharged_by: jzozfn
+      note: >
+        The tick this deviation filed (7h6j) is closed: `utina.enact` now offers the public
+        `Constructor.resume` this node asked for, the adapter is deleted, and the invariants
+        its pin asserted became tests of the public API. See @jzozfn.
       why: >
         `Constructor` has no public way to resume a record it did not itself write: `_emit` takes
         its coordinate from `len(self._emitted)`, `_dispose` checks `self._saids`, and every verb
@@ -989,3 +994,25 @@ Make Custos's replayable governance useful to a real organization = goal:
         treats it as a failure would make `utina eval ... && echo ok` mean something the engine
         never said. Rejected mapping the four verdicts onto four exit codes, which invites exactly
         that confusion and would make `utina demo` exit non-zero on the beats it is proudest of.
+
+    The constructor resumes a committed record through a public classmethod = decision:
+      id: jzozfn
+      why: >
+        @cladpt reached into Constructor privates from the CLI's composition root because
+        `utina.enact` offered no public way to continue a record it did not write. That
+        deviation is discharged: `Constructor.resume(substrate, gaid, values=..., events=...)`
+        is an alternate constructor on the writing plane. Chose a classmethod over a mutator on
+        a fresh instance so that resuming a constructor that has already emitted is
+        unrepresentable rather than checked — no state to police, and no error code for a
+        misuse that cannot be typed. Founding is derived from the events themselves, an
+        inception among them, rather than taken as a flag, so a caller cannot assert a founding
+        the record does not carry. Positions must run contiguously from zero, refused with
+        e.input.format.resume-record.f, because `_emit` takes its next coordinate from the
+        record's length, and continuing over a gapped or permuted record would put every later
+        event at a coordinate the committed bytes contradict — silently, which is the one
+        failure shape this repo always refuses. Rejected verifying signatures at resume: the
+        events are the caller's own committed log, and judging evidence is the fold's job under
+        Custos section 1.3 — a constructor that re-checked proofs would be judging, and a check
+        it cannot actually perform is decoration. The CLI's adapter `constructor_over` is
+        deleted, and the invariants its pin asserted move to tests/test_enact.py as tests of
+        the public API.
