@@ -1,7 +1,8 @@
 """The constructor's error codes, declared as module-scope literals.
 
-Classified by the obstacle: ``e.state.`` is a record that does not admit the
-act being asked for, ``e.proof.`` is a signature that will not stand up.
+Classified by the obstacle: ``e.input.`` is material a caller handed us that
+does not have the required shape, ``e.state.`` is a record that does not admit
+the act being asked for, ``e.proof.`` is a signature that will not stand up.
 """
 
 # bakobo-errors ships no py.typed marker yet, so mypy cannot see its annotations.
@@ -40,6 +41,20 @@ SUBJECT_UNKNOWN = ErrorCode(
     ),
     args=("aid", "subject"),
     hint="Commit the act or the enactment first, then dispose of it by its returned SAID.",
+)
+
+RECORD_UNRESUMABLE = ErrorCode(
+    code="e.input.format.resume-record.f",
+    title="These events do not read as one continuable record.",
+    detail=(
+        "Resuming expected the committed events in coordinate order, positions running from "
+        "zero without a gap, and found position {found} where {expected} was required. The "
+        "constructor takes its next coordinate from the record's length, so continuing over "
+        "a gapped or permuted record would commit every later event at a coordinate the "
+        "committed bytes contradict."
+    ),
+    args=("expected", "found"),
+    hint="Hand resume the record's events exactly as committed: complete, in coordinate order.",
 )
 
 SIGNATURE_UNVERIFIABLE = ErrorCode(

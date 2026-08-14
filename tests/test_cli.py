@@ -649,20 +649,6 @@ def test_enact_against_nothing_committed_is_refused():
     assert "e.state.subject-unknown.f" in err
 
 
-def test_the_constructor_adapter_continues_the_committed_record():
-    """this.i @cladpt: the deviation is pinned, so it cannot rot unnoticed."""
-    from utina.cli.world import constructor_over
-
-    with world() as record:
-        constructor = constructor_over(record)
-        assert constructor.emitted == record.events
-
-        event = constructor.endorse("acme:nina", record.said("approve-budget-retabled"))
-        assert event.position.seq == len(record.events)
-        sealed = {key: value for key, value in event.body.items() if key != "sig"}
-        assert record.substrate.verify("acme:nina", sealed, event.body["sig"])
-
-
 # --- utina demo ----------------------------------------------------------------
 
 

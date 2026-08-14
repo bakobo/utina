@@ -38,7 +38,8 @@ from utina.cli.render import (
     whois_screen,
 )
 from utina.cli.style import RED, Style
-from utina.cli.world import RealValues, constructor_over, world
+from utina.cli.world import RealValues, world
+from utina.enact import Constructor
 from utina.fold.constitution import Constitution
 from utina.fold.question import Committed
 from utina.fold.triple import Position
@@ -324,7 +325,9 @@ def enact_command(args: argparse.Namespace, console: Console) -> int:
         _, end = _position(record, None)
         before = appraise(record.corpus, Committed(subject), at=end, label=LATEST)
 
-        constructor = constructor_over(record)
+        constructor = Constructor.resume(
+            record.substrate, record.gaid, values=record.values, events=record.events
+        )
         verb = constructor.endorse if args.disposition == "endorse" else constructor.decline
         event = verb(_actor(record, args.actor), subject)
 

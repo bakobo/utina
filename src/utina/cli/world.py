@@ -17,12 +17,11 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from utina.acme import Acme, build
-from utina.enact import Constructor
 from utina.fold.corpus import Corpus, Event
 from utina.fold.triple import Position
 from utina.substrate import FACADE, substrate_named
 
-__all__ = ["RealValues", "constructor_over", "world"]
+__all__ = ["RealValues", "world"]
 
 
 class RealValues:
@@ -57,26 +56,3 @@ def world(substrate: str = FACADE, *, store: Path | None = None) -> Iterator[Acm
     """
     with substrate_named(substrate, store=store) as backend:
         yield build(values=RealValues(), substrate=backend)
-
-
-def constructor_over(record: Acme) -> Constructor:
-    """A constructor that continues Acme's committed record instead of starting one.
-
-    ``utina.enact`` offers no way to resume a log it did not itself write: ``_emit``
-    takes its coordinate from ``len(self._emitted)``, ``_dispose`` checks
-    ``self._saids`` before it will dispose against a subject, and every verb checks
-    ``self._founded``. All three are set here from the committed record.
-
-    This reaches into another package's internals, and it is the smaller of the two
-    wrongs available (this.i @cladpt; ~7h6j is the tick against ``utina.enact`` for a
-    public ``Constructor.resume``). The alternative is to re-implement ``_emit`` in the CLI,
-    which would copy the committed byte layout — the field order, the
-    coordinate-before-identifier rule, the signature-verified-before-recorded rule —
-    across a seam that fails silently when the copies drift. ``tests/test_cli.py`` pins
-    the invariants so this cannot rot unnoticed.
-    """
-    constructor = Constructor(record.substrate, record.gaid, values=record.values)
-    constructor._emitted = list(record.events)
-    constructor._saids = {event.said for event in record.events}
-    constructor._founded = True
-    return constructor

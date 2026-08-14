@@ -14,13 +14,14 @@ endorsement and an untouched slot is not an act at all (this.i @7szbfw).
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from utina.substrate import AID, SAID, Event, FoldValues, Substrate
 
 from .errors import (
     DOMAIN_INCEPTED,
     DOMAIN_UNINCEPTED,
+    RECORD_UNRESUMABLE,
     SIGNATURE_UNVERIFIABLE,
     SUBJECT_UNKNOWN,
 )
@@ -58,6 +59,34 @@ class Constructor:
     def emitted(self) -> tuple[Event, ...]:
         """Every event this constructor committed, in the order it committed them."""
         return tuple(self._emitted)
+
+    @classmethod
+    def resume(
+        cls,
+        substrate: Substrate,
+        gaid: AID,
+        *,
+        values: FoldValues,
+        events: Sequence[Event],
+    ) -> Constructor:
+        """Continue a committed record this constructor did not write (this.i @jzozfn).
+
+        A classmethod rather than a mutator, so a constructor that has already
+        emitted cannot be resumed at all. Founding is derived from the events —
+        an inception among them — never asserted by the caller, and the positions
+        must run contiguously from zero, because :meth:`_emit` takes its next
+        coordinate from the record's length. Signatures are not re-verified here:
+        judging evidence is the fold's job, and these events are the caller's own
+        committed log.
+        """
+        for expected, event in enumerate(events):
+            if event.position.seq != expected:
+                raise RECORD_UNRESUMABLE(expected=expected, found=event.position.seq)
+        constructor = cls(substrate, gaid, values=values)
+        constructor._emitted = list(events)
+        constructor._saids = {event.said for event in events}
+        constructor._founded = any(event.kind == "inception" for event in events)
+        return constructor
 
     # -- the verbs ------------------------------------------------------------
 

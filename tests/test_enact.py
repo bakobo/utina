@@ -151,6 +151,7 @@ def test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it(f
         "gaid",
         "incept_domain",
         "propose",
+        "resume",
         "substrate",
     }
 
@@ -254,3 +255,70 @@ def test_an_event_whose_own_signature_does_not_verify_is_never_produced(values):
         constructor.incept_domain(LAW)
     assert caught.value.code == "e.proof.signature-unverifiable.f"
     assert constructor.emitted == ()
+
+
+# --- Resuming a committed record (this.i @jzozfn) -----------------------------
+
+
+def committed_record(founded):
+    """A three-event record: the inception, an act, and an endorsement of it."""
+    act = founded.propose("open-bank-account")
+    founded.endorse("acme:marta", act.said)
+    return founded.emitted
+
+
+def test_resume_continues_the_committed_record(founded, values):
+    """this.i @jzozfn: the coordinate, the subjects and the signature all continue."""
+    events = committed_record(founded)
+    substrate = founded.substrate
+    resumed = Constructor.resume(substrate, GAID, values=values, events=events)
+    assert resumed.emitted == events
+
+    event = resumed.endorse("acme:dev", events[1].said)
+    assert event.position.seq == len(events)
+    sealed = {key: value for key, value in event.body.items() if key != "sig"}
+    assert substrate.verify("acme:dev", sealed, event.body["sig"])
+
+
+def test_resume_derives_founding_from_the_record(founded, values):
+    """An inception among the events founds the domain; founding again is refused."""
+    events = committed_record(founded)
+    resumed = Constructor.resume(founded.substrate, GAID, values=values, events=events)
+    with pytest.raises(BakoboError) as caught:
+        resumed.incept_domain(LAW)
+    assert caught.value.code == "e.state.domain-incepted.f"
+
+
+def test_resume_of_an_empty_record_founds_nothing(substrate, values):
+    """Resuming nothing is a fresh start: verbs are refused, inception is open."""
+    resumed = Constructor.resume(substrate, substrate.incept(GAID), values=values, events=())
+    with pytest.raises(BakoboError) as caught:
+        resumed.propose("open-bank-account")
+    assert caught.value.code == "e.state.domain-unincepted.f"
+    assert resumed.incept_domain(LAW).position.seq == 0
+
+
+def test_resume_without_an_inception_founds_nothing(substrate, values):
+    """Founding is derived from event kinds, never from the record being non-empty."""
+    gaid = substrate.incept(GAID)
+    events = tuple(
+        values.event(said=f"E{seq}", kind="act", position=values.position(seq), body={})
+        for seq in range(2)
+    )
+    resumed = Constructor.resume(substrate, gaid, values=values, events=events)
+    with pytest.raises(BakoboError) as caught:
+        resumed.propose("open-bank-account")
+    assert caught.value.code == "e.state.domain-unincepted.f"
+
+
+@pytest.mark.parametrize(
+    "mangle",
+    [lambda events: events[:1] + events[2:], lambda events: events[::-1]],
+    ids=["gapped", "permuted"],
+)
+def test_resume_refuses_a_record_whose_positions_do_not_run_from_zero(founded, values, mangle):
+    """this.i @jzozfn: the next coordinate is the record's length, so a gap corrupts."""
+    events = mangle(committed_record(founded))
+    with pytest.raises(BakoboError) as caught:
+        Constructor.resume(founded.substrate, GAID, values=values, events=events)
+    assert caught.value.code == "e.input.format.resume-record.f"
