@@ -26,6 +26,20 @@ AID = str
 #: A self-addressing digest of committed bytes.
 SAID = str
 
+#: The dossier specification's single endorsement schema — the one all four
+#: threshold operators use, which every endorsement credential's ``s`` field
+#: names (``dossier-spec-body.md:367``; the schema itself is
+#: ``schemas/endorsement.json`` in the specification repo, and its ``$id`` is
+#: this SAID). Declared at the substrate because both backends construct
+#: credentials and both planes above read the pin (this.i @7db5c4).
+ENDORSEMENT_SCHEMA = "EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0"
+
+#: The timestamp every credential's attributes block carries. A fixed fixture,
+#: the same posture as the pinned salt (this.i @7jrbt3): keripy injects a
+#: wall-clock ``dt`` when the caller supplies none, which would give the same
+#: endorsement a different identifier on every run and break replay outright.
+ACDC_DT = "2026-01-01T00:00:00.000000+00:00"
+
 #: ``utina.fold.triple.Position`` — an appraisal coordinate.
 Position = Any
 
@@ -107,6 +121,24 @@ class Substrate(Protocol):
 
         Rotations stay out of the corpus the fold folds (this.i @jdie6v), so the
         binding an anchored enactment claims is answerable here or nowhere.
+        """
+        ...
+
+    def issue_acdc(
+        self, issuer: AID, schema: SAID, attributes: Mapping[str, object]
+    ) -> tuple[Mapping[str, object], str]:
+        """A registry-less credential: constructed, signed, verified, anchored.
+
+        Returns the credential as a plain mapping — ``{v, d, i, s, a}``, the
+        dossier schema's required shape — together with the issuer's signature
+        over the credential's own canonical bytes, opaque above this seam in
+        the same establishment-coordinate format ``sign`` uses. The attributes
+        block gains a fixed ``dt`` (:data:`ACDC_DT`) so the same endorsement is
+        the same bytes on every run, and the credential's identifier is sealed
+        into the issuer's key log by an interaction event — the log advances,
+        the keys do not — so :meth:`anchoring_event` answers for it. A
+        credential whose signature does not verify is refused rather than
+        returned (this.i @7db5c4, @vi4t4i).
         """
         ...
 

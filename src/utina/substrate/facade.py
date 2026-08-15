@@ -20,8 +20,8 @@ from collections.abc import Mapping
 from types import TracebackType
 
 from .canonical import SAID_PLACEHOLDER, canonical_bytes, digest
-from .errors import AID_UNKNOWN, ALIAS_TAKEN
-from .protocol import AID, SAID
+from .errors import ACDC_UNVERIFIABLE, AID_UNKNOWN, ALIAS_TAKEN
+from .protocol import ACDC_DT, AID, SAID
 
 #: Domain separation for derived key material, so a key can never be mistaken
 #: for a digest of anything else this module computes.
@@ -29,6 +29,12 @@ _KEY_DOMAIN = b"utina-facade-key\x00"
 
 #: The signature's code, chosen to look like what it stands in for.
 _SIG_CODE = "0B"
+
+#: What a facade credential's version field holds. Deliberately not a sized
+#: KERI version string: imitating the shape without the substance invites a
+#: reader to trust it (this.i @d2nlhb), and the honest statement is that this
+#: credential was produced by the facade.
+ACDC_VERSION = "ACDCfacade"
 
 
 class FacadeSubstrate:
@@ -84,6 +90,29 @@ class FacadeSubstrate:
         """The establishment event that sealed ``said``, if one did."""
         return self._anchors.get(said)
 
+    # -- credentials ----------------------------------------------------------
+
+    def issue_acdc(
+        self, issuer: AID, schema: SAID, attributes: Mapping[str, object]
+    ) -> tuple[Mapping[str, object], str]:
+        """A registry-less credential in the dossier schema's required shape.
+
+        The mirror of what the keripy backend produces with ``proving.credential``:
+        same field set, same fixed ``dt``, its own digests. The anchor rides an
+        interaction event — the key log advances, the key state does not — so a
+        signature made before an issuance still verifies after it.
+        """
+        self._require_known(issuer)
+        block: dict[str, object] = {"dt": ACDC_DT, **attributes}
+        block = {"d": self.said(block), **block}
+        sad: dict[str, object] = {"v": ACDC_VERSION, "i": issuer, "s": schema, "a": block}
+        sad = {"v": ACDC_VERSION, "d": self.said(sad), "i": issuer, "s": schema, "a": block}
+        signature = self.sign(issuer, sad)
+        if not self.verify(issuer, sad, signature):
+            raise ACDC_UNVERIFIABLE(issuer=issuer)
+        self._interact(issuer, str(sad["d"]))
+        return sad, signature
+
     # -- committed bytes ------------------------------------------------------
 
     def said(self, body: Mapping[str, object]) -> SAID:
@@ -111,6 +140,19 @@ class FacadeSubstrate:
         return hmac.compare_digest(mac, self._mac(aid, index, body))
 
     # -- internals ------------------------------------------------------------
+
+    def _interact(self, aid: AID, anchor: SAID) -> SAID:
+        """Seal ``anchor`` into an interaction event: the log moves, the keys stay."""
+        self._kel_seq[aid] += 1
+        body: dict[str, object] = {
+            "t": "ixn",
+            "i": aid,
+            "s": self._kel_seq[aid],
+            "a": ({"d": anchor},),
+        }
+        said = self.said(body)
+        self._anchors[anchor] = said
+        return said
 
     def _require_known(self, aid: AID) -> None:
         if aid not in self._key_index:

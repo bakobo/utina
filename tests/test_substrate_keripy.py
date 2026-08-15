@@ -18,8 +18,12 @@ from pathlib import Path
 
 import pytest
 from bakobo.errors import BakoboError
+from keri.core.eventing import verifySigs
+from keri.core.indexing import Siger
+from keri.core.serdering import SerderACDC
 from keri.core.structing import SealDigest
 
+from utina.substrate import ENDORSEMENT_SCHEMA
 from utina.substrate.keripy import COORDINATE, MARKER, KeripySubstrate
 
 BODY: dict[str, object] = {"t": "act", "act": "open-bank-account", "s": 1}
@@ -168,3 +172,57 @@ def test_the_ephemeral_and_the_durable_store_are_different_key_material(tmp_path
     with KeripySubstrate(store=tmp_path / "store") as durable:
         slow = durable.incept("acme:gaid")
     assert fast != slow
+
+
+# --- a registry-less credential (this.i @7db5c4) -------------------------------
+
+
+def endorsement_acdc(substrate, issuer):
+    return substrate.issue_acdc(
+        issuer, ENDORSEMENT_SCHEMA, {"said": "E" + "s" * 43, "act": "issue", "disp": "endorse"}
+    )
+
+
+def test_the_pinned_schema_said_is_the_dossier_specifications():
+    """The one schema all four operators use (dossier-spec-body.md:367)."""
+    assert ENDORSEMENT_SCHEMA == "EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0"
+
+
+def test_a_credential_is_a_real_acdc_a_stranger_verifies_with_keripy_alone(keripy):
+    """SAID recomputed by keripy, signature checked against the named key state."""
+    marta = keripy.incept("acme:marta")
+    sad, signature = endorsement_acdc(keripy, marta)
+
+    creder = SerderACDC(sad=dict(sad))  # re-verifies the SAID on construction
+    assert creder.said == sad["d"]
+    assert creder.regid is None  # no registry: structurally unrevokable
+
+    established, _, qb64 = signature.partition(COORDINATE)
+    serder = keripy._hby.db.evts.get(keys=(marta, established))
+    verified, _ = verifySigs(raw=creder.raw, sigers=[Siger(qb64=qb64)], verfers=serder.verfers)
+    assert verified
+
+
+def test_the_credential_anchor_is_an_interaction_event_not_a_rotation(keripy):
+    """The keys do not move to anchor a credential; the log grows by one ixn."""
+    marta = keripy.incept("acme:marta")
+    sad, _ = endorsement_acdc(keripy, marta)
+    sealing = [
+        serder
+        for serder in keripy._hby.db.getEvtPreIter(pre=marta)
+        for seal in (serder.sad.get("a") or ())
+        if seal.get("d") == sad["d"]
+    ]
+    assert sealing
+    assert all(serder.ilk == "ixn" for serder in sealing)
+
+
+def test_a_credential_whose_signature_will_not_verify_is_never_returned(keripy, monkeypatch):
+    """Fail closed at issuance, same discipline as the constructor's _emit."""
+    marta = keripy.incept("acme:marta")
+    monkeypatch.setattr(
+        "utina.substrate.keripy.eventing.verifySigs", lambda **kwargs: ((), ())
+    )
+    with pytest.raises(BakoboError) as caught:
+        endorsement_acdc(keripy, marta)
+    assert caught.value.code == "e.proof.acdc-sig.f"

@@ -25,7 +25,7 @@ from pathlib import Path
 import pytest
 from bakobo.errors import BakoboError
 
-from utina.substrate import SAID_LENGTH
+from utina.substrate import ACDC_DT, ENDORSEMENT_SCHEMA, SAID_LENGTH
 from utina.substrate.select import NAMES, substrate_named
 
 #: A body with no identifier and no signature: what a caller hands ``said``.
@@ -240,6 +240,68 @@ def test_a_rotation_does_not_disturb_another_party_s_signatures(conformant, mart
     assert conformant.verify(marta, BODY, signature)
 
 
+# --- issue_acdc: a registry-less credential ------------------------------------
+
+#: A SAID-shaped subject for a credential to be about.
+SUBJECT = "E" + "s" * 43
+
+
+def endorsement_acdc(substrate, issuer, disp: str = "endorse"):
+    """One registry-less endorsement credential, as ``utina.enact`` would ask for it."""
+    return substrate.issue_acdc(
+        issuer, ENDORSEMENT_SCHEMA, {"said": SUBJECT, "act": "issue", "disp": disp}
+    )
+
+
+def test_a_credential_carries_the_dossier_required_fields(conformant, marta):
+    """The shape is the dossier schema's required set, top level and attributes both."""
+    sad, signature = endorsement_acdc(conformant, marta)
+    assert set(sad) >= {"v", "d", "i", "s", "a"}
+    attributes = sad["a"]
+    assert set(attributes) >= {"d", "dt", "said", "act", "disp"}
+    assert sad["i"] == marta
+    assert sad["s"] == ENDORSEMENT_SCHEMA
+    assert attributes["said"] == SUBJECT
+    assert attributes["act"] == "issue"
+    assert attributes["disp"] == "endorse"
+    assert attributes["dt"] == ACDC_DT
+    assert isinstance(signature, str) and signature
+
+
+def test_a_declination_is_the_same_credential_with_one_field_changed(conformant, marta):
+    endorsed, _ = endorsement_acdc(conformant, marta, disp="endorse")
+    declined, _ = endorsement_acdc(conformant, marta, disp="decline")
+    assert declined["a"]["disp"] == "decline"
+    assert endorsed["d"] != declined["d"]
+
+
+def test_a_credential_is_deterministic(conformant, marta):
+    """Same issuer, same attributes, same bytes — the fixture dt is what makes it so."""
+    first, _ = endorsement_acdc(conformant, marta)
+    second, _ = endorsement_acdc(conformant, marta)
+    assert first == second
+
+
+def test_a_credential_is_anchored_in_the_issuers_key_log(conformant, marta):
+    """The dossier's Endorsed predicate requires the anchor (dossier-spec-body.md:223)."""
+    sad, _ = endorsement_acdc(conformant, marta)
+    assert conformant.anchoring_event(sad["d"]) is not None
+
+
+def test_issuing_as_an_identifier_with_no_key_state_is_refused(conformant):
+    with pytest.raises(BakoboError) as caught:
+        endorsement_acdc(conformant, "acme:never-incepted")
+    assert caught.value.code == "e.id.aid-unknown.f"
+
+
+def test_issuing_does_not_disturb_the_issuers_signing_key_state(conformant, marta):
+    """The anchor rides an interaction event: the log advances, the keys do not."""
+    before = conformant.sign(marta, BODY)
+    endorsement_acdc(conformant, marta)
+    assert conformant.sign(marta, BODY) == before
+    assert conformant.verify(marta, BODY, before)
+
+
 # --- determinism across processes ---------------------------------------------
 
 FINGERPRINT = """
@@ -250,12 +312,18 @@ with substrate_named(sys.argv[1]) as substrate:
     gaid = substrate.incept("acme:gaid")
     marta = substrate.incept("acme:marta")
     said = substrate.said({"t": "end", "act": "issue", "disp": "endorse", "s": 4})
+    from utina.substrate import ENDORSEMENT_SCHEMA
+    acdc, acdc_sig = substrate.issue_acdc(
+        marta, ENDORSEMENT_SCHEMA, {"said": "E" + "s" * 43, "act": "issue", "disp": "endorse"}
+    )
     print(json.dumps({
         "gaid": gaid,
         "marta": marta,
         "said": said,
         "sig": substrate.sign(marta, {"t": "act", "d": said}),
         "rot": substrate.rotate(gaid, said),
+        "acdc": acdc["d"],
+        "acdc_sig": acdc_sig,
     }))
 """
 

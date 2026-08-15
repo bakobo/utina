@@ -48,10 +48,12 @@ from keri.core.coring import Saider, dumps  # type: ignore[import-untyped]
 from keri.core.indexing import Siger  # type: ignore[import-untyped]
 from keri.core.signing import Salter  # type: ignore[import-untyped]
 from keri.core.structing import SealDigest  # type: ignore[import-untyped]
+from keri.kering import Vrsn_1_0  # type: ignore[import-untyped]
+from keri.vc.proving import credential  # type: ignore[import-untyped]
 
 from .canonical import canonical_json
-from .errors import AID_UNKNOWN, ALIAS_TAKEN, STORE_NOT_OURS
-from .protocol import AID, SAID
+from .errors import ACDC_UNVERIFIABLE, AID_UNKNOWN, ALIAS_TAKEN, STORE_NOT_OURS
+from .protocol import ACDC_DT, AID, SAID
 
 #: The demo's pinned salt: sixteen literal bytes. Correct for a fixture whose
 #: purpose is reproducible replay, and a key-management failure in production.
@@ -176,6 +178,41 @@ class KeripySubstrate:
                         found: str = serder.said
                         return found
         return None
+
+    # -- credentials ----------------------------------------------------------
+
+    def issue_acdc(
+        self, issuer: AID, schema: SAID, attributes: Mapping[str, object]
+    ) -> tuple[Mapping[str, object], str]:
+        """A real, registry-less ACDC: the v1 ilkless shape, anchored by an ixn.
+
+        ``version=Vrsn_1_0`` is load-bearing: ``credential()`` defaults to the
+        v2 version string while writing v1 field labels, and the v1 ilkless
+        shape ``{v, d, i, s, a}`` is exactly the dossier schema's required set
+        (this.i @7db5c4). ``dt`` is supplied rather than inherited, because
+        keripy would otherwise stamp wall-clock time into the attributes block
+        and the same endorsement would digest differently on every run. The
+        signature is over ``creder.raw`` verbatim — KERI's own bytes, never
+        this substrate's canonical reordering — because the whole point of a
+        real credential is that a stranger with keripy and the key log verifies
+        it with nothing of ours (@vi4t4i).
+        """
+        hab = self._hab(issuer)
+        creder = credential(
+            schema=schema,
+            issuer=issuer,
+            data={"dt": ACDC_DT, **dict(attributes)},
+            version=Vrsn_1_0,
+        )
+        siger = hab.sign(creder.raw, indexed=True)[0]
+        verified, _ = eventing.verifySigs(
+            raw=creder.raw, sigers=[siger], verfers=hab.kever.verfers
+        )
+        if not verified:
+            raise ACDC_UNVERIFIABLE(issuer=issuer)
+        hab.interact(data=[SealDigest(d=creder.said)._asdict()])
+        sad: dict[str, object] = dict(creder.sad)
+        return sad, f"{hab.kever.lastEst.d}{COORDINATE}{siger.qb64}"
 
     # -- committed bytes ------------------------------------------------------
 

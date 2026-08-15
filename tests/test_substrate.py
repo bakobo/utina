@@ -16,6 +16,7 @@ import pytest
 from bakobo.errors import BakoboError
 
 from utina.substrate import (
+    ENDORSEMENT_SCHEMA,
     SAID_PLACEHOLDER,
     FacadeSubstrate,
     canonical_bytes,
@@ -249,3 +250,54 @@ def test_the_anchor_binding_is_recorded_and_answerable(substrate):
     rotation = substrate.rotate("acme:gaid", anchor)
     assert substrate.anchoring_event(anchor) == rotation
     assert substrate.anchoring_event("E" + "z" * 43) is None
+
+
+# --- a registry-less credential (this.i @7db5c4, @vi4t4i) ----------------------
+
+
+def facade_acdc(substrate):
+    substrate.incept("acme:marta")
+    return substrate.issue_acdc(
+        "acme:marta",
+        ENDORSEMENT_SCHEMA,
+        {"said": "E" + "s" * 43, "act": "issue", "disp": "endorse"},
+    )
+
+
+def test_a_facade_credential_wears_no_keri_version_string(substrate):
+    """@d2nlhb's honesty: the facade mirrors the shape without imitating the substance."""
+    sad, _ = facade_acdc(substrate)
+    version = sad["v"]
+    assert isinstance(version, str)
+    assert "facade" in version
+
+
+def test_a_facade_credential_signature_is_the_facades_own_discipline(substrate):
+    """One canonicalization for every mapping, so verify() covers the credential too."""
+    sad, signature = facade_acdc(substrate)
+    assert substrate.verify("acme:marta", sad, signature)
+
+
+def test_anchoring_a_credential_advances_the_log_and_not_the_keys(substrate):
+    sad, _ = facade_acdc(substrate)
+    assert substrate._key_index["acme:marta"] == 0
+    assert substrate._kel_seq["acme:marta"] == 1
+    assert substrate.anchoring_event(sad["d"]) is not None
+
+
+def test_a_facade_credential_that_cannot_verify_is_never_returned():
+    """Fail closed at issuance: unverifiable evidence must not reach a caller."""
+
+    class Lying(FacadeSubstrate):
+        def verify(self, aid, body, signature):
+            return False
+
+    lying = Lying()
+    lying.incept("acme:marta")
+    with pytest.raises(BakoboError) as caught:
+        lying.issue_acdc(
+            "acme:marta",
+            ENDORSEMENT_SCHEMA,
+            {"said": "E" + "s" * 43, "act": "issue", "disp": "endorse"},
+        )
+    assert caught.value.code == "e.proof.acdc-sig.f"

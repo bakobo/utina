@@ -9,7 +9,9 @@ from .canonical import SAID_LENGTH, SAID_PLACEHOLDER, canonical_bytes, digest
 from .errors import AID_UNKNOWN, ALIAS_TAKEN, NOT_CANONICAL, SUBSTRATE_UNKNOWN
 from .facade import FacadeSubstrate
 from .protocol import (
+    ACDC_DT,
     AID,
+    ENDORSEMENT_SCHEMA,
     SAID,
     Corpus,
     Event,
@@ -21,9 +23,11 @@ from .protocol import (
 from .select import FACADE, KERIPY, NAMES, substrate_named
 
 __all__ = [
+    "ACDC_DT",
     "AID",
     "AID_UNKNOWN",
     "ALIAS_TAKEN",
+    "ENDORSEMENT_SCHEMA",
     "FACADE",
     "KERIPY",
     "NAMES",

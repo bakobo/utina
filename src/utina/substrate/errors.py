@@ -37,6 +37,22 @@ ALIAS_TAKEN = ErrorCode(
     hint="Incept each party once, and hold the identifier the first inception returned.",
 )
 
+ACDC_UNVERIFIABLE = ErrorCode(
+    code="e.proof.acdc-sig.f",
+    title="A credential this substrate just signed does not verify.",
+    detail=(
+        "The substrate issued a credential for {issuer} and then failed to verify its own "
+        "signature over the credential's canonical bytes. The credential was not returned "
+        "and its anchor was not written, because evidence nobody can check confers no "
+        "authority."
+    ),
+    args=("issuer",),
+    hint=(
+        "The substrate's signing and verifying paths disagree about the credential's bytes. "
+        "Suspect the canonical encoding or the key state the signature names."
+    ),
+)
+
 STORE_NOT_OURS = ErrorCode(
     code="e.state.store-not-ours.f",
     title="That directory was not made by this substrate.",
