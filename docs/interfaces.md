@@ -334,7 +334,12 @@ matching `i` and `said` is DECLINED.
 
 ```python
 class Constructor:
-    def __init__(self, substrate: Substrate, gaid: AID) -> None: ...
+    def __init__(self, substrate: Substrate, gaid: AID, *, values: FoldValues) -> None: ...
+    @classmethod
+    def resume(
+        cls, substrate: Substrate, gaid: AID, *,
+        values: FoldValues, events: Sequence[Event],
+    ) -> Constructor: ...
     def incept_domain(self, founding_law: Mapping[str, object]) -> Event: ...
     def enact_amendment(
         self, law: Mapping[str, object], *, act: str | None = None
@@ -345,6 +350,12 @@ class Constructor:
 ```
 
 Nothing here judges, and nothing in `utina.fold` writes.
+
+`resume` continues a committed record the constructor did not write (this.i @jzozfn):
+founding is derived from an inception among the events, and a record whose positions do
+not run contiguously from zero is refused with `e.input.format.resume-record.f`. The
+`values` factory is the injected seam @tvaq2s describes — the writing plane constructs
+the fold's value types without importing the fold.
 
 ## Errors
 
