@@ -3,8 +3,10 @@
 Expressed as Acme's own committed clause predicate in a structure isomorphic to
 the dossier specification's threshold operators — same operator, slot and
 weight shape, same unity threshold, same three dispositions — rather than as
-real ACDC edge groups, for the reasons this.i @ta7vle sets out. When the keripy
-commission swaps the encoding, the substrate changes and the fold does not.
+real ACDC edge groups, for the reasons this.i @ta7vle sets out. The evidence
+half moved to real credentials (this.i @7db5c4); this, the law half, is the
+wide commission tick ~5psg tracks — real edge groups oblige the semantics pin
+and the refusal machinery axiom 4 demands.
 
 The encoding is a field-for-field image of the parsed types in
 ``docs/interfaces.md``: a clause carries ``id``, ``governs`` and ``group``; a

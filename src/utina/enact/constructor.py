@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from utina.substrate import AID, SAID, Event, FoldValues, Substrate
+from utina.substrate import AID, ENDORSEMENT_SCHEMA, SAID, Event, FoldValues, Substrate
 
 from .errors import (
     DOMAIN_INCEPTED,
@@ -31,7 +31,9 @@ from .errors import (
 #: fold's slot predicate reads exactly that field: an endorsement without it is
 #: not refused, it is silently PENDING, so the field is the seam and not a
 #: decoration. This domain commits no revocation operator — a party who changes
-#: their mind declines, which is another issuance.
+#: their mind declines, which is another issuance — and the credentials this
+#: constructor issues carry no registry, so they are structurally unrevokable;
+#: whether revocation ever enters the vocabulary is deliberately open (~56js).
 ISSUANCE = "issue"
 
 
@@ -159,12 +161,25 @@ class Constructor:
             raise DOMAIN_UNINCEPTED(gaid=self.gaid)
 
     def _dispose(self, aid: AID, subject: SAID, disposition: str) -> Event:
+        """Issue the credential, then commit the event that embeds it.
+
+        The credential is a real, registry-less ACDC — the substrate constructs,
+        signs, verifies and anchors it (this.i @7db5c4) — and the event around it
+        is the corpus's own sealing discipline, unchanged (this.i @vi4t4i). The
+        substrate signature travels in ``acdc_sig`` for a stranger to verify with
+        KERI tooling alone; the fold never reads it.
+        """
         self._require_founded()
         if subject not in self._saids:
             raise SUBJECT_UNKNOWN(aid=aid, subject=subject)
+        sad, signature = self.substrate.issue_acdc(
+            aid,
+            ENDORSEMENT_SCHEMA,
+            {"said": subject, "act": ISSUANCE, "disp": disposition},
+        )
         return self._emit(
             "endorsement",
-            {"t": "end", "i": aid, "act": ISSUANCE, "disp": disposition, "said": subject},
+            {"t": "end", "i": aid, "acdc": sad, "acdc_sig": signature},
             aid,
         )
 

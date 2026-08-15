@@ -291,7 +291,17 @@ class Substrate(Protocol):
     def incept(self, alias: str) -> AID: ...
     def rotate(self, aid: AID, anchor: SAID) -> SAID: ...
     def anchoring_event(self, said: SAID) -> SAID | None: ...
+    def issue_acdc(
+        self, issuer: AID, schema: SAID, attributes: Mapping[str, object]
+    ) -> tuple[Mapping[str, object], str]: ...
 ```
+
+`issue_acdc` mints a registry-less credential (this.i @7db5c4): constructed in the
+dossier schema's required shape with a fixed `dt`, signed over its own canonical bytes,
+verified fail-closed (`e.proof.acdc-sig.f`), and anchored into the issuer's key log by an
+interaction event — the log advances, the keys do not. It returns the credential as a
+plain mapping together with the signature, opaque, in the same establishment-coordinate
+format `sign` uses.
 
 `rotate` exists because Custos binds law-amending enactments to anchor in an
 establishment event: Acme's board-seating amendment rides a rotation. It returns
@@ -313,22 +323,35 @@ owns the `with`.
 
 ## The endorsement body — field names are contract, not preference
 
-An endorsement's field names are load-bearing across the enact/slots seam: if the writer
-and the predicate disagree on a name, every slot silently reads PENDING and every decision
-is pending forever. Names are the dossier specification's, so the later move to real ACDC
-endorsements is a re-encoding rather than a rename.
+An endorsement's shape is load-bearing across the enact/slots seam: if the writer and the
+predicate disagree on a name or a nesting, every slot silently reads PENDING and every
+decision is pending forever. Since this.i @7db5c4/@vi4t4i the endorsement event embeds a
+real, registry-less ACDC, and the field names inside it are the dossier specification's
+own — the earlier flat encoding chose them so this move was a re-encoding, not a rename.
 
 ```python
-{"i": AID,          # issuer — the endorser, and the slot's expected party
- "disp": str,       # "endorse" | "decline"
- "act": str,        # "issue" | "revoke"
- "said": SAID}      # the subject: the decision this endorsement is about
+{"t": "end",
+ "i": AID,           # the event's vouched signer — must equal the credential's issuer
+ "acdc":             # the credential, in the dossier schema's required shape
+   {"v": str,        # version string (keripy's under keripy; an honest label under the facade)
+    "d": SAID,       # the credential's own identifier
+    "i": AID,        # issuer — the endorser, and the slot's expected party
+    "s": SAID,       # the pinned endorsement schema (utina.substrate.ENDORSEMENT_SCHEMA)
+    "a": {"d": SAID,           # the attribute block's identifier
+          "dt": str,           # the fixed fixture timestamp (utina.substrate.ACDC_DT)
+          "said": SAID,        # the subject: the decision this endorsement is about
+          "act": str,          # "issue" | "revoke"
+          "disp": str}},       # "endorse" | "decline"
+ "acdc_sig": str}    # the issuer's signature over the credential's own bytes
 ```
 
-A slot is ENDORSED only when a committed, signed endorsement carries `i` equal to the
-slot's endorser, `disp == "endorse"`, `act == "issue"`, and `said` equal to the subject.
-Anything else — including anything unverifiable — is PENDING. `disp == "decline"` with a
-matching `i` and `said` is DECLINED.
+A slot is ENDORSED only when a committed, signed endorsement embeds a credential whose
+`i` (agreeing with the event's `i`) is the slot's endorser, whose `s` is the pinned
+schema, and whose attributes carry `disp == "endorse"`, `act == "issue"`, and `said`
+equal to the subject. Anything else — including anything unverifiable — is PENDING.
+`disp == "decline"` with the same gates otherwise satisfied is DECLINED. The fold never
+reads `acdc_sig`: it rides for a stranger with KERI tooling, and the credential's anchor
+in the issuer's key log is answerable through `Substrate.anchoring_event`.
 
 ## `utina.enact` — the constructor's verb
 

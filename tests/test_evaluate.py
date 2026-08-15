@@ -35,6 +35,7 @@ from utina.fold.finding import (
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal
 from utina.fold.triple import Position
+from utina.substrate import ENDORSEMENT_SCHEMA
 
 MARTA, DEV, NINA = "acme:marta", "acme:dev", "acme:nina"
 GAID = "acme:gaid"
@@ -95,10 +96,28 @@ class Log:
         )
 
     def dispose(self, who: str, subject: str, disposition: str) -> str:
+        name = f"{disposition}-{who}"
         return self._add(
-            f"{disposition}-{who}",
+            name,
             "endorsement",
-            {"t": "end", "i": who, "act": "issue", "disp": disposition, "said": subject},
+            {
+                "t": "end",
+                "i": who,
+                "acdc": {
+                    "v": "ACDCtest",
+                    "d": f"E{name}-credential",
+                    "i": who,
+                    "s": ENDORSEMENT_SCHEMA,
+                    "a": {
+                        "d": f"E{name}-attributes",
+                        "dt": "2026-01-01T00:00:00.000000+00:00",
+                        "said": subject,
+                        "act": "issue",
+                        "disp": disposition,
+                    },
+                },
+                "acdc_sig": f"E{name}-sig",
+            },
         )
 
     def endorse(self, who: str, subject: str) -> str:

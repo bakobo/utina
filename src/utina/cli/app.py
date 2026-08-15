@@ -335,8 +335,11 @@ def enact_command(args: argparse.Namespace, console: Console) -> int:
         after = appraise(
             corpus, Committed(subject), at=event.position, label="after this act"
         )
+        anchor = record.substrate.anchoring_event(str(event.body["acdc"]["d"]))
         console.out.write(
-            enact_screen(event, before, after, _aliases(record), console.style)
+            enact_screen(
+                event, before, after, _aliases(record), console.style, anchor=anchor
+            )
         )
     return 0
 

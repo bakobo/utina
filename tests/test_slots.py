@@ -51,17 +51,30 @@ def signed(
     *,
     subject: str = SUBJECT,
     disp: str = "endorse",
+    act: str = "issue",
     kind: str = "endorsement",
-    **extra: Any,
+    schema: str = slots.ENDORSEMENT_SCHEMA,
 ) -> Ev:
-    """One committed endorsement act.
+    """One committed endorsement act, embedding its credential (this.i @vi4t4i).
 
-    ``body["said"]`` is the SUBJECT's SAID — the decision being endorsed — while
+    ``a["said"]`` is the SUBJECT's SAID — the decision being endorsed — while
     ``Ev.said`` is this act's own. That collision of names is the dossier's, kept
     deliberately so the shape stays isomorphic.
     """
-    body: dict[str, Any] = {"i": issuer, "disp": disp, "act": "issue", "said": subject}
-    body.update(extra)
+    acdc: dict[str, Any] = {
+        "v": "ACDCtest",
+        "d": f"{said}-credential",
+        "i": issuer,
+        "s": schema,
+        "a": {
+            "d": f"{said}-attributes",
+            "dt": "2026-01-01T00:00:00.000000+00:00",
+            "said": subject,
+            "act": act,
+            "disp": disp,
+        },
+    }
+    body: dict[str, Any] = {"t": "end", "i": issuer, "acdc": acdc, "acdc_sig": f"{said}-sig"}
     return Ev(said=said, kind=kind, body=body)
 
 
@@ -129,7 +142,8 @@ def test_a_disposition_the_law_does_not_recognize_leaves_the_slot_pending():
 
 
 def test_a_missing_disposition_leaves_the_slot_pending():
-    unnamed = Ev(said="EAct1", body={"i": MARTA, "act": "issue", "said": SUBJECT})
+    unnamed = signed("EAct1", MARTA)
+    del unnamed.body["acdc"]["a"]["disp"]
     assert disposition_of(founders(), [unnamed], MARTA) is Disposition.PENDING
 
 
@@ -163,17 +177,63 @@ def test_an_event_of_another_kind_is_not_an_endorsement_however_it_reads():
 def test_an_endorsement_that_is_not_an_issuance_does_not_count_toward_issuance():
     """MxN counts endorsements carrying act "issue"; a revocation endorsement is
     the business of a revocation operator this domain has not committed."""
-    events = [signed("EAct1", MARTA, **{"act": "revoke"})]
+    events = [signed("EAct1", MARTA, act="revoke")]
     assert disposition_of(founders(), events, MARTA) is Disposition.PENDING
 
 
 def test_a_body_whose_fields_are_not_strings_is_unverifiable_and_so_pending():
-    malformed = Ev(said="EAct1", body={"i": MARTA, "disp": 7, "act": "issue", "said": SUBJECT})
+    malformed = signed("EAct1", MARTA)
+    malformed.body["acdc"]["a"]["disp"] = 7
     assert disposition_of(founders(), [malformed], MARTA) is Disposition.PENDING
 
 
 def test_an_event_with_no_body_at_all_is_pending_rather_than_an_error():
     assert disposition_of(founders(), [Ev(said="EAct1")], MARTA) is Disposition.PENDING
+
+
+def test_the_retired_flat_encoding_no_longer_fills_a_slot():
+    """The pre-@vi4t4i shape — fields on the body, no credential — is not evidence now.
+
+    Pinned so the old bytes cannot quietly keep working beside the new: a predicate
+    honoring both encodings would let an event carry two answers to what it says.
+    """
+    flat = Ev(
+        said="EAct1", body={"i": MARTA, "disp": "endorse", "act": "issue", "said": SUBJECT}
+    )
+    assert disposition_of(founders(), [flat], MARTA) is Disposition.PENDING
+
+
+def test_a_credential_claiming_another_schema_never_counts():
+    """The dossier's slot names the schema its endorsement MUST satisfy (:356)."""
+    events = [signed("EAct1", MARTA, schema="E" + "x" * 43)]
+    assert disposition_of(founders(), events, MARTA) is Disposition.PENDING
+
+
+def test_a_credential_that_is_not_a_mapping_is_pending_rather_than_an_error():
+    impostor = signed("EAct1", MARTA)
+    impostor.body["acdc"] = "not a credential"
+    assert disposition_of(founders(), [impostor], MARTA) is Disposition.PENDING
+
+
+def test_an_attributes_block_that_is_not_a_mapping_is_pending_rather_than_an_error():
+    impostor = signed("EAct1", MARTA)
+    impostor.body["acdc"]["a"] = "compacted-away"
+    assert disposition_of(founders(), [impostor], MARTA) is Disposition.PENDING
+
+
+def test_a_credential_wrapped_by_a_different_signer_never_counts():
+    """The event's vouched signer and the credential's claimed issuer must agree.
+
+    The dossier identifies the endorser by the credential's i (:356), and utina's
+    wrapper discipline makes the event's i the party the substrate vouched for. A
+    committed event where the two diverge is not attributed to either — fail closed.
+    """
+    wrapped = signed("EAct1", MARTA)
+    wrapped.body["i"] = MALLORY
+    assert disposition_of(founders(), [wrapped], MARTA) is Disposition.PENDING
+    assert disposition_of(
+        Group("MxN", (Slot(MALLORY, HALF),)), [wrapped], MALLORY
+    ) is Disposition.PENDING
 
 
 # --- Contradiction ------------------------------------------------------------

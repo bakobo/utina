@@ -156,7 +156,7 @@ def test_an_affirmed_screen_carries_its_clause_endorsements_and_bundle():
     assert "AFFIRMED" in out
     assert "clauses" in out and "A1" in out
     assert "reached by" in out
-    assert "ElO0tE7Ry0ZP" in out and "ETR_6FPPeGzR" in out
+    assert "E7rZDgjVNGiJ" in out and "ETFRV_i1XbrD" in out
     assert "evidence" in out
     assert "unity reached" in out
 
@@ -176,7 +176,7 @@ def test_a_defeated_screen_carries_the_clause_class_subcode_and_declination():
     assert "DEFEATED" in out
     assert "authority (the actor lacked the invoked power)" in out
     assert "subcode" in out and "9-dev-as-founder-at-acme" in out
-    assert "Ei1G09hY6yu2" in out
+    assert "ENETeOGqyXf3" in out
     assert "unity unreachable" in out
 
 

@@ -47,7 +47,16 @@ from utina.fold.finding import (
     SelfConvicted,
 )
 from utina.fold.refusal import Refusal
-from utina.fold.slots import ACT_FIELD, DISPOSITION_FIELD, ENDORSE, ISSUER_FIELD, SUBJECT_FIELD
+from utina.fold.slots import (
+    ACT_FIELD,
+    DISPOSITION_FIELD,
+    ENDORSE,
+    ISSUER_FIELD,
+    SCHEMA_FIELD,
+    SUBJECT_FIELD,
+    attributes,
+    credential,
+)
 from utina.fold.triple import Position
 
 __all__ = [
@@ -491,10 +500,11 @@ def _gloss(event: Event, aliases: Aliases) -> str:
         return f"a successor law, enacted as {event.body.get(ACT_FIELD)}"
     if event.kind == "act":
         return f"an act of the class {event.body.get(ACT_FIELD)}"
-    verb = "endorses" if event.body.get(DISPOSITION_FIELD) == ENDORSE else "declines"
+    block = attributes(event)
+    verb = "endorses" if block.get(DISPOSITION_FIELD) == ENDORSE else "declines"
     return (
-        f"{aliases.short(str(event.body.get(ISSUER_FIELD)))} {verb} "
-        f"{abbrev(str(event.body.get(SUBJECT_FIELD)))}"
+        f"{aliases.short(str(credential(event).get(ISSUER_FIELD)))} {verb} "
+        f"{abbrev(str(block.get(SUBJECT_FIELD)))}"
     )
 
 
@@ -606,38 +616,43 @@ def verdict_word(outcome: Finding | Refusal) -> str:
 
 
 def enact_screen(
-    event: Event, before: Appraisal, after: Appraisal, aliases: Aliases, style: Style
+    event: Event,
+    before: Appraisal,
+    after: Appraisal,
+    aliases: Aliases,
+    style: Style,
+    *,
+    anchor: str | None = None,
 ) -> str:
     """A committed act, and what the record says about its subject because of it.
 
-    The ``body`` line is the one place on any screen where a party appears as a full
-    identifier rather than as an alias, and it is deliberate: the line is labelled as
-    the committed body, an alias never enters committed bytes (this.i @cldspl), and
-    printing one there would assert the opposite of what the decision says. It is
-    wrapped rather than truncated, because a full value is not the antipattern — a
-    short teaser is.
+    The credential block is the one place on any screen where a party appears as a
+    full identifier rather than as an alias, and it is deliberate: the block is
+    labelled as committed bytes, an alias never enters committed bytes (this.i
+    @cldspl), and printing one there would assert the opposite of what the decision
+    says. Values are wrapped rather than truncated, because a full value is not the
+    antipattern — a short teaser is.
+
+    ``anchor`` is the key-log event the credential's identifier is sealed into,
+    asked of the substrate by the caller: the dossier's Endorsed predicate requires
+    the anchor (this.i @7db5c4), so the screen shows it rather than implying it.
     """
-    issuer = str(event.body.get(ISSUER_FIELD))
-    disposition = str(event.body.get(DISPOSITION_FIELD))
+    acdc = credential(event)
+    block = attributes(event)
+    issuer = str(acdc.get(ISSUER_FIELD))
+    disposition = str(block.get(DISPOSITION_FIELD))
+    subject = abbrev(str(block.get(SUBJECT_FIELD)))
     verb = "endorses" if disposition == ENDORSE else "declines"
-    committed = (
-        f"{ISSUER_FIELD}={issuer} "
-        f"{ACT_FIELD}={event.body.get(ACT_FIELD)} "
-        f"{DISPOSITION_FIELD}={disposition} "
-        f"{SUBJECT_FIELD}={abbrev(str(event.body.get(SUBJECT_FIELD)))}"
-    )
     lines = [
         MARGIN
         + style.banner(f"{'ENACTED':<10}", GREEN)
-        + f"  {aliases.full(issuer)} {verb} "
-        f"{abbrev(str(event.body.get(SUBJECT_FIELD)))}",
+        + f"  {aliases.full(issuer)} {verb} {subject}",
         MARGIN + RULE,
         "",
         MARGIN + style.strong("committed event"),
         field(style, "coordinate", f"seq {event.position.seq}", indent=4),
         field(style, "kind", event.kind, indent=4),
         field(style, "identifier", event.said, indent=4),
-        *wrapped(style, "body", committed, indent=4),
         # Whole, and wrapped. A keripy signature is the establishment event's SAID, a
         # dot, and the indexed signature (this.i @zk27gz) — and for a party that has
         # never rotated, that leading SAID *is* their identifier, because a KERI prefix
@@ -648,6 +663,34 @@ def enact_screen(
             style,
             "signature",
             f"{event.body.get('sig')} (the substrate verified it before recording)",
+            indent=4,
+        ),
+        "",
+        MARGIN + style.strong("embedded credential (a registry-less ACDC, this.i @7db5c4)"),
+        field(style, "identifier", str(acdc.get("d")), indent=4),
+        field(style, "schema", str(acdc.get(SCHEMA_FIELD)), indent=4),
+        *wrapped(style, "issuer", issuer, indent=4),
+        *wrapped(
+            style,
+            "attributes",
+            f"{ACT_FIELD}={block.get(ACT_FIELD)} "
+            f"{DISPOSITION_FIELD}={disposition} "
+            f"{SUBJECT_FIELD}={subject} dt={block.get('dt')}",
+            indent=4,
+        ),
+        field(
+            style,
+            "anchor",
+            f"sealed at {abbrev(anchor)} in the issuer's key log"
+            if anchor
+            else "not found in the issuer's key log",
+            indent=4,
+        ),
+        *wrapped(
+            style,
+            "signature",
+            f"{event.body.get('acdc_sig')} (a stranger verifies this with KERI tooling "
+            "and the key log alone)",
             indent=4,
         ),
         "",

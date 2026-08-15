@@ -40,8 +40,8 @@ utina eval hire-vp-sales --at d3
   subject     E1rffWC9X3TbAvOb7uva7RUxD1CvqcQ6ovLHW64URWxY
 
   slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      E0knXw2hGgUl...
-  9-dev-as-founder     1/2   declined      Ei1G09hY6yu2...
+  9-marta-as-founder   1/2   endorsed      ENzStORRBBmE...
+  9-dev-as-founder     1/2   declined      ENETeOGqyXf3...
                     ------
   endorsed             1/2   of 1          unity not reached
   reachable            1/2   of 1          unity unreachable: a declined slot is spent
@@ -50,7 +50,7 @@ utina eval hire-vp-sales --at d3
     clause      A1
     defeater    authority (the actor lacked the invoked power)
     subcode     9-dev-as-founder-at-acme
-    citation    the declination Ei1G09hY6yu2... committed by 9-dev-as-founder-at-acme
+    citation    the declination ENETeOGqyXf3... committed by 9-dev-as-founder-at-acme
     reason      Unity is unreachable under clause A1: 9-dev-as-founder-at-acme committed
                 a signed declination, which spends that slot's weight, and the weight
                 that can still arrive no longer reaches unity.
@@ -86,7 +86,7 @@ utina eval hire-vp-sales --at d3
 
       clause        A1, in force at d3 under the law head 932f0ab892df...
       defeater      authority - the actor lacked the invoked power
-      citation      the declination Ei1G09hY6yu2... committed by 9-dev-as-founder-at-acme
+      citation      the declination ENETeOGqyXf3... committed by 9-dev-as-founder-at-acme
       subcode       9-dev-as-founder-at-acme
 
   The arithmetic
@@ -129,7 +129,7 @@ utina eval hire-vp-sales --at d3
 
   DEFEATED    clause A1, authority (the actor lacked the invoked power)
               subcode 9-dev-as-founder-at-acme
-              cited: the declination Ei1G09hY6yu2... committed by 9-dev-as-founder-at-acme
+              cited: the declination ENETeOGqyXf3... committed by 9-dev-as-founder-at-acme
 ```
 
 Good at: it argues rather than asserts, and the gauge makes the centerpiece visual —

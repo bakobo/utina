@@ -14,11 +14,14 @@ dispositions."
 **Fail closed.** A slot is ENDORSED only when every one of these holds:
 
 1. the act is committed as an event of kind ``endorsement``;
-2. its issuer is exactly the endorser the slot names;
-3. it carries ``act`` of ``"issue"`` — this domain commits no revocation operator;
-4. it carries ``disp`` of ``"endorse"``;
-5. its ``said`` attribute is the subject under appraisal;
-6. its issuer has not retracted it.
+2. the event embeds a credential (``this.i`` @vi4t4i), and the credential's issuer
+   and the event's vouched signer are both exactly the endorser the slot names;
+3. the credential names the pinned endorsement schema (``this.i`` @7db5c4);
+4. its attributes carry ``act`` of ``"issue"`` — this domain commits no revocation
+   operator;
+5. its attributes carry ``disp`` of ``"endorse"``;
+6. its attributes' ``said`` is the subject under appraisal;
+7. its issuer has not retracted it.
 
 Anything else — an unrecognized disposition, a body whose fields are not strings,
 an event of another kind that happens to read like an endorsement — is PENDING.
@@ -40,20 +43,27 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from utina.fold.group import AID, SAID, Disposition, Group, Slot
+from utina.substrate import ENDORSEMENT_SCHEMA
 
 __all__ = [
+    "ACDC_FIELD",
     "ACT_FIELD",
+    "ATTRIBUTES_FIELD",
     "DECLINE",
     "DISPOSITION_FIELD",
     "ENDORSE",
     "ENDORSEMENT_KIND",
+    "ENDORSEMENT_SCHEMA",
     "ISSUANCE",
     "ISSUER_FIELD",
     "REVOKES_FIELD",
+    "SCHEMA_FIELD",
     "SUBJECT_FIELD",
     "CommittedEvent",
     "SlotDisposition",
+    "attributes",
     "classify",
+    "credential",
     "declinations",
     "dispositions",
     "endorsements",
@@ -67,9 +77,23 @@ __all__ = [
 ENDORSEMENT_KIND = "endorsement"
 """The event kind an endorsement act is committed as."""
 
+ACDC_FIELD = "acdc"
+"""Where the event embeds its credential (``this.i`` @vi4t4i). The predicate reads
+the credential; the event around it is the corpus's sealing discipline."""
+
+ATTRIBUTES_FIELD = "a"
+"""The credential's attributes block, where ``disp``, ``act`` and ``said`` live."""
+
+SCHEMA_FIELD = "s"
+"""The credential's schema. The dossier's slot names the schema its endorsement
+MUST satisfy (``dossier-spec-body.md:356``); with the composition rule still
+domain-native there is one schema, so the predicate pins ``ENDORSEMENT_SCHEMA``."""
+
 ISSUER_FIELD = "i"
-"""Who acted. The dossier identifies the expected endorser by the issuer of the ACDC
-a slot references (``dossier-spec-body.md:358``); flat evidence carries it in the body."""
+"""Who acted. The dossier identifies the expected endorser by the issuer (``i``) of
+the ACDC a slot references (``dossier-spec-body.md:356``); utina requires the event's
+vouched signer and the credential's claimed issuer to agree, because evidence in
+which they diverge attributes an act to nobody."""
 
 DISPOSITION_FIELD = "disp"
 SUBJECT_FIELD = "said"
@@ -200,9 +224,25 @@ def _classify_slot(
     ]
     for wanted, disposition in _PRECEDENCE:
         for event in standing:
-            if event.body.get(DISPOSITION_FIELD) == wanted:
+            if attributes(event).get(DISPOSITION_FIELD) == wanted:
                 return SlotDisposition(slot.endorser, disposition, event.said)
     return SlotDisposition(slot.endorser, Disposition.PENDING)
+
+
+def credential(event: CommittedEvent) -> Mapping[str, object]:
+    """The credential the event embeds, or an empty mapping — never an error.
+
+    Public because the display plane reads the same committed values the
+    predicate reads, and two readings of one nesting would drift.
+    """
+    acdc = event.body.get(ACDC_FIELD)
+    return acdc if isinstance(acdc, Mapping) else {}
+
+
+def attributes(event: CommittedEvent) -> Mapping[str, object]:
+    """The embedded credential's attributes block, or an empty mapping."""
+    block = credential(event).get(ATTRIBUTES_FIELD)
+    return block if isinstance(block, Mapping) else {}
 
 
 def _fills(event: CommittedEvent, slot: Slot, subject: SAID) -> bool:
@@ -212,9 +252,13 @@ def _fills(event: CommittedEvent, slot: Slot, subject: SAID) -> bool:
     attributed and bound to the subject, and what it *says* is the caller's next
     question.
     """
+    acdc = credential(event)
+    block = attributes(event)
     return (
         event.kind == ENDORSEMENT_KIND
+        and acdc.get(ISSUER_FIELD) == slot.endorser
         and event.body.get(ISSUER_FIELD) == slot.endorser
-        and event.body.get(ACT_FIELD) == ISSUANCE
-        and event.body.get(SUBJECT_FIELD) == subject
+        and acdc.get(SCHEMA_FIELD) == ENDORSEMENT_SCHEMA
+        and block.get(ACT_FIELD) == ISSUANCE
+        and block.get(SUBJECT_FIELD) == subject
     )

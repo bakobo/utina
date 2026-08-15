@@ -157,12 +157,22 @@ def test_the_budget_is_tabled_twice(acme_double):
         assert acme_double.corpus.event(said).body["act"] == "approve-budget"
 
 
+def disp(event):
+    """The disposition the event's embedded credential carries, if it is one."""
+    acdc = event.body.get("acdc")
+    return acdc["a"]["disp"] if isinstance(acdc, dict) else None
+
+
+def subject_of(event):
+    return event.body["acdc"]["a"]["said"]
+
+
 def test_dev_declines_twice_and_both_are_signed_committed_acts(acme_double):
     """A no is never a silence, and two nos are two events."""
     declinations = [
         event
         for event in acme_double.events
-        if event.body.get("disp") == "decline" and event.body["i"] == DEV
+        if disp(event) == "decline" and event.body["i"] == DEV
     ]
     assert len(declinations) == 2
     for event in declinations:
@@ -174,7 +184,7 @@ def test_nina_declines_the_amendment(acme_double):
     assert [
         event.body["i"]
         for event in acme_double.events
-        if event.body.get("disp") == "decline"
+        if disp(event) == "decline"
     ] == [DEV, DEV, NINA]
 
 
@@ -202,21 +212,21 @@ def test_the_board_is_seated_at_the_amendment_s_own_beat(acme_double):
 
 def test_d1_is_the_second_founder_s_endorsement_of_the_bank_account(acme_double):
     event = acme_double.events[acme_double.at("d1").seq]
-    assert (event.body["i"], event.body["disp"]) == (DEV, "endorse")
-    assert event.body["said"] == acme_double.said("open-bank-account")
+    assert (event.body["i"], disp(event)) == (DEV, "endorse")
+    assert subject_of(event) == acme_double.said("open-bank-account")
 
 
 def test_d3_is_dev_s_declination_of_the_hire(acme_double):
     event = acme_double.events[acme_double.at("d3").seq]
-    assert (event.body["i"], event.body["disp"]) == (DEV, "decline")
-    assert event.body["said"] == acme_double.said("hire-vp-sales")
+    assert (event.body["i"], disp(event)) == (DEV, "decline")
+    assert subject_of(event) == acme_double.said("hire-vp-sales")
 
 
 def test_d6_is_dev_s_declination_of_the_retabled_budget(acme_double):
     """The centerpiece's second half addresses the second act, not the first."""
     event = acme_double.events[acme_double.at("d6").seq]
-    assert (event.body["i"], event.body["disp"]) == (DEV, "decline")
-    assert event.body["said"] == acme_double.said("approve-budget-retabled")
+    assert (event.body["i"], disp(event)) == (DEV, "decline")
+    assert subject_of(event) == acme_double.said("approve-budget-retabled")
 
 
 def test_d9_looks_back_from_after_the_amendment(acme_double):

@@ -1328,6 +1328,23 @@ corpus holds — something else, which Custos does not say either. Two conformin
 engines do not merely disagree on a verdict here; they disagree about what the
 evidence *is*.
 
+**SETTLED 2026-08-15, by a ruling that lands between the readings** (this.i
+@7db5c4, @vi4t4i; tick 2coc). An endorsement is now a real ACDC — the v1 ilkless
+shape, the dossier's single normative schema, a fixed fixture `dt`, signed over
+its own bytes and sealed into the issuer's KEL by an interaction event — and
+there is still no registry, because the dossier's own Endorsed predicate
+(dossier-spec-body.md:223) is signed + `disp` + `act` + expected issuer +
+anchored, with revocation not a term in it and no registry field in the
+normative schema. So B was right that the endorsement is a credential and wrong
+that a credential needs a TEL; A's cost argument survives only for the registry
+half it originally priced. What the corpus holds is answered by embedding: the
+governance event carries the credential in its body and keeps the corpus's own
+sealing discipline, so the fold's inputs stay closed at committed values.
+Revocation remains open as tick 56js, and the dossier-shaped door is an
+RMxN/RMxQ revocation operator in the law rather than a registry on the
+credential. The composition-rule half of §9's MAY stays domain-native; tick
+5psg holds the wide commission.
+
 **Ask Custos:** does an endorsement's `act` of `"issue"` denote an ACDC issuance
 in a credential registry, or is it a committed classification of the act with no
 registry implied? If the former, what is the committed form the fold folds — the

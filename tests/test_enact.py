@@ -17,7 +17,7 @@ import pytest
 from bakobo.errors import BakoboError
 
 from utina.enact import Constructor
-from utina.substrate import FacadeSubstrate
+from utina.substrate import ENDORSEMENT_SCHEMA, FacadeSubstrate
 
 LAW: Mapping[str, object] = {"clauses": ()}
 GAID = "acme:gaid"
@@ -113,21 +113,40 @@ def test_an_endorsement_names_its_subject_and_its_disposition(founded):
     act = founded.propose("open-bank-account")
     endorsement = founded.endorse("acme:marta", act.said)
     assert endorsement.kind == "endorsement"
-    assert endorsement.body["disp"] == "endorse"
-    assert endorsement.body["said"] == act.said
+    attributes = endorsement.body["acdc"]["a"]
+    assert attributes["disp"] == "endorse"
+    assert attributes["said"] == act.said
+    assert endorsement.body["acdc"]["i"] == "acme:marta"
     assert endorsement.body["i"] == "acme:marta"
 
 
+def test_an_endorsement_embeds_an_anchored_registry_less_credential(founded):
+    """this.i @7db5c4/@vi4t4i: the evidence is a real credential, and it is anchored."""
+    act = founded.propose("open-bank-account")
+    endorsement = founded.endorse("acme:marta", act.said)
+    acdc = endorsement.body["acdc"]
+    assert acdc["s"] == ENDORSEMENT_SCHEMA
+    assert "ri" not in acdc and "rd" not in acdc  # no registry: unrevokable
+    assert founded.substrate.anchoring_event(acdc["d"]) is not None
+    assert isinstance(endorsement.body["acdc_sig"], str) and endorsement.body["acdc_sig"]
+
+
 def test_a_declination_is_the_same_signed_act_with_the_other_disposition(founded):
-    """@7szbfw — one emitter, one committed field between yes and no."""
+    """@7szbfw — one emitter, and between yes and no the credential's attributes
+    differ in the disposition alone (plus the digest that seals it)."""
     act = founded.propose("open-bank-account")
     yes = founded.endorse("acme:marta", act.said)
     no = founded.decline("acme:dev", act.said)
     differing = {
         key for key in yes.body if yes.body[key] != no.body.get(key)
     }
-    assert differing == {"disp", "i", "s", "d", "sig"}
-    assert no.body["disp"] == "decline"
+    assert differing == {"acdc", "acdc_sig", "i", "s", "d", "sig"}
+    yes_attributes = yes.body["acdc"]["a"]
+    no_attributes = no.body["acdc"]["a"]
+    assert {
+        key for key in yes_attributes if yes_attributes[key] != no_attributes.get(key)
+    } == {"d", "disp"}
+    assert no_attributes["disp"] == "decline"
     assert no.kind == yes.kind == "endorsement"
 
 
