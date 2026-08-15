@@ -658,6 +658,12 @@ Make Custos's replayable governance useful to a real organization = goal:
 
     An endorsement stays a plain signed body anchored in a KEL, not an ACDC in a TEL = decision:
       id: 65buz7
+      superseded_in_part_by: 7db5c4
+      note: >
+        The half of this decision that kept an endorsement a plain signed body is withdrawn
+        by @7db5c4: an endorsement is now a real ACDC. The half that kept the TEL out
+        stands — the credential is registry-less, which @7db5c4 shows is conformant
+        evidence, and tick 56js holds the revocation question this deferred.
       why: >
         The dossier alignment makes real ACDC issuance the honest long-term encoding of an
         endorsement, and this is knowingly not that. Measured, the ACDC path on 2.0.0-dev6 costs
@@ -1016,3 +1022,60 @@ Make Custos's replayable governance useful to a real organization = goal:
         it cannot actually perform is decoration. The CLI's adapter `constructor_over` is
         deleted, and the invariants its pin asserted move to tests/test_enact.py as tests of
         the public API.
+
+    An endorsement is a real ACDC — registry-less, schema-pinned, anchored = decision:
+      id: 7db5c4
+      why: >
+        Tick 2coc, ruled narrow 2026-08-15: the evidence becomes real ACDCs while the law's
+        composition rule stays domain-native (tick 5psg holds the wide half). The dossier
+        spec's own Endorsed predicate is "a signed Endorsement ACDC with disp endorse and act
+        appropriate to the operation, issued by the expected endorser and anchored in that
+        endorser's KEL" (dossier-spec-body.md:223, restated :359) — revocation status is not a
+        term in it, and the normative endorsement schema (SAID
+        EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0, named at :367 as the single schema all
+        four operators use) has no registry field. So a registry-less credential is conformant
+        evidence rather than a shortcut, and the costs @65buz7 measured — the v1 registry
+        pinned inside a v2 KEL, the three-step anchor dance, the registry nonce — belonged to
+        the TEL, not to the credential. Tick 56js holds whether revocation ever enters the
+        vocabulary; the dossier-shaped door is an RMxN/RMxQ revocation OPERATOR in the law,
+        not a registry on the credential. Chose the v1 ilkless shape via
+        keri.vc.proving.credential(version=Vrsn_1_0, no status): its committed fields
+        {v, d, i, s, a} are exactly the schema's required set, where v2's acm adds a t field
+        the schema never names and most-compact SAID machinery that buys nothing here. The
+        one nondeterminism left was the wall-clock dt keripy injects into the attributes
+        block when the caller supplies none (proving.py:68, verified live on the pinned
+        build): the substrate supplies a fixed fixture timestamp, the same posture as the
+        pinned salt (@7jrbt3). Confessed reading: the schema's a.said is "typically the
+        dossier's SAID" and utina's subject is a committed act event — the schema and the
+        predicate are satisfied either way, and this note is where that reading is on the
+        record. docs/custos-questions.md Q32 carries the settlement: the middle reading, a
+        real credential with no registry operation.
+
+    The governance event embeds the credential; the corpus discipline is unchanged = decision:
+      id: vi4t4i
+      why: >
+        The event body seals its coordinate under the key s (Q24), and an ACDC's s is its
+        schema — one key, two meanings — so the endorsement event cannot simply BE the
+        credential. Nor should it: _emit's discipline (coordinate before identifier,
+        identifier before signature, signature verified before recording) presumes utina's
+        event shape, while an ACDC has its own identity discipline — a SAID over KERI's bytes
+        — and its own signature, indexed and attached, in the substrate's existing
+        est-coordinate format. Chose {t: "end", i, acdc: <sad>, acdc_sig: <signature>}: the
+        event is sealed, signed and verified exactly as every other kind, and the credential
+        inside stands alone — its own SAID, its own signature over its own canonical bytes,
+        its own KEL anchor sealed by an interaction event, which is what the dossier predicate
+        requires and what anchoring_event() already finds unchanged. Two signatures by one
+        party accepted and distinguished: the event's covers the coordinate and the embedding
+        (the corpus's replay claim), the credential's is what a stranger with KERI tooling and
+        the key log verifies with nothing of ours. That is not the body-borne signature
+        @yrkrqj rejected — the fold still never reads acdc_sig; it rides for the stranger,
+        and the predicate stays attribution over substrate-vouched evidence. The substrate
+        gains one protocol method, issue_acdc(issuer, schema, attributes) -> (sad, signature)
+        — construct, sign, verify fail-closed, anchor — because credential construction needs
+        the KERI library the planes above may not import; the facade mirrors it
+        deterministically and does not fake a sized KERI version string (@d2nlhb's honesty).
+        The fold's predicate reads issuer and schema from the embedded credential and
+        disposition, act and subject from its attributes block, and gains one conjunct — the
+        credential's s equals the pinned schema SAID, the one-schema form of the dossier's
+        "names the schema that endorsement MUST satisfy" (:356) — with anything malformed
+        still reading PENDING, never an error.
