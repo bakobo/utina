@@ -15,6 +15,20 @@ keyword force, once: "this document's clauses are the GARD's law for every
 position at and after the effectuation coordinate, and SHALL bind no position
 before it" (3001-3003).
 
+**Effectuation**, which is the coordinate that sentence turns on and the one
+Custos never defines. An enactment is an act: "a ratification is an enactment, an
+enactment is judged under the Constitution it amends, and the judgment is a
+finding like any other" (214-215). So an edition takes force where its enactment
+*carried* — the first coordinate at which the enactment's own lawfulness reaches
+unity under the clause governing it — and an enactment that is never endorsed, or
+that is defeated, confers nothing however well signed. Keying force on the
+enactment being merely committed is the reading this module shipped with, and
+under it a single party amends the law alone (tick ``4pmw``, R4 in
+``docs/custos-proposals.md``, Q33 in ``docs/custos-questions.md``, ``this.i``
+@xhtvuxnc). The consequence for this module is that the law fold is no longer a
+walk over law events: it consults the slot predicate, because whether an edition
+is in force is a question about evidence.
+
 Genesis is the exception, and Custos names it in the next breath: "The
 recursion's base case is genesis, constructed rather than judged" (2272-2274). A
 founding law judged under its predecessor would have no predecessor, so the
@@ -42,6 +56,7 @@ from bakobo.errors import ErrorCode  # type: ignore[import-untyped]
 
 from utina.fold.clause import MALFORMED_LAW, Clause
 from utina.fold.corpus import Corpus, Event
+from utina.fold.slots import dispositions
 from utina.fold.triple import LawHead, Position
 
 #: Where an inception or an enactment carries the law it commits. The event body
@@ -55,6 +70,17 @@ LAW_FIELD = "law"
 #: The clause set inside the law body. The one field ``docs/interfaces.md``
 #: makes authoritative there.
 CLAUSES_FIELD = "clauses"
+
+#: Where a committed act names its class. An enactment is an act — judged like any
+#: other (214-215) — so the law fold is the first reader of this field, and
+#: ``utina.fold.evaluate`` imports it from here rather than declaring a second name
+#: for the same committed bytes.
+ACT_CLASS_FIELD = "act"
+
+#: The event kinds that commit an edition of law. Genesis and amendment differ in
+#: how they take force and in nothing else: one is constructed, one is judged.
+INCEPTION_KIND = "inception"
+ENACTMENT_KIND = "enactment"
 
 #: A clause id the law in force does not define. Not the caller's bytes: "B2" is
 #: a well-formed clause id that is simply not in force yet, and will be at a
@@ -120,7 +146,7 @@ def _canonical_bytes(clauses: tuple[Clause, ...]) -> bytes:
     return _BLOCK.join(clause.sub_block() for clause in sorted(clauses, key=lambda c: c.said()))
 
 
-def _takes_force(event: Event, position: Position) -> bool:  # ~4pmw
+def _takes_force(corpus: Corpus, event: Event, position: Position) -> bool:
     """Whether this event's law is in force at ``position``.
 
     The asymmetry is the succession rule. Genesis is "constructed rather than
@@ -128,14 +154,65 @@ def _takes_force(event: Event, position: Position) -> bool:  # ~4pmw
     is no predecessor to judge it under, and a domain ungoverned at its own
     inception could never enact anything. Every later enactment is judged, so it
     binds strictly after its own coordinate — "law never applies to itself at a
-    coordinate, only to its successor at the next" (2270-2272). That is what
-    makes an amendment answerable under the law it replaces.
+    coordinate, only to its successor at the next" (2270-2272) — and only from
+    where that judgment reached unity, which is :func:`_effectuation`.
+
+    The coordinate test comes before the judgment, and it is load-bearing twice
+    over. Succession is never retroactive, so an enactment can never be in force
+    at or before its own coordinate whatever its endorsements say; and asking for
+    the law at an enactment's own coordinate is how :func:`_effectuation` finds
+    the law that judges it, so a rule that consulted the judgment first would
+    recur without descending.
     """
-    if event.kind == "inception":
+    if event.kind == INCEPTION_KIND:
         return True
-    if event.kind == "enactment":
-        return bool(event.position < position)
-    return False
+    if event.kind != ENACTMENT_KIND:
+        return False
+    if not event.position < position:
+        return False
+    return _effectuation(corpus, event, position) is not None
+
+
+def _effectuation(corpus: Corpus, enactment: Event, position: Position) -> Position | None:
+    """The coordinate at which ``enactment`` reached unity, or ``None`` by ``position``.
+
+    The first crossing, and the first is the only one that counts: a finding
+    stands at its coordinate and "evidence does not un-arrive" (1698-1712), so an
+    enactment that carried has carried, and a later retraction of an endorsement
+    that reached unity does not unmake the edition. The scan is over candidate
+    coordinates strictly after the enactment's own, with every slot reclassified
+    from the whole bundle at each one — the slot predicate is consulted rather
+    than reimplemented, because the rules that decide a slot are subtle (a
+    declination is decisive whatever the committed order) and two readings of
+    them would drift.
+
+    ``None`` where the enactment names no act class, where the law in force at
+    its own coordinate governs no such class, or where unity is not reached at or
+    before ``position``. All three are the same fail-closed answer: nothing
+    committed says this enactment carried, so it confers no law.
+    """
+    act = enactment.body.get(ACT_CLASS_FIELD)
+    if not isinstance(act, str) or not act:
+        return None
+    clause = _governing(Constitution.at(corpus, enactment.position).clauses, act)
+    if clause is None:
+        return None
+    committed = corpus.upto(position)
+    for candidate in committed:
+        if not enactment.position < candidate.position:
+            continue
+        bundle = tuple(one for one in committed if not candidate.position < one.position)
+        if clause.group.satisfied(dispositions(clause.group, bundle, enactment.said)):
+            return candidate.position
+    return None
+
+
+def _governing(clauses: tuple[Clause, ...], act: str) -> Clause | None:
+    """The clause ruling ``act`` in ``clauses``, or ``None`` where none does."""
+    for clause in clauses:
+        if act in clause.governs:
+            return clause
+    return None
 
 
 def _edition_committed_by(event: Event) -> tuple[Clause, ...]:
@@ -174,13 +251,19 @@ class Constitution:
         """Fold the committed law events up to ``position`` into the law in force.
 
         The inception event's law binds at its own coordinate, because genesis is
-        constructed rather than judged. An enactment's law binds strictly after
-        its own coordinate, because it is judged — under the law this fold is
-        still holding when it reaches it, which is the law the enactment replaces.
+        constructed rather than judged. An enactment's law binds from the
+        coordinate its own judgment reached unity, because it is judged — under
+        the law in force at its own coordinate, which is the law it replaces.
+
+        Where more than one edition is in force the last in canonical order wins,
+        as it always has. That resolves a succession fork, and it is an artifact
+        of the walk rather than a reading: §17 rules the fork by the predecessor
+        each enactment cites (3047-3050) and utina's enactments cite none, so the
+        case is left undecided and every record utina builds succeeds linearly.
         """
         edition: tuple[Clause, ...] = ()
         for event in corpus.upto(position):
-            if _takes_force(event, position):
+            if _takes_force(corpus, event, position):
                 edition = _edition_committed_by(event)
         _refuse_a_contradictory_edition(edition)
         head = hashlib.sha256(_canonical_bytes(edition)).hexdigest()
@@ -204,10 +287,7 @@ class Constitution:
         (1896-1902). Returning a clause here on a guess would convert a refusal
         into a judgment, which is the one substitution Custos never permits.
         """
-        for clause in self.clauses:
-            if act in clause.governs:
-                return clause
-        return None
+        return _governing(self.clauses, act)
 
     def canonical_bytes(self) -> bytes:
         """The law in force, rendered to the bytes its head digests."""

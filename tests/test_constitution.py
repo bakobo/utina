@@ -88,6 +88,7 @@ from bakobo.errors import BakoboError  # noqa: E402
 from utina.fold.constitution import Constitution  # noqa: E402
 from utina.fold.corpus import Corpus, Event  # noqa: E402
 from utina.fold.triple import Position  # noqa: E402
+from utina.substrate import ENDORSEMENT_SCHEMA  # noqa: E402
 
 
 def slots(*pairs):
@@ -99,36 +100,81 @@ def clause(ident, governs, *pairs):
     return {"id": ident, "governs": governs, "group": group}
 
 
+GAID = "acme:gaid"
 MARTA, DEV, NINA = "acme:marta", "acme:dev", "acme:nina"
+
+#: The act class Acme's amendment clause governs, in both editions.
+AMEND = "amend-operating-agreement"
+
+#: What the ordinary-acts clause governs once the board is seated.
+ORDINARY = ["open-bank-account", "hire-vp-sales", "approve-budget"]
+
+
+def enactment(said, position, clauses, act=AMEND):
+    """A law event that commits ``clauses`` and performs the act class ``act``.
+
+    ``act`` is the field the law fold now reads: an enactment is an act, judged
+    like any other, so it names a class of act for a clause to govern. Passing
+    ``None`` omits the field, which is the fail-closed case.
+    """
+    body = {"i": GAID, "law": {"clauses": clauses}}
+    if act is not None:
+        body["act"] = act
+    return Event(said=said, kind="enactment", position=position, body=body)
+
+
+def endorsement(said, position, endorser, subject, disposition="endorse"):
+    """A committed endorsement of ``subject``, shaped as the slot predicate reads it.
+
+    Every conjunct of ``utina.fold.slots`` has to hold or the slot classifies
+    PENDING and the amendment below never takes force, so this helper is the
+    predicate's shape rather than a sketch of it.
+    """
+    return Event(
+        said=said,
+        kind="endorsement",
+        position=position,
+        body={
+            "i": endorser,
+            "acdc": {
+                "i": endorser,
+                "s": ENDORSEMENT_SCHEMA,
+                "a": {"said": subject, "act": "issue", "disp": disposition},
+            },
+        },
+    )
+
+
+def retraction(said, position, endorser, target):
+    """``endorser`` withdrawing the act ``target``."""
+    return Event(
+        said=said, kind="retraction", position=position, body={"i": endorser, "revokes": target}
+    )
+
 
 #: Acme's founding law: two founders, both required, for ordinary acts and for
 #: amending the operating agreement alike.
 STATE_ONE = [
-    clause("A1", ["open-bank-account", "hire-vp-sales"], (MARTA, "1/2"), (DEV, "1/2")),
-    clause("A2", ["amend-operating-agreement"], (MARTA, "1/2"), (DEV, "1/2")),
+    clause("A1", ORDINARY[:2], (MARTA, "1/2"), (DEV, "1/2")),
+    clause("A2", [AMEND], (MARTA, "1/2"), (DEV, "1/2")),
 ]
 
 #: After the board is seated: ordinary authority is distributed so any two reach
 #: unity, and the bar for amending the agreement is retained at all three. That
 #: retained bar is the point of the whole demo.
 STATE_TWO = [
-    clause(
-        "B1",
-        ["open-bank-account", "hire-vp-sales", "approve-budget"],
-        (MARTA, "1/2"),
-        (DEV, "1/2"),
-        (NINA, "1/2"),
-    ),
-    clause(
-        "B2",
-        ["amend-operating-agreement"],
-        (MARTA, "1/3"),
-        (DEV, "1/3"),
-        (NINA, "1/3"),
-    ),
+    clause("B1", ORDINARY, (MARTA, "1/2"), (DEV, "1/2"), (NINA, "1/2")),
+    clause("B2", [AMEND], (MARTA, "1/3"), (DEV, "1/3"), (NINA, "1/3")),
 ]
 
-INCEPTION, AMENDMENT, LATER = Position(0), Position(4), Position(5)
+#: The five coordinates the succession turns on. ``AMENDMENT`` is where the
+#: amendment is committed, ``HALF_ENDORSED`` where one founder has endorsed it and
+#: unity is not yet reached, and ``AFFIRMED`` where the second endorsement reaches
+#: it — the effectuation coordinate, and the first position the board law governs.
+INCEPTION, AMENDMENT = Position(0), Position(4)
+HALF_ENDORSED, AFFIRMED, LATER = Position(5), Position(6), Position(7)
+
+SEAT_BOARD = "E4-seat-board"
 
 EVENTS = [
     Event(
@@ -137,14 +183,9 @@ EVENTS = [
         position=INCEPTION,
         body={"law": {"clauses": STATE_ONE}},
     ),
-    Event(said="E1-act", kind="act", position=Position(1), body={}),
-    Event(said="E2-endorse", kind="endorsement", position=Position(2), body={}),
-    Event(
-        said="E4-seat-board",
-        kind="enactment",
-        position=AMENDMENT,
-        body={"law": {"clauses": STATE_TWO}},
-    ),
+    enactment(SEAT_BOARD, AMENDMENT, STATE_TWO),
+    endorsement("E5-marta-endorses", HALF_ENDORSED, MARTA, SEAT_BOARD),
+    endorsement("E6-dev-endorses", AFFIRMED, DEV, SEAT_BOARD),
 ]
 
 
@@ -152,26 +193,140 @@ def corpus(events=None):
     return Corpus.load(events if events is not None else EVENTS)
 
 
+def amended_by(amendment):
+    """The standard record with ``amendment`` in place of the one that seats the board.
+
+    Both endorsements are kept, so what each case below varies is the amendment
+    itself and never the evidence for it.
+    """
+    return corpus([EVENTS[0], amendment, *EVENTS[2:]])
+
+
+def ids(law):
+    return [clause.id for clause in law.clauses]
+
+
 # --- Succession: the centerpiece ---------------------------------------------
 
 
 def test_the_founding_law_is_in_force_at_its_own_coordinate():
     """Genesis is constructed rather than judged (2272-2274), so it binds at once."""
-    law = Constitution.at(corpus(), INCEPTION)
-    assert [c.id for c in law.clauses] == ["A1", "A2"]
+    assert ids(Constitution.at(corpus(), INCEPTION)) == ["A1", "A2"]
 
 
 def test_the_amendment_is_judged_under_the_law_it_replaces():
     """2270-2272: law never applies to itself at a coordinate, only to its successor."""
     law = Constitution.at(corpus(), AMENDMENT)
-    assert [c.id for c in law.clauses] == ["A1", "A2"]
-    assert law.governing("amend-operating-agreement").id == "A2"
+    assert ids(law) == ["A1", "A2"]
+    assert law.governing(AMEND).id == "A2"
 
 
-def test_the_amendment_binds_every_position_after_its_own():
+def test_the_amendment_binds_every_position_after_it_is_affirmed():
     """3001-3003, at keyword force: law for every position at and after effectuation."""
-    law = Constitution.at(corpus(), LATER)
-    assert [c.id for c in law.clauses] == ["B1", "B2"]
+    assert ids(Constitution.at(corpus(), LATER)) == ["B1", "B2"]
+
+
+# --- Effectuation: force follows affirmation, never commitment (Q33) ---------
+
+
+def test_an_enactment_does_not_take_force_until_it_is_affirmed():
+    """The bug this pins shut: at HALF_ENDORSED the amendment is committed and short.
+
+    Marta has endorsed it and Dev has not, so it holds 1/2 of a clause needing
+    unity. An engine keying force on commitment has the board law governing here —
+    one event before the amendment enacting it carries — and every question asked
+    at this coordinate is then answered under a law nobody has yet enacted.
+    """
+    law = Constitution.at(corpus(), HALF_ENDORSED)
+    assert ids(law) == ["A1", "A2"]
+    assert law.governing("hire-vp-sales").id == "A1"
+
+
+def test_an_enactment_takes_force_at_the_coordinate_it_is_affirmed():
+    """Q33 reading B: the effectuation coordinate is where unity is reached, not after it.
+
+    Dev's endorsement at AFFIRMED brings the amendment to unity, so the board law
+    governs from that coordinate. Under the reading that binds strictly afterwards
+    the coordinate seating the board is a coordinate the board's law does not
+    govern, and nothing committed marks that distinction.
+    """
+    law = Constitution.at(corpus(), AFFIRMED)
+    assert ids(law) == ["B1", "B2"]
+    assert law.governing("approve-budget").id == "B1"
+
+
+def test_an_enactment_nobody_endorses_never_takes_force():
+    """The unilateral amendment. 214-215: an enactment is judged like any other act."""
+    assert ids(Constitution.at(corpus(EVENTS[:2]), LATER)) == ["A1", "A2"]
+
+
+def test_a_defeated_enactment_never_takes_force():
+    """Dev signs a declination, unity is unreachable, and the law does not move.
+
+    1796-1800's defeat annihilating upward, applied to the one thing an enactment
+    builds: a defeated amendment leaves no edition behind it.
+    """
+    declined = endorsement("E6-dev-declines", AFFIRMED, DEV, SEAT_BOARD, "decline")
+    defeated = corpus([*EVENTS[:3], declined])
+    assert ids(Constitution.at(defeated, LATER)) == ["A1", "A2"]
+
+
+def test_an_enactment_naming_no_act_class_never_takes_force():
+    """Fail closed: no act class means no clause can govern it, so nothing judged it."""
+    classless = amended_by(enactment(SEAT_BOARD, AMENDMENT, STATE_TWO, act=None))
+    assert ids(Constitution.at(classless, LATER)) == ["A1", "A2"]
+    empty = amended_by(enactment(SEAT_BOARD, AMENDMENT, STATE_TWO, act=""))
+    assert ids(Constitution.at(empty, LATER)) == ["A1", "A2"]
+
+
+def test_an_enactment_no_clause_governs_never_takes_force():
+    """An amendment claiming an act class the law in force rules nowhere.
+
+    The engine refuses to legislate the missing rule here exactly as the evaluator
+    does (1896-1902): with no clause there is no threshold, so there is nothing an
+    endorsement could satisfy, and an edition that could take force on an
+    ungoverned class would be a law changed by an act no law authorized.
+    """
+    ungoverned = amended_by(enactment(SEAT_BOARD, AMENDMENT, STATE_TWO, "declare-dividend"))
+    assert ids(Constitution.at(ungoverned, LATER)) == ["A1", "A2"]
+
+
+def test_the_first_crossing_is_the_effectuation_coordinate_and_a_retraction_leaves_it():
+    """1698-1712: evidence does not un-arrive, and an edition in force stays in force.
+
+    The amendment reaches unity at AFFIRMED. Dev then withdraws the endorsement
+    that carried it. Because force is keyed to the *first* coordinate at which
+    unity was reached, the board law is still the law — the retraction is a fact
+    about Dev's present will and not evidence that the amendment never carried.
+    """
+    withdrawn = corpus([*EVENTS, retraction("E7-dev-retracts", LATER, DEV, "E6-dev-endorses")])
+    assert ids(Constitution.at(withdrawn, Position(8))) == ["B1", "B2"]
+
+
+def test_an_enactment_is_judged_under_the_law_in_force_at_its_own_coordinate():
+    """The retained bar doing work, one edition deeper.
+
+    A second amendment, committed after the board is seated, is judged under B2 —
+    three slots at a third, so both founders together do not reach unity — and not
+    under the A2 it would have cleared before the board existed. So the law that
+    judges an enactment is itself computed from an affirmation, which is the
+    recursion the succession rule now carries.
+    """
+    third = [
+        clause("C1", ORDINARY, (MARTA, "1/1")),
+        clause("C2", [AMEND], (MARTA, "1/1")),
+    ]
+    second = "E7-second-amendment"
+    founders_only = [
+        *EVENTS,
+        enactment(second, LATER, third),
+        endorsement("E8-marta-endorses-again", Position(8), MARTA, second),
+        endorsement("E9-dev-endorses-again", Position(9), DEV, second),
+    ]
+    assert ids(Constitution.at(corpus(founders_only), Position(9))) == ["B1", "B2"]
+
+    seated = endorsement("Ea-nina-endorses", Position(10), NINA, second)
+    assert ids(Constitution.at(corpus([*founders_only, seated]), Position(10))) == ["C1", "C2"]
 
 
 def test_succession_is_never_retroactive():
@@ -185,7 +340,7 @@ def test_an_amendment_replaces_the_edition_rather_than_adding_to_it():
     """Otherwise A1 and B1 both govern ordinary acts and governing() has two answers."""
     law = Constitution.at(corpus(), LATER)
     assert law.governing("open-bank-account").id == "B1"
-    assert [c.id for c in law.clauses] == ["B1", "B2"]
+    assert ids(law) == ["B1", "B2"]
 
 
 def test_the_retained_bar_survives_the_amendment():

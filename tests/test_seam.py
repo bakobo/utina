@@ -37,6 +37,29 @@ def test_the_committed_law_reads_as_law(acme):
     assert {slot.weight for slot in law.clause("A1").group.slots} == {Fraction(1, 2)}
 
 
+def test_the_board_law_takes_force_where_the_amendment_carries_and_not_before(acme):
+    """@xhtvuxnc over Acme's own record, which is where the bug was measurable.
+
+    The amendment seating the board is committed, then endorsed twice, and only
+    the second endorsement reaches unity — the coordinate the record labels
+    ``board-seated``. One coordinate earlier the amendment is committed and
+    short, and the founding law is still the law; the shipped engine had the
+    board law in force there, a full event before the amendment enacting it
+    carried, so every question asked at that coordinate was answered under a law
+    nobody had yet enacted (tick ``4pmw``).
+    """
+    seated = acme.at("board-seated")
+    short = acme.values.position(seated.seq - 1)
+    committed = acme.corpus.event(acme.said("seat-the-board")).position
+
+    def clauses(position):
+        return [clause.id for clause in Constitution.at(acme.corpus, position).clauses]
+
+    assert committed.seq < short.seq, "the amendment is committed before this coordinate"
+    assert clauses(short) == ["A1", "A2"]
+    assert clauses(seated) == ["B1", "B2"]
+
+
 def test_a_committed_weight_is_an_exact_rational_string(acme):
     """``docs/interfaces.md``: weight is a string in the committed body.
 

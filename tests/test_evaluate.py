@@ -482,11 +482,18 @@ def test_the_flipped_reading_never_returns_an_empty_requirement_set(founded, mon
 
 
 def test_a_committed_act_is_judged_under_the_law_in_force_at_its_own_coordinate(founded):
-    """The utility claim: the past is recomputable, not retconned."""
+    """The utility claim: the past is recomputable, not retconned.
+
+    The amendment is endorsed to unity here, so the law really does change after
+    the act under appraisal. An unendorsed one confers nothing (@xhtvuxnc), which
+    would make this case pass without succession having to work.
+    """
     hire = founded.act("hire", "hire")
     founded.endorse(MARTA, hire)
     founded.endorse(DEV, hire)
-    founded.amend("seat-the-board", BOARD_LAW)
+    seat = founded.amend("seat-the-board", BOARD_LAW)
+    founded.endorse(MARTA, seat)
+    founded.endorse(DEV, seat)
     founded.act("later", "hire")
 
     finding = evaluate(founded.corpus, Committed(hire), at=founded.now)
@@ -508,8 +515,15 @@ def test_an_amendment_is_judged_under_the_law_it_replaces(founded):
 
 
 def test_a_proposal_is_judged_under_the_law_in_force_at_the_position(founded):
-    """A proposal asks whether an act may be performed now, so now's law rules it."""
-    founded.amend("seat-the-board", BOARD_LAW)
+    """A proposal asks whether an act may be performed now, so now's law rules it.
+
+    Nina's endorsement is what makes this B1's answer rather than A1's, and it
+    only counts because the amendment that seated her carried: an edition takes
+    force where its enactment reaches unity (@xhtvuxnc).
+    """
+    seat = founded.amend("seat-the-board", BOARD_LAW)
+    founded.endorse(MARTA, seat)
+    founded.endorse(DEV, seat)
     hire = founded.act("hire", "hire")
     founded.endorse(MARTA, hire)
     founded.endorse(NINA, hire)

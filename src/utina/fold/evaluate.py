@@ -42,7 +42,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from utina.fold.clause import Clause
-from utina.fold.constitution import Constitution
+from utina.fold.constitution import ACT_CLASS_FIELD, Constitution
 from utina.fold.corpus import Corpus, Event
 from utina.fold.finding import (
     Affirmed,
@@ -107,8 +107,9 @@ that nothing they do to this decision will move it.
 #: mistaken for the thing it endorses.
 ACT_KINDS = ("act", "enactment")
 
-#: Where a committed act names its class.
-ACT_CLASS_FIELD = "act"
+#: Where a committed act names its class. Declared in ``constitution.py``, which
+#: reads it first: an enactment is an act, and the law fold now has to know which
+#: clause judged it before it can say whether its edition is in force.
 
 #: What the slot predicate is given as the subject when nothing has been tabled.
 #: No committed event bears it, so every slot classifies PENDING — which is the

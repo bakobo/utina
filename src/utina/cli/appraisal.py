@@ -24,9 +24,9 @@ from dataclasses import dataclass
 
 from utina.cli.errors import COMMAND_MALFORMED, SAID_PREFIX_AMBIGUOUS
 from utina.fold.clause import Clause
-from utina.fold.constitution import Constitution
+from utina.fold.constitution import ACT_CLASS_FIELD, Constitution
 from utina.fold.corpus import Corpus, Event
-from utina.fold.evaluate import ACT_CLASS_FIELD, ACT_KINDS, evaluate
+from utina.fold.evaluate import ACT_KINDS, evaluate
 from utina.fold.finding import Finding
 from utina.fold.question import Committed, Proposal, Question
 from utina.fold.refusal import Refusal
