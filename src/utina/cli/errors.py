@@ -62,14 +62,22 @@ ALIAS_PREFIX_AMBIGUOUS = ErrorCode(
     hint="Give the alias instead, which is unambiguous: {matches}",
 )
 
+#: The parties are named by a *command* rather than listed here, and that is a
+#: repair rather than a preference: the error machinery caps a detail's length,
+#: so once the domain had five parties the enumeration came out cut mid-alias —
+#: "9-marta-as…" — under a hint telling the reader to type one of them. A
+#: fragment of an alias invites the same unsupportable comparison a fragment of
+#: an identifier does (this.i @clcoia), and it is worse here, because a reader
+#: who types it gets this same refusal back.
 ALIAS_UNKNOWN = ErrorCode(
     code="e.input.unknown.alias.f",
     title="Nothing in this domain is called that.",
     detail=(
         "No party matches {query}, either as an alias or as an identifier prefix. An "
         "alias is creator-local, so it names something only inside the domain that "
-        "created it. The parties this domain knows are: {known}."
+        "created it. This domain knows {count} parties, and the law screen lists them "
+        "with their aliases."
     ),
-    args=("query", "known"),
-    hint="Run utina whois with one of the aliases above, or with an identifier prefix.",
+    args=("query", "count"),
+    hint="Run utina law --at inception to see the parties, then whois one of them.",
 )

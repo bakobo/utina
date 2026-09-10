@@ -466,7 +466,7 @@ def test_a_defeat_with_no_declination_still_carries_its_ground():
 def test_log_shows_every_committed_event_in_canonical_order():
     out = screen("log")
     assert "COMMITTED LOG AT the end of the record" in out
-    assert "26 events" in out
+    assert "27 events" in out
     assert "Arrival order is not consulted" in out
     seqs = [
         int(line.split()[0])
@@ -556,7 +556,11 @@ def test_whois_refuses_a_name_this_domain_does_not_have():
     status, _, err = shell("whois", "9-nobody-as-nothing")
     assert status == 2
     assert "e.input.unknown.alias.f" in err
-    assert "9-marta-as-founder" in err
+    # The parties are named by a command, not listed: the detail is length-capped,
+    # and an enumeration that came out cut mid-alias under a hint saying to type
+    # one of them was worse than a pointer (see cli/errors.py).
+    assert "utina law --at inception" in err
+    assert "..." not in err and "…" not in err
     assert "Retrying will not help" in err
 
 
@@ -621,7 +625,7 @@ def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
     # The signature is printed whole and therefore wraps, so the sentence beside it is
     # matched against the screen with its line breaks flattened.
     assert "the substrate verified it before recording" in " ".join(out.split())
-    assert "said=EJennRUnhTdo..." in out
+    assert "said=E3CkC7KlYyV8..." in out
     assert "before" in out and "PENDING" in out
     assert "after" in out and "AFFIRMED" in out
     assert "nothing here is written to disk" in out

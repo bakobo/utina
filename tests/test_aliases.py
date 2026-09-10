@@ -18,7 +18,7 @@ import pytest
 from bakobo.errors import BakoboError  # type: ignore[import-untyped]
 
 from utina import coia
-from utina.acme import DEV, GAID, MARTA, NINA
+from utina.acme import DEV, GAID, MARTA, NINA, SEAT
 from utina.cli.aliases import PARTIES, SCOPE, Aliases, aliases_over
 from utina.cli.world import world
 
@@ -101,7 +101,7 @@ def test_every_alias_carries_the_demo_flag(table: Aliases) -> None:
 
 def test_the_party_table_covers_exactly_what_acme_incepts(facade_aids: dict[str, str]) -> None:
     """A party with no entry would render as a raw identifier, which is a gap."""
-    assert set(PARTIES) == set(facade_aids) == {GAID, MARTA, DEV, NINA}
+    assert set(PARTIES) == set(facade_aids) == {GAID, MARTA, DEV, NINA, SEAT}
 
 
 def test_the_domain_itself_is_aliased_too(table: Aliases, facade_aids: dict[str, str]) -> None:
@@ -207,7 +207,7 @@ def test_the_aliases_come_back_in_a_stable_order(table: Aliases) -> None:
     """The law screen header lists them, so the order may not depend on a dict's luck."""
     listed = table.every_alias()
     assert listed == tuple(sorted(listed))
-    assert len(listed) == len(set(listed)) == 4
+    assert len(listed) == len(set(listed)) == len(PARTIES)
 
 
 def test_the_table_is_built_from_identifiers_and_carries_no_record(

@@ -34,6 +34,30 @@ MARTA = "acme:marta"
 DEV = "acme:dev"
 NINA = "acme:nina"
 
+#: Board seat 3: the *office*, a delegated identifier of the domain rather than
+#: a person. Nina holds its keys; the seat is what the law slots and what the
+#: seat credential is issued to, so a director leaving is a rotation on the seat
+#: and not a reissued credential (custos-4.2.md:2139-2148, this.i @2a25xudi).
+SEAT = "acme:seat3"
+
+#: The office the seat credential names, in Acme's own vocabulary. A label for a
+#: reader; nothing computes over it, because what the law slots is the seat's
+#: identifier.
+SEAT_OFFICE = "board-seat-3"
+
+#: Acme's own credential registry, through which a standing-conferring
+#: credential is revocable (custos-4.2.md:1420-1422).
+GOVERNANCE_REGISTRY = "acme-governance"
+
+#: The schema Acme's seat credential is typed by: the SAID of
+#: ``schemas/acme-seat.json``, computed the way ACDC computes a schema
+#: identifier and checked against the document by ``tests/test_schemas.py``.
+#: It is *Acme's* schema and it is pinned in Acme's law, because §9 leaves it to
+#: the domain's Constitution to name which schemas, issued by which registries,
+#: confer which powers (custos-4.2.md:1924) — so the fold reads it out of
+#: committed law and holds no constant of its own.
+SEAT_SCHEMA = "EGC1M03TgvSUMlGLusG60CIKIBgoiTu9Is_VQgb2eeUm"
+
 FOUNDERS = (MARTA, DEV)
 BOARD = (MARTA, DEV, NINA)
 

@@ -41,6 +41,7 @@ ORACLE_LABELS = {
     "inception",
     "board-seated",
     "b5",
+    "b8",
     "b11",
     "d1",
     "d2",
@@ -195,13 +196,20 @@ def test_the_budget_is_tabled_twice(acme_double):
 
 
 def disp(event):
-    """The disposition the event's embedded credential carries, if it is one."""
+    """The disposition the event's embedded credential carries, if it carries one.
+
+    ``None`` covers both an event with no credential in it and a credential of
+    the other kind: a seat credential has an issuee and an office where an
+    endorsement has a disposition and a subject.
+    """
     acdc = event.body.get("acdc")
-    return acdc["a"]["disp"] if isinstance(acdc, dict) else None
+    return acdc["a"].get("disp") if isinstance(acdc, dict) else None
 
 
 def subject_of(event):
-    return event.body["acdc"]["a"]["said"]
+    """The subject the event's embedded endorsement is about, if it is one."""
+    acdc = event.body.get("acdc")
+    return acdc["a"].get("said") if isinstance(acdc, dict) else None
 
 
 def test_dev_declines_twice_and_both_are_signed_committed_acts(acme_double):

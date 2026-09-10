@@ -18,14 +18,14 @@ from __future__ import annotations
 from fractions import Fraction
 
 from conftest import RealValues
-from utina.acme import DEV, MARTA, NINA, build
-from utina.fold import evaluate
+from utina.acme import DEV, MARTA, NINA, SEAT, build
+from utina.fold import evaluate, standing
 from utina.fold.constitution import Constitution
 from utina.fold.finding import Affirmed, Pending
 from utina.fold.group import Disposition
 from utina.fold.question import Committed, Proposal
 from utina.fold.slots import dispositions
-from utina.substrate import canonical_bytes
+from utina.substrate import ISSUED, canonical_bytes
 
 
 def test_the_committed_law_reads_as_law(acme):
@@ -105,6 +105,31 @@ def test_the_declination_at_d3_is_read_as_a_spent_slot(acme):
 
     assert held == {acme.aid(MARTA): Disposition.ENDORSED, acme.aid(DEV): Disposition.DECLINED}
     assert not law.clause("A1").group.reachable(held)
+
+
+def test_the_fold_reads_the_seats_standing_out_of_committed_events(acme):
+    """@exy3u4t7, and the seam it is really about.
+
+    The substrate holds a transaction log and can answer what the registry says.
+    The fold cannot ask it — the purity fitness function forbids the import —
+    and must not, because that would be the ambient read issue #82 rule 3 rules
+    out. So the constructor commits the issuance as a governance event, and the
+    fold folds that. Both answers are asserted here, and the point is that they
+    agree *without* the fold having consulted the one that holds the TEL.
+    """
+    seating = acme.corpus.event(acme.said("seat-credential"))
+    credential = seating.body["acdc"]["d"]
+
+    assert seating.kind == standing.ISSUANCE_KIND
+    assert seating.body["ri"] == acme.registry
+    assert seating.body["acdc"]["a"]["i"] == acme.aid(SEAT), "the issuee is the seat"
+
+    folded = standing.state_over(acme.corpus.upto(acme.at("b8")), acme.registry, credential)
+    before = standing.state_over(acme.corpus.upto(acme.at("d4")), acme.registry, credential)
+
+    assert folded == ISSUED
+    assert before is None, "nothing stands before the event that issued it"
+    assert acme.substrate.registry_state(acme.registry, credential) == ISSUED
 
 
 def test_the_carried_clause_is_one_clause_on_both_sides_of_the_amendment(acme):

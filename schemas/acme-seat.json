@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "EGC1M03TgvSUMlGLusG60CIKIBgoiTu9Is_VQgb2eeUm",
+  "title": "Acme board seat",
+  "description": "Acme, Inc.'s seat credential: the domain's own attestation that an identifier holds one of its seated organs. Custos requires a seat to take credential form 'where standing must be toolchain-checkable' — typed by schema identifier, issued under the domain's registry, and naming the organ's AID as issuee (custos-4.2.md:1420-1425). The issuee is the seat, an identifier for the office, and never the person currently holding its keys: tenure is then a rotation on the seat rather than a reissued credential. An endorsement offered as the seat's carries an ACDC edge to this credential under the DI2I operator, so that 'the endorser holds the seat it claims' is checked by edge validation before any fold runs. This is a domain schema, not a Custos or dossier one: section 9 leaves it to the GARD's Constitution to name which schemas, issued by which registries, confer which powers.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "v",
+    "d",
+    "i",
+    "ri",
+    "s",
+    "a"
+  ],
+  "properties": {
+    "v": {
+      "type": "string",
+      "description": "CESR version string."
+    },
+    "d": {
+      "type": "string",
+      "description": "SAID of this seat credential."
+    },
+    "i": {
+      "type": "string",
+      "description": "AID of the issuer, which is the governed domain itself: a seat is the domain's own act, and nobody else's attestation seats an organ of it."
+    },
+    "ri": {
+      "type": "string",
+      "description": "Identifier of the registry this credential is issued under, through which it is revocable. Required rather than optional: a standing-conferring credential that cannot be revoked would make registry state unaskable, and registry state is the evidence a standing judgment is computed over."
+    },
+    "s": {
+      "type": "string",
+      "description": "SAID of the schema applied to this ACDC, which is this document's own identifier."
+    },
+    "u": {
+      "type": "string",
+      "description": "Optional salt for SAID blinding."
+    },
+    "a": {
+      "description": "Attributes block. Compact form: SAID string. Expanded form: the issuee and the office it holds.",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "d",
+            "i",
+            "seat"
+          ],
+          "properties": {
+            "d": {
+              "type": "string",
+              "description": "SAID of this attributes block."
+            },
+            "dt": {
+              "type": "string",
+              "description": "Issuance timestamp."
+            },
+            "i": {
+              "type": "string",
+              "description": "AID of the issuee: the seat itself, which SHOULD be a delegated identifier of the issuing domain so that the organ's key events are dual-anchored and its recovery falls inside KERI's own delegated-recovery rules (custos-4.2.md:2139-2148)."
+            },
+            "seat": {
+              "type": "string",
+              "description": "The office this credential seats, in the domain's own vocabulary. A label for a reader and for a screen; nothing computes over it, because what the law slots is the issuee's identifier and not this string."
+            }
+          }
+        }
+      ]
+    }
+  }
+}

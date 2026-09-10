@@ -86,7 +86,10 @@ def test_an_independent_keripy_reader_finds_the_anchor_utina_wrote(tmp_path: Pat
     assert read.returncode == 0, read.stderr
     assert f"FOUND  {expected}" in read.stdout
     assert "every SAID re-derives: True" in read.stdout
-    assert "  sn 1  rot  " in read.stdout
+    # A rotation, not an interaction: the sequence number is left out on purpose,
+    # because the delegation and the registry seal ride interaction events ahead of
+    # it and pinning the coordinate here would break every time the KEL grows.
+    assert "  rot  " in read.stdout
 
 
 def test_the_reader_refuses_a_digest_nothing_anchors(tmp_path: Path):

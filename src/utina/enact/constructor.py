@@ -22,6 +22,7 @@ from .errors import (
     DOMAIN_INCEPTED,
     DOMAIN_UNINCEPTED,
     RECORD_UNRESUMABLE,
+    REGISTRY_UNOPENED,
     SIGNATURE_UNVERIFIABLE,
     SUBJECT_UNKNOWN,
 )
@@ -56,6 +57,7 @@ class Constructor:
         self._emitted: list[Event] = []
         self._saids: set[SAID] = set()
         self._founded = False
+        self._registry: SAID | None = None
 
     @property
     def emitted(self) -> tuple[Event, ...]:
@@ -126,6 +128,58 @@ class Constructor:
         event = self._emit("enactment", body, self.gaid)
         self.substrate.rotate(self.gaid, event.said)
         return event
+
+    def open_registry(self, alias: str) -> SAID:
+        """Open the domain's credential registry, and hold its identifier.
+
+        No corpus event. A registry's own inception confers nothing on anybody:
+        what bears on a standing judgment is the issuance and the revocation,
+        and those are committed as governance events below. The registry itself
+        is substrate machinery, like a rotation, and stays out of the log the
+        fold folds (this.i @jdie6v, @exy3u4t7).
+        """
+        self._require_founded()
+        self._registry = self.substrate.open_registry(self.gaid, alias)
+        return self._registry
+
+    @property
+    def registry(self) -> SAID | None:
+        """The domain's registry, or ``None`` before one is opened."""
+        return self._registry
+
+    def seat(self, organ: AID, *, schema: SAID, office: str) -> Event:
+        """Commit the domain's seat credential for ``organ``.
+
+        The second credential kind, and its obligations are not the
+        endorsement's: "a seat credential names the organ's AID as issuee,
+        issued under the domain's registry" (``custos-4.2.md:1420-1425``), typed
+        by a schema identifier and revocable through that registry. The issuee
+        is the *seat* rather than whoever holds its keys, which is what makes
+        tenure a rotation instead of a reissuance.
+
+        The domain is the issuer, because seating an organ of a domain is that
+        domain's own act and no stranger's attestation does it. The schema is
+        the caller's: which schemas confer which powers is committed law, not
+        something this object may name (``:1924``).
+        """
+        self._require_founded()
+        registry = self._registry
+        if registry is None:
+            raise REGISTRY_UNOPENED(gaid=self.gaid, organ=organ)
+        sad, signature = self.substrate.issue_acdc(
+            self.gaid, schema, {"i": organ, "seat": office}, registry=registry
+        )
+        return self._emit(
+            "issuance",
+            {
+                "t": "iss",
+                "i": self.gaid,
+                "ri": registry,
+                "acdc": sad,
+                "acdc_sig": signature,
+            },
+            self.gaid,
+        )
 
     def propose(self, act: str) -> Event:
         """Commit an act for appraisal."""

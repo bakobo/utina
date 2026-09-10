@@ -21,9 +21,13 @@ from .law import (
     DEV,
     EQUITY_ACTS,
     GAID,
+    GOVERNANCE_REGISTRY,
     MARTA,
     NINA,
     ORDINARY_ACTS,
+    SEAT,
+    SEAT_OFFICE,
+    SEAT_SCHEMA,
     UNGOVERNED_ACT,
     board_law,
     founding_law,
@@ -48,6 +52,12 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     substrate = FacadeSubstrate() if substrate is None else substrate
     aids = {alias: substrate.incept(alias) for alias in (GAID, MARTA, DEV, NINA)}
     marta, dev, nina = aids[MARTA], aids[DEV], aids[NINA]
+
+    # Board seat 3 is an office, not a person: a delegated identifier of the
+    # domain, whose keys Nina holds (custos-4.2.md:2139-2148, this.i @2a25xudi).
+    # It is delegated after the four self-incepted parties so that their key
+    # material, derived from the pinned salt by index, does not move.
+    aids[SEAT] = substrate.delegate(aids[GAID], SEAT)
     constructor = Constructor(substrate, aids[GAID], values=values)
 
     saids: dict[str, str] = {}
@@ -99,6 +109,15 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     mark("d4", seated)
     mark("board-seated", seated)
 
+    # Demo 2 beat 8's other binding: the seat credential, issued by the domain
+    # under its own registry to the seat itself. The registry is opened here
+    # rather than at inception because nothing before this beat is issued under
+    # it, and opening it writes no committed event.
+    constructor.open_registry(GOVERNANCE_REGISTRY)
+    seating = constructor.seat(aids[SEAT], schema=SEAT_SCHEMA, office=SEAT_OFFICE)
+    name("seat-credential", seating)
+    mark("b8", seating)
+
     # Demo 2 beat 11 — Dev endorses the equity release on the far side of the
     # amendment, curing it under the same clause A3 it was tabled under. Beat 10
     # is asked at board-seated, between this event and Marta's, and needs no
@@ -138,4 +157,5 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
         aids=aids,
         substrate=substrate,
         values=values,
+        registry=constructor.registry,
     )

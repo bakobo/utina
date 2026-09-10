@@ -43,6 +43,19 @@ SUBJECT_UNKNOWN = ErrorCode(
     hint="Commit the act or the enactment first, then dispose of it by its returned SAID.",
 )
 
+REGISTRY_UNOPENED = ErrorCode(
+    code="e.state.registry-unopened.f",
+    title="This domain has no credential registry yet.",
+    detail=(
+        "A seat credential for {organ} was asked for and the domain {gaid} has opened no "
+        "registry, so the credential would be unrevokable. A standing-conferring credential "
+        "that cannot be revoked leaves registry state unaskable, and registry state is the "
+        "evidence a standing judgment is computed over."
+    ),
+    args=("gaid", "organ"),
+    hint="Open the domain's registry before seating an organ under it.",
+)
+
 RECORD_UNRESUMABLE = ErrorCode(
     code="e.input.format.resume-record.f",
     title="These events do not read as one continuable record.",

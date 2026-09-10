@@ -296,7 +296,7 @@ def whois_command(args: argparse.Namespace, console: Console) -> int:
         aliases = _aliases(record)
         identifier = aliases.resolve(args.party)
         if identifier is None:
-            raise ALIAS_UNKNOWN(query=args.party, known=aliases.known())
+            raise ALIAS_UNKNOWN(query=args.party, count=len(aliases.every_alias()))
         console.out.write(
             whois_screen(identifier, aliases, args.substrate, console.style)
         )

@@ -28,6 +28,10 @@ class Acme:
     aids: Mapping[str, AID]
     substrate: Substrate
     values: FoldValues
+    registry: SAID | None = None
+    """The domain's credential registry, if the story opened one. Held because a
+    registry-bound credential's state is asked per registry, and a caller that
+    had to rediscover the identifier would be guessing at which log answers."""
 
     def at(self, label: str) -> Position:
         """The appraisal coordinate of the beat ``label`` names."""

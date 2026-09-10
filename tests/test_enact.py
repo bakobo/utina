@@ -169,10 +169,54 @@ def test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it(f
         "endorse",
         "gaid",
         "incept_domain",
+        "open_registry",
         "propose",
+        "registry",
         "resume",
+        "seat",
         "substrate",
     }
+
+
+def test_a_domain_has_no_registry_until_one_is_opened(founded):
+    """And opening one writes no committed event: a registry confers nothing."""
+    assert founded.registry is None
+    before = len(founded.emitted)
+
+    registry = founded.open_registry("acme-governance")
+
+    assert isinstance(registry, str)
+    assert founded.registry == registry
+    assert len(founded.emitted) == before
+
+
+def test_seating_an_organ_before_the_registry_is_opened_is_refused(founded):
+    """Fail closed: a seat credential nobody can revoke leaves standing unaskable.
+
+    ``custos-4.2.md:1420-1422`` makes a standing-conferring credential revocable
+    through its registry, so issuing one outside a registry would produce
+    evidence whose registry state no fold could ever read.
+    """
+    with pytest.raises(BakoboError) as caught:
+        founded.seat("acme:seat3", schema="E" + "t" * 43, office="board-seat-3")
+    assert caught.value.code == "e.state.registry-unopened.f"
+    assert not caught.value.retryable
+
+
+def test_a_seat_credential_names_the_organ_as_issuee_under_the_domains_registry(founded):
+    """The second credential kind, and the three things that make it one."""
+    registry = founded.open_registry("acme-governance")
+
+    event = founded.seat("acme:seat3", schema="E" + "t" * 43, office="board-seat-3")
+
+    assert event.kind == "issuance"
+    assert event.body["ri"] == registry
+    credential = event.body["acdc"]
+    assert credential["i"] == founded.gaid, "the domain seats its own organ"
+    assert credential["ri"] == registry, "revocable through the registry it names"
+    assert credential["a"]["i"] == "acme:seat3", "the issuee is the seat itself"
+    assert credential["a"]["seat"] == "board-seat-3"
+    assert founded.substrate.verify(founded.gaid, event.body, event.body["sig"])
 
 
 @pytest.mark.parametrize("verb", ["endorse", "decline"], ids=["endorse", "decline"])
