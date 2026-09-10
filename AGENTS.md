@@ -72,8 +72,8 @@ later need to know *why*) may skip intent entirely — just delete `this.i.seed`
 | Test (gates at 100% branch coverage) | `uv run pytest` |
 | Lint | `uv run ruff check .` |
 | Types | `uv run mypy` |
-| Run the demo | `uv run utina --help` |
-| Run the demo on real KERI | `uv run utina demo --substrate keripy --no-pause` |
+| Run the CLI | `uv run utina --help` |
+| Run any command against real KERI | add `--substrate keripy` |
 
 Python 3.14+, uv, pytest. No plane above the substrate imports a KERI library — not
 `utina.fold`, `utina.enact`, `utina.acme` or `utina.cli` — and `tests/test_purity.py`
@@ -88,9 +88,11 @@ requirement, observe them fail, then implement until they pass. Never check in w
 the suite green. 100% branch coverage of new code is enforced in CI; any gap needs an approved
 `deviation:` node in `this.i`. Always leave existing code better tested than you found it.
 
-`tests/test_acceptance_oracle.py` is the outer oracle and mirrors `docs/demo-script.md` row for
-row. It skips, naming what the fold still owes, until the API it names exists. Do not weaken a
-case in it to make it collect sooner — that is the one change that would make the suite lie.
+The outermost tests here are **acceptance oracles**. A committed script under `docs/` states
+what the engine owes, row by row, and one test file mirrors that script row for row. An oracle
+skips, naming what the engine still owes, until the API a row names exists — it goes from
+skipped to passing rather than from failing to passing. Never weaken a case in an oracle to
+make it collect sooner: that is the one change that would make the suite lie.
 
 ## CI
 
