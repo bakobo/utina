@@ -36,7 +36,7 @@ utina eval hire-vp-sales --at d3
   ------------------------------------------------------------------------------------
 
   position    d3 (seq 6)
-  law head    932f0ab892df...          clause A1 (MxN), unity 1
+  law head    10f70cb57fe0...          clause A1 (MxN), unity 1
   subject     E1rffWC9X3TbAvOb7uva7RUxD1CvqcQ6ovLHW64URWxY
 
   slot              weight   disposition   committed act
@@ -84,7 +84,7 @@ utina eval hire-vp-sales --at d3
 
   The ground
 
-      clause        A1, in force at d3 under the law head 932f0ab892df...
+      clause        A1, in force at d3 under the law head 10f70cb57fe0...
       defeater      authority - the actor lacked the invoked power
       citation      the declination ENETeOGqyXf3... committed by 9-dev-as-founder-at-acme
       subcode       9-dev-as-founder-at-acme
@@ -116,7 +116,7 @@ utina eval hire-vp-sales --at d3
 
   may Acme perform an act of the class hire-vp-sales?          at d3 (seq 6)
 
-  clause A1   MxN over 2 slots, satisfied at unity = 1         law head 932f0ab892df...
+  clause A1   MxN over 2 slots, satisfied at unity = 1         law head 10f70cb57fe0...
 
       9-marta-as-founder   1/2   endorsed   [##########..........]  +1/2
       9-dev-as-founder     1/2   declined   [....................]  spent, unreclaimable

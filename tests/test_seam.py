@@ -32,7 +32,7 @@ def test_the_committed_law_reads_as_law(acme):
     """The Constitution folds Acme's own inception event, not a fixture's."""
     law = Constitution.at(acme.corpus, acme.at("inception"))
 
-    assert [clause.id for clause in law.clauses] == ["A1", "A2"]
+    assert [clause.id for clause in law.clauses] == ["A1", "A2", "A3"]
     assert law.governing("open-bank-account").id == "A1"
     assert {slot.weight for slot in law.clause("A1").group.slots} == {Fraction(1, 2)}
 
@@ -56,8 +56,8 @@ def test_the_board_law_takes_force_where_the_amendment_carries_and_not_before(ac
         return [clause.id for clause in Constitution.at(acme.corpus, position).clauses]
 
     assert committed.seq < short.seq, "the amendment is committed before this coordinate"
-    assert clauses(short) == ["A1", "A2"]
-    assert clauses(seated) == ["B1", "B2"]
+    assert clauses(short) == ["A1", "A2", "A3"]
+    assert clauses(seated) == ["B1", "B2", "A3"]
 
 
 def test_a_committed_weight_is_an_exact_rational_string(acme):
@@ -105,6 +105,49 @@ def test_the_declination_at_d3_is_read_as_a_spent_slot(acme):
 
     assert held == {acme.aid(MARTA): Disposition.ENDORSED, acme.aid(DEV): Disposition.DECLINED}
     assert not law.clause("A1").group.reachable(held)
+
+
+def test_the_carried_clause_is_one_clause_on_both_sides_of_the_amendment(acme):
+    """Demo 2 beat 10's ground: same clause SAID, read out of the fold twice.
+
+    ``tests/test_acme.py`` asserts the committed bytes are equal; this asserts
+    the fold agrees, which is the form the finding cites. Two clauses with equal
+    weights and different digests would satisfy that test and fail this one, and
+    the requirement space a pending act declared at birth would then be
+    unreachable on the far side of an amendment that never touched its rule.
+    """
+    before = Constitution.at(acme.corpus, acme.at("b5"))
+    after = Constitution.at(acme.corpus, acme.at("board-seated"))
+
+    assert [clause.id for clause in before.clauses] == ["A1", "A2", "A3"]
+    assert [clause.id for clause in after.clauses] == ["B1", "B2", "A3"]
+    assert before.clause("A3").said() == after.clause("A3").said()
+    assert before.clause("A3").sub_block() == after.clause("A3").sub_block()
+    assert before.law_head != after.law_head, "the edition moved even though A3 did not"
+
+
+def test_the_founders_equity_question_is_pending_across_the_amendment_and_then_cured(acme):
+    """Demo 2 beats 5, 10 and 11, which the demo-2 oracle will own row by row.
+
+    One committed act, three coordinates. Pending under A3 before the board is
+    seated, pending under the same A3 after it — the same clause and the same
+    outstanding slot, which is what makes the cure path *open* — and affirmed
+    once Dev acts. Beat 9's contrast, the cure path that closes, is U3's work.
+    """
+    equity = "release-escrowed-equity"
+    tabled = evaluate(acme.corpus, Proposal(equity), at=acme.at("b5"))
+    across = evaluate(acme.corpus, Proposal(equity), at=acme.at("board-seated"))
+    cured = evaluate(acme.corpus, Proposal(equity), at=acme.at("b11"))
+
+    assert isinstance(tabled, Pending)
+    assert isinstance(across, Pending)
+    assert tabled.requirement == across.requirement
+    assert [element.clause for element in across.requirement] == ["A3"]
+    assert [element.endorser for element in across.requirement] == [acme.aid(DEV)]
+
+    assert isinstance(cured, Affirmed)
+    assert cured.clauses == ("A3",)
+    assert len(cured.endorsements) == 2
 
 
 def test_a_proposal_binds_to_the_latest_act_and_never_aggregates(acme):

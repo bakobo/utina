@@ -22,6 +22,7 @@ from utina.acme import (
     AMENDMENT_ACTS,
     BOARD_LAW,
     DEV,
+    EQUITY_ACTS,
     FOUNDING_LAW,
     GAID,
     MARTA,
@@ -31,9 +32,16 @@ from utina.acme import (
 )
 from utina.substrate import canonical_bytes
 
+#: ``d1`` through ``d9`` and the two named coordinates are ``docs/demo-script.md``'s.
+#: ``b5`` and ``b11`` are ``docs/demo-2-script.md``'s beats 5 and 11, the two
+#: coordinates the carried clause A3 needs; its beat 10 is asked at
+#: ``board-seated``, the first coordinate the board law governs, so it needs no
+#: label of its own.
 ORACLE_LABELS = {
     "inception",
     "board-seated",
+    "b5",
+    "b11",
     "d1",
     "d2",
     "d3",
@@ -72,6 +80,35 @@ def test_state_two_distributes_ordinary_authority_but_not_amendment_authority():
 
 def test_the_amendment_seats_nina():
     assert BOARD_LAW["seats"] == (NINA,)
+
+
+# --- A3, the clause the amendment does not reach (@rwo55zyw, tick 6ms6) -------
+
+
+def test_the_founders_keep_their_own_clause_in_both_editions():
+    """Escrowed founder equity is a founders' matter in edition 1 and edition 2 alike."""
+    assert weights(FOUNDING_LAW, "A3") == {MARTA: Fraction(1, 2), DEV: Fraction(1, 2)}
+    assert weights(BOARD_LAW, "A3") == {MARTA: Fraction(1, 2), DEV: Fraction(1, 2)}
+
+
+def test_the_carried_clause_is_byte_identical_across_the_amendment():
+    """The claim the whole fixture exists to make, checked where it is made.
+
+    A clause is its bytes. Equal weights would not be enough — a difference in
+    the governed-act list, the operator, or the order of the slots would give the
+    same weights a different digest, and the amendment would then be replacing A3
+    with a clause that merely resembles it.
+    """
+    assert canonical_bytes(clause(FOUNDING_LAW, "A3")) == canonical_bytes(
+        clause(BOARD_LAW, "A3")
+    )
+
+
+def test_the_carried_clause_governs_what_no_other_clause_governs():
+    """Nothing else may rule the equity act, or A3 would not be the untouched one."""
+    assert clause(FOUNDING_LAW, "A3")["governs"] == EQUITY_ACTS
+    for law, ordinary in ((FOUNDING_LAW, "A1"), (BOARD_LAW, "B1")):
+        assert EQUITY_ACTS[0] not in clause(law, ordinary)["governs"]
 
 
 @pytest.mark.parametrize(
@@ -231,6 +268,25 @@ def test_d6_is_dev_s_declination_of_the_retabled_budget(acme_double):
 
 def test_d9_looks_back_from_after_the_amendment(acme_double):
     assert acme_double.at("d9").seq > acme_double.at("board-seated").seq
+
+
+def test_the_equity_release_is_tabled_once_and_straddles_the_amendment(acme_double):
+    """Beats 5, 10 and 11 are one committed act asked at three coordinates.
+
+    Marta endorses before the board is seated and Dev after it, so the same
+    question is pending under A3 on both sides of the amendment and cured on the
+    far side of it — under a clause whose bytes the amendment did not touch.
+    """
+    equity = acme_double.said(EQUITY_ACTS[0])
+    assert acme_double.corpus.event(equity).body["act"] == EQUITY_ACTS[0]
+    endorsers = [
+        (event.body["i"], acme_double.at("board-seated").seq < event.position.seq)
+        for event in acme_double.events
+        if disp(event) == "endorse" and subject_of(event) == equity
+    ]
+    assert endorsers == [(MARTA, False), (DEV, True)]
+    assert acme_double.at("b5").seq < acme_double.at("board-seated").seq
+    assert acme_double.at("b11").seq > acme_double.at("board-seated").seq
 
 
 def test_an_unknown_label_is_named_rather_than_guessed_at(acme_double):

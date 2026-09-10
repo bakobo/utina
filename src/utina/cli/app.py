@@ -53,7 +53,8 @@ LATEST = "the end of the record"
 _EPILOG = """\
 positions
   inception, d1 ... d9, board-seated -- the beats of docs/demo-script.md, so a
-  narrator types something memorable rather than a digest.
+  narrator types something memorable rather than a digest. b5 and b11 are beats
+  of docs/demo-2-script.md, whose numbering is its own.
 
 identifiers
   --said and --on take the name the record commits an act under (seat-the-board),

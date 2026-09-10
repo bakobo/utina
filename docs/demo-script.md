@@ -42,22 +42,30 @@ Each slot is in exactly one disposition:
 
 An active "no" is always a signed declination, never a silent slot.
 
-### State 1 — from inception (clauses A1, A2)
+### State 1 — from inception (clauses A1, A2, A3)
 
 | Clause | Governs | Slots | Effect |
 |---|---|---|---|
 | A1 | ordinary acts | Marta `w=1/2`, Dev `w=1/2` | both required |
 | A2 | amendment of the operating agreement | Marta `w=1/2`, Dev `w=1/2` | both required |
+| A3 | release of escrowed founder equity | Marta `w=1/2`, Dev `w=1/2` | both required |
 
-### State 2 — after E4 seats the board (clauses B1, B2)
+### State 2 — after E4 seats the board (clauses B1, B2, and A3 carried forward)
 
 | Clause | Governs | Slots | Effect |
 |---|---|---|---|
 | B1 | ordinary acts | Marta `w=1/2`, Dev `w=1/2`, Nina `w=1/2` | any two reach unity |
 | B2 | amendment of the operating agreement | Marta `w=1/3`, Dev `w=1/3`, Nina `w=1/3` | all three required |
+| A3 | release of escrowed founder equity | Marta `w=1/2`, Dev `w=1/2` | **unchanged bytes, unchanged SAID** |
 
 The retained higher bar at B2 is the point: seating a board distributes ordinary authority
 without distributing the authority to change the rules.
+
+**A3 is demo 2's material, and no beat below asks about it.** It is recorded here because
+these tables state what the law screens print, and the record this script runs on commits it:
+seating a board does not reach the founders' own escrowed equity, so A3 is carried into state 2
+byte-identical, which is what lets `docs/demo-2-script.md` show a pending act surviving an
+amendment (`this.i` @rwo55zyw, tick `6ms6`). Every beat below is unchanged by it.
 
 ## The beats
 

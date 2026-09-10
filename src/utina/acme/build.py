@@ -19,6 +19,7 @@ from utina.substrate import FacadeSubstrate, FoldValues, Substrate
 from .law import (
     AMENDMENT_ACTS,
     DEV,
+    EQUITY_ACTS,
     GAID,
     MARTA,
     NINA,
@@ -31,6 +32,7 @@ from .record import Acme
 
 BANK_ACCOUNT, HIRE, BUDGET = ORDINARY_ACTS
 AMEND = AMENDMENT_ACTS[0]
+EQUITY = EQUITY_ACTS[0]
 
 
 def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
@@ -59,7 +61,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     def mark(label: str, event: object) -> None:
         labels[label] = event.position.seq  # type: ignore[attr-defined]
 
-    # Inception. The founding law commits A1 and A2, both unanimous.
+    # Inception. The founding law commits A1, A2 and A3, all three unanimous.
     mark("inception", constructor.incept_domain(founding_law(aids)))
     name("inception", constructor.emitted[0])
 
@@ -75,6 +77,13 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     mark("d2", constructor.endorse(marta, hire))
     mark("d3", constructor.decline(dev, hire))
 
+    # Demo 2 beat 5 — release of escrowed founder equity, under A3. Marta
+    # endorses and Dev does not, and it is left that way on purpose: it is the
+    # act that has to still be pending when the amendment lands, so that beat 10
+    # can show a cure path staying open under a clause the amendment did not move.
+    equity = name(EQUITY, constructor.propose(EQUITY))
+    mark("b5", constructor.endorse(marta, equity))
+
     # D4 — the amendment that seats the board, judged under the law it replaces
     # and anchored in an establishment event (custos-4.2.md:2085-2087).
     seat = name("seat-the-board", constructor.enact_amendment(board_law(aids), act=AMEND))
@@ -82,6 +91,12 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     seated = constructor.endorse(dev, seat)
     mark("d4", seated)
     mark("board-seated", seated)
+
+    # Demo 2 beat 11 — Dev endorses the equity release on the far side of the
+    # amendment, curing it under the same clause A3 it was tabled under. Beat 10
+    # is asked at board-seated, between this event and Marta's, and needs no
+    # event of its own.
+    mark("b11", constructor.endorse(dev, equity))
 
     # D5 — the budget carries on Marta and Nina, with Dev never acting.
     budget = name(BUDGET, constructor.propose(BUDGET))

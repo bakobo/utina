@@ -106,10 +106,11 @@ def test_main_defaults_to_the_process_arguments(capsys, monkeypatch):
 # --- utina law ----------------------------------------------------------------
 
 
-def test_law_at_inception_shows_both_founding_clauses_with_slots_and_weights():
+def test_law_at_inception_shows_every_founding_clause_with_slots_and_weights():
     out = screen("law", "--at", "inception")
     assert "LAW IN FORCE AT inception" in out
-    assert "clause A1" in out and "clause A2" in out
+    assert "clause A1" in out and "clause A2" in out and "clause A3" in out
+    assert "release-escrowed-equity" in out
     assert "9-marta-as-founder 1/2, 9-dev-as-founder 1/2" in out
     assert "open-bank-account, hire-vp-sales, approve-budget" in out
     assert "unity 1" in out
@@ -120,12 +121,14 @@ def test_law_shows_the_head_that_identifies_the_edition():
     with world() as record:
         head = record.values  # touched so the fixture cost is visible in the test
     assert head is not None
-    assert "932f0ab892df" in out
+    assert "10f70cb57fe0" in out
 
 
 def test_law_after_the_amendment_shows_the_board_clauses_and_the_retained_bar():
     out = screen("law", "--at", "board-seated")
     assert "clause B1" in out and "clause B2" in out
+    # A3 is re-committed unchanged, so the edition that seats the board carries it.
+    assert "clause A3" in out
     assert "9-marta-as-founder 1/2, 9-dev-as-founder 1/2, 9-nina-as-director 1/2" in out
     assert "9-marta-as-founder 1/3, 9-dev-as-founder 1/3, 9-nina-as-director 1/3" in out
     # B1's slots oversum, so unity does not need everyone; B2's do not.
@@ -223,7 +226,7 @@ def test_a_committed_question_is_judged_under_the_law_it_replaces():
 
 
 def test_a_said_may_be_given_as_a_prefix_of_the_identifier():
-    out = screen("eval", "--said", "E7hG2mIUMDWp", "--at", "d4")
+    out = screen("eval", "--said", "E3nyAcEfOUu7", "--at", "d4")
     assert "AFFIRMED" in out and "A2" in out
 
 
@@ -264,7 +267,7 @@ def test_an_endorsement_is_not_an_act_and_cannot_be_appraised():
 def test_eval_needs_exactly_one_of_an_act_class_and_a_said():
     for argv in (
         ("eval", "--at", "d1"),
-        ("eval", "hire-vp-sales", "--said", "E7hG2mIUMDWp", "--at", "d4"),
+        ("eval", "hire-vp-sales", "--said", "E3nyAcEfOUu7", "--at", "d4"),
     ):
         status, _, err = shell(*argv)
         assert status == 2, argv
@@ -463,7 +466,7 @@ def test_a_defeat_with_no_declination_still_carries_its_ground():
 def test_log_shows_every_committed_event_in_canonical_order():
     out = screen("log")
     assert "COMMITTED LOG AT the end of the record" in out
-    assert "21 events" in out
+    assert "24 events" in out
     assert "Arrival order is not consulted" in out
     seqs = [
         int(line.split()[0])
@@ -496,7 +499,7 @@ def test_replay_folds_the_permuted_log_to_the_same_bytes():
     assert "REPLAY AT board-seated" in out
     assert "IDENTICAL" in out
     assert "custos-4.2.md:3101" in out
-    assert out.count("932f0ab8") == 0  # the board law is in force here, not the founding one
+    assert out.count("10f70cb5") == 0  # the board law is in force here, not the founding one
     assert "clause sub-blocks" in out
     assert "B1" in out and "B2" in out
 
@@ -618,7 +621,7 @@ def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
     # The signature is printed whole and therefore wraps, so the sentence beside it is
     # matched against the screen with its line breaks flattened.
     assert "the substrate verified it before recording" in " ".join(out.split())
-    assert "said=E978mpa1QdIW..." in out
+    assert "said=Ebnz13phAfQy..." in out
     assert "before" in out and "PENDING" in out
     assert "after" in out and "AFFIRMED" in out
     assert "nothing here is written to disk" in out

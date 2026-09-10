@@ -40,10 +40,18 @@ BOARD = (MARTA, DEV, NINA)
 #: What the ordinary-acts clause rules. ``declare-dividend`` is deliberately
 #: absent from every clause: beat D8 needs the law to be genuinely silent
 #: somewhere, and a fold that refuses has to have something to refuse about.
-ORDINARY_ACTS = ("open-bank-account", "hire-vp-sales", "approve-budget")  # ~6ms6
+ORDINARY_ACTS = ("open-bank-account", "hire-vp-sales", "approve-budget")
 
 #: What the amendment clause rules.
 AMENDMENT_ACTS = ("amend-operating-agreement",)
+
+#: What the founders' own clause rules, and the one act class no other clause
+#: reaches. Escrowed founder equity is a founders' matter by construction:
+#: seating a board distributes ordinary authority and the authority to amend, and
+#: deliberately does not reach the equity the founders escrowed between
+#: themselves. That is why A3 can be carried across the amendment unchanged for a
+#: reason rather than as a fixture's control (this.i @rwo55zyw).
+EQUITY_ACTS = ("release-escrowed-equity",)
 
 #: The act nothing governs.
 UNGOVERNED_ACT = "declare-dividend"
@@ -77,11 +85,27 @@ def _even(endorsers: Sequence[str], weight: Fraction) -> tuple[Mapping[str, obje
     return tuple(slot(endorser, weight) for endorser in endorsers)
 
 
+def equity_clause(aids: Mapping[str, str]) -> Mapping[str, object]:
+    """A3, the founders' own clause, built once and committed in both editions.
+
+    The point of the clause is that an amendment does not move it, and a clause
+    is its bytes — each is independently SAID-addressed (custos-4.2.md:1483), so
+    re-committing these bytes re-commits the same clause with the same
+    identifier. Both editions build it through this one function so that the two
+    sites cannot drift: an edit here changes A3 in edition 1 and edition 2
+    together, or it changes neither, which is the only way the identity claim
+    stays true under maintenance (this.i @rwo55zyw).
+    """
+    return clause(
+        "A3", EQUITY_ACTS, _even([aids[alias] for alias in FOUNDERS], Fraction(1, 2))
+    )
+
+
 def founding_law(aids: Mapping[str, str]) -> Mapping[str, object]:
     """State 1, from inception, over the identifiers ``aids`` names.
 
-    Two slots at a half apiece in both clauses, so every decision needs both
-    founders. ``aids`` maps each alias above to the identifier inception
+    Two slots at a half apiece in all three clauses, so every decision needs
+    both founders. ``aids`` maps each alias above to the identifier inception
     returned for it; a slot names an identifier, because an endorsement names
     one and the fold matches the two.
     """
@@ -90,6 +114,7 @@ def founding_law(aids: Mapping[str, str]) -> Mapping[str, object]:
         "clauses": (
             clause("A1", ORDINARY_ACTS, _even(founders, Fraction(1, 2))),
             clause("A2", AMENDMENT_ACTS, _even(founders, Fraction(1, 2))),
+            equity_clause(aids),
         ),
     }
 
@@ -100,12 +125,19 @@ def board_law(aids: Mapping[str, str]) -> Mapping[str, object]:
     Ordinary authority is distributed — three slots at a half, so any two reach
     unity — and the authority to change the rules is not: three slots at a
     third, so all three are needed. That retained bar is the point of the demo.
+
+    A3 is re-committed last and unchanged. An amendment replaces the edition
+    rather than adding to it (this.i @wg3jr6), so a clause that does not change
+    is re-committed rather than left implicitly in force; carrying its bytes is
+    what makes it the same clause afterwards rather than a new one that resembles
+    it.
     """
     board = [aids[alias] for alias in BOARD]
     return {
         "clauses": (
             clause("B1", ORDINARY_ACTS, _even(board, Fraction(1, 2))),
             clause("B2", AMENDMENT_ACTS, _even(board, Fraction(1, 3))),
+            equity_clause(aids),
         ),
         "seats": (aids[NINA],),
     }

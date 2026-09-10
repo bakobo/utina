@@ -13,11 +13,14 @@ LABEL_UNKNOWN = ErrorCode(
     title="Acme's log has no position by that label.",
     detail=(
         "The position {label} was asked for, and the labels this corpus commits are {known}. "
-        "A label names a beat of docs/demo-script.md, so an unknown one is either a typo or a "
-        "beat the corpus does not tell yet."
+        "A label names a beat of docs/demo-script.md or docs/demo-2-script.md, so an unknown "
+        "one is either a typo or a beat the corpus does not tell yet."
     ),
     args=("label", "known"),
-    hint="The labels are inception, board-seated, and d1 through d9.",
+    hint=(
+        "The labels are inception, board-seated, d1 through d9 for demo 1, and b-prefixed "
+        "beat numbers for demo 2."
+    ),
 )
 
 NAME_UNKNOWN = ErrorCode(

@@ -43,8 +43,9 @@ PROLOGUE = (
     Beat(
         "law",
         "The law Acme committed at inception",
-        "Two clauses, two founders, half the weight each. Nothing is judged yet; this "
-        "is the rule set every judgment below is computed against.",
+        "Three clauses, two founders, half the weight each. Nothing is judged yet; this "
+        "is the rule set every judgment below is computed against. The third clause, over "
+        "escrowed founder equity, is the one no beat below asks about.",
         ("law", "--at", "inception"),
     ),
 )
