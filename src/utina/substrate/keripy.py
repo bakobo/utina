@@ -2,7 +2,7 @@
 
 This is the one module in utina permitted to import a KERI library, and
 ``tests/test_purity.py`` is what keeps that true. Everything above the seam gets
-the same five answers it got from the facade; what changes is that an identifier
+the same answers it got from the facade; what changes is that an identifier
 here is a prefix derived from a real inception event, a SAID is Blake3-256 over
 KERI's own JSON, a signature is Ed25519, and an amendment's anchor is a seal in a
 rotation that any KERI tool can read out of the database this leaves on disk.
@@ -47,7 +47,7 @@ from keri.core import eventing  # type: ignore[import-untyped]
 from keri.core.coring import Saider, dumps  # type: ignore[import-untyped]
 from keri.core.indexing import Siger  # type: ignore[import-untyped]
 from keri.core.signing import Salter  # type: ignore[import-untyped]
-from keri.core.structing import SealDigest  # type: ignore[import-untyped]
+from keri.core.structing import SealDigest, SealEvent  # type: ignore[import-untyped]
 from keri.kering import Vrsn_1_0  # type: ignore[import-untyped]
 from keri.vc.proving import credential  # type: ignore[import-untyped]
 
@@ -149,6 +149,38 @@ class KeripySubstrate:
             raise ALIAS_TAKEN(alias=alias)
         prefix: str = self._hby.makeHab(name=alias, **_SINGLE_SIG).pre
         return prefix
+
+    def delegate(self, delegator: AID, alias: str) -> AID:
+        """A real cooperative delegation: a ``dip``, then the delegator's seal.
+
+        ``makeHab(delpre=...)`` writes the delegated inception — ilk ``dip``,
+        with the delegator's prefix in ``di`` — and keripy accepts it into
+        escrow unsigned by the delegator, which is what makes the second half
+        necessary rather than decorative. The delegator then seals it with an
+        *event* seal ``(i, s, d)`` in an interaction event, which is the shape
+        KERI reserves for approving a delegated event, and the escrows are
+        processed so the delegate's key state is accepted rather than pending.
+
+        The seal's ``d`` is the delegated inception's identifier, and for a
+        self-addressing prefix that digest *is* the prefix, so
+        :meth:`anchoring_event` answers for the delegation given nothing but
+        the delegated identifier (this.i @2a25xudi).
+        """
+        delegating = self._hab(delegator)
+        if self._hby.habByName(alias) is not None:
+            raise ALIAS_TAKEN(alias=alias)
+        hab = self._hby.makeHab(name=alias, delpre=delegator, **_SINGLE_SIG)
+        seal = SealEvent(i=hab.pre, s=hab.kever.sner.numh, d=hab.kever.serder.said)
+        delegating.interact(data=[seal._asdict()])
+        self._hby.kvy.processEscrows()
+        prefix: str = hab.pre
+        return prefix
+
+    def delegator_of(self, aid: AID) -> AID | None:
+        """The ``di`` of ``aid``'s inception, read out of its key state."""
+        kever = self._hby.kevers.get(aid)
+        delegator: str | None = None if kever is None else kever.delpre
+        return delegator
 
     def rotate(self, aid: AID, anchor: SAID) -> SAID:
         """Seal ``anchor`` into a rotation, and return that rotation's identifier.

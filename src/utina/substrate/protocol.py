@@ -102,6 +102,39 @@ class Substrate(Protocol):
         """
         ...
 
+    def delegate(self, delegator: AID, alias: str) -> AID:
+        """Bring an identifier into being whose authority is ``delegator``'s.
+
+        Custos asks for a seated organ to *be* a delegated identifier of the
+        governed domain, so that delegation "dual-anchors the seat's key events
+        (the organ signs; the delegator seals)" and the charter's delegation
+        strata carry KERI's delegation semantics rather than a metaphor
+        (``custos-4.2.md:2139-2148``).
+
+        KERI's delegation is cooperative and has two halves — the delegate's
+        inception names its delegator, and the delegator seals that inception
+        into its own key log — and this verb performs both, because neither
+        alone is a delegation: an unanchored delegated inception is a claim, and
+        a seal with no inception anchors nothing. One call, both halves, so a
+        caller cannot leave the unapproved half in a record (this.i @2a25xudi).
+
+        Returns the delegated identifier, which is the delegate's own — it
+        signs for itself, and only its *authority* is another's.
+        :meth:`delegator_of` answers for the first half and
+        :meth:`anchoring_event`, given the returned identifier, for the second.
+        """
+        ...
+
+    def delegator_of(self, aid: AID) -> AID | None:
+        """The identifier that delegated ``aid``, or ``None`` where none did.
+
+        Total, like :meth:`verify` and :meth:`anchoring_event`: an identifier
+        this substrate has never seen, and one that incepted itself, are the
+        same fail-closed answer — nothing committed shows anybody delegating
+        it, so no delegated authority may be read off it.
+        """
+        ...
+
     def rotate(self, aid: AID, anchor: SAID) -> SAID:
         """Rotate ``aid``, sealing ``anchor`` into the establishment event.
 
@@ -117,10 +150,14 @@ class Substrate(Protocol):
         ...
 
     def anchoring_event(self, said: SAID) -> SAID | None:
-        """The establishment event that sealed ``said``, if one did.
+        """The key event that sealed ``said``, if one did.
 
-        Rotations stay out of the corpus the fold folds (this.i @jdie6v), so the
-        binding an anchored enactment claims is answerable here or nowhere.
+        An establishment event for an amendment's anchor, an interaction event
+        for a credential's or a delegation's — the distinction belongs to what
+        was being anchored and not to this question, which asks only where in a
+        key log the seal is. Key events stay out of the corpus the fold folds
+        (this.i @jdie6v), so a binding an anchored artifact claims is answerable
+        here or nowhere.
         """
         ...
 
@@ -146,7 +183,7 @@ class Substrate(Protocol):
 class OpenSubstrate(Substrate, Protocol):
     """A substrate that also has a lifecycle, which is every concrete one.
 
-    ``Substrate`` is the six governance answers and nothing else: that is what
+    ``Substrate`` is the governance answers and nothing else: that is what
     the writing plane is written against, and it should not have to know that
     one backend owns a keystore and two LMDB environments. Opening and closing
     is a construction contract, so it is named here rather than folded into the

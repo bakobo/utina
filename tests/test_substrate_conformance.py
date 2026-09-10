@@ -294,6 +294,86 @@ def test_issuing_as_an_identifier_with_no_key_state_is_refused(conformant):
     assert caught.value.code == "e.id.aid-unknown.f"
 
 
+# --- delegate: a seat is an identifier, and its authority is another's ---------
+
+
+def test_a_delegated_identifier_names_its_delegator(conformant):
+    """The first half of a cooperative delegation: KERI's ``di`` (@2a25xudi).
+
+    ``custos-4.2.md:2139-2148`` asks for a seated organ to be a delegated
+    identifier of the gAID. A seat that did not name its delegator would be an
+    ordinary identifier wearing an office's name.
+    """
+    gaid = conformant.incept("acme:gaid")
+    seat = conformant.delegate(gaid, "acme:seat3")
+
+    assert isinstance(seat, str) and seat != gaid
+    assert conformant.delegator_of(seat) == gaid
+
+
+def test_a_delegation_is_sealed_into_the_delegators_key_log(conformant):
+    """The second half, and the one the demo's seat screen cites.
+
+    The delegator seals the delegate's inception event, so the binding is a fact
+    about committed KERI bytes on both sides rather than a claim on one.
+    """
+    gaid = conformant.incept("acme:gaid")
+    seat = conformant.delegate(gaid, "acme:seat3")
+
+    assert conformant.anchoring_event(seat) is not None
+
+
+def test_a_self_incepted_identifier_has_no_delegator(conformant, marta):
+    """Total and fail-closed: no delegator is ``None``, never an exception."""
+    assert conformant.delegator_of(marta) is None
+    assert conformant.delegator_of("E" + "z" * 43) is None
+
+
+def test_a_delegated_identifier_signs_and_verifies_as_itself(conformant):
+    """The organ signs. Its authority is delegated; its key material is its own."""
+    gaid = conformant.incept("acme:gaid")
+    seat = conformant.delegate(gaid, "acme:seat3")
+
+    signature = conformant.sign(seat, BODY)
+
+    assert conformant.verify(seat, BODY, signature)
+    assert not conformant.verify(gaid, BODY, signature)
+
+
+def test_a_delegated_identifier_may_itself_delegate(conformant):
+    """The third stratum: gAID to seat to device, each hop a real delegation."""
+    gaid = conformant.incept("acme:gaid")
+    seat = conformant.delegate(gaid, "acme:seat3")
+    device = conformant.delegate(seat, "acme:nina-device")
+
+    assert conformant.delegator_of(device) == seat
+    assert conformant.delegator_of(seat) == gaid
+
+
+def test_delegating_under_an_identifier_with_no_key_state_is_refused(conformant):
+    with pytest.raises(BakoboError) as caught:
+        conformant.delegate("acme:never-incepted", "acme:seat3")
+    assert caught.value.code == "e.id.aid-unknown.f"
+
+
+def test_delegating_to_an_alias_already_taken_is_refused(conformant, marta):
+    with pytest.raises(BakoboError) as caught:
+        conformant.delegate(marta, "acme:marta")
+    assert caught.value.code == "e.id.alias-taken.f"
+
+
+def test_a_delegation_is_deterministic(conformant, substrate_name):
+    """Two runs, two substrates of the same kind, one identifier.
+
+    The record's replay claim reaches the seat as well: a delegated identifier
+    derived from anything unpinned would move every beat that names it.
+    """
+    first = conformant.delegate(conformant.incept("acme:gaid"), "acme:seat3")
+    with substrate_named(substrate_name) as again:
+        second = again.delegate(again.incept("acme:gaid"), "acme:seat3")
+    assert first == second
+
+
 def test_issuing_does_not_disturb_the_issuers_signing_key_state(conformant, marta):
     """The anchor rides an interaction event: the log advances, the keys do not."""
     before = conformant.sign(marta, BODY)

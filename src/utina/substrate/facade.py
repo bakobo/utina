@@ -44,6 +44,7 @@ class FacadeSubstrate:
         self._key_index: dict[AID, int] = {}
         self._kel_seq: dict[AID, int] = {}
         self._anchors: dict[SAID, SAID] = {}
+        self._delegators: dict[AID, AID] = {}
 
     def __enter__(self) -> FacadeSubstrate:
         """A lifecycle this backend does not need, and its sibling does.
@@ -70,6 +71,25 @@ class FacadeSubstrate:
         self._key_index[alias] = 0
         self._kel_seq[alias] = 0
         return alias
+
+    def delegate(self, delegator: AID, alias: str) -> AID:
+        """Both halves of a cooperative delegation, in the facade's own terms.
+
+        The delegate is incepted like any party — its identifier is its alias
+        here (this.i @crrtzf) — and then two things are recorded that the
+        protocol's queries answer from: the delegator, and a seal of the
+        delegated identifier in the delegator's own log, written through the
+        same interaction an issuance uses. What keripy gets from a ``dip``
+        naming ``di`` and an event seal, this gets from the pair.
+        """
+        self._require_known(delegator)
+        delegated = self.incept(alias)
+        self._delegators[delegated] = delegator
+        self._interact(delegator, delegated)
+        return delegated
+
+    def delegator_of(self, aid: AID) -> AID | None:
+        return self._delegators.get(aid)
 
     def rotate(self, aid: AID, anchor: SAID) -> SAID:
         self._require_known(aid)
