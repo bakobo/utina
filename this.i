@@ -1159,3 +1159,30 @@ Make Custos's replayable governance useful to a real organization = goal:
         resolve by the canonical tiebreak rather than as one bundle, which is the only order
         available to it; and classification is quadratic when a retraction is present, behind an
         early return for the ordinary case where none is.
+
+    A third founding clause, carried into edition 2 byte-identical = decision:
+      id: rwo55zyw
+      why: >
+        Tick 6ms6. Demo 1's founding law committed {A1, A2} and its board law {B1, B2}, so every
+        clause changed across the amendment and no beat could show a pending act SURVIVING one.
+        Issue 82's rule 2 — an amendment elsewhere leaves the cure path open, tested by same
+        clause SAID, same requirement space, same pinned lens — was unshowable, and so was its
+        contrast with rule 1, which is the pair the demo now turns on. Chose a third founding
+        clause A3, release of escrowed founder equity, at the founders' own weights, re-committed
+        in edition 2 with unchanged bytes: a clause is its bytes and each is independently
+        SAID-addressed (1483), so that is the same clause with the same identifier. Rejected a
+        clause that merely resembles itself across the amendment, which would demonstrate rule
+        2's stability test FAILING and read as though it passed. Rejected making amendment
+        additive so that unmentioned clauses persist implicitly, which is @wg3jr6's settled
+        question and would put two clauses over one act kind. The subject matter is the argument
+        rather than a convenience: seating a board distributes ordinary authority and the
+        authority to amend, and deliberately does not reach the founders' own escrowed equity, so
+        A3 is untouched for a reason a room accepts instead of because the fixture wanted a
+        control. Both editions build A3 through one function so the two sites cannot drift, and
+        tests assert the identity where it is claimed — equal SAIDs and equal sub-block bytes,
+        read out of the two committed law events rather than out of the builder. Consequences
+        accepted: the record grows the tabled release and Marta's endorsement before the
+        amendment and Dev's cure after it, so every coordinate after d3 moves and the founding
+        law head changes with it; demo 1's law screens, its prologue narration and its pinned
+        head fragment therefore change, while every demo-1 verdict stands unaltered, which is
+        exactly what choosing a clause no other beat touches buys.
