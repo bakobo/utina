@@ -1122,3 +1122,40 @@ Make Custos's replayable governance useful to a real organization = goal:
         primitive docs/custos-proposals.md:244-251 says R1, R2 and R3 all need: the coordinate
         at which an act stops being in flight. Logged as Q33 and filed as
         Nicholas-Keystate/custos#96, whose second half is the predecessor citation (tick 5edf).
+
+    A retraction reaches its act only while the act is still in flight = decision:
+      id: nuxitore
+      why: >
+        Tick 5wu5 and R1 in docs/custos-proposals.md. The slot predicate filtered a retracted
+        act out of `standing` unconditionally, so a slot fell back to PENDING at unlimited
+        distance and a settled affirmation came apart: measured on the demo corpus, the bank
+        account is affirmed at d9, and appending one retraction eighteen events after the act
+        settled returns the same question to pending, naming its cure as the arrival of evidence
+        that had already arrived. 1698-1712 forbids that edge by name — affirmed -> pending,
+        "evidence does not un-arrive" — and 1730-1745 permits a successor to reverse a terminal
+        value only where its grown bundle carries evidence falsifying a ground the prior finding
+        cites, "never on added contrary weight alone". Chose: a retraction is honored only where
+        it was committed while its act was still in flight, in flight meaning unity is neither
+        reached nor unreachable, decided by one forward walk in canonical order in which each
+        retraction is judged against the record before it. Rejected the unconditional filter,
+        the shipped bug. Rejected Q18's reading B, in which a retraction spends its slot,
+        because that gives the withdrawal an authority nothing committed gives it and lets a
+        party defeat a live act by first endorsing it. The doctrine is the ground-evaporation
+        text drafted for the spec at 1740 and never applied: withdrawal is not falsification,
+        it is "a fact about the giver's present will, never a fact about the artifact the prior
+        finding appraised", so it is added contrary weight and reverses nothing — because a
+        system in which withdrawal undercuts is one in which any party unmakes any settled
+        question at any distance, unilaterally. Q18's pin therefore narrows from A to A bounded
+        by settlement, and the twin doctrine repair is owed by Custos. The unreachable half of
+        the gate is independent of the UNREACHABLE_YIELDS reading and does not touch that
+        constant (@dozrtx): under the shipped Defeated pin the finding is terminal, and under
+        section 9's pending reading its species is expired/abandoned, whose ratified cure is
+        re-presentation and not the arrival of evidence — so under both readings nothing further
+        can be added to that act. This is the second crossing of the same shape as the
+        effectuation coordinate (@xhtvuxnc) and the two are deliberately not unified: one asks
+        where unity was reached and holds positions, the other asks where the act stopped being
+        reachable and lives in a module that cannot see a coordinate. Tradeoff accepted: that
+        module now steps event by event in the committed order, so two events at one coordinate
+        resolve by the canonical tiebreak rather than as one bundle, which is the only order
+        available to it; and classification is quadratic when a retraction is present, behind an
+        early return for the ordinary case where none is.

@@ -739,8 +739,12 @@ decision becomes pending again; under B it does not; under C the retraction is
 not evidence at all. The demo commits no retraction, so the divergence is latent
 here and live anywhere real.
 
+**AMENDED 2026-09-10 — the pin narrows to A bounded by settlement** (`this.i` @nuxitore, tick `5wu5`). Reading A as pinned was not merely one guess among three; it was inconsistent with a keyword-force span nobody had connected to it. Under it a retraction is effective at unlimited distance, so a settled affirmation returns to pending — measured on the demo corpus, appending one retraction eighteen events after the bank account settled returns that question to pending and names its cure as the arrival of evidence that had already arrived. `:1698-1712` forbids that edge by name (affirmed → pending, "evidence does not un-arrive"; defeated → pending, likewise), and `:1730-1745` permits a successor finding to reverse a terminal value only where its grown bundle carries committed evidence falsifying a ground the prior finding cites, "never on added contrary weight alone". A withdrawal falsifies nothing: it is a fact about the giver's present will, not about the artifact the prior finding appraised.
+
+So A holds while the act is still in flight — unity neither reached nor unreachable — and a retraction committed after that is inert. The divergence paragraph above stands for the live case and is wrong for the settled one: a retracted declination un-spends the slot in a three-slot group, where the act is still reachable, and does not in a two-slot group, where the declination itself ended the flight. Both halves of that gate are reading-independent: where unity is unreachable, §8's pin makes the finding terminal, and §9's competing pending reading types the requirement `expired/abandoned`, whose ratified cure is re-presentation rather than the arrival of evidence.
+
 **Ask Custos:** is the retraction of an endorsement a governed act with a
-committed form, or is it outside the composed-evidence rule entirely?
+committed form, or is it outside the composed-evidence rule entirely? And define `ground-evaporation`, which `:1701` names as load-bearing — "taint-cure and ground-evaporation are different phenomena, and neither is an edge" — and which appears nowhere else in 3,940 lines. The distinction the engine now rests on is that withdrawal is not falsification, and it is stated in the ratified text only by that one unexplained hyphenation.
 
 ---
 
