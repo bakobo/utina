@@ -32,7 +32,7 @@ SAID = str
 #: ``schemas/endorsement.json`` in the specification repo, and its ``$id`` is
 #: this SAID). Declared at the substrate because both backends construct
 #: credentials and both planes above read the pin (this.i @7db5c4).
-ENDORSEMENT_SCHEMA = "EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0"  # ~5ocu
+ENDORSEMENT_SCHEMA = "EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0"
 
 #: The two states a registry-bound credential can be in, in utina's words rather
 #: than KERI's ilks, because this protocol is above the seam. A credential the
