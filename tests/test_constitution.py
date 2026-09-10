@@ -291,16 +291,33 @@ def test_an_enactment_no_clause_governs_never_takes_force():
     assert ids(Constitution.at(ungoverned, LATER)) == ["A1", "A2"]
 
 
-def test_the_first_crossing_is_the_effectuation_coordinate_and_a_retraction_leaves_it():
+def test_an_amendment_that_carried_stays_in_force_when_its_endorser_withdraws():
     """1698-1712: evidence does not un-arrive, and an edition in force stays in force.
 
     The amendment reaches unity at AFFIRMED. Dev then withdraws the endorsement
-    that carried it. Because force is keyed to the *first* coordinate at which
-    unity was reached, the board law is still the law — the retraction is a fact
-    about Dev's present will and not evidence that the amendment never carried.
+    that carried it, and the board law is still the law — twice over. The
+    withdrawal never reaches the enactment, because the enactment had settled
+    (@nuxitore); and force is keyed to the first coordinate at which unity was
+    reached, so even an honored withdrawal would not unmake it (@xhtvuxnc).
     """
     withdrawn = corpus([*EVENTS, retraction("E7-dev-retracts", LATER, DEV, "E6-dev-endorses")])
     assert ids(Constitution.at(withdrawn, Position(8))) == ["B1", "B2"]
+
+
+def test_an_amendment_that_carried_stays_in_force_when_an_endorser_then_declines():
+    """Effectuation is a coordinate the record fixes, not a condition law keeps meeting.
+
+    A signed declination is decisive whatever the committed order, so over the
+    bundle at Position(8) the amendment's group does not hold unity: Dev's slot
+    is spent rather than endorsed. The board law is in force regardless, because
+    the enactment carried at a coordinate and nothing later moves that fact. The
+    withdrawal above cannot make this case, since a withdrawal after settlement
+    never reaches the slot at all — a declination does.
+    """
+    reversed_later = corpus(
+        [*EVENTS, endorsement("E7-dev-declines", LATER, DEV, SEAT_BOARD, "decline")]
+    )
+    assert ids(Constitution.at(reversed_later, Position(8))) == ["B1", "B2"]
 
 
 def test_an_enactment_is_judged_under_the_law_in_force_at_its_own_coordinate():

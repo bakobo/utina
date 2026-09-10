@@ -152,20 +152,61 @@ def test_an_endorsement_of_a_different_subject_never_counts():
     assert disposition_of(founders(), events, MARTA) is Disposition.PENDING
 
 
+def retraction(said: str, issuer: str, target: str) -> Ev:
+    """``issuer`` withdrawing their own earlier act ``target``."""
+    return Ev(said=said, kind="retraction", body={"i": issuer, "revokes": target})
+
+
 def test_a_revoked_endorsement_leaves_the_slot_pending():
-    events = [
-        signed("EAct1", MARTA),
-        Ev(said="EAct2", body={"i": MARTA, "revokes": "EAct1"}),
-    ]
+    """The in-flight case: Marta alone holds 1/2, the act is live, and she withdraws."""
+    events = [signed("EAct1", MARTA), retraction("EAct2", MARTA, "EAct1")]
     assert disposition_of(founders(), events, MARTA) is Disposition.PENDING
 
 
 def test_only_the_issuer_can_revoke_their_own_act():
+    events = [signed("EAct1", MARTA), retraction("EAct2", MALLORY, "EAct1")]
+    assert disposition_of(founders(), events, MARTA) is Disposition.ENDORSED
+
+
+# --- Retraction, bounded by settlement: Q18 as amended, this.i @nuxitore -------
+
+
+def test_a_retraction_after_the_act_settles_does_not_unmake_the_endorsement():
+    """``:1698-1712``, at keyword force: affirmed → pending, "evidence does not un-arrive".
+
+    Both founders endorse, so the act is settled at Dev's endorsement. Dev then
+    withdraws it. Under the unconditional filter this slot fell back to PENDING
+    at any distance, which returned a settled affirmation to pending and named
+    its cure as the arrival of the evidence that had already arrived. A
+    withdrawal is a fact about Dev's present will, not about the artifact the
+    finding appraised, so it reverses nothing.
+    """
     events = [
         signed("EAct1", MARTA),
-        Ev(said="EAct2", body={"i": MALLORY, "revokes": "EAct1"}),
+        signed("EAct2", DEV),
+        retraction("EAct3", DEV, "EAct2"),
     ]
+    assert disposition_of(founders(), events, DEV) is Disposition.ENDORSED
     assert disposition_of(founders(), events, MARTA) is Disposition.ENDORSED
+
+
+def test_a_retraction_is_judged_against_the_record_before_it_and_not_the_whole_bundle():
+    """Marta withdraws while the act is live, then endorses again, and the act settles.
+
+    The retraction reached the first act because at its own coordinate nothing
+    had settled. What fills the slot afterwards is the second endorsement, on its
+    own identifier — the withdrawal is keyed to the act it names and does not
+    reach an act committed after it.
+    """
+    events = [
+        signed("EAct1", MARTA),
+        retraction("EAct2", MARTA, "EAct1"),
+        signed("EAct3", MARTA),
+        signed("EAct4", DEV),
+    ]
+    classified = slots.classify(founders(), events, SUBJECT)
+    assert classified[0].disposition is Disposition.ENDORSED
+    assert classified[0].said == "EAct3"
 
 
 def test_an_event_of_another_kind_is_not_an_endorsement_however_it_reads():
@@ -250,13 +291,35 @@ def test_a_declination_is_decisive_whatever_the_committed_order(order):
     assert disposition_of(founders(), events, MARTA) is Disposition.DECLINED
 
 
-def test_a_revoked_declination_releases_the_slot_again():
-    """custos-questions.md Q18, reading A: a retracted act is as if never committed."""
+def test_a_revoked_declination_releases_the_slot_while_unity_is_still_reachable():
+    """Q18's reading A, in the case it was always right for: the act is still live.
+
+    Three slots at a half, so Marta's declination leaves Dev and Nina able to
+    reach unity between them. The act is in flight, her withdrawal reaches it,
+    and her weight is reachable again.
+    """
     events = [
         signed("EAct1", MARTA, disp="decline"),
-        Ev(said="EAct2", body={"i": MARTA, "revokes": "EAct1"}),
+        retraction("EAct2", MARTA, "EAct1"),
     ]
-    assert disposition_of(founders(), events, MARTA) is Disposition.PENDING
+    assert disposition_of(board(), events, MARTA) is Disposition.PENDING
+
+
+def test_a_revoked_declination_does_not_release_a_slot_whose_declination_ended_the_flight():
+    """The same two events under two slots instead of three, and the answer inverts.
+
+    Marta's declination spends her slot, so the weight that can still arrive is
+    Dev's half and unity is unreachable: the act is settled at that coordinate,
+    and under the shipped pin the finding is defeated. Her withdrawal then
+    arrives at a question that is over. Honoring it would run the forbidden
+    defeated → pending edge, and would mean a party could settle a decision
+    against itself and reopen it at will.
+    """
+    events = [
+        signed("EAct1", MARTA, disp="decline"),
+        retraction("EAct2", MARTA, "EAct1"),
+    ]
+    assert disposition_of(founders(), events, MARTA) is Disposition.DECLINED
 
 
 def test_the_same_endorsement_committed_twice_endorses_once():

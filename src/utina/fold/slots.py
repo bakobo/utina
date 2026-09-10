@@ -21,7 +21,9 @@ dispositions."
    operator;
 5. its attributes carry ``disp`` of ``"endorse"``;
 6. its attributes' ``said`` is the subject under appraisal;
-7. its issuer has not retracted it.
+7. its issuer has not retracted it while the act it endorses was still in flight
+   (``this.i`` @nuxitore — a withdrawal after the act settles is inert, because
+   withdrawal is not falsification).
 
 Anything else — an unrecognized disposition, a body whose fields are not strings,
 an event of another kind that happens to read like an endorsement — is PENDING.
@@ -162,9 +164,14 @@ def classify(
     and a declination naming ``subject``, the slot is DECLINED whatever the committed
     order, because the reading that never grants authority is the one to take when
     the specification does not say (``docs/custos-questions.md`` Q20).
+
+    A retraction is not decisive at all once the act has settled. Which
+    withdrawals reach their act is :func:`_retracted`, and it is a question about
+    the whole bundle rather than about one slot, so it is answered once here
+    rather than per slot.
     """
     committed = tuple(events)
-    retracted = _retracted(committed)
+    retracted = _retracted(group, committed, subject)
     return tuple(_classify_slot(slot, committed, retracted, subject) for slot in group.slots)
 
 
@@ -193,21 +200,91 @@ def declinations(classified: Iterable[SlotDisposition]) -> tuple[tuple[AID, SAID
     )
 
 
-def _retracted(committed: tuple[CommittedEvent, ...]) -> dict[SAID, set[AID]]:  # ~3h6k
-    """Which acts have been retracted, and by whom.
+def _retracts(event: CommittedEvent) -> tuple[SAID, AID] | None:
+    """The act this event withdraws and who withdrew it, or ``None`` for neither.
 
     Deliberately liberal about the retracting event's kind and strict about its
     issuer: a retraction removes authority rather than granting it, so a broad
     reading of what retracts is the fail-closed one, while letting a stranger
     cancel someone else's endorsement would not be.
     """
-    retractions: dict[SAID, set[AID]] = {}
-    for event in committed:
-        target = event.body.get(REVOKES_FIELD)
-        issuer = event.body.get(ISSUER_FIELD)
-        if isinstance(target, str) and isinstance(issuer, str):
-            retractions.setdefault(target, set()).add(issuer)
-    return retractions
+    target = event.body.get(REVOKES_FIELD)
+    issuer = event.body.get(ISSUER_FIELD)
+    if isinstance(target, str) and isinstance(issuer, str):
+        return target, issuer
+    return None
+
+
+def _retracted(  # ~3h6k
+    group: Group, committed: tuple[CommittedEvent, ...], subject: SAID
+) -> dict[SAID, set[AID]]:
+    """Which retractions reached their act, and by whom.
+
+    **Withdrawal is not falsification.** A retraction says "I no longer give
+    this", which is a fact about the giver's present will. An undercut says "this
+    ground was never good", which is a fact about the artifact a finding
+    appraised. Only the second is evidence about the state of affairs the prior
+    finding judged, and only the second reopens it: ``:1730-1745`` permits a
+    successor finding to reverse a terminal value "only where its grown bundle
+    contains committed evidence falsifying a ground the prior finding cites …
+    and never on added contrary weight alone". The distinction is the
+    ``ground-evaporation`` the ratified text names at ``:1701`` and never
+    defines (``docs/custos-questions.md`` Q18 as amended, ``this.i`` @nuxitore).
+
+    So a retraction reaches its act only while the act is still **in flight** —
+    unity neither reached nor unreachable — and one committed after that is
+    inert. Honoring it later would run the edges ``:1698-1712`` forbids at
+    keyword force (affirmed → pending and defeated → pending, "evidence does not
+    un-arrive"), and would mean any party could unmake any settled question at
+    any distance, unilaterally.
+
+    The walk is forward, and each retraction is judged against the record before
+    it. That is the only order available here: this module sees no coordinates
+    (see :class:`CommittedEvent`), so it steps event by event through the
+    committed order it was handed, and two events at one coordinate resolve by
+    the canonical tiebreak rather than as one bundle.
+
+    Entries naming an act that is not an endorsement of ``subject`` are never
+    read — :func:`_classify_slot` looks a retraction up by the identifier of an
+    act already filling one of this group's slots — so the gate's answer for
+    them cannot change a disposition. The early return is the ordinary case,
+    where nothing was withdrawn and there is nothing to gate; it keeps the
+    quadratic walk off every classification with no withdrawal in it.
+    """
+    reaching: dict[SAID, set[AID]] = {}
+    if not any(_retracts(event) is not None for event in committed):
+        return reaching
+    for index, event in enumerate(committed):
+        withdrawal = _retracts(event)
+        if withdrawal is not None:
+            target, issuer = withdrawal
+            reaching.setdefault(target, set()).add(issuer)
+        if not _in_flight(group, committed[: index + 1], reaching, subject):
+            break
+    return reaching
+
+
+def _in_flight(
+    group: Group,
+    committed: tuple[CommittedEvent, ...],
+    retracted: Mapping[SAID, set[AID]],
+    subject: SAID,
+) -> bool:
+    """Whether the act could still go either way over this much evidence.
+
+    Unity neither reached nor unreachable. Both halves are what they are under
+    either reading of an unreachable group: where unity cannot be reached, the
+    shipped pin makes the finding terminal, and §9's competing pending reading
+    types its requirement ``expired/abandoned``, whose ratified cure is
+    re-presentation rather than the arrival of evidence. Under both, nothing
+    further can be added to *this* act — which is why this predicate does not
+    consult ``UNREACHABLE_YIELDS`` and must not (``this.i`` @dozrtx).
+    """
+    held = {
+        one.endorser: one.disposition
+        for one in (_classify_slot(slot, committed, retracted, subject) for slot in group.slots)
+    }
+    return group.reachable(held) and not group.satisfied(held)
 
 
 def _classify_slot(
@@ -220,7 +297,7 @@ def _classify_slot(
         event
         for event in committed
         if _fills(event, slot, subject)
-        and slot.endorser not in retracted.get(event.said, ())  # ~5wu5
+        and slot.endorser not in retracted.get(event.said, ())
     ]
     for wanted, disposition in _PRECEDENCE:
         for event in standing:

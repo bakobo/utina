@@ -126,6 +126,12 @@ class Log:
     def decline(self, who: str, subject: str) -> str:
         return self.dispose(who, subject, "decline")
 
+    def retract(self, who: str, target: str) -> str:
+        """``who`` withdrawing their own earlier act, which the fold reads and
+        nothing in ``utina.enact`` can yet write (ticks ``3z6a``, ``56js``)."""
+        body = {"t": "ret", "i": who, "revokes": target}
+        return self._add(f"retract-{who}", "retraction", body)
+
     @property
     def corpus(self) -> Corpus:
         return Corpus.load(self.events)
@@ -410,6 +416,43 @@ def test_a_declination_that_leaves_unity_reachable_is_only_pending(founded):
 
     assert isinstance(finding, Pending)
     assert [element.endorser for element in finding.requirement] == [NINA]
+
+
+def test_a_retraction_after_the_act_settles_leaves_the_affirmation_standing(founded):
+    """R1's measurement, at the level it was measured: the finding does not come apart.
+
+    Both founders endorse the hire, and it is affirmed. Dev then withdraws the
+    endorsement he gave. Under the unconditional filter the same question came
+    back pending, carrying a requirement element naming Dev's slot ``absent``,
+    "cured by the arrival of the missing evidence" — the arrival of evidence that
+    had already arrived. ``:1698-1712`` forbids that edge (this.i @nuxitore).
+    """
+    hire = founded.act("hire", "hire")
+    from_marta = founded.endorse(MARTA, hire)
+    from_dev = founded.endorse(DEV, hire)
+    founded.retract(DEV, from_dev)
+
+    finding = evaluate(founded.corpus, Committed(hire), at=founded.now)
+
+    assert isinstance(finding, Affirmed)
+    assert finding.endorsements == (from_marta, from_dev)
+
+
+def test_a_retraction_while_the_act_is_in_flight_returns_the_slot_to_pending(founded):
+    """The live case, which the same rule has to keep working.
+
+    Marta endorses and withdraws it before Dev acts. Nothing has settled, so the
+    withdrawal reaches the act and her slot owes an endorsement again — which is
+    what a pending requirement element correctly says can cure it.
+    """
+    hire = founded.act("hire", "hire")
+    given = founded.endorse(MARTA, hire)
+    founded.retract(MARTA, given)
+
+    finding = evaluate(founded.corpus, Committed(hire), at=founded.now)
+
+    assert isinstance(finding, Pending)
+    assert [element.endorser for element in finding.requirement] == [DEV, MARTA]
 
 
 def test_the_defeat_is_selected_canonically_where_two_slots_declined(founded):
