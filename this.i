@@ -1209,3 +1209,35 @@ Make Custos's replayable governance useful to a real organization = goal:
         hire's endorsement moves again; and docs/render-candidates.md is re-rendered where a
         test pins it and says plainly that its two unchosen alternates were drawn against the
         pre-split subject.
+
+    One verb performs both halves of a cooperative delegation = decision:
+      id: 2a25xudi
+      why: >
+        2139-2148 says a seated organ SHOULD be a delegated identifier of the gAID, so that
+        delegation "dual-anchors the seat's key events (the organ signs; the delegator seals)"
+        and gives the charter's delegation strata KERI's delegation semantics rather than a
+        metaphor. KERI's delegation is cooperative and has exactly two halves: the delegate's
+        inception names its delegator in di, and the delegator seals the delegate's inception
+        event into its own key log. Neither half alone is a delegation — an unanchored dip is a
+        claim, and a seal with no dip anchors nothing. Chose one verb, delegate(delegator,
+        alias) -> AID, which performs both halves and returns the delegated identifier.
+        Rejected two verbs, an incept-delegated followed by an approve, because that lets a
+        caller produce the unanchored half and leave a record claiming a seat nobody approved;
+        making the halves inseparable at the seam is the fail-closed direction. Rejected a
+        delegator argument on incept, because a delegation is not an inception with a flag: it
+        returns an identifier whose authority is another's, and a caller reading incept would
+        not know a seal was owed. Observability needed one new query and not two: a delegated
+        inception's identifier IS its own event's digest, so anchoring_event(seat) already
+        returns the delegator's sealing event, exactly as it does for a credential, and only the
+        di half needed asking for. delegator_of is total and answers None rather than raising,
+        matching anchoring_event and verify — "this substrate cannot show that anybody delegated
+        it" is the same fail-closed answer for an unknown identifier as for a self-incepted one.
+        Under keripy this is makeHab(delpre=...), an event seal (i, s, d) in the delegator's
+        interaction event, and processing escrows so the delegate's key state is accepted;
+        measured on the pinned build, the dip carries di and its prefix equals its own said, and
+        the seat signs and can take a delegated rotation afterwards. The facade records the
+        delegator and seals the delegated identifier through the same interaction an issuance
+        uses. Neither backend adds a corpus event: delegation lives in the key log (@jdie6v), so
+        it moves no coordinate and regenerates no identifier in the record. Tradeoff accepted:
+        every party's keys still come from one pinned salt in one keystore, so "Nina holds seat
+        3's keys" is a story the fixture tells rather than a custody boundary it enforces.
