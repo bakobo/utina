@@ -63,6 +63,7 @@ before the fold can still be followed. The per-commission files are gone.
 | Q30 | what act class does an enactment perform | DIVERGENT | new at integration |
 | Q31 | what is a threshold defeat's subcode | DIVERGENT | new at integration |
 | Q32 | must an endorsement be an ACDC issuance in a registry | DIVERGENT | new at the keripy substrate |
+| Q33 | at which coordinate does an affirmed enactment take force | DIVERGENT | new at demo 2 |
 
 ---
 
@@ -1350,6 +1351,28 @@ in a credential registry, or is it a committed classification of the act with no
 registry implied? If the former, what is the committed form the fold folds — the
 credential, the TEL event, or the anchoring KEL event — and how does an evaluator
 with no network resolve the schema that issuance requires?
+
+---
+
+## Q33 — At which coordinate does an affirmed enactment take force? **DIVERGENT**
+
+*New at demo 2. The companion to Q3, which settles which law judges an enactment and says nothing about when the edition it commits begins to bind.*
+
+**Span:** `:207` ("the fold never writes, it reads the successor law the enactment left"); `:214-215` (a ratification is an enactment, an enactment is judged under the Constitution it amends, "and the judgment is a finding like any other"); `:1796-1800` (defeat annihilates upward, voiding "what was built on it"); `:3001-3003` (a ratified document's clauses "are the GARD's law for every position at and after the effectuation coordinate, and SHALL bind no position before it"). The phrase "effectuation coordinate" appears at `:3001-3002` and `:3041` and is nowhere defined; `:2999` names effectuation as the third step of an operational ceremony whose "circumstances remain outside the ratified bytes".
+
+**Where it bit:** `Constitution.at`. utina keyed force on the enactment being *committed*, which is one of the three readings below and the weakest of them.
+
+- **Reading A — the enactment's own coordinate.** Permitted by `:207` read alone: the enactment "left" a successor law, and the fold reads it. Under this reading an enactment that nobody endorsed, or that was defeated, changes the law exactly as an affirmed one does — the law fold never consults an endorsement at all, so an unendorsed unilateral commitment is a lawful amendment.
+- **Reading B — the coordinate at which the enactment is first affirmed.** Permitted by `:214-215` with `:3001-3003`: the enactment is judged like any other act, so what it commits binds from where its judgment carried, which is where the effectuation coordinate falls.
+- **Reading C — the coordinate after the one at which it is first affirmed.** Permitted by reading the succession rule at `:2270-2272` ("law never applies to itself at a coordinate, only to its successor at the next") as ranging over the affirmation rather than over the commitment.
+
+**Pinned: B.** A defeats itself against `:214-215`: a judgment "like any other" whose value changes nothing about whether the law changes is not a judgment. `:1796-1800` points the same way, though it is an extension rather than a ruling on this case — defeat voids "what was built on" a defeated finding, and its examples run up to the enactment and stop short of the edition the enactment leaves. Between B and C, `:3001-3003` binds "at and after the effectuation coordinate", and the coordinate at which an enactment carried is the coordinate at which it took effect — under C the coordinate that seats a board is a coordinate the board's own law does not yet govern, which is a distinction nothing committed marks. `this.i` @xhtvuxnc.
+
+**Divergence.** Between A and B, every position between an enactment and its affirmation, and every record in which an enactment is unendorsed or defeated: two conforming engines return findings under different editions on identical bytes, and one of them lets any single party amend the law alone. Between B and C, exactly one coordinate — the affirming one — which is enough for two engines to disagree about a beat asked there.
+
+**What B does not settle, and what utina cannot express.** Once force is keyed to affirmation, an enactment's commitment order and its effectuation order can disagree: commit two amendments to one predecessor, affirm the second before the first, and two editions become in force at coordinates whose order is the reverse of their events'. `:3038-3050` rules that case, in the clause where Custos governs its own succession and calls it "the same discipline this standard imposes on every governed corpus, applied to itself" (`:2992-2994`) — the successor cites its predecessor's bytes, eligibility is latest-unsuperseded, and "where two enactments claim the same predecessor, the GEL's committed order rules: the earlier lawful enactment is the succession, and the later travels as evidence — of error or of duplicity." utina cannot apply either half: its enactment events carry a law body and no predecessor citation, so nothing committed says which predecessor an enactment claims, and "already superseded at that coordinate" has no committed term to test. The law fold keeps its walk in canonical order and therefore resolves such a fork to the last law event in force, which is an artifact of the walk and not a reading of the text. Every record utina builds has a linear succession, where the two rules cannot disagree.
+
+**Ask Custos:** define the effectuation coordinate. Does an enactment's edition bind from the coordinate at which the enactment reaches unity, and does an enactment that is defeated or never affirmed confer nothing? This is R4 in `docs/custos-proposals.md`, where it is stated as a requirement rather than a reading; one sentence at the succession rule closes both. Second, and consequent: §17's succession record and fork rule presume a committed predecessor citation on every enactment, and §18's GEL event grammar never obliges one. Either §18 owes the field, or §17 owes the rule that applies without it.
 
 ---
 

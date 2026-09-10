@@ -1079,3 +1079,46 @@ Make Custos's replayable governance useful to a real organization = goal:
         credential's s equals the pinned schema SAID, the one-schema form of the dossier's
         "names the schema that endorsement MUST satisfy" (:356) — with anything malformed
         still reading PENDING, never an error.
+
+    An enactment takes force where it is affirmed, not where it is committed = decision:
+      id: xhtvuxnc
+      why: >
+        R4 in docs/custos-proposals.md, and the correctness bug tick 4pmw held. Constitution.at
+        keyed an edition's force on its enactment being COMMITTED and never consulted an
+        endorsement, so in the demo record the board law was in force one event before the
+        amendment enacting it reached unity, and a unilaterally committed — or actively defeated
+        — enactment changed the law just the same. Custos implies the opposite without stating
+        it: 214-215 makes a ratification an enactment, an enactment judged under the
+        Constitution it amends, and that judgment "a finding like any other", and 1796-1800 has
+        defeat annihilate upward — voiding "what was built on it", which an edition is, though
+        the passage's own examples stop at the enactment rather than at the law it leaves. But
+        207, read alone, says the fold "reads the successor law the enactment left", which is
+        what was built. Chose: an edition takes force at and
+        after its EFFECTUATION COORDINATE — the first coordinate at which the enactment's own
+        lawfulness reaches unity, under the clause governing its act class in the law in force
+        at its own coordinate — and an enactment never affirmed, or defeated, never takes force
+        at all. Rejected force-on-commitment, the shipped bug. Rejected the coordinate strictly
+        AFTER unity, because 3001-3003 binds a ratified document's clauses "for every position
+        at and after the effectuation coordinate", and effectuation is where the enactment
+        carried, not the event after it; under the strict reading the coordinate that seats the
+        board is one the board's own law does not govern. Deliberately NOT decided: which
+        edition governs where two enactments amend one predecessor and their effectuation
+        coordinates interleave. 3038-3050 rules that case, where Custos governs its own
+        succession by "the same discipline this standard imposes on every governed corpus"
+        (2992-2994) — a successor cites its predecessor's bytes, eligibility is
+        latest-unsuperseded, and "where two enactments claim the same predecessor, the GEL's
+        committed order rules: the earlier lawful enactment is the succession, and the later
+        travels as evidence" — but utina's enactment events cite no predecessor at all, so
+        neither the eligibility test nor the fork rule is expressible over the bytes utina
+        commits. The walk therefore keeps the shipped engine's own resolution, which is the last
+        law event in canonical order among those in force, and that is an artifact of the walk
+        rather than a reading: every record utina builds has a linear succession, in which the
+        two rules cannot disagree. Widening the enactment to carry its predecessor is the
+        prerequisite for deciding it, and it is not this tick's. Tradeoff accepted: the law fold
+        is no longer a walk over law events alone. It consults the slot predicate, so
+        constitution.py imports slots.py, and finding a first crossing re-classifies the slots
+        at every candidate coordinate — quadratic in the record's length, taken over duplicating
+        the precedence rules that make a declination decisive. This also builds the derived
+        primitive docs/custos-proposals.md:244-251 says R1, R2 and R3 all need: the coordinate
+        at which an act stops being in flight. Logged as Q33, and the question is owed to Custos
+        at R4.
