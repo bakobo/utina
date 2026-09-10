@@ -1241,3 +1241,42 @@ Make Custos's replayable governance useful to a real organization = goal:
         it moves no coordinate and regenerates no identifier in the record. Tradeoff accepted:
         every party's keys still come from one pinned salt in one keystore, so "Nina holds seat
         3's keys" is a story the fixture tells rather than a custody boundary it enforces.
+
+    A real TEL holds the registry, and the fold never reads it = decision:
+      id: exy3u4t7
+      why: >
+        1420-1422 requires a standing-conferring credential to be revocable through its
+        registry, so the seat credential is registry-bound where an endorsement stays
+        registry-less (@7db5c4): two credential kinds with different obligations, and the demo
+        shows both. Chose a real keri.vdr registry under keripy — vcp, iss and rev events in a
+        TEL, anchored by seals in Acme's KEL — over a registry-shaped field on the credential,
+        because 1916-1927's doctrine is that registry state is EVIDENCE and a relying party
+        that treats it as authority "has skipped the law and trusted the ledger", and a field
+        nobody can revoke would make that sentence unshowable. The three sources of
+        nondeterminism @65buz7 priced are all pinnable, measured on the pinned build: the
+        registry nonce is a fixed qb64 seed, the vcp is built at version Vrsn_1_0 because the
+        v2 defaults raise on it, and iss/rev take the same fixed dt the credentials take, since
+        keripy stamps wall-clock time when the caller supplies none. With those three pinned,
+        two Haberies built from the same salt produce the same registry identifier, the same
+        credential identifier and the same final KEL digest. The anchor dance is four steps and
+        cannot be shortened: makeRegistry builds the vcp but its own regser property reads
+        through a tever that does not exist until the anchor lands, so the sequence is build,
+        seal (i, s, d) from the TEL event into the controller's interaction event, anchorMsg to
+        hand the TEL event its anchor, then processEscrows. A seal whose s is not the TEL
+        event's own sequence number is accepted and does nothing, which is how a revocation can
+        appear to succeed and leave the state at iss.
+        The seam gains three verbs and one query — open_registry, a registry keyword on
+        issue_acdc, revoke_acdc, registry_state — and issue_acdc takes a keyword rather than
+        splitting into two verbs, so both kinds of credential are constructed, signed, verified
+        and anchored by one code path and the difference between them is one argument at the
+        call site. State reads as "issued" or "revoked", utina's words rather than KERI's ilks,
+        because the protocol is above the seam.
+        The load-bearing negative: the FOLD never calls registry_state. It cannot — the purity
+        fitness function forbids the import — and it should not, because a fold that read
+        registry state from a substrate would be reading an ambient condition, which is exactly
+        what issue 82 rule 3 rules out when it makes registry state "a member of the evidence
+        bundle rather than an ambient condition read against it". So the constructor commits the
+        issuance and the revocation as governance events and the fold folds THOSE into standing;
+        registry_state answers for screens and for the constructor's own fail-closed checks.
+        That split is what keeps the two currents unmerged at the layer where they could quietly
+        merge.
