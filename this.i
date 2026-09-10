@@ -1186,3 +1186,26 @@ Make Custos's replayable governance useful to a real organization = goal:
         law head changes with it; demo 1's law screens, its prologue narration and its pinned
         head fragment therefore change, while every demo-1 verdict stands unaltered, which is
         exactly what choosing a clause no other beat touches buys.
+
+    The signed no at D3 moves from the hire to a new office-lease act = decision:
+      id: 4tcsbw72
+      why: >
+        The demo-2 beat in which a pending act's cure path CLOSES needs an act that is still
+        pending when the amendment lands: the hire, whose cited clause A1 the amendment repeals,
+        leaving the amending enactment as its ground (issue 82 determination 1). Demo 1 had
+        already spent that act — Dev declines the hire at D3, which is the defeat half of the
+        D3-against-D6 centerpiece — so one of the two had to give. Chose the split demo 2's
+        script already calls for: a new ordinary act, sign-office-lease, takes Dev's declination
+        and becomes D3's subject, and the hire keeps Marta's endorsement alone and stays pending
+        across the amendment. Rejected the additive alternative, keeping D3's declined hire and
+        tabling the hire a second time for demo 2, which costs no test and puts two tablings of
+        one act class in a log this audience reads line by line, where the only honest
+        explanation is that one of them serves a different demo. D3's argument does not depend
+        on which act carries the no: it is the same person's same signed declination under a
+        two-slot clause, and the contrast with D6 is untouched. Daniel ruled it 2026-09-10, the
+        question being whether a row of a script still in force may move; it may. Consequences:
+        the D3 row of that script, the acceptance oracle's D3 cases and the demo driver's D3
+        beat all name the lease; the record gains two events, so every coordinate after the
+        hire's endorsement moves again; and docs/render-candidates.md is re-rendered where a
+        test pins it and says plainly that its two unchosen alternates were drawn against the
+        pre-split subject.
