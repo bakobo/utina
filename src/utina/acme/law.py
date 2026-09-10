@@ -40,7 +40,7 @@ BOARD = (MARTA, DEV, NINA)
 #: What the ordinary-acts clause rules. ``declare-dividend`` is deliberately
 #: absent from every clause: beat D8 needs the law to be genuinely silent
 #: somewhere, and a fold that refuses has to have something to refuse about.
-ORDINARY_ACTS = ("open-bank-account", "hire-vp-sales", "approve-budget")
+ORDINARY_ACTS = ("open-bank-account", "hire-vp-sales", "approve-budget")  # ~6ms6
 
 #: What the amendment clause rules.
 AMENDMENT_ACTS = ("amend-operating-agreement",)
@@ -69,7 +69,7 @@ def clause(
     return {
         "id": identifier,
         "governs": tuple(governs),
-        "group": {"operator": "MxN", "slots": tuple(slots)},
+        "group": {"operator": "MxN", "slots": tuple(slots)},  # ~5psg
     }
 
 

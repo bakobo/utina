@@ -193,7 +193,7 @@ def declinations(classified: Iterable[SlotDisposition]) -> tuple[tuple[AID, SAID
     )
 
 
-def _retracted(committed: tuple[CommittedEvent, ...]) -> dict[SAID, set[AID]]:
+def _retracted(committed: tuple[CommittedEvent, ...]) -> dict[SAID, set[AID]]:  # ~3h6k
     """Which acts have been retracted, and by whom.
 
     Deliberately liberal about the retracting event's kind and strict about its
@@ -220,7 +220,7 @@ def _classify_slot(
         event
         for event in committed
         if _fills(event, slot, subject)
-        and slot.endorser not in retracted.get(event.said, ())
+        and slot.endorser not in retracted.get(event.said, ())  # ~5wu5
     ]
     for wanted, disposition in _PRECEDENCE:
         for event in standing:
@@ -229,7 +229,7 @@ def _classify_slot(
     return SlotDisposition(slot.endorser, Disposition.PENDING)
 
 
-def credential(event: CommittedEvent) -> Mapping[str, object]:
+def credential(event: CommittedEvent) -> Mapping[str, object]:  # ~5fam
     """The credential the event embeds, or an empty mapping — never an error.
 
     Public because the display plane reads the same committed values the
@@ -245,7 +245,7 @@ def attributes(event: CommittedEvent) -> Mapping[str, object]:
     return block if isinstance(block, Mapping) else {}
 
 
-def _fills(event: CommittedEvent, slot: Slot, subject: SAID) -> bool:
+def _fills(event: CommittedEvent, slot: Slot, subject: SAID) -> bool:  # ~6mcq
     """Whether ``event`` is an issuance act by this slot's endorser on this subject.
 
     The disposition itself is not read here: an act that reaches this far has been

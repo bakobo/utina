@@ -34,7 +34,7 @@ from .errors import (
 #: their mind declines, which is another issuance — and the credentials this
 #: constructor issues carry no registry, so they are structurally unrevokable;
 #: whether revocation ever enters the vocabulary is deliberately open (~56js).
-ISSUANCE = "issue"
+ISSUANCE = "issue"  # ~3z6a
 
 
 class Constructor:

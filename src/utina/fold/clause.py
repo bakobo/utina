@@ -94,7 +94,7 @@ class Clause:
 
     id: str
     governs: tuple[str, ...]
-    group: Group
+    group: Group  # ~66mh
 
     @classmethod
     def from_committed(cls, body: object) -> Clause:

@@ -32,7 +32,7 @@ SAID = str
 #: ``schemas/endorsement.json`` in the specification repo, and its ``$id`` is
 #: this SAID). Declared at the substrate because both backends construct
 #: credentials and both planes above read the pin (this.i @7db5c4).
-ENDORSEMENT_SCHEMA = "EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0"
+ENDORSEMENT_SCHEMA = "EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0"  # ~5ocu
 
 #: The timestamp every credential's attributes block carries. A fixed fixture,
 #: the same posture as the pinned salt (this.i @7jrbt3): keripy injects a
@@ -91,7 +91,7 @@ class Substrate(Protocol):
         """
         ...
 
-    def incept(self, alias: str) -> AID:
+    def incept(self, alias: str) -> AID:  # ~5sfe
         """Bring an identifier into being, and return the identifier to use.
 
         The alias is a name for the caller's convenience and the return value is
@@ -124,7 +124,7 @@ class Substrate(Protocol):
         """
         ...
 
-    def issue_acdc(
+    def issue_acdc(  # ~2kks
         self, issuer: AID, schema: SAID, attributes: Mapping[str, object]
     ) -> tuple[Mapping[str, object], str]:
         """A registry-less credential: constructed, signed, verified, anchored.

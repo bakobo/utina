@@ -120,7 +120,7 @@ def _canonical_bytes(clauses: tuple[Clause, ...]) -> bytes:
     return _BLOCK.join(clause.sub_block() for clause in sorted(clauses, key=lambda c: c.said()))
 
 
-def _takes_force(event: Event, position: Position) -> bool:
+def _takes_force(event: Event, position: Position) -> bool:  # ~4pmw
     """Whether this event's law is in force at ``position``.
 
     The asymmetry is the succession rule. Genesis is "constructed rather than
@@ -170,7 +170,7 @@ class Constitution:
     clauses: tuple[Clause, ...]
 
     @classmethod
-    def at(cls, corpus: Corpus, position: Position) -> Constitution:
+    def at(cls, corpus: Corpus, position: Position) -> Constitution:  # ~7rfv
         """Fold the committed law events up to ``position`` into the law in force.
 
         The inception event's law binds at its own coordinate, because genesis is

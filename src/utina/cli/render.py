@@ -188,7 +188,7 @@ def _screen(lines: Iterable[str]) -> str:
 # --- utina eval ---------------------------------------------------------------
 
 
-def eval_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
+def eval_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:  # ~5dnq
     """One appraisal, rendered as a finding or — visibly differently — as a refusal."""
     outcome = appraisal.outcome
     if isinstance(outcome, Refusal):
