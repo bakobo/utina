@@ -1,0 +1,352 @@
+"""The demo-2 acceptance oracle: Acme's governance, beat by beat.
+
+This encodes ``docs/demo-2-script.md`` directly. Every row of its beat tables is a
+case here under that row's own number, and the numbering is demo 2's — it does not
+correspond to demo 1's ``D1``-``D10``, and ``tests/test_acceptance_oracle.py``
+remains the oracle for that script until this one ships.
+
+Each case asserts the verdict *and* that the verdict carries the ground its row
+names. The Ground Axiom makes the ground a component of a finding's type rather
+than an annotation on it, so a case that checked only the verdict would pass
+against an engine returning bare opinions.
+
+**A row whose ground the engine cannot yet carry skips, and names what it owes.**
+It never asserts the part it can reach: the script's columns are one contract per
+row, and a case that checked a verdict while its ground was unbuilt would report
+an engine that does not exist. So this file goes from skipped to passing, row by
+row, as the phases land — ``uv run pytest -rs`` reads as the remaining work.
+
+Where a row's *behaviour* is reachable today but its ground is not, the assertion
+lives at the seam (``tests/test_seam.py``) until the row itself can carry it.
+Nothing here is a substitute for that; nothing there is a substitute for this.
+"""
+
+import pytest
+
+pytest.importorskip(
+    "utina.fold.evaluate",
+    reason="the fold has no evaluate() yet — see docs/demo-2-script.md for what it owes",
+)
+
+from utina.acme import DEV, MARTA
+from utina.fold import Constitution, evaluate
+from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies
+from utina.fold.question import Committed, Proposal
+from utina.fold.refusal import Refusal
+
+#: Where each beat is asked, in the record's own labels. Demo 2 numbers its beats
+#: and the record labels its coordinates, so the mapping is stated once here
+#: rather than guessed at each row. Beats whose coordinate the record does not
+#: reach yet are absent, and their rows skip.
+AT = {
+    2: "d1",
+    3: "d2",
+    4: "d3",
+    5: "b5",
+    6: "d8",
+    10: "board-seated",
+    11: "b11",
+    24: "d9",
+    25: "board-seated",
+}
+
+BANK = "open-bank-account"
+HIRE = "hire-vp-sales"
+LEASE = "sign-office-lease"
+EQUITY = "release-escrowed-equity"
+DIVIDEND = "declare-dividend"
+
+
+def owed(*what: str) -> str:
+    """The reason this row skips: what the engine still owes it.
+
+    Phase and tick, so the skip line is a pointer into the plan rather than a
+    shrug. A row that skips for a reason nobody can act on is worse than absent.
+    The caller raises the skip itself, rather than this helper doing it, so that
+    ``pytest -rs`` reports each line against its own row.
+    """
+    return "owes " + "; ".join(what)
+
+
+# --- The law -----------------------------------------------------------------
+
+
+def test_edition_one_is_three_clauses_over_the_two_founders(acme):
+    """Every founding clause is two slots at a half, so unity needs both founders."""
+    law = Constitution.at(acme.corpus, acme.at("inception"))
+    assert [clause.id for clause in law.clauses] == ["A1", "A2", "A3"]
+    for identifier in ("A1", "A2", "A3"):
+        group = law.clause(identifier).group
+        assert {slot.endorser for slot in group.slots} == {acme.aid(MARTA), acme.aid(DEV)}
+        assert not group.satisfied_by({acme.aid(MARTA)})
+        assert group.satisfied_by({acme.aid(MARTA), acme.aid(DEV)})
+
+
+def test_edition_two_distributes_ordinary_authority_and_carries_a3_unchanged(acme):
+    """The most important row of the script's law section.
+
+    Ordinary authority is distributed and the authority to amend is not — demo
+    1's point, retained — and the founders' own clause is re-committed with the
+    same bytes, so it is the same clause with the same identifier afterwards.
+    """
+    before = Constitution.at(acme.corpus, acme.at("inception"))
+    after = Constitution.at(acme.corpus, acme.at("board-seated"))
+
+    assert after.clause("B1").group.satisfied_by({acme.aid(MARTA), acme.aid(DEV)})
+    assert not after.clause("B2").group.satisfied_by({acme.aid(MARTA), acme.aid(DEV)})
+    assert after.clause("A3").said() == before.clause("A3").said()
+
+
+# --- Act I — law is computed, not asserted (the recorded opener) ---------------
+
+
+def test_b01_the_constitution_at_inception():
+    """Row 1: three clauses with their SAIDs, operators, slots and weights, and
+    the pinned dossier-semantics digest."""
+    pytest.skip(
+        owed(
+            "U5.2 the semantics-declaration block and its axiom-4 refusal (tick 2uhi)",
+        )
+    )
+
+
+def test_b02_open_a_bank_account_is_affirmed(acme):
+    """Row 2: clause A1 and both endorsement SAIDs."""
+    finding = evaluate(acme.corpus, Proposal(BANK), at=acme.at(AT[2]))
+    assert isinstance(finding, Affirmed)
+    assert finding.clauses == ("A1",)
+    assert len(finding.endorsements) == 2
+
+
+def test_b03_the_hire_is_pending_naming_devs_slot():
+    """Row 3: a typed requirement naming the required schema, the expected issuer
+    and the citing clause, species absent."""
+    pytest.skip(owed("a schema term on the requirement element (tick 54q4)"))
+
+
+def test_b04_the_office_lease_is_defeated(acme):
+    """Row 4: Dev's declination SAID and clause A1; unity unreachable."""
+    finding = evaluate(acme.corpus, Proposal(LEASE), at=acme.at(AT[4]))
+    assert isinstance(finding, Defeated)
+    assert finding.citation.clause == "A1"
+    assert finding.citation.declination.endorser == acme.aid(DEV)
+    assert finding.citation.declination.said == acme.said(LEASE + "-declined")
+
+
+def test_b05_the_equity_release_is_pending_under_a3(acme):
+    """Row 5: a typed requirement naming Dev's slot under A3, species absent."""
+    finding = evaluate(acme.corpus, Proposal(EQUITY), at=acme.at(AT[5]))
+    assert isinstance(finding, Pending)
+    assert [element.endorser for element in finding.requirement] == [acme.aid(DEV)]
+    assert [element.clause for element in finding.requirement] == ["A3"]
+    assert [element.species for element in finding.requirement] == [PendingSpecies.ABSENT]
+
+
+def test_b06_a_dividend_is_refused_rather_than_answered(acme):
+    """Row 6: the refusal names the missing rule, and is not a finding."""
+    outcome = evaluate(acme.corpus, Proposal(DIVIDEND), at=acme.at(AT[6]))
+    assert isinstance(outcome, Refusal)
+    assert not isinstance(outcome, Affirmed | Defeated | Pending)
+    assert DIVIDEND in outcome.missing
+
+
+# --- Act II — delegation, and the two currents --------------------------------
+
+
+def test_b07_seating_the_board_is_affirmed_under_the_law_it_replaces():
+    """Row 7: judged under A2, plus the delegating seal's coordinate in Acme's
+    KEL, the dip in seat 3's KEL, the seat credential's issuance event, and the
+    declared disturbance set."""
+    pytest.skip(owed(
+        "U1.1 a delegate verb on Substrate (tick 5sfe)",
+        "U1.3 the seat credential (tick 5ocu)",
+        "U3.3 the declared disturbance set (tick 7rfv)",
+    ))
+
+
+def test_b08_the_seat_screen_shows_two_bindings():
+    """Row 8: KERI's delegating seal and dip, and the ACDC seat credential with
+    its registry state — two bindings on one screen."""
+    pytest.skip(owed(
+        "U1.1 a delegate verb on Substrate (tick 5sfe)",
+        "U1.2 the governance registry (tick 2kks)",
+        "U4.2 the seat screen (tick 27x5)",
+    ))
+
+
+def test_b09_the_hire_re_asked_after_the_amendment_has_no_cure_path():
+    """Row 9: pending with species expired/abandoned, ground the amending
+    enactment's SAID, cure re-presentation."""
+    pytest.skip(
+        owed(
+            "U3.1 the stability test (tick 6pdw)",
+            "U3.2 expired/abandoned on the amendment path (tick 6pdw)",
+        )
+    )
+
+
+def test_b10_the_equity_release_re_asked_after_the_amendment_is_still_curable():
+    """Row 10: species absent, the same requirement as row 5, and the three-part
+    stability check shown — same clause SAID, same requirement space, same
+    pinned lens."""
+    pytest.skip(owed(
+        "U3.1 the three-part stability test (tick 6pdw)",
+        "U5.2 the pinned lens (tick 2uhi)",
+    ))
+
+
+def test_b11_the_equity_release_is_cured_across_the_amendment(acme):
+    """Row 11: clause A3 and both endorsement SAIDs — cured under the clause that
+    never moved."""
+    finding = evaluate(acme.corpus, Proposal(EQUITY), at=acme.at(AT[11]))
+    assert isinstance(finding, Affirmed)
+    assert finding.clauses == ("A3",)
+    assert len(finding.endorsements) == 2
+
+
+def test_b12_the_budget_carries_on_two_slots_of_three():
+    """Row 12: unity reached though one party never acted, and seat 3's
+    endorsement carries its DI2I edge to the seat credential."""
+    pytest.skip(owed(
+        "U1.4 the DI2I edge as pre-fold evidence (tick 5fam)",
+        "U1.5 slots naming the seat AID (tick 7tvh)",
+    ))
+
+
+def test_b13_the_same_signed_no_is_only_pending_under_three_slots():
+    """Row 13: seat 3's slot is still reachable, so a declination delays rather
+    than defeats. Demo 1's centerpiece, re-cut for the seated board."""
+    pytest.skip(owed("U1.5 slots naming the seat AID (tick 7tvh)"))
+
+
+def test_b14_an_unseated_endorser_fails_credential_verification_before_any_fold():
+    """Row 14: the DI2I edge names a seat credential whose issuee Quinn is not,
+    and the fold's separate answer is unchanged. The two currents stay unmerged."""
+    pytest.skip(owed(
+        "U1.3 the seat credential (tick 5ocu)",
+        "U1.4 edge validation as a pre-fold check whose result is evidence (tick 5fam)",
+    ))
+
+
+def test_b15_the_delegated_device_fills_the_seats_slot():
+    """Row 15: DI2I validates because the issuer is a delegated AID of the
+    issuee. Same slot, different key, no law change."""
+    pytest.skip(owed(
+        "U1.1 a delegate verb on Substrate, third stratum (tick 5sfe)",
+        "U1.4 the DI2I edge (tick 5fam)",
+    ))
+
+
+# --- Act III — revocation, and what it cannot do ------------------------------
+
+
+def test_b16_the_registry_screen_shows_the_revocation():
+    """Row 16: a rev event against the seat credential, with seat 3's KEL
+    untouched and its keys still valid."""
+    pytest.skip(owed(
+        "U2.1 a revoke verb on Constructor (tick 3z6a)",
+        "U4.2 the registry screen (tick 27x5)",
+    ))
+
+
+def test_b17_a_new_question_after_the_revocation_is_pending():
+    """Row 17: a typed requirement naming seat 3's slot — required schema,
+    expected issuer, citing clause."""
+    pytest.skip(owed(
+        "U2.1 a revoke verb on Constructor (tick 3z6a)",
+        "a schema term on the requirement element (tick 54q4)",
+    ))
+
+
+def test_b18_the_earlier_finding_is_byte_identical_when_re_asked_at_its_position():
+    """Row 18: re-asking row 12's question at row 12's position, ground included."""
+    pytest.skip(
+        owed(
+            "U1 delegation, so that row 12 exists at all",
+            "U2.1 the revocation (tick 3z6a)",
+        )
+    )
+
+
+def test_b19_a_prospective_revocation_falsifies_no_cited_ground():
+    """Row 19, the surprising half: re-asked at a position *after* the
+    revocation, the credential stood at that position and the finding stands."""
+    pytest.skip(
+        owed(
+            "U2.2 the slot judgment asking whether the credential stands at p (tick 6mcq)",
+        )
+    )
+
+
+def test_b20_duplicity_at_the_signing_position_is_self_convicted():
+    """Row 20: the canonical proof package naming the contradictory pair, and the
+    statement that superseding recovery does not reconcile it. Revocation and
+    undercut never share a code path."""
+    pytest.skip(
+        owed(
+            "U2.3 the undercut, via bearing, structurally separate from revocation (tick 3h6k)",
+        )
+    )
+
+
+# --- Act IV — the amendment that lies -----------------------------------------
+
+
+def test_b21_a_second_question_is_pending_under_b1():
+    """Row 21: the capital plan, pending alongside row 17's Q3 budget."""
+    pytest.skip(
+        owed(
+            "U1.5 slots naming the seat AID (tick 7tvh)",
+            "U2.1 the revocation (tick 3z6a)",
+        )
+    )
+
+
+def test_b22_the_second_amendment_declares_a_disturbance_set_that_under_declares():
+    """Row 22: the enactment's declared set names only the Q3 budget, and not the
+    capital plan."""
+    pytest.skip(owed("U3.3 the declared disturbance set on the amending enactment (tick 7rfv)"))
+
+
+def test_b23_the_under_declaring_amendment_is_convicted_on_its_own_bytes():
+    """Row 23: declared set against computed set, side by side; the computed set
+    contains both B1 questions, and the mismatch is the proof."""
+    pytest.skip(owed(
+        "U3.3 the fold's computed disturbance set and self-convicted on mismatch (tick 7rfv)",
+        "the finding value an under-declaring amendment returns, owed to Custos (tick 7xe6)",
+    ))
+
+
+# --- Coda ---------------------------------------------------------------------
+
+
+def test_b24_the_past_is_recomputed_under_the_law_in_force_then(acme):
+    """Row 24: row 2's question, asked from the end of the log, still under A1."""
+    finding = evaluate(acme.corpus, Committed(acme.said(BANK)), at=acme.at(AT[24]))
+    assert isinstance(finding, Affirmed)
+    assert finding.clauses == ("A1",)
+
+
+def test_b25_permuted_arrival_folds_to_a_byte_identical_constitution(acme):
+    """Row 25: binding at custos-4.2.md:3101 — byte-identical, not equivalent."""
+    straight = Constitution.at(acme.corpus, acme.at(AT[25]))
+    shuffled = Constitution.at(acme.permuted_corpus(seed=7), acme.at(AT[25]))
+    assert straight.canonical_bytes() == shuffled.canonical_bytes()
+
+
+# --- The script's own completeness check --------------------------------------
+
+
+def test_every_beat_of_the_script_has_a_row_here():
+    """Twenty-five beats, twenty-five cases, and the numbering is contiguous.
+
+    The failure this guards against is a row of the script with no case at all,
+    which is invisible: a missing test does not fail, and an oracle that is
+    quietly short of its script is the one artifact whose silence lies.
+    """
+    cases = {
+        int(name[6:8])
+        for name in globals()
+        if name.startswith("test_b") and name[6:8].isdigit()
+    }
+    assert cases == set(range(1, 26))

@@ -80,7 +80,9 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # them spent, so unity is unreachable and the finding is a defeat.
     lease = name(LEASE, constructor.propose(LEASE))
     constructor.endorse(marta, lease)
-    mark("d3", constructor.decline(dev, lease))
+    declined = constructor.decline(dev, lease)
+    name(f"{LEASE}-declined", declined)
+    mark("d3", declined)
 
     # Demo 2 beat 5 — release of escrowed founder equity, under A3. Marta
     # endorses and Dev does not, and it is left that way on purpose: it is the
