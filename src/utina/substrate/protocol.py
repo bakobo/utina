@@ -91,7 +91,7 @@ class Substrate(Protocol):
         """
         ...
 
-    def incept(self, alias: str) -> AID:  # ~5sfe
+    def incept(self, alias: str) -> AID:
         """Bring an identifier into being, and return the identifier to use.
 
         The alias is a name for the caller's convenience and the return value is
