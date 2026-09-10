@@ -6,12 +6,21 @@ Python facade backend; the keripy backend arrives as its own commission.
 """
 
 from .canonical import SAID_LENGTH, SAID_PLACEHOLDER, canonical_bytes, digest
-from .errors import AID_UNKNOWN, ALIAS_TAKEN, NOT_CANONICAL, SUBSTRATE_UNKNOWN
+from .errors import (
+    AID_UNKNOWN,
+    ALIAS_TAKEN,
+    NOT_CANONICAL,
+    NOT_ISSUED,
+    REGISTRY_UNKNOWN,
+    SUBSTRATE_UNKNOWN,
+)
 from .facade import FacadeSubstrate
 from .protocol import (
     ACDC_DT,
     AID,
     ENDORSEMENT_SCHEMA,
+    ISSUED,
+    REVOKED,
     SAID,
     Corpus,
     Event,
@@ -29,9 +38,13 @@ __all__ = [
     "ALIAS_TAKEN",
     "ENDORSEMENT_SCHEMA",
     "FACADE",
+    "ISSUED",
     "KERIPY",
     "NAMES",
     "NOT_CANONICAL",
+    "NOT_ISSUED",
+    "REGISTRY_UNKNOWN",
+    "REVOKED",
     "SAID",
     "SAID_LENGTH",
     "SAID_PLACEHOLDER",

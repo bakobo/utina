@@ -20,8 +20,8 @@ from collections.abc import Mapping
 from types import TracebackType
 
 from .canonical import SAID_PLACEHOLDER, canonical_bytes, digest
-from .errors import ACDC_UNVERIFIABLE, AID_UNKNOWN, ALIAS_TAKEN
-from .protocol import ACDC_DT, AID, SAID
+from .errors import ACDC_UNVERIFIABLE, AID_UNKNOWN, ALIAS_TAKEN, NOT_ISSUED, REGISTRY_UNKNOWN
+from .protocol import ACDC_DT, AID, ISSUED, REVOKED, SAID
 
 #: Domain separation for derived key material, so a key can never be mistaken
 #: for a digest of anything else this module computes.
@@ -45,11 +45,13 @@ class FacadeSubstrate:
         self._kel_seq: dict[AID, int] = {}
         self._anchors: dict[SAID, SAID] = {}
         self._delegators: dict[AID, AID] = {}
+        self._registries: dict[SAID, AID] = {}
+        self._states: dict[tuple[SAID, SAID], str] = {}
 
     def __enter__(self) -> FacadeSubstrate:
         """A lifecycle this backend does not need, and its sibling does.
 
-        The facade holds three dictionaries and nothing to close. It is a context
+        The facade holds a few dictionaries and nothing to close. It is a context
         manager anyway so that a composition root writes one ``with`` and does not
         have to know which backend is behind it.
         """
@@ -107,29 +109,74 @@ class FacadeSubstrate:
         return said
 
     def anchoring_event(self, said: SAID) -> SAID | None:
-        """The establishment event that sealed ``said``, if one did."""
+        """The key event that sealed ``said``, if one did — rotation or interaction."""
         return self._anchors.get(said)
 
     # -- credentials ----------------------------------------------------------
 
+    def open_registry(self, controller: AID, alias: str) -> SAID:
+        """A registry identified by the digest of its own inception, as a TEL is.
+
+        The facade's analogue of a ``vcp``: the identifier is a function of the
+        controller and the alias, so it is the same on every run, and it is
+        sealed into the controller's log through the same interaction an issuance
+        uses. What keripy gets from a transaction-event log, this gets from two
+        dictionaries — which is the whole facade in one sentence.
+        """
+        self._require_known(controller)
+        registry = self.said({"t": "vcp", "ii": controller, "n": alias})
+        self._registries[registry] = controller
+        self._interact(controller, registry)
+        return registry
+
+    def revoke_acdc(self, registry: SAID, said: SAID) -> SAID:
+        """A ``rev``: the registry's state moves, and the credential does not."""
+        self._require_registry(registry)
+        if self._states.get((registry, said)) != ISSUED:
+            raise NOT_ISSUED(registry=registry, said=said)
+        controller = self._registries[registry]
+        revocation = self.said({"t": "rev", "i": said, "ri": registry, "dt": ACDC_DT})
+        self._states[(registry, said)] = REVOKED
+        self._interact(controller, revocation)
+        return revocation
+
+    def registry_state(self, registry: SAID, said: SAID) -> str | None:
+        """``None`` says the credential does not stand here, so an unknown
+        registry is refused rather than answered: they mean different things."""
+        self._require_registry(registry)
+        return self._states.get((registry, said))
+
     def issue_acdc(
-        self, issuer: AID, schema: SAID, attributes: Mapping[str, object]
+        self,
+        issuer: AID,
+        schema: SAID,
+        attributes: Mapping[str, object],
+        *,
+        registry: SAID | None = None,
     ) -> tuple[Mapping[str, object], str]:
-        """A registry-less credential in the dossier schema's required shape.
+        """A credential in the dossier schema's required shape, registry or not.
 
         The mirror of what the keripy backend produces with ``proving.credential``:
-        same field set, same fixed ``dt``, its own digests. The anchor rides an
-        interaction event — the key log advances, the key state does not — so a
-        signature made before an issuance still verifies after it.
+        same field set, same fixed ``dt``, its own digests. A registry adds the
+        ``ri`` field the credential names its registry in, and an issuance the
+        registry's state answers from. The anchor rides an interaction event —
+        the key log advances, the key state does not — so a signature made
+        before an issuance still verifies after it.
         """
         self._require_known(issuer)
+        if registry is not None:
+            self._require_registry(registry)
         block: dict[str, object] = {"dt": ACDC_DT, **attributes}
         block = {"d": self.said(block), **block}
-        sad: dict[str, object] = {"v": ACDC_VERSION, "i": issuer, "s": schema, "a": block}
-        sad = {"v": ACDC_VERSION, "d": self.said(sad), "i": issuer, "s": schema, "a": block}
+        fields: dict[str, object] = {"v": ACDC_VERSION, "i": issuer, "s": schema, "a": block}
+        if registry is not None:
+            fields["ri"] = registry
+        sad: dict[str, object] = {"v": ACDC_VERSION, "d": self.said(fields), **fields}
         signature = self.sign(issuer, sad)
         if not self.verify(issuer, sad, signature):
             raise ACDC_UNVERIFIABLE(issuer=issuer)
+        if registry is not None:
+            self._states[(registry, str(sad["d"]))] = ISSUED
         self._interact(issuer, str(sad["d"]))
         return sad, signature
 
@@ -177,6 +224,10 @@ class FacadeSubstrate:
     def _require_known(self, aid: AID) -> None:
         if aid not in self._key_index:
             raise AID_UNKNOWN(aid=aid)
+
+    def _require_registry(self, registry: SAID) -> None:
+        if registry not in self._registries:
+            raise REGISTRY_UNKNOWN(registry=registry)
 
     @staticmethod
     def _for_said(body: Mapping[str, object]) -> dict[str, object]:

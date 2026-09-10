@@ -78,6 +78,34 @@ SUBSTRATE_UNKNOWN = ErrorCode(
     hint="Pass one of the listed names. The facade is the default and needs no flag.",
 )
 
+REGISTRY_UNKNOWN = ErrorCode(
+    code="e.state.registry-unknown.f",
+    title="This substrate holds no registry by that identifier.",
+    detail=(
+        "A credential registry {registry} was named, and this substrate never opened it, so "
+        "there is no transaction log to write the event into and nothing whose state could be "
+        "read back."
+    ),
+    args=("registry",),
+    hint="Open the registry under its controller, and hold the identifier that returned.",
+)
+
+NOT_ISSUED = ErrorCode(
+    code="e.state.not-issued.f",
+    title="That registry never issued that credential.",
+    detail=(
+        "A revocation was asked for against {said} in registry {registry}, and no issuance of "
+        "it stands there. Writing the revocation anyway would put a state change in the "
+        "registry for a credential whose issuance is not in it, and registry state is evidence "
+        "a fold consumes."
+    ),
+    args=("registry", "said"),
+    hint=(
+        "Revoke in the registry the credential was issued under, and issue it there before "
+        "revoking it."
+    ),
+)
+
 AID_UNKNOWN = ErrorCode(
     code="e.id.aid-unknown.f",
     title="This substrate holds no key state for that identifier.",

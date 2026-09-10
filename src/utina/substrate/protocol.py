@@ -34,6 +34,12 @@ SAID = str
 #: credentials and both planes above read the pin (this.i @7db5c4).
 ENDORSEMENT_SCHEMA = "EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0"  # ~5ocu
 
+#: The two states a registry-bound credential can be in, in utina's words rather
+#: than KERI's ilks, because this protocol is above the seam. A credential the
+#: registry never issued is in neither, and reads ``None``.
+ISSUED = "issued"
+REVOKED = "revoked"
+
 #: The timestamp every credential's attributes block carries. A fixed fixture,
 #: the same posture as the pinned salt (this.i @7jrbt3): keripy injects a
 #: wall-clock ``dt`` when the caller supplies none, which would give the same
@@ -161,10 +167,61 @@ class Substrate(Protocol):
         """
         ...
 
-    def issue_acdc(  # ~2kks
-        self, issuer: AID, schema: SAID, attributes: Mapping[str, object]
+    def open_registry(self, controller: AID, alias: str) -> SAID:
+        """Bring a credential registry into being under ``controller``.
+
+        Returns the registry's identifier. Custos requires a
+        standing-conferring credential to be revocable through its registry
+        (``custos-4.2.md:1420-1422``), which is why the seat credential is
+        registry-bound where an endorsement is not: two credential kinds with
+        different obligations (this.i @7db5c4, @exy3u4t7).
+
+        The registry's own inception is sealed into the controller's key log, so
+        :meth:`anchoring_event` answers for it given the registry identifier.
+        """
+        ...
+
+    def revoke_acdc(self, registry: SAID, said: SAID) -> SAID:
+        """Revoke ``said`` in ``registry``, and return the revocation's identifier.
+
+        Refused where the registry holds no standing issuance of that
+        credential: a revocation of nothing would put a state change in a
+        registry whose issuance is not there, and registry state is evidence a
+        fold consumes rather than a note anybody may write.
+        """
+        ...
+
+    def registry_state(self, registry: SAID, said: SAID) -> str | None:
+        """Whether ``said`` stands in ``registry``: :data:`ISSUED`,
+        :data:`REVOKED`, or ``None`` where that registry never issued it.
+
+        **The fold must never call this.** It cannot — the purity fitness
+        function forbids importing a substrate above the seam — and it should
+        not: a fold reading registry state out of a substrate would be reading
+        an ambient condition, where the rule is that registry state is "a member
+        of the evidence bundle rather than an ambient condition read against it".
+        So the constructor commits an issuance and a revocation as governance
+        events, the fold folds those, and this question is for screens and for
+        the constructor's own fail-closed checks (this.i @exy3u4t7).
+        """
+        ...
+
+    def issue_acdc(
+        self,
+        issuer: AID,
+        schema: SAID,
+        attributes: Mapping[str, object],
+        *,
+        registry: SAID | None = None,
     ) -> tuple[Mapping[str, object], str]:
-        """A registry-less credential: constructed, signed, verified, anchored.
+        """A credential: constructed, signed, verified, anchored.
+
+        ``registry`` is the difference between the two kinds. Given one, the
+        credential names it in committed bytes and its issuance is a registry
+        event, so it can later be revoked; omitted, the credential is
+        registry-less, which is what the dossier's Endorsed predicate asks for
+        and all an endorsement needs. One code path builds both, so they cannot
+        drift in how they are digested, signed or anchored (this.i @exy3u4t7).
 
         Returns the credential as a plain mapping — ``{v, d, i, s, a}``, the
         dossier schema's required shape — together with the issuer's signature

@@ -25,7 +25,7 @@ from pathlib import Path
 import pytest
 from bakobo.errors import BakoboError
 
-from utina.substrate import ACDC_DT, ENDORSEMENT_SCHEMA, SAID_LENGTH
+from utina.substrate import ACDC_DT, ENDORSEMENT_SCHEMA, ISSUED, REVOKED, SAID_LENGTH
 from utina.substrate.select import NAMES, substrate_named
 
 #: A body with no identifier and no signature: what a caller hands ``said``.
@@ -292,6 +292,145 @@ def test_issuing_as_an_identifier_with_no_key_state_is_refused(conformant):
     with pytest.raises(BakoboError) as caught:
         endorsement_acdc(conformant, "acme:never-incepted")
     assert caught.value.code == "e.id.aid-unknown.f"
+
+
+# --- a governance registry, and the two credential kinds ----------------------
+
+#: A schema-shaped token for a credential kind that is not an endorsement. The
+#: seat credential's own schema is U1.3's; this stands in for it here, because a
+#: registry's promises do not depend on which schema it holds.
+SEAT_SCHEMA = "E" + "t" * 43
+
+
+def seat_acdc(substrate, issuer, registry, issuee):
+    """A registry-bound credential, as ``utina.enact`` will ask for one."""
+    return substrate.issue_acdc(
+        issuer, SEAT_SCHEMA, {"i": issuee, "seat": "board-seat-3"}, registry=registry
+    )
+
+
+def test_a_registry_is_opened_under_a_controller(conformant):
+    """``custos-4.2.md:1420-1422``: a standing-conferring credential is revocable
+    through its registry, so the registry has to exist as an identified thing."""
+    gaid = conformant.incept("acme:gaid")
+    registry = conformant.open_registry(gaid, "acme-governance")
+
+    assert isinstance(registry, str) and registry != gaid
+
+
+def test_a_registry_is_anchored_in_its_controllers_key_log(conformant):
+    """The registry's own inception is sealed by the party that opened it."""
+    gaid = conformant.incept("acme:gaid")
+    registry = conformant.open_registry(gaid, "acme-governance")
+
+    assert conformant.anchoring_event(registry) is not None
+
+
+def test_opening_a_registry_under_an_unknown_identifier_is_refused(conformant):
+    with pytest.raises(BakoboError) as caught:
+        conformant.open_registry("acme:never-incepted", "acme-governance")
+    assert caught.value.code == "e.id.aid-unknown.f"
+
+
+def test_a_registry_bound_credential_stands_issued(conformant, marta):
+    """Registry state is evidence, and the first thing it says is that it stands."""
+    registry = conformant.open_registry(marta, "acme-governance")
+    sad, _ = seat_acdc(conformant, marta, registry, "acme:seat3")
+
+    assert conformant.registry_state(registry, sad["d"]) == ISSUED
+
+
+def test_a_revoked_credential_stands_revoked(conformant, marta):
+    """Beat 16: a rev event against the credential, and the state moves."""
+    registry = conformant.open_registry(marta, "acme-governance")
+    sad, _ = seat_acdc(conformant, marta, registry, "acme:seat3")
+
+    revocation = conformant.revoke_acdc(registry, sad["d"])
+
+    assert isinstance(revocation, str)
+    assert conformant.registry_state(registry, sad["d"]) == REVOKED
+
+
+def test_a_revocation_is_anchored_in_the_issuers_key_log(conformant, marta):
+    registry = conformant.open_registry(marta, "acme-governance")
+    sad, _ = seat_acdc(conformant, marta, registry, "acme:seat3")
+
+    revocation = conformant.revoke_acdc(registry, sad["d"])
+
+    assert conformant.anchoring_event(revocation) is not None
+
+
+def test_a_credential_nobody_issued_has_no_registry_state(conformant, marta):
+    """Total: never issued is ``None``, which is neither issued nor revoked."""
+    registry = conformant.open_registry(marta, "acme-governance")
+    assert conformant.registry_state(registry, SUBJECT) is None
+
+
+def test_revoking_a_credential_nobody_issued_is_refused(conformant, marta):
+    """Fail closed: a revocation of nothing would report a state change that
+    never happened, and registry state is evidence the fold consumes."""
+    registry = conformant.open_registry(marta, "acme-governance")
+    with pytest.raises(BakoboError) as caught:
+        conformant.revoke_acdc(registry, SUBJECT)
+    assert caught.value.code == "e.state.not-issued.f"
+
+
+@pytest.mark.parametrize("act", ["issue", "revoke", "read"], ids=["issue", "revoke", "read"])
+def test_naming_a_registry_nobody_opened_is_refused(conformant, marta, act):
+    """A registry is an identified thing, so an unknown one is an obstacle and
+    not an empty answer — including on the read, where ``None`` would say the
+    credential does not stand there and mean something else entirely."""
+    ghost = "E" + "r" * 43
+    with pytest.raises(BakoboError) as caught:
+        if act == "issue":
+            seat_acdc(conformant, marta, ghost, "acme:seat3")
+        elif act == "revoke":
+            conformant.revoke_acdc(ghost, SUBJECT)
+        else:
+            conformant.registry_state(ghost, SUBJECT)
+    assert caught.value.code == "e.state.registry-unknown.f"
+
+
+def test_an_endorsement_is_registry_less_and_has_no_state_anywhere(conformant, marta):
+    """The other credential kind, and the difference the demo shows (@7db5c4).
+
+    An endorsement carries no registry because the dossier's Endorsed predicate
+    does not reach for one; a registry-less credential therefore has no state to
+    read, in any registry, which is what makes revocation the seat credential's
+    property and not the evidence's.
+    """
+    registry = conformant.open_registry(marta, "acme-governance")
+    sad, _ = endorsement_acdc(conformant, marta)
+
+    assert "ri" not in sad
+    assert conformant.registry_state(registry, sad["d"]) is None
+
+
+def test_a_registry_bound_credential_names_its_registry(conformant, marta):
+    """The credential says which registry answers for it, in committed bytes."""
+    registry = conformant.open_registry(marta, "acme-governance")
+    sad, _ = seat_acdc(conformant, marta, registry, "acme:seat3")
+
+    assert sad["ri"] == registry
+
+
+def test_a_registry_and_its_events_are_deterministic(conformant, substrate_name, marta):
+    """Every identifier the demo prints has to be the same on the next run."""
+    registry = conformant.open_registry(marta, "acme-governance")
+    sad, _ = seat_acdc(conformant, marta, registry, "acme:seat3")
+    revocation = conformant.revoke_acdc(registry, sad["d"])
+
+    with substrate_named(substrate_name) as again:
+        marta_again = again.incept("acme:marta")
+        registry_again = again.open_registry(marta_again, "acme-governance")
+        sad_again, _ = seat_acdc(again, marta_again, registry_again, "acme:seat3")
+        revocation_again = again.revoke_acdc(registry_again, sad_again["d"])
+
+    assert (registry, sad["d"], revocation) == (
+        registry_again,
+        sad_again["d"],
+        revocation_again,
+    )
 
 
 # --- delegate: a seat is an identifier, and its authority is another's ---------

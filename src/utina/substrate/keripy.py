@@ -44,16 +44,25 @@ from typing import Any
 
 from keri.app import habbing  # type: ignore[import-untyped]
 from keri.core import eventing  # type: ignore[import-untyped]
-from keri.core.coring import Saider, dumps  # type: ignore[import-untyped]
+from keri.core.coring import Diger, Number, Saider, dumps  # type: ignore[import-untyped]
 from keri.core.indexing import Siger  # type: ignore[import-untyped]
 from keri.core.signing import Salter  # type: ignore[import-untyped]
 from keri.core.structing import SealDigest, SealEvent  # type: ignore[import-untyped]
 from keri.kering import Vrsn_1_0  # type: ignore[import-untyped]
 from keri.vc.proving import credential  # type: ignore[import-untyped]
+from keri.vdr import credentialing  # type: ignore[import-untyped]
+from keri.vdr.eventing import Reger  # type: ignore[import-untyped]
 
 from .canonical import canonical_json
-from .errors import ACDC_UNVERIFIABLE, AID_UNKNOWN, ALIAS_TAKEN, STORE_NOT_OURS
-from .protocol import ACDC_DT, AID, SAID
+from .errors import (
+    ACDC_UNVERIFIABLE,
+    AID_UNKNOWN,
+    ALIAS_TAKEN,
+    NOT_ISSUED,
+    REGISTRY_UNKNOWN,
+    STORE_NOT_OURS,
+)
+from .protocol import ACDC_DT, AID, ISSUED, REVOKED, SAID
 
 #: The demo's pinned salt: sixteen literal bytes. Correct for a fixture whose
 #: purpose is reproducible replay, and a key-management failure in production.
@@ -76,6 +85,15 @@ SIGNATURE_FIELD = "sig"
 #: the qb64 alphabet, so it cannot occur inside either half.
 COORDINATE = "."
 
+#: The registry nonce, pinned for the same reason the salt is: keripy generates
+#: a random one when a caller supplies none, and a random nonce would give the
+#: governance registry a different identifier on every run (this.i @exy3u4t7).
+REGISTRY_NONCE = Salter(raw=b"utina-registry!!").qb64
+
+#: The transaction-event ilk a revoked credential's state carries. KERI's word,
+#: mapped to utina's at the seam.
+TEL_REVOKED = "rev"
+
 #: The single-signature, single-next-key shape every party is incepted with.
 _SINGLE_SIG = {"icount": 1, "isith": "1", "ncount": 1, "nsith": "1"}
 
@@ -97,16 +115,36 @@ class KeripySubstrate:
         self._store = store
         self._salt = Salter(raw=salt).qb64
         self._hby: Any = None
+        self._rgy: Any = None
 
     # -- lifecycle ------------------------------------------------------------
 
     def __enter__(self) -> KeripySubstrate:
+        """Open the keystore, the key-event database and the registry database.
+
+        The store directory is prepared once and handed to both databases. A
+        ``Regery`` left to build its own ``Reger`` puts it under keripy's
+        system-wide default path instead, which both writes the transaction log
+        outside the store a caller asked for and makes two substrates in one
+        process collide on an LMDB environment that is already open.
+        """
+        temp = self._store is None
+        head = None if temp else str(self._prepared_store())
         self._hby = habbing.Habery(
+            name=STORE_NAME, base="", temp=temp, headDirPath=head, salt=self._salt
+        )
+        self._rgy = credentialing.Regery(
+            hby=self._hby,
             name=STORE_NAME,
-            base="",
-            temp=self._store is None,
-            headDirPath=None if self._store is None else str(self._prepared_store()),
-            salt=self._salt,
+            temp=temp,
+            reger=Reger(
+                name=STORE_NAME,
+                base="",
+                db=self._hby.db,
+                temp=temp,
+                headDirPath=head,
+                reopen=True,
+            ),
         )
         return self
 
@@ -116,6 +154,7 @@ class KeripySubstrate:
         error: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
+        self._rgy.close()
         self._hby.close(clear=self._store is None)
 
     def _prepared_store(self) -> Path:
@@ -213,10 +252,69 @@ class KeripySubstrate:
 
     # -- credentials ----------------------------------------------------------
 
+    def open_registry(self, controller: AID, alias: str) -> SAID:
+        """A real TEL: a ``vcp``, anchored in the controller's key log.
+
+        Four steps, and none of them is optional. ``makeRegistry`` builds the
+        inception event but the registry's own ``regser`` property reads through
+        a ``Tever`` that does not exist until the anchor lands, so the vcp has
+        to be taken from ``.vcp`` at this point rather than from the registry's
+        state. Then the controller seals it, ``anchorMsg`` hands the transaction
+        event the coordinate of the seal that authorized it, and the escrows are
+        processed so the registry is accepted rather than pending.
+
+        Two pins keep it deterministic (this.i @exy3u4t7): the nonce is a fixed
+        seed, because keripy generates a random one when the caller supplies
+        none, and the version is v1, because the v2 defaults raise on a vcp.
+        """
+        hab = self._hab(controller)
+        registry = self._rgy.makeRegistry(
+            name=alias, prefix=controller, nonce=REGISTRY_NONCE, version=Vrsn_1_0
+        )
+        self._anchor_tel(hab, registry, registry.vcp)
+        identifier: str = registry.regk
+        return identifier
+
+    def revoke_acdc(self, registry: SAID, said: SAID) -> SAID:
+        """A real ``rev`` in the registry's TEL, anchored like the issuance was.
+
+        The seal takes the revocation event's *own* sequence number, which is
+        the detail that silently matters: a seal at sequence zero is accepted
+        and anchors nothing, so the revocation appears to succeed and the
+        credential's state stays at issued.
+        """
+        held = self._registry(registry)
+        if self.registry_state(registry, said) != ISSUED:
+            raise NOT_ISSUED(registry=registry, said=said)
+        revocation = held.revoke(said=said, dt=ACDC_DT)
+        self._anchor_tel(self._hab(held.hab.pre), held, revocation)
+        identifier: str = revocation.said
+        return identifier
+
+    def registry_state(self, registry: SAID, said: SAID) -> str | None:
+        """The credential's state in the registry's TEL, in utina's words.
+
+        ``None`` covers both a registry with no such credential in it and a
+        transaction log that has not accepted anything, because the question a
+        caller is asking — does this credential stand here — has the same answer
+        in either case.
+        """
+        self._registry(registry)
+        tever = self._rgy.reger.tevers.get(registry)
+        state = None if tever is None else tever.vcState(vci=said)
+        if state is None:
+            return None
+        return REVOKED if state.et == TEL_REVOKED else ISSUED
+
     def issue_acdc(
-        self, issuer: AID, schema: SAID, attributes: Mapping[str, object]
+        self,
+        issuer: AID,
+        schema: SAID,
+        attributes: Mapping[str, object],
+        *,
+        registry: SAID | None = None,
     ) -> tuple[Mapping[str, object], str]:
-        """A real, registry-less ACDC: the v1 ilkless shape, anchored by an ixn.
+        """A real ACDC: the v1 ilkless shape, anchored by an ixn.
 
         ``version=Vrsn_1_0`` is load-bearing: ``credential()`` defaults to the
         v2 version string while writing v1 field labels, and the v1 ilkless
@@ -228,12 +326,20 @@ class KeripySubstrate:
         this substrate's canonical reordering — because the whole point of a
         real credential is that a stranger with keripy and the key log verifies
         it with nothing of ours (@vi4t4i).
+
+        Given a ``registry``, ``status`` puts its identifier in the credential's
+        ``ri`` and the issuance becomes a real transaction event, anchored by the
+        same four-step dance the registry's own inception took. Without one the
+        credential is registry-less and the anchor is an ordinary digest seal,
+        which is all the dossier's Endorsed predicate asks for.
         """
         hab = self._hab(issuer)
+        held = None if registry is None else self._registry(registry)
         creder = credential(
             schema=schema,
             issuer=issuer,
             data={"dt": ACDC_DT, **dict(attributes)},
+            status=registry,
             version=Vrsn_1_0,
         )
         siger = hab.sign(creder.raw, indexed=True)[0]
@@ -242,7 +348,10 @@ class KeripySubstrate:
         )
         if not verified:
             raise ACDC_UNVERIFIABLE(issuer=issuer)
-        hab.interact(data=[SealDigest(d=creder.said)._asdict()])
+        if held is None:
+            hab.interact(data=[SealDigest(d=creder.said)._asdict()])
+        else:
+            self._anchor_tel(hab, held, held.issue(said=creder.said, dt=ACDC_DT))
         sad: dict[str, object] = dict(creder.sad)
         return sad, f"{hab.kever.lastEst.d}{COORDINATE}{siger.qb64}"
 
@@ -296,6 +405,32 @@ class KeripySubstrate:
         if hab is None:
             raise AID_UNKNOWN(aid=aid)
         return hab
+
+    def _registry(self, registry: SAID) -> Any:
+        held = self._rgy.regs.get(registry)
+        if held is None:
+            raise REGISTRY_UNKNOWN(registry=registry)
+        return held
+
+    def _anchor_tel(self, hab: Any, registry: Any, serder: Any) -> None:
+        """Seal a transaction event into the controller's key log, and accept it.
+
+        The seal is an *event* seal carrying the transaction event's own
+        identifier, sequence number and digest; ``anchorMsg`` then tells the
+        transaction-event verifier which key event authorized it, and the
+        escrows are processed so the event is accepted rather than held. Every
+        transaction event this substrate writes goes through here, so no caller
+        can write one and forget the half that makes it count.
+        """
+        seal = SealEvent(i=serder.sad["i"], s=serder.sad["s"], d=serder.said)
+        hab.interact(data=[seal._asdict()])
+        registry.anchorMsg(
+            pre=serder.sad["i"],
+            regd=serder.said,
+            seqner=Number(sn=hab.kever.sner.num),
+            saider=Diger(qb64=hab.kever.serder.said),
+        )
+        self._rgy.processEscrows()
 
     @staticmethod
     def _sad(body: Mapping[str, object], *, said: str | None = None) -> dict[str, object]:
