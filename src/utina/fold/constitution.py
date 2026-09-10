@@ -262,7 +262,7 @@ class Constitution:
         case is left undecided and every record utina builds succeeds linearly.
         """
         edition: tuple[Clause, ...] = ()
-        for event in corpus.upto(position):
+        for event in corpus.upto(position):  # ~5edf
             if _takes_force(corpus, event, position):
                 edition = _edition_committed_by(event)
         _refuse_a_contradictory_edition(edition)

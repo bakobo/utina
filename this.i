@@ -1120,5 +1120,5 @@ Make Custos's replayable governance useful to a real organization = goal:
         at every candidate coordinate — quadratic in the record's length, taken over duplicating
         the precedence rules that make a declination decisive. This also builds the derived
         primitive docs/custos-proposals.md:244-251 says R1, R2 and R3 all need: the coordinate
-        at which an act stops being in flight. Logged as Q33, and the question is owed to Custos
-        at R4.
+        at which an act stops being in flight. Logged as Q33 and filed as
+        Nicholas-Keystate/custos#96, whose second half is the predecessor citation (tick 5edf).
