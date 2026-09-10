@@ -98,7 +98,7 @@ def test_the_slot_predicate_reads_the_endorsements_the_constructor_wrote(acme):
 def test_the_declination_at_d3_is_read_as_a_spent_slot(acme):
     """The centerpiece's raw material: Dev's signed no, seen as DECLINED."""
     law = Constitution.at(acme.corpus, acme.at("d3"))
-    subject = acme.said("hire-vp-sales")
+    subject = acme.said("sign-office-lease")
     committed = acme.corpus.upto(acme.at("d3"))
 
     held = dispositions(law.clause("A1").group, committed, subject)

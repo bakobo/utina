@@ -73,7 +73,7 @@ colour
 
 examples
   utina law --at inception
-  utina eval hire-vp-sales --at d3
+  utina eval sign-office-lease --at d3
   utina eval --said seat-the-board --at d4
   utina replay --at board-seated
   utina whois 9-marta-as-founder

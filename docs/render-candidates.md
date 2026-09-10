@@ -4,8 +4,16 @@
 `docs/demo-script.md` — it is the first half of the centerpiece, and the beat where the
 audience has to see that a signed no did not merely fail to help but made unity
 unreachable. Everything below is the same command over the same committed record, and
-every identifier, weight and sentence is the real one: `utina eval hire-vp-sales --at
-d3` against Acme's log, clause A1, Marta endorsed, Dev declined.*
+every identifier, weight and sentence is the real one: `utina eval sign-office-lease
+--at d3` against Acme's log, clause A1, Marta endorsed, Dev declined.*
+
+**D3's subject changed after these were drawn.** The signed no stood against the hire
+when the three candidates were written, and it now stands against the office lease, so
+that the hire stays pending for `docs/demo-2-script.md` (`this.i` @4tcsbw72). Candidate
+A is re-rendered below against the record as it stands, because a test pins that block
+to what the command actually prints. Candidates B and C are left as they were drawn:
+they are the record of a layout decision already taken, not current output, and
+re-rendering an unchosen alternate by hand would only produce a screen nothing verifies.
 
 Assumptions the three share, because they are not what is being chosen: about 100
 columns, ANSI colour when the stream is a terminal and nothing when it is not (shown
@@ -30,18 +38,18 @@ Verdict first, then the header fields, then an aligned table whose last two rows
 sums, then the ground as a labelled block.
 
 ```
-utina eval hire-vp-sales --at d3
+utina eval sign-office-lease --at d3
 
-  DEFEATED    may Acme perform an act of the class hire-vp-sales?
+  DEFEATED    may Acme perform an act of the class sign-office-lease?
   ------------------------------------------------------------------------------------
 
-  position    d3 (seq 6)
-  law head    10f70cb57fe0...          clause A1 (MxN), unity 1
-  subject     E1rffWC9X3TbAvOb7uva7RUxD1CvqcQ6ovLHW64URWxY
+  position    d3 (seq 8)
+  law head    3b8b16f24a68...          clause A1 (MxN), unity 1
+  subject     EijCMIuLxgp_fVyn7QswUxykLRJBUsD3vDVjS6K-LbM8
 
   slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      ENzStORRBBmE...
-  9-dev-as-founder     1/2   declined      ENETeOGqyXf3...
+  9-marta-as-founder   1/2   endorsed      EMD5n3lW7eG5...
+  9-dev-as-founder     1/2   declined      EboFtM84Xdhk...
                     ------
   endorsed             1/2   of 1          unity not reached
   reachable            1/2   of 1          unity unreachable: a declined slot is spent
@@ -50,7 +58,7 @@ utina eval hire-vp-sales --at d3
     clause      A1
     defeater    authority (the actor lacked the invoked power)
     subcode     9-dev-as-founder-at-acme
-    citation    the declination ENETeOGqyXf3... committed by 9-dev-as-founder-at-acme
+    citation    the declination EboFtM84Xdhk... committed by 9-dev-as-founder-at-acme
     reason      Unity is unreachable under clause A1: 9-dev-as-founder-at-acme committed
                 a signed declination, which spends that slot's weight, and the weight
                 that can still arrive no longer reaches unity.

@@ -67,10 +67,10 @@ BEATS = (
     ),
     Beat(
         "d3",
-        "Hire a VP of Sales, after Dev declines",
+        "Sign the office lease, after Dev declines",
         "The centerpiece, first half. A signed no spends its slot, so the weight that "
         "can still arrive no longer reaches unity. Watch the reachable row.",
-        ("eval", "hire-vp-sales", "--at", "d3"),
+        ("eval", "sign-office-lease", "--at", "d3"),
     ),
     Beat(
         "d4",

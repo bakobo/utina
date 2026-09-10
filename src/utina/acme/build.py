@@ -30,7 +30,7 @@ from .law import (
 )
 from .record import Acme
 
-BANK_ACCOUNT, HIRE, BUDGET = ORDINARY_ACTS
+BANK_ACCOUNT, HIRE, LEASE, BUDGET = ORDINARY_ACTS
 AMEND = AMENDMENT_ACTS[0]
 EQUITY = EQUITY_ACTS[0]
 
@@ -70,12 +70,17 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     constructor.endorse(marta, bank)
     mark("d1", constructor.endorse(dev, bank))
 
-    # D2, D3 — Marta endorses the hire; Dev signs a declination against it.
-    # One committed act, two beats, because a slot may go from pending to
-    # declined without the act being retabled.
+    # D2 — Marta endorses the hire and nobody else acts on it, ever. It is left
+    # pending on purpose: it is the act whose governing clause the amendment
+    # repeals, which closes its cure path (this.i @4tcsbw72).
     hire = name(HIRE, constructor.propose(HIRE))
     mark("d2", constructor.endorse(marta, hire))
-    mark("d3", constructor.decline(dev, hire))
+
+    # D3 — the office lease carries the signed no. Two slots at a half, one of
+    # them spent, so unity is unreachable and the finding is a defeat.
+    lease = name(LEASE, constructor.propose(LEASE))
+    constructor.endorse(marta, lease)
+    mark("d3", constructor.decline(dev, lease))
 
     # Demo 2 beat 5 — release of escrowed founder equity, under A3. Marta
     # endorses and Dev does not, and it is left that way on purpose: it is the

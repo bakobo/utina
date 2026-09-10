@@ -76,8 +76,13 @@ def test_d2_one_slot_untouched_is_pending_naming_the_slot(acme):
 
 
 def test_d3_declination_under_two_slots_makes_unity_unreachable(acme):
-    """The centerpiece, first half: a signed no kills a two-slot decision."""
-    finding = evaluate(acme.corpus, Proposal("hire-vp-sales"), at=acme.at("d3"))
+    """The centerpiece, first half: a signed no kills a two-slot decision.
+
+    The subject is the office lease rather than the hire, so that the hire stays
+    pending for demo 2's beat 9. Which act carries the declination is nothing to
+    this beat (``this.i`` @4tcsbw72).
+    """
+    finding = evaluate(acme.corpus, Proposal("sign-office-lease"), at=acme.at("d3"))
     assert isinstance(finding, Defeated)
     assert finding.citation.clause == "A1"
     assert finding.citation.declination.endorser == acme.aid(DEV)
@@ -141,5 +146,5 @@ def test_d10_permuted_arrival_folds_to_byte_identical_constitutions(acme):
 )
 def test_one_declination_two_verdicts(acme, position, expected):
     """Dev's signed no is one act. The Constitution decides what it means."""
-    act = "hire-vp-sales" if position == "d3" else "approve-budget"
+    act = "sign-office-lease" if position == "d3" else "approve-budget"
     assert isinstance(evaluate(acme.corpus, Proposal(act), at=acme.at(position)), expected)

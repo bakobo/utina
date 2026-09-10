@@ -38,7 +38,7 @@ DOCS = Path(__file__).resolve().parents[1] / "docs"
 BEATS = [
     ("d1", ["eval", "open-bank-account", "--at", "d1"], "AFFIRMED"),
     ("d2", ["eval", "hire-vp-sales", "--at", "d2"], "PENDING"),
-    ("d3", ["eval", "hire-vp-sales", "--at", "d3"], "DEFEATED"),
+    ("d3", ["eval", "sign-office-lease", "--at", "d3"], "DEFEATED"),
     ("d4", ["eval", "--said", "seat-the-board", "--at", "d4"], "AFFIRMED"),
     ("d5", ["eval", "approve-budget", "--at", "d5"], "AFFIRMED"),
     ("d6", ["eval", "approve-budget", "--at", "d6"], "PENDING"),
@@ -112,7 +112,7 @@ def test_law_at_inception_shows_every_founding_clause_with_slots_and_weights():
     assert "clause A1" in out and "clause A2" in out and "clause A3" in out
     assert "release-escrowed-equity" in out
     assert "9-marta-as-founder 1/2, 9-dev-as-founder 1/2" in out
-    assert "open-bank-account, hire-vp-sales, approve-budget" in out
+    assert "open-bank-account, hire-vp-sales, sign-office-lease, approve-budget" in out
     assert "unity 1" in out
 
 
@@ -121,7 +121,7 @@ def test_law_shows_the_head_that_identifies_the_edition():
     with world() as record:
         head = record.values  # touched so the fixture cost is visible in the test
     assert head is not None
-    assert "10f70cb57fe0" in out
+    assert "3b8b16f24a68" in out
 
 
 def test_law_after_the_amendment_shows_the_board_clauses_and_the_retained_bar():
@@ -175,17 +175,17 @@ def test_a_pending_screen_names_the_slot_that_would_discharge_it_and_the_cure():
 
 
 def test_a_defeated_screen_carries_the_clause_class_subcode_and_declination():
-    out = screen("eval", "hire-vp-sales", "--at", "d3")
+    out = screen("eval", "sign-office-lease", "--at", "d3")
     assert "DEFEATED" in out
     assert "authority (the actor lacked the invoked power)" in out
     assert "subcode" in out and "9-dev-as-founder-at-acme" in out
-    assert "ENETeOGqyXf3" in out
+    assert "EboFtM84Xdhk" in out
     assert "unity unreachable" in out
 
 
 def test_the_centerpiece_contrast_differs_only_on_the_reachable_row():
     """D3 and D6 both show 1/2 endorsed. The reachable row is what separates them."""
-    three = screen("eval", "hire-vp-sales", "--at", "d3")
+    three = screen("eval", "sign-office-lease", "--at", "d3")
     six = screen("eval", "approve-budget", "--at", "d6")
     assert "unity unreachable" in three
     assert "unity still reachable" in six
@@ -226,7 +226,7 @@ def test_a_committed_question_is_judged_under_the_law_it_replaces():
 
 
 def test_a_said_may_be_given_as_a_prefix_of_the_identifier():
-    out = screen("eval", "--said", "E3nyAcEfOUu7", "--at", "d4")
+    out = screen("eval", "--said", "ElpSy5nBM9n9", "--at", "d4")
     assert "AFFIRMED" in out and "A2" in out
 
 
@@ -267,7 +267,7 @@ def test_an_endorsement_is_not_an_act_and_cannot_be_appraised():
 def test_eval_needs_exactly_one_of_an_act_class_and_a_said():
     for argv in (
         ("eval", "--at", "d1"),
-        ("eval", "hire-vp-sales", "--said", "E3nyAcEfOUu7", "--at", "d4"),
+        ("eval", "hire-vp-sales", "--said", "ElpSy5nBM9n9", "--at", "d4"),
     ):
         status, _, err = shell(*argv)
         assert status == 2, argv
@@ -347,9 +347,9 @@ def _each_beat_cites_what_it_shows(record):
 def test_the_d3_screen_is_the_committed_candidate():
     """docs/render-candidates.md is what the maintainer picks from. Keep it true."""
     block = fenced("render-candidates.md", 0)
-    assert block[0] == "utina eval hire-vp-sales --at d3"
+    assert block[0] == "utina eval sign-office-lease --at d3"
     expected = [line.rstrip() for line in block[2:]]
-    actual = screen("eval", "hire-vp-sales", "--at", "d3")
+    actual = screen("eval", "sign-office-lease", "--at", "d3")
     printed = [line.rstrip() for line in actual.splitlines()]
     assert printed == expected
 
@@ -359,7 +359,7 @@ def test_no_screen_is_wider_than_the_projector(backend):
     """Both substrates: a 44-character prefix must not push a line off the edge."""
     for argv in (
         ["law", "--at", "board-seated"],
-        ["eval", "hire-vp-sales", "--at", "d3"],
+        ["eval", "sign-office-lease", "--at", "d3"],
         ["eval", "declare-dividend", "--at", "d8"],
         ["eval", "open-bank-account", "--at", "d1"],
         ["log"],
@@ -372,7 +372,7 @@ def test_no_screen_is_wider_than_the_projector(backend):
 
 
 def test_screens_carry_no_emoji_and_no_box_drawing():
-    out = screen("eval", "hire-vp-sales", "--at", "d3") + screen("law", "--at", "d3")
+    out = screen("eval", "sign-office-lease", "--at", "d3") + screen("law", "--at", "d3")
     assert out.isascii()
 
 
@@ -380,8 +380,8 @@ def test_screens_carry_no_emoji_and_no_box_drawing():
 
 
 def test_colour_is_never_the_only_carrier_of_meaning():
-    _, plain, _ = shell("eval", "hire-vp-sales", "--at", "d3", color=False)
-    _, painted, _ = shell("eval", "hire-vp-sales", "--at", "d3", color=True)
+    _, plain, _ = shell("eval", "sign-office-lease", "--at", "d3", color=False)
+    _, painted, _ = shell("eval", "sign-office-lease", "--at", "d3", color=True)
     assert "\x1b[" in painted
     assert "\x1b[" not in plain
     assert ANSI.sub("", painted) == plain
@@ -466,7 +466,7 @@ def test_a_defeat_with_no_declination_still_carries_its_ground():
 def test_log_shows_every_committed_event_in_canonical_order():
     out = screen("log")
     assert "COMMITTED LOG AT the end of the record" in out
-    assert "24 events" in out
+    assert "26 events" in out
     assert "Arrival order is not consulted" in out
     seqs = [
         int(line.split()[0])
@@ -499,7 +499,7 @@ def test_replay_folds_the_permuted_log_to_the_same_bytes():
     assert "REPLAY AT board-seated" in out
     assert "IDENTICAL" in out
     assert "custos-4.2.md:3101" in out
-    assert out.count("10f70cb5") == 0  # the board law is in force here, not the founding one
+    assert out.count("3b8b16f2") == 0  # the board law is in force here, not the founding one
     assert "clause sub-blocks" in out
     assert "B1" in out and "B2" in out
 
@@ -586,7 +586,7 @@ def test_no_screen_anywhere_shows_a_truncated_party_identifier(backend: str):
         ["law", "--at", "inception"],
         ["law", "--at", "board-seated"],
         ["eval", "hire-vp-sales", "--at", "d2"],
-        ["eval", "hire-vp-sales", "--at", "d3"],
+        ["eval", "sign-office-lease", "--at", "d3"],
         ["eval", "approve-budget", "--at", "d6"],
         ["eval", "amend-operating-agreement", "--at", "d7"],
         ["eval", "declare-dividend", "--at", "d8"],
@@ -606,7 +606,7 @@ def test_no_screen_anywhere_shows_a_truncated_party_identifier(backend: str):
 @pytest.mark.parametrize("backend", NAMES)
 def test_the_slot_column_is_the_same_on_both_substrates(backend: str):
     """The demo's claim, made visible: the screen does not say which engine is under it."""
-    out = screen("eval", "hire-vp-sales", "--at", "d3", "--substrate", backend)
+    out = screen("eval", "sign-office-lease", "--at", "d3", "--substrate", backend)
     assert "  9-marta-as-founder   1/2   endorsed" in out
     assert "  9-dev-as-founder     1/2   declined" in out
 
@@ -621,7 +621,7 @@ def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
     # The signature is printed whole and therefore wraps, so the sentence beside it is
     # matched against the screen with its line breaks flattened.
     assert "the substrate verified it before recording" in " ".join(out.split())
-    assert "said=Ebnz13phAfQy..." in out
+    assert "said=EJennRUnhTdo..." in out
     assert "before" in out and "PENDING" in out
     assert "after" in out and "AFFIRMED" in out
     assert "nothing here is written to disk" in out
@@ -659,7 +659,7 @@ def test_demo_walks_all_ten_beats_through_the_query_commands():
     out = screen("demo", "--no-pause")
     for number in range(1, 11):
         assert f"BEAT D{number} " in out or f"BEAT D{number}  " in out
-    assert "$ utina eval hire-vp-sales --at d3" in out
+    assert "$ utina eval sign-office-lease --at d3" in out
     assert "$ utina replay --at board-seated" in out
     # The prologue shows the law before anything is judged under it.
     assert "BEAT LAW" in out
@@ -786,7 +786,7 @@ def test_every_query_answers_the_same_way_on_either_substrate():
     """The verdicts are the engine's, and the engine cannot tell which it is on."""
     for argv in (
         ["eval", "open-bank-account", "--at", "d1"],
-        ["eval", "hire-vp-sales", "--at", "d3"],
+        ["eval", "sign-office-lease", "--at", "d3"],
         ["eval", "approve-budget", "--at", "d6"],
         ["eval", "amend-operating-agreement", "--at", "d7"],
         ["eval", "declare-dividend", "--at", "d8"],

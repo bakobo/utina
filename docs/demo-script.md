@@ -73,7 +73,7 @@ amendment (`this.i` @rwo55zyw, tick `6ms6`). Every beat below is unchanged by it
 |---|---|---|---|---|---|---|
 | D1 | 1 | Open a bank account | Marta E, Dev E | 1.0 | **affirmed** | clause A1 + both endorsement SAIDs |
 | D2 | 1 | Hire a VP of Sales | Marta E, Dev P | 0.5 | **pending** | typed requirement naming Dev's slot |
-| D3 | 1 | Hire a VP of Sales, after Dev declines | Marta E, Dev **D** | 0.5 | **defeated** | Dev's declination SAID + clause A1; unity unreachable |
+| D3 | 1 | Sign the office lease, after Dev declines | Marta E, Dev **D** | 0.5 | **defeated** | Dev's declination SAID + clause A1; unity unreachable |
 | D4 | 1→2 | Seat the board (the amendment itself) | Marta E, Dev E under **A2** | 1.0 | **affirmed** | judged under the law it replaces; anchored in an establishment event |
 | D5 | 2 | Approve the annual budget | Marta E, Nina E, Dev P | 1.0 | **affirmed** | unity reached though one party never acted |
 | D6 | 2 | Approve the annual budget, after Dev declines | Marta E, Dev **D**, Nina P | 0.5 | **pending** | Nina's slot still reachable |
@@ -89,7 +89,10 @@ E = Endorsed, P = Pending, D = Declined.
 - **D3 against D6** is the centerpiece. The same signed "no" from the same person is *defeat*
   under the founders and *pending* under the board — not because the engine treats Dev
   differently, but because with two slots a declination makes unity unreachable, and with
-  three it does not. The Constitution changed; the arithmetic did the rest.
+  three it does not. The Constitution changed; the arithmetic did the rest. Dev's D3
+  declination stands against the office lease rather than against the hire, so that the hire
+  stays pending for `docs/demo-2-script.md`'s beat 9; which act carries the no is nothing to
+  this beat (`this.i` @4tcsbw72).
 - **D2 against D5** is the secondary contrast: a decision can be affirmed while a party has
   never acted, and pending while one has. Presence is not the question; reachable weight is.
 - **D8** is the beat for this audience. The engine refuses rather than legislating, and names

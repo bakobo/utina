@@ -253,10 +253,22 @@ def test_d1_is_the_second_founder_s_endorsement_of_the_bank_account(acme_double)
     assert subject_of(event) == acme_double.said("open-bank-account")
 
 
-def test_d3_is_dev_s_declination_of_the_hire(acme_double):
+def test_d3_is_dev_s_declination_of_the_office_lease(acme_double):
+    """@4tcsbw72: the lease takes the signed no so the hire can stay pending."""
     event = acme_double.events[acme_double.at("d3").seq]
     assert (event.body["i"], disp(event)) == (DEV, "decline")
-    assert subject_of(event) == acme_double.said("hire-vp-sales")
+    assert subject_of(event) == acme_double.said("sign-office-lease")
+
+
+def test_the_hire_is_left_pending_and_nobody_declines_it(acme_double):
+    """Demo 2 beat 9's material: an act whose cure path the amendment will close."""
+    hire = acme_double.said("hire-vp-sales")
+    acts = [
+        (event.body["i"], disp(event))
+        for event in acme_double.events
+        if disp(event) is not None and subject_of(event) == hire
+    ]
+    assert acts == [(MARTA, "endorse")]
 
 
 def test_d6_is_dev_s_declination_of_the_retabled_budget(acme_double):

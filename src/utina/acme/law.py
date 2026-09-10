@@ -37,10 +37,18 @@ NINA = "acme:nina"
 FOUNDERS = (MARTA, DEV)
 BOARD = (MARTA, DEV, NINA)
 
-#: What the ordinary-acts clause rules. ``declare-dividend`` is deliberately
-#: absent from every clause: beat D8 needs the law to be genuinely silent
-#: somewhere, and a fold that refuses has to have something to refuse about.
-ORDINARY_ACTS = ("open-bank-account", "hire-vp-sales", "approve-budget")
+#: What the ordinary-acts clause rules, in the order the record tables them.
+#: ``declare-dividend`` is deliberately absent from every clause: one beat needs
+#: the law to be genuinely silent somewhere, and a fold that refuses has to have
+#: something to refuse about. The office lease is here to carry a declination
+#: that used to stand against the hire, which has to stay pending across the
+#: amendment (this.i @4tcsbw72).
+ORDINARY_ACTS = (
+    "open-bank-account",
+    "hire-vp-sales",
+    "sign-office-lease",
+    "approve-budget",
+)
 
 #: What the amendment clause rules.
 AMENDMENT_ACTS = ("amend-operating-agreement",)
