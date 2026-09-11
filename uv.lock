@@ -434,8 +434,8 @@ wheels = [
 
 [[package]]
 name = "keri"
-version = "2.0.0.dev6"
-source = { git = "https://github.com/bakobo/keripy?rev=7da1e64a1df971ab34d622e2f30c541e7c48305c#7da1e64a1df971ab34d622e2f30c541e7c48305c" }
+version = "2.1.0.dev0"
+source = { git = "https://github.com/bakobo/keripy?rev=0af11b4a52fd09e9a6abf952e6f241c959a859d9#0af11b4a52fd09e9a6abf952e6f241c959a859d9" }
 dependencies = [
     { name = "apispec" },
     { name = "blake3" },
@@ -979,7 +979,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "bakobo-errors", git = "https://github.com/bakobo/errors" },
-    { name = "keri", git = "https://github.com/bakobo/keripy?rev=7da1e64a1df971ab34d622e2f30c541e7c48305c" },
+    { name = "keri", git = "https://github.com/bakobo/keripy?rev=0af11b4a52fd09e9a6abf952e6f241c959a859d9" },
 ]
 
 [package.metadata.requires-dev]

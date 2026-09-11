@@ -73,4 +73,11 @@ files = ["src/utina"]
 
 [tool.uv.sources]
 bakobo-errors = { git = "https://github.com/bakobo/errors" }
-keri = { git = "https://github.com/bakobo/keripy", rev = "7da1e64a1df971ab34d622e2f30c541e7c48305c" }
+# Pinned to a branch of the fork rather than to its main, because this rev carries
+# WebOfTrust/keripy#1564 — the DI2I edge operator — forward-ported ahead of the
+# upstream merge. The demo's two-currents beat needs DI2I to exist at all: without
+# it the toolchain refuses a seated endorser and an unseated one alike, which
+# proves nothing. Repin to the fork's main once the PR lands upstream; the ported
+# commits keep their identity, so that merge will be recognized rather than
+# replayed. ~4z5c
+keri = { git = "https://github.com/bakobo/keripy", rev = "0af11b4a52fd09e9a6abf952e6f241c959a859d9" }
