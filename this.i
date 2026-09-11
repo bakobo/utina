@@ -1381,3 +1381,35 @@ Make Custos's replayable governance useful to a real organization = goal:
         is. A finding that says a cure path closed has to name what closed it, and the fold had
         no way to say which enactment that was — it computed the edition and forgot where it
         came from.
+
+    An amendment that declares nothing has declared the empty set = decision:
+      id: bvzzaquc
+      why: >
+        Issue 82's determination 5 makes an amending enactment declare the pending questions
+        its change disturbs, has the fold compute the true set from the same committed bytes,
+        and convicts the declaration on a mismatch. Two choices fell out of building it.
+        FIRST, an enactment carrying no declaration is read as claiming that nothing is
+        disturbed, rather than as having made no claim. Chose that over treating silence as
+        no testimony, because the alternative guts the mechanism: an amender who could omit the
+        field would evade conviction by saying nothing, and the whole point of the declaration
+        is that it is a claim a stranger can falsify. The constructor therefore commits the
+        field always, including empty. Acme's board-seating amendment now declares the hire
+        truthfully, and the demo-1 suite caught its absence the moment the rule landed — D4
+        went self-convicted, which is the mechanism working on the first record it met.
+        SECOND, the conviction arrives at the coordinate the amendment CARRIES, not at the one
+        it is committed at. Nothing is disturbed until an edition takes force, so an enactment
+        short of its threshold is simply pending and one that never carries disturbs nothing
+        ever (@xhtvuxnc). Measured on a synthetic record: pending, pending, self-convicted, at
+        the three coordinates from commitment to unity. Demo 2's beat 22 reads "declared
+        affirmed", which is the amender's claim and not the fold's answer; the fold's answer is
+        beat 23's, and under-declaring it was never affirmed at any coordinate.
+        The value is self-convicted rather than defeated, which is the pinned reading of an
+        open question (docs/demo-2-script.md "Open readings", tick 7xe6): the enactment commits
+        two things that cannot both be true of one set of bytes, which is 1499-1530's "two
+        voices where its constitution demands one". Defeated would say a committed requirement
+        was violated, and no clause of Acme's commits one about declarations.
+        The proof package is a SHA-256 over both sets in canonical order — rendered sorted
+        rather than as declared, because a set is a set and a package that moved with the
+        declaration's ORDER would make one falsehood two different proofs. The pair field is
+        left empty: the two contradicting commitments are in one event, so there are not two
+        identifiers to name, and the ruled payload is the package alone anyway (1659-1660).
