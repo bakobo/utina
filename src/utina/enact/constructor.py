@@ -16,11 +16,23 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from utina.substrate import AID, ENDORSEMENT_SCHEMA, SAID, Event, FoldValues, Substrate
+from utina.substrate import (
+    AID,
+    DI2I,
+    EDGE_NODE_FIELD,
+    EDGE_OPERATOR_FIELD,
+    ENDORSEMENT_SCHEMA,
+    SAID,
+    Event,
+    FoldValues,
+    Substrate,
+)
 
 from .errors import (
+    CITATION_UNKNOWN,
     DOMAIN_INCEPTED,
     DOMAIN_UNINCEPTED,
+    EDGE_UNVALIDATED,
     RECORD_UNRESUMABLE,
     REGISTRY_UNOPENED,
     SIGNATURE_UNVERIFIABLE,
@@ -35,7 +47,19 @@ from .errors import (
 #: their mind declines, which is another issuance — and the credentials this
 #: constructor issues carry no registry, so they are structurally unrevokable;
 #: whether revocation ever enters the vocabulary is deliberately open (~56js).
-ISSUANCE = "issue"  # ~3z6a
+ISSUANCE = "issue"
+
+#: The event kind a registry-bound issuance commits, and the field a credential
+#: names its schema in. Both are read back when an endorser cites a credential as
+#: their qualification, so the citation resolves out of the record.
+ISSUANCE_KIND = "issuance"
+SCHEMA_FIELD = "s"
+
+#: The name of the edge an endorser's qualification rides on. The dossier
+#: specification's own label for a qualification-proof edge
+#: (``dossier-spec-body.md``'s endorsement schema, ``e.qp``), which is exactly
+#: what a seat credential is: proof the endorser may act on this subject.
+QUALIFICATION_EDGE = "qp"  # ~3z6a
 
 
 class Constructor:
@@ -186,18 +210,32 @@ class Constructor:
         self._require_founded()
         return self._emit("act", {"t": "act", "i": self.gaid, "act": act}, self.gaid)
 
-    def endorse(self, aid: AID, subject: SAID) -> Event:
-        """Commit ``aid``'s signed yes to ``subject``."""
-        return self._dispose(aid, subject, "endorse")
+    def endorse(self, aid: AID, subject: SAID, *, qualification: SAID | None = None) -> Event:
+        """Commit ``aid``'s signed yes to ``subject``.
 
-    def decline(self, aid: AID, subject: SAID) -> Event:
+        ``qualification`` is a credential this endorser cites as what entitles
+        them to act — for the demo, a seat credential. It is the *endorser's*
+        claim and is never inferred here: an endorser who holds no seat can
+        still cite one, which is the whole of beat 14, and a constructor that
+        looked the right credential up would have made that claim unmakeable and
+        the check unshowable. Citing one attaches the DI2I edge and submits it to
+        edge validation before anything is committed (this.i @x7crwavm).
+        """
+        return self._dispose(aid, subject, "endorse", qualification)
+
+    def decline(
+        self, aid: AID, subject: SAID, *, qualification: SAID | None = None
+    ) -> Event:
         """Commit ``aid``'s signed no to ``subject``.
 
         A declination is a signed, attributable, committed act. Its weight
         contributes nothing to unity and its slot is spent, but that is the
-        fold's reading of these bytes, not something decided here.
+        fold's reading of these bytes, not something decided here. A declination
+        offered as a seat's cites the seat credential exactly as an endorsement
+        does, and is refused on the same terms: a "no" from an unseated party is
+        no more attributable than their "yes".
         """
-        return self._dispose(aid, subject, "decline")
+        return self._dispose(aid, subject, "decline", qualification)
 
     def anchoring_event(self, said: SAID) -> SAID | None:
         """The identifier of the establishment event that sealed ``said``.
@@ -214,7 +252,44 @@ class Constructor:
         if not self._founded:
             raise DOMAIN_UNINCEPTED(gaid=self.gaid)
 
-    def _dispose(self, aid: AID, subject: SAID, disposition: str) -> Event:
+    def _qualifying_edge(self, aid: AID, qualification: SAID) -> dict[str, object]:
+        """The DI2I edge citing ``qualification`` as what qualifies ``aid``.
+
+        The far node's schema comes out of the committed issuance that carries
+        it, rather than from a caller or a constant: the edge's ``s`` is a claim
+        about the credential it points at, and the only honest source for that
+        is the credential. A citation this record does not carry is refused —
+        a qualification a stranger cannot resolve from the record is not one.
+        """
+        cited = self._credential(qualification)
+        if cited is None:
+            raise CITATION_UNKNOWN(aid=aid, qualification=qualification)
+        return {
+            QUALIFICATION_EDGE: {
+                EDGE_NODE_FIELD: qualification,
+                SCHEMA_FIELD: cited.get(SCHEMA_FIELD),
+                EDGE_OPERATOR_FIELD: DI2I,
+            }
+        }
+
+    def _credential(self, said: SAID) -> Mapping[str, object] | None:
+        """The credential a committed issuance embeds under ``said``, if any.
+
+        Read out of the record rather than remembered in a field, so a
+        constructor that resumed somebody else's record can cite what that
+        record carries (this.i @jzozfn).
+        """
+        for event in self._emitted:
+            if event.kind != ISSUANCE_KIND:
+                continue
+            acdc = event.body.get("acdc")
+            if isinstance(acdc, Mapping) and acdc.get("d") == said:
+                return acdc
+        return None
+
+    def _dispose(
+        self, aid: AID, subject: SAID, disposition: str, qualification: SAID | None = None
+    ) -> Event:
         """Issue the credential, then commit the event that embeds it.
 
         The credential is a real, registry-less ACDC — the substrate constructs,
@@ -226,11 +301,15 @@ class Constructor:
         self._require_founded()
         if subject not in self._saids:
             raise SUBJECT_UNKNOWN(aid=aid, subject=subject)
+        edges = None if qualification is None else self._qualifying_edge(aid, qualification)
         sad, signature = self.substrate.issue_acdc(
             aid,
             ENDORSEMENT_SCHEMA,
             {"said": subject, "act": ISSUANCE, "disp": disposition},
+            edges=edges,
         )
+        if edges is not None and not self.substrate.verify_edges(sad):
+            raise EDGE_UNVALIDATED(aid=aid, qualification=str(qualification))
         return self._emit(
             "endorsement",
             {"t": "end", "i": aid, "acdc": sad, "acdc_sig": signature},

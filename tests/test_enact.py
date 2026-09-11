@@ -219,6 +219,127 @@ def test_a_seat_credential_names_the_organ_as_issuee_under_the_domains_registry(
     assert founded.substrate.verify(founded.gaid, event.body, event.body["sig"])
 
 
+# --- the qualification an endorser cites, and the check on it (@x7crwavm) -----
+
+
+@pytest.fixture
+def seated(founded):
+    """A founded domain with a registry, a delegated seat, and its credential.
+
+    Returns the constructor, the seat's identifier, and the seat credential's
+    own identifier — the three things an endorsement offered as the seat's needs.
+    """
+    seat = founded.substrate.delegate(founded.gaid, "acme:seat3")
+    founded.open_registry("acme-governance")
+    event = founded.seat(seat, schema="E" + "t" * 43, office="board-seat-3")
+    return founded, seat, str(event.body["acdc"]["d"])
+
+
+def test_a_seats_endorsement_carries_a_di2i_edge_to_its_seat_credential(seated):
+    """Beat 12's ground: the edge is in the committed credential, not implied.
+
+    ``custos-4.2.md:1425-1428`` requires the edge by name and requires DI2I on
+    it, so that "the endorser holds the seat it claims" is checkable by the
+    existing toolchain rather than by this engine.
+    """
+    constructor, seat, credential = seated
+    subject = constructor.propose("approve-budget").said
+
+    event = constructor.endorse(seat, subject, qualification=credential)
+
+    edge = event.body["acdc"]["e"]["qp"]
+    assert edge["n"] == credential
+    assert edge["o"] == "DI2I"
+    assert edge["s"] == "E" + "t" * 43, "the far node's schema, read off the far node"
+    assert constructor.substrate.verify_edges(event.body["acdc"]) is True
+
+
+def test_an_unseated_endorser_citing_a_seat_credential_commits_nothing(seated):
+    """Beat 14. The claim is made, the toolchain refuses it, the record does not move.
+
+    Quinn's shape exactly: a real party citing a real seat credential whose
+    issuee he is not. The endorsement is issued and anchored in his own key log,
+    because he really did make the claim; what does not happen is the
+    commitment. Under the refusal reading the fold never sees this at all, which
+    is why the two currents cannot merge here (this.i @x7crwavm).
+    """
+    constructor, _, credential = seated
+    quinn = constructor.substrate.incept("acme:quinn")
+    subject = constructor.propose("approve-budget").said
+    before = len(constructor.emitted)
+
+    with pytest.raises(BakoboError) as caught:
+        constructor.endorse(quinn, subject, qualification=credential)
+
+    assert caught.value.code == "e.proof.edge-unvalidated.f"
+    assert not caught.value.retryable
+    assert len(constructor.emitted) == before, "nothing was committed"
+
+
+def test_an_unseated_declination_is_refused_on_the_same_terms(seated):
+    """A "no" from an unseated party is no more attributable than their "yes"."""
+    constructor, _, credential = seated
+    quinn = constructor.substrate.incept("acme:quinn")
+    subject = constructor.propose("approve-budget").said
+
+    with pytest.raises(BakoboError) as caught:
+        constructor.decline(quinn, subject, qualification=credential)
+    assert caught.value.code == "e.proof.edge-unvalidated.f"
+
+
+def test_a_delegate_of_the_seat_satisfies_the_seats_own_edge(seated):
+    """Beat 15: the third stratum. Same slot, different key, no law change."""
+    constructor, seat, credential = seated
+    device = constructor.substrate.delegate(seat, "acme:nina-device")
+    subject = constructor.propose("approve-budget").said
+
+    event = constructor.endorse(device, subject, qualification=credential)
+
+    assert event.body["acdc"]["i"] == device
+    assert constructor.substrate.verify_edges(event.body["acdc"]) is True
+
+
+def test_a_citation_resolves_by_identifier_and_not_by_the_latest_issuance(seated):
+    """Two seats, and the endorser cites the one whose issuee it is.
+
+    A record with more than one seat credential in it is the ordinary case for
+    any board, and a constructor that resolved a citation to the most recent
+    issuance would attach an edge naming a credential the endorser does not
+    hold — which the toolchain would then correctly refuse, for a reason nobody
+    could find.
+    """
+    constructor, _, first_credential = seated
+    second_seat = constructor.substrate.delegate(constructor.gaid, "acme:seat4")
+    second = constructor.seat(second_seat, schema="E" + "t" * 43, office="board-seat-4")
+    second_credential = str(second.body["acdc"]["d"])
+    subject = constructor.propose("approve-budget").said
+
+    event = constructor.endorse(second_seat, subject, qualification=second_credential)
+
+    assert first_credential != second_credential
+    assert event.body["acdc"]["e"]["qp"]["n"] == second_credential
+    assert constructor.substrate.verify_edges(event.body["acdc"]) is True
+
+
+def test_citing_a_credential_this_record_does_not_carry_is_refused(founded):
+    """A citation a stranger cannot resolve from the record is not a qualification."""
+    marta = founded.substrate.incept("acme:marta-again")
+    subject = founded.propose("approve-budget").said
+
+    with pytest.raises(BakoboError) as caught:
+        founded.endorse(marta, subject, qualification="E" + "z" * 43)
+    assert caught.value.code == "e.state.citation-unknown.f"
+
+
+def test_an_endorsement_citing_nothing_carries_no_edge_and_is_committed(founded):
+    """Marta and Dev are slotted as themselves, so they cite nothing and need to."""
+    subject = founded.propose("approve-budget").said
+
+    event = founded.endorse("acme:marta", subject)
+
+    assert "e" not in event.body["acdc"]
+
+
 @pytest.mark.parametrize("verb", ["endorse", "decline"], ids=["endorse", "decline"])
 def test_a_disposition_on_an_uncommitted_subject_is_refused(founded, verb):
     """Fail closed: a slot cannot be spent against something nobody committed."""

@@ -70,6 +70,36 @@ RECORD_UNRESUMABLE = ErrorCode(
     hint="Hand resume the record's events exactly as committed: complete, in coordinate order.",
 )
 
+EDGE_UNVALIDATED = ErrorCode(
+    code="e.proof.edge-unvalidated.f",
+    title="The credential cited as this endorser's qualification does not bear them out.",
+    detail=(
+        "{aid} offered an endorsement citing {qualification} as the credential that qualifies "
+        "them to give it, and edge validation refuses the citation: under the DI2I operator "
+        "the citing credential's issuer must be the cited credential's issuee, or a delegated "
+        "identifier of it. The endorsement was issued and anchored in the endorser's own key "
+        "log — they really did make the claim — and it was not committed to the record, "
+        "because an endorsement whose qualification does not validate confers nothing."
+    ),
+    args=("aid", "qualification"),
+    hint=(
+        "Cite the credential whose issuee is the endorser, or an identifier delegated from "
+        "that issuee. An endorser who holds no such credential cites none."
+    ),
+)
+
+CITATION_UNKNOWN = ErrorCode(
+    code="e.state.citation-unknown.f",
+    title="This record carries no credential by that identifier.",
+    detail=(
+        "{aid} cited {qualification} as their qualification, and no issuance committed to this "
+        "record embeds a credential with that identifier. A citation a stranger cannot resolve "
+        "from the record is not a qualification; it is a claim about something invisible."
+    ),
+    args=("aid", "qualification"),
+    hint="Issue the credential into the domain's registry first, then cite its identifier.",
+)
+
 SIGNATURE_UNVERIFIABLE = ErrorCode(
     code="e.proof.signature-unverifiable.f",
     title="A signature this constructor just produced does not verify.",

@@ -120,6 +120,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     seating = constructor.seat(aids[SEAT], schema=SEAT_SCHEMA, office=SEAT_OFFICE)
     name("seat-credential", seating)
     mark("b8", seating)
+    seat_credential = str(seating.body["acdc"]["d"])
 
     # Demo 2 beat 11 — Dev endorses the equity release on the far side of the
     # amendment, curing it under the same clause A3 it was tabled under. Beat 10
@@ -129,10 +130,12 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
 
     # D5 — the budget carries on Marta and the seat, with Dev never acting. The
     # organ signs: the seat is what the law slots, and Nina holds its keys in the
-    # story rather than in the record (this.i @z373ew7j).
+    # story rather than in the record (this.i @z373ew7j). The seat's endorsement
+    # cites its own seat credential, so the DI2I edge is checked by the existing
+    # toolchain before the endorsement is committed at all (@x7crwavm).
     budget = name(BUDGET, constructor.propose(BUDGET))
     constructor.endorse(marta, budget)
-    mark("d5", constructor.endorse(seat3, budget))
+    mark("d5", constructor.endorse(seat3, budget, qualification=seat_credential))
 
     # D6 — the budget is tabled again and Dev declines it. Same signed no as
     # D3, three slots instead of two, and the fold draws the difference.
@@ -145,7 +148,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     amend = name(AMEND, constructor.propose(AMEND))
     constructor.endorse(marta, amend)
     constructor.endorse(dev, amend)
-    mark("d7", constructor.decline(seat3, amend))
+    mark("d7", constructor.decline(seat3, amend, qualification=seat_credential))
 
     # D8 — a question the law is silent about. D9 re-asks D1 from here.
     dividend = constructor.propose(UNGOVERNED_ACT)
