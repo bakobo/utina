@@ -106,7 +106,14 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
 
     # D4 — the amendment that seats the board, judged under the law it replaces
     # and anchored in an establishment event (custos-4.2.md:2085-2087).
-    seat = name("seat-the-board", constructor.enact_amendment(board_law(aids), act=AMEND))
+    # The amendment declares what it disturbs, truthfully: the hire is the one
+    # act in flight whose clause it replaces, and the equity release is not,
+    # because A3 is carried across byte-identical. A declaration that omitted the
+    # hire would convict this amendment on its own bytes (this.i @<disturbance>).
+    seat = name(
+        "seat-the-board",
+        constructor.enact_amendment(board_law(aids), act=AMEND, disturbs=[hire]),
+    )
     constructor.endorse(marta, seat)
     seated = constructor.endorse(dev, seat)
     mark("d4", seated)

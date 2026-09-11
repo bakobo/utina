@@ -128,7 +128,13 @@ class Constructor:
         self._founded = True
         return event
 
-    def enact_amendment(self, law: Mapping[str, object], *, act: str | None = None) -> Event:
+    def enact_amendment(
+        self,
+        law: Mapping[str, object],
+        *,
+        act: str | None = None,
+        disturbs: Sequence[SAID] = (),
+    ) -> Event:
         """Commit a successor law, anchored in an establishment event.
 
         custos-4.2.md:2085-2087 designates an enactment amending law as a class
@@ -144,9 +150,22 @@ class Constructor:
         would be legislating a class no clause governs. A domain that designates
         none commits none, and the fold then refuses to appraise the enactment,
         which is the honest answer rather than a guessed one.
+
+        ``disturbs`` is the amender's declaration of which pending questions this
+        change disturbs (issue #82, determination 5). It is always committed,
+        including when it is empty, because an omitted declaration is read as
+        claiming that nothing is disturbed — the fail-closed reading, and the
+        only one under which the mechanism works at all: if silence were no
+        claim, an amender could evade conviction by saying nothing, which is
+        precisely what the declaration exists to make impossible.
         """
         self._require_founded()
-        body: dict[str, object] = {"t": "enact", "i": self.gaid, "law": law}
+        body: dict[str, object] = {
+            "t": "enact",
+            "i": self.gaid,
+            "law": law,
+            "disturbs": tuple(disturbs),
+        }
         if act is not None:
             body["act"] = act
         event = self._emit("enactment", body, self.gaid)

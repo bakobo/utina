@@ -23,6 +23,7 @@ from fractions import Fraction
 
 import pytest
 
+from utina.fold import disturbance
 from utina.fold.corpus import Corpus, Event
 from utina.fold.evaluate import UNREACHABLE_YIELDS, appraisal_triple, evaluate
 from utina.fold.finding import (
@@ -31,6 +32,8 @@ from utina.fold.finding import (
     DefeaterClass,
     Pending,
     PendingSpecies,
+    SelfConvicted,
+    Verdict,
 )
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal
@@ -95,12 +98,16 @@ class Log:
     def act(self, name: str, kind: str) -> str:
         return self._add(name, "act", {"t": "act", "i": GAID, "act": kind})
 
-    def amend(self, name: str, clauses, act: str = "amend") -> str:
-        return self._add(
-            name,
-            "enactment",
-            {"t": "enact", "i": GAID, "act": act, "law": {"clauses": clauses}},
-        )
+    def amend(self, name: str, clauses, act: str = "amend", disturbs=None) -> str:
+        body: dict[str, object] = {
+            "t": "enact",
+            "i": GAID,
+            "act": act,
+            "law": {"clauses": clauses},
+        }
+        if disturbs is not None:
+            body["disturbs"] = tuple(disturbs)
+        return self._add(name, "enactment", body)
 
     def dispose(self, who: str, subject: str, disposition: str) -> str:
         name = f"{disposition}-{who}"
@@ -698,6 +705,114 @@ def test_a_proposal_has_no_cure_path_to_close(founded):
     assert isinstance(finding, Pending)
     assert all(element.species is PendingSpecies.ABSENT for element in finding.requirement)
     assert all(element.ground == "" for element in finding.requirement)
+
+
+# --- the amendment that lies about itself (issue #82, determination 5) --------
+
+
+def under_declaring(founded, disturbs):
+    """A record with a pending act, then an amendment declaring ``disturbs``.
+
+    The hire is left half-endorsed and the amendment replaces the clause under
+    it, so the amendment disturbs exactly one question. What it *says* is the
+    caller's, which is the whole point: the declaration is a claim, and a claim
+    is what can be false.
+    """
+    tabled = founded.act("hire", "hire")
+    founded.endorse(MARTA, tabled)
+    amendment = founded.amend("amendment", BOARD_LAW, disturbs=disturbs)
+    founded.endorse(MARTA, amendment)
+    founded.endorse(DEV, amendment)
+    return tabled, amendment
+
+
+def test_an_amendment_declaring_truthfully_is_affirmed(founded):
+    """The claim and the computation agree, so there is nothing to convict."""
+    # Re-run with the true set declared, over a fresh log of the same shape.
+    log = Log()
+    log.law("inception", "inception", FOUNDERS_LAW)
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    amendment = log.amend("amendment", BOARD_LAW, disturbs=[tabled])
+    log.endorse(MARTA, amendment)
+    log.endorse(DEV, amendment)
+
+    finding = evaluate(log.corpus, Committed(amendment), at=log.now)
+
+    assert isinstance(finding, Affirmed)
+    assert finding.clauses == ("A2",)
+
+
+def test_an_amendment_that_under_declares_is_convicted_on_its_own_bytes(founded):
+    """Beat 23, and determination 5.
+
+    The amendment says it disturbs nothing and it disturbs the hire. No judge,
+    no vote, no appeal to anything outside the log: the same committed bytes
+    carry the claim and the change, and a stranger computes the gap.
+    """
+    tabled, amendment = under_declaring(founded, disturbs=[])
+
+    finding = evaluate(founded.corpus, Committed(amendment), at=founded.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == disturbance.package((), (tabled,))
+    assert finding.verdict is Verdict.SELF_CONVICTED
+
+
+def test_an_amendment_that_over_declares_is_convicted_too(founded):
+    """A false claim is false in either direction.
+
+    Naming a question it did not disturb is testimony about its own effect that
+    the record contradicts, exactly as omitting one is. Determination 5 convicts
+    the *mismatch*, not the omission.
+    """
+    _, amendment = under_declaring(founded, disturbs=["E-not-an-act-at-all"])
+
+    finding = evaluate(founded.corpus, Committed(amendment), at=founded.now)
+
+    assert isinstance(finding, SelfConvicted)
+
+
+def test_the_conviction_arrives_exactly_when_the_amendment_carries(founded):
+    """Beat 22 against beat 23, which is one enactment read at three positions.
+
+    An amendment that has not carried has disturbed nothing, so there is no
+    mismatch to find and the enactment's own question is simply pending, short of
+    its threshold. At the coordinate it reaches unity its edition takes force,
+    the hire's cure path shuts, and the declaration is false in the same breath.
+    Beat 22's "declared affirmed" is the amender's claim; this is the fold's
+    answer, and it never was affirmed.
+    """
+    _, amendment = under_declaring(founded, disturbs=[])
+    committed = founded.corpus.event(amendment).position
+
+    reading = [
+        type(evaluate(founded.corpus, Committed(amendment), at=Position(seq))).__name__
+        for seq in range(committed.seq, founded.now.seq + 1)
+    ]
+
+    assert reading == ["Pending", "Pending", "SelfConvicted"]
+
+
+def test_an_amendment_nobody_carried_disturbs_nothing_and_declares_nothing(founded):
+    """An enactment that never took force cannot have disturbed a thing."""
+    tabled = founded.act("hire", "hire")
+    founded.endorse(MARTA, tabled)
+    amendment = founded.amend("amendment", BOARD_LAW, disturbs=[])
+
+    assert isinstance(evaluate(founded.corpus, Committed(amendment), at=founded.now), Pending)
+
+
+def test_a_settled_act_is_not_disturbed_by_a_later_amendment(founded):
+    """Disturbance reaches acts in flight, so a truthful declaration omits it."""
+    settled = founded.act("hire", "hire")
+    founded.endorse(MARTA, settled)
+    founded.endorse(DEV, settled)
+    amendment = founded.amend("amendment", BOARD_LAW, disturbs=[])
+    founded.endorse(MARTA, amendment)
+    founded.endorse(DEV, amendment)
+
+    assert isinstance(evaluate(founded.corpus, Committed(amendment), at=founded.now), Affirmed)
 
 
 # --- Q26: what a prospective question binds to ----------------------------------

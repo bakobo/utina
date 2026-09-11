@@ -226,7 +226,7 @@ def test_a_committed_question_is_judged_under_the_law_it_replaces():
 
 
 def test_a_said_may_be_given_as_a_prefix_of_the_identifier():
-    out = screen("eval", "--said", "EVLCXDH-LVrM", "--at", "d4")
+    out = screen("eval", "--said", "E_eNokAC1cx8", "--at", "d4")
     assert "AFFIRMED" in out and "A2" in out
 
 
@@ -267,7 +267,7 @@ def test_an_endorsement_is_not_an_act_and_cannot_be_appraised():
 def test_eval_needs_exactly_one_of_an_act_class_and_a_said():
     for argv in (
         ("eval", "--at", "d1"),
-        ("eval", "hire-vp-sales", "--said", "EVLCXDH-LVrM", "--at", "d4"),
+        ("eval", "hire-vp-sales", "--said", "E_eNokAC1cx8", "--at", "d4"),
     ):
         status, _, err = shell(*argv)
         assert status == 2, argv

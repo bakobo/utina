@@ -41,8 +41,9 @@ import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from utina.fold import disturbance
 from utina.fold.clause import Clause
-from utina.fold.constitution import ACT_CLASS_FIELD, Constitution
+from utina.fold.constitution import ACT_CLASS_FIELD, ENACTMENT_KIND, Constitution
 from utina.fold.corpus import Corpus, Event
 from utina.fold.finding import (
     Affirmed,
@@ -53,12 +54,14 @@ from utina.fold.finding import (
     Finding,
     Pending,
     PendingSpecies,
+    Proof,
     RequirementElement,
+    SelfConvicted,
     canonical_requirement_set,
     select_defeat,
 )
 from utina.fold.group import Disposition
-from utina.fold.question import Proposal, Question
+from utina.fold.question import Committed, Proposal, Question
 from utina.fold.refusal import Refusal
 from utina.fold.slots import SlotDisposition, classify, declinations, endorsements
 from utina.fold.triple import SAID, AppraisalTriple, EvidenceBundle, Position
@@ -151,6 +154,10 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
     evidence = EvidenceBundle(corpus.upto(at))
     classified = classify(clause.group, evidence.events, subject.said)
     closed = _cure_path_closed(corpus, subject, clause, at)
+
+    convicted = _convicted_by_its_own_declaration(corpus, subject, at)
+    if convicted is not None:
+        return convicted
 
     # The complete requirement space, built before any verdict is chosen. Both
     # halves are computed unconditionally: step 2 forbids returning while an
@@ -278,6 +285,93 @@ def _ungoverned(act: str) -> Refusal:
 
 
 # --- step 2: the requirement space ---------------------------------------------
+
+
+def _convicted_by_its_own_declaration(
+    corpus: Corpus, subject: _Subject, at: Position
+) -> SelfConvicted | None:
+    """A self-conviction where an enactment's declaration contradicts its effect.
+
+    Issue #82's fifth determination. An amending enactment declares which pending
+    questions its change disturbs; the fold computes the true set from the same
+    committed bytes; a mismatch means the amender "has testified falsely about
+    its own amendment, in committed bytes". The pinned reading of what that
+    returns is **self-convicted** rather than defeated (``docs/demo-2-script.md``
+    "Open readings", and the question owed to Custos at tick ``7xe6``): the
+    enactment commits two things that cannot both be true of one set of bytes,
+    which is ``:1499-1530``'s "two voices where its constitution demands one".
+
+    The conviction appears only once the amendment has taken force and something
+    has been disturbed, which is why beat 22 can be affirmed at its own
+    coordinate and beat 23 convicted afterwards. That is a permitted transition
+    and not a contradiction: affirmed to self-convicted, "a contradictory pair
+    bearing on the question enters the bundle" (``:1675``).
+
+    ``None`` for everything else — an act that is not an enactment, an enactment
+    that declares nothing and disturbs nothing, and an enactment whose
+    declaration is true. A declaration this fold cannot read is read as
+    declaring nothing, and then only an actual disturbance convicts it.
+    """
+    enactment = corpus.event(subject.said)
+    if enactment is None or enactment.kind != ENACTMENT_KIND:
+        return None
+    claimed = disturbance.declared(enactment)
+    true = _disturbed_by(corpus, enactment, at)
+    if claimed == true:
+        return None
+    return SelfConvicted(proof=Proof(package=disturbance.package(claimed, true)))
+
+
+def _disturbed_by(corpus: Corpus, enactment: Event, at: Position) -> tuple[SAID, ...]:
+    """The questions this enactment actually disturbed, at or before ``at``.
+
+    An act is disturbed when it was in flight before the enactment took force and
+    its cure path is closed after — both halves, because an act that had settled
+    is disturbed by nothing and an act whose own clause the amendment left alone
+    is the specificity this requirement turns on.
+
+    Computed at the enactment's *effectuation*, which is where its edition
+    started binding, and not at its commitment: an enactment that has not carried
+    has disturbed nothing yet, and one that never carries disturbs nothing ever
+    (this.i @xhtvuxnc).
+    """
+    effectuation = _effectuation(corpus, enactment, at)
+    if effectuation is None:
+        return ()
+    earlier = disturbance.before(effectuation)
+    if earlier is None:  # pragma: no cover - an enactment is never at genesis
+        return ()
+    disturbed = []
+    for act in disturbance.acts(corpus, ACT_KINDS, earlier):
+        if act.said == enactment.said:
+            continue
+        was = evaluate(corpus, Committed(act.said), at=earlier)
+        now = evaluate(corpus, Committed(act.said), at=effectuation)
+        if isinstance(was, Pending) and isinstance(now, Pending) and _closed(now):
+            disturbed.append(act.said)
+    return tuple(sorted(disturbed))
+
+
+def _closed(finding: Pending) -> bool:
+    """Whether a pending finding's cure path is shut, which its elements say."""
+    return any(element.ground != "" for element in finding.requirement)
+
+
+def _effectuation(corpus: Corpus, enactment: Event, at: Position) -> Position | None:
+    """The coordinate this enactment's edition took force at, if it has by ``at``.
+
+    Asked of the law fold rather than recomputed: the Constitution names the law
+    event its edition came from, so the first position whose Constitution names
+    this enactment is the coordinate it effectuated at. A walk, because the fold
+    exposes no index from a law event to its coordinate and inventing one here
+    would be a second answer to a question ``constitution.py`` already answers.
+    """
+    for event in corpus.upto(at):
+        if not enactment.position < event.position:
+            continue
+        if Constitution.at(corpus, event.position).source == enactment.said:
+            return event.position
+    return None
 
 
 def _cure_path_closed(
