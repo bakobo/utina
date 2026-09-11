@@ -584,6 +584,122 @@ def test_a_proposal_is_judged_under_the_law_in_force_at_the_position(founded):
     assert finding.clauses == ("B1",)
 
 
+# --- the cure path, and what closes it (issue #82 rules 1 and 2) ---------------
+
+
+def amended_over(founded, clauses, act="hire"):
+    """Table an act, endorse it half way, then amend the law to ``clauses``.
+
+    The shape every case below needs: a pending act with a requirement space it
+    declared at birth, and an amendment that either moves the rule under it or
+    leaves it alone.
+    """
+    tabled = founded.act(act, act)
+    founded.endorse(MARTA, tabled)
+    seat = founded.amend("amendment", clauses)
+    founded.endorse(MARTA, seat)
+    founded.endorse(DEV, seat)
+    return tabled, founded.said("amendment")
+
+
+def test_an_amendment_to_the_governing_clause_closes_the_cure_path(founded):
+    """Beat 9, and issue #82's first rule.
+
+    The endorser who signed under a clause requiring two of two signed a bargain
+    in which their signature was decisive; under any two of three it is
+    dispensable. Carrying it across converts what they agreed to with no new act
+    of will from them, so the requirement space the finding declared at birth is
+    unreachable and the cure is re-presentation.
+    """
+    tabled, amendment = amended_over(founded, BOARD_LAW)
+
+    finding = evaluate(founded.corpus, Committed(tabled), at=founded.now)
+
+    assert isinstance(finding, Pending)
+    assert [element.species for element in finding.requirement] == [
+        PendingSpecies.EXPIRED_ABANDONED
+    ]
+    assert [element.ground for element in finding.requirement] == [amendment]
+    assert [element.clause for element in finding.requirement] == ["A1"]
+
+
+def test_an_amendment_elsewhere_leaves_the_cure_path_open(founded):
+    """Beat 10, and issue #82's second rule — the half nobody guesses.
+
+    A1 is re-committed byte-identical while A2 moves. A clause is its bytes, so
+    the same identifier is the same clause and the bargain the endorser struck
+    is the one still in force. Without this, any party able to enact anything
+    could kill any inconvenient pending act by amending something irrelevant.
+    """
+    carried = [FOUNDERS_LAW[0], clause("A9", ["amend"], (MARTA, "1/3"), (DEV, "2/3"))]
+    tabled, _ = amended_over(founded, carried)
+
+    finding = evaluate(founded.corpus, Committed(tabled), at=founded.now)
+
+    assert isinstance(finding, Pending)
+    assert [element.species for element in finding.requirement] == [PendingSpecies.ABSENT]
+    assert [element.ground for element in finding.requirement] == [""]
+
+
+def test_an_amendment_that_leaves_the_class_ungoverned_closes_the_path_too(founded):
+    """Nothing governs the act any more, so nothing could discharge it either."""
+    tabled, amendment = amended_over(founded, [clause("A9", ["amend"], (MARTA, "1/1"))])
+
+    finding = evaluate(founded.corpus, Committed(tabled), at=founded.now)
+
+    assert isinstance(finding, Pending)
+    assert [element.ground for element in finding.requirement] == [amendment]
+
+
+def test_an_affirmed_act_is_not_reopened_by_an_amendment(founded):
+    """Beat 24, and the reason this test sits beside the two above.
+
+    Rule 1 reaches acts still in flight. A finding that reached a terminal value
+    stands at its coordinate forever, and re-asking it later returns the same
+    answer under the law in force then.
+    """
+    tabled = founded.act("hire", "hire")
+    founded.endorse(MARTA, tabled)
+    founded.endorse(DEV, tabled)
+    seat = founded.amend("amendment", BOARD_LAW)
+    founded.endorse(MARTA, seat)
+    founded.endorse(DEV, seat)
+
+    finding = evaluate(founded.corpus, Committed(tabled), at=founded.now)
+
+    assert isinstance(finding, Affirmed)
+    assert finding.clauses == ("A1",)
+
+
+def test_a_defeated_act_is_not_reopened_by_an_amendment(founded):
+    """The same, from the other terminal value."""
+    tabled = founded.act("hire", "hire")
+    founded.endorse(MARTA, tabled)
+    founded.decline(DEV, tabled)
+    seat = founded.amend("amendment", BOARD_LAW)
+    founded.endorse(MARTA, seat)
+    founded.endorse(DEV, seat)
+
+    assert isinstance(evaluate(founded.corpus, Committed(tabled), at=founded.now), Defeated)
+
+
+def test_a_proposal_has_no_cure_path_to_close(founded):
+    """A proposal is judged under the law at the position it is asked from.
+
+    So the clause that judges it and the clause in force are the same clause by
+    construction, and the stability test can never fire. Asserted rather than
+    assumed, because a test that fired here would be closing cure paths on
+    questions about *now*.
+    """
+    amended_over(founded, BOARD_LAW)
+
+    finding = evaluate(founded.corpus, Proposal("hire"), at=founded.now)
+
+    assert isinstance(finding, Pending)
+    assert all(element.species is PendingSpecies.ABSENT for element in finding.requirement)
+    assert all(element.ground == "" for element in finding.requirement)
+
+
 # --- Q26: what a prospective question binds to ----------------------------------
 
 

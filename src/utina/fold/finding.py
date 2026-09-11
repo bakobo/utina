@@ -260,6 +260,16 @@ class RequirementElement:
     engine could supply that would be the law's answer rather than its own. It
     comes from the slot, which is where a composition rule commits it
     (``:1946-1951``, this.i @z373ew7j).
+
+    ``ground`` is the committed event that made this element what it is, and it
+    is empty for every species whose cure is simply the arrival of the missing
+    evidence: an absent slot is undischarged because nobody acted, which needs no
+    citation. It is populated where the *record* closed the cure path — an
+    amendment that repealed the clause this element cites — because issue #82's
+    first determination widened ``expired/abandoned`` to admit exactly that
+    ground rather than minting a fifth species, and a finding that said "no
+    longer curable" without saying what did it would be an assertion
+    (this.i @<pending>).
     """
 
     endorser: AID
@@ -267,6 +277,7 @@ class RequirementElement:
     schema: SAID
     kind: str = "endorsement"
     species: PendingSpecies = PendingSpecies.ABSENT
+    ground: SAID = ""
 
     def __post_init__(self) -> None:
         _identifier(
@@ -315,16 +326,25 @@ class RequirementElement:
         )
 
     def sort_key(self) -> tuple[str, str, bytes, int]:
-        """"subject, then kind, then citing-clause bytes, then species" (``:1650-1651``)."""
+        """"subject, then kind, then citing-clause bytes, then species" (``:1650-1651``).
+
+        Exactly four fields, because the order is ruled over exactly four. An
+        element carries more than the order sorts on, and the extra fields are
+        the deduplication key's business rather than this one's.
+        """
         return (self.endorser, self.kind, self.clause.encode("utf-8"), self.species.rank)
 
-    def dedup_key(self) -> tuple[str, str, bytes, int]:
+    def dedup_key(self) -> tuple[str, str, bytes, int, str, str]:
         """The key "sees every field the element carries" (``:1652-1656``).
 
-        Which is the sort key, exactly: elements differing only in species do not
-        merge, and species is the fourth field of the order.
+        The order's four fields and then the two the element carries beyond
+        them. Elements differing only in species do not merge, which the text
+        states outright; elements differing only in the schema they require, or
+        only in the ground that closed their cure path, do not merge either, for
+        the reason the text gives for species — the key sees every field, and
+        two elements that are not the same element must not become one.
         """
-        return self.sort_key()
+        return (*self.sort_key(), self.schema, self.ground)
 
 
 @dataclasses.dataclass(frozen=True)

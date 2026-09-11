@@ -150,12 +150,19 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
 
     evidence = EvidenceBundle(corpus.upto(at))
     classified = classify(clause.group, evidence.events, subject.said)
+    closed = _cure_path_closed(corpus, subject, clause, at)
 
     # The complete requirement space, built before any verdict is chosen. Both
     # halves are computed unconditionally: step 2 forbids returning while an
     # enumerated check is still unexamined, and the cost of a clause's worth of
     # arithmetic is not a reason to make a finding on partial information.
-    outstanding = _requirements(clause, classified, Disposition.PENDING, PendingSpecies.ABSENT)
+    outstanding = _requirements(
+        clause,
+        classified,
+        Disposition.PENDING,
+        PendingSpecies.EXPIRED_ABANDONED if closed else PendingSpecies.ABSENT,
+        ground=closed,
+    )
     spent = _requirements(
         clause, classified, Disposition.DECLINED, PendingSpecies.EXPIRED_ABANDONED
     )
@@ -273,11 +280,47 @@ def _ungoverned(act: str) -> Refusal:
 # --- step 2: the requirement space ---------------------------------------------
 
 
+def _cure_path_closed(
+    corpus: Corpus, subject: _Subject, clause: Clause, at: Position
+) -> SAID:
+    """The enactment that closed this question's cure path, or ``""`` if it is open.
+
+    Issue #82's first two rules, which are one test read twice. A pending
+    finding declares its requirement space at birth, under the clause in force
+    at the act's own coordinate; at a later position that space is reachable
+    only if the same rule is still the rule. The test is three-part — same
+    clause SAID, same requirement space, same pinned lens — and the first part
+    carries the second here, because a clause *is* its bytes and an edition
+    refuses to rule one act class twice, so a clause with the same identifier
+    has the same slots, weights and schemas by construction.
+
+    The third part is not asked yet: the pinned lens is the semantics
+    declaration, which Acme's law does not carry (tick ``2uhi``). Until it does,
+    this test is two-thirds of the one Custos describes, and the missing third
+    can only make a *stable* answer unstable — it cannot make an unstable one
+    stable — so what it costs is a beat, never a wrong closure.
+
+    Where the rule moved, the enactment that moved it is the ground: issue #82's
+    first determination widened ``expired/abandoned`` to admit the amending
+    enactment rather than minting a fifth species, because the amendment is
+    committed by construction and an eviction receipt is not. Where it did not
+    move — or where the question is a proposal, judged under the law at the
+    position it is asked from, so that the two clauses are the same clause by
+    construction — the answer is the empty string and nothing changes.
+    """
+    now = Constitution.at(corpus, at)
+    governing = now.governing(subject.act)
+    if governing is not None and governing.said() == clause.said():
+        return ""
+    return now.source
+
+
 def _requirements(
     clause: Clause,
     classified: Sequence[SlotDisposition],
     holding: Disposition,
     species: PendingSpecies,
+    ground: SAID = "",
 ) -> tuple[RequirementElement, ...]:
     """The slots in ``holding``, as typed requirement elements in canonical order.
 
@@ -293,6 +336,9 @@ def _requirements(
     because the schema an element must name lives in the slot and nowhere else
     (this.i @z373ew7j). The dispositions are read back by endorser, which is
     exact: a group slots each endorser at most once.
+
+    ``ground`` names the committed event that made these elements what they are,
+    and is empty for every cure that is simply the arrival of missing evidence.
     """
     held = {one.endorser: one.disposition for one in classified}
     return canonical_requirement_set(
@@ -302,6 +348,7 @@ def _requirements(
             schema=slot.schema,
             kind="endorsement",
             species=species,
+            ground=ground,
         )
         for slot in clause.group.slots
         if held.get(slot.endorser) is holding

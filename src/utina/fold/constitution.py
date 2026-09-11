@@ -57,7 +57,7 @@ from bakobo.errors import ErrorCode  # type: ignore[import-untyped]
 from utina.fold.clause import MALFORMED_LAW, Clause
 from utina.fold.corpus import Corpus, Event
 from utina.fold.slots import dispositions
-from utina.fold.triple import LawHead, Position
+from utina.fold.triple import SAID, LawHead, Position
 
 #: Where an inception or an enactment carries the law it commits. The event body
 #: is the constructor's envelope — ``t``, ``i``, the committed coordinate, the
@@ -245,6 +245,11 @@ class Constitution:
 
     law_head: LawHead
     clauses: tuple[Clause, ...]
+    source: SAID = ""
+    """The identifier of the law event whose edition this is — the inception, or
+    the enactment that took force. Carried because a finding that says a cure
+    path closed has to name what closed it, and the answer is this event
+    (issue #82, determination 1). Empty where no law is in force at all."""
 
     @classmethod
     def at(cls, corpus: Corpus, position: Position) -> Constitution:  # ~7rfv
@@ -262,12 +267,14 @@ class Constitution:
         case is left undecided and every record utina builds succeeds linearly.
         """
         edition: tuple[Clause, ...] = ()
+        source = ""
         for event in corpus.upto(position):  # ~5edf
             if _takes_force(corpus, event, position):
                 edition = _edition_committed_by(event)
+                source = event.said
         _refuse_a_contradictory_edition(edition)
         head = hashlib.sha256(_canonical_bytes(edition)).hexdigest()
-        return cls(law_head=LawHead(said=head), clauses=edition)
+        return cls(law_head=LawHead(said=head), clauses=edition, source=source)
 
     def clause(self, id: str) -> Clause:
         """The clause bearing ``id``, or a refusal that it is not in force here."""

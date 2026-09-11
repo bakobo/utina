@@ -45,6 +45,7 @@ AT = {
     4: "d3",
     5: "b5",
     6: "d8",
+    9: "board-seated",
     10: "board-seated",
     11: "b11",
     24: "d9",
@@ -177,15 +178,26 @@ def test_b08_the_seat_screen_shows_two_bindings():
     pytest.skip(owed("U4.2 the seat screen (tick 27x5)"))
 
 
-def test_b09_the_hire_re_asked_after_the_amendment_has_no_cure_path():
+def test_b09_the_hire_re_asked_after_the_amendment_has_no_cure_path(acme):
     """Row 9: pending with species expired/abandoned, ground the amending
-    enactment's SAID, cure re-presentation."""
-    pytest.skip(
-        owed(
-            "U3.1 the stability test (tick 6pdw)",
-            "U3.2 expired/abandoned on the amendment path (tick 6pdw)",
-        )
-    )
+    enactment's SAID, cure re-presentation.
+
+    The finding at its own position stands forever, as every finding does. What
+    it loses is any path to a terminal value: the clause it cited is not the
+    clause in force, so the requirement space it declared at birth is
+    unreachable and only re-presentation reaches one.
+    """
+    finding = evaluate(acme.corpus, Committed(acme.said(HIRE)), at=acme.at(AT[9]))
+
+    assert isinstance(finding, Pending)
+    assert [element.clause for element in finding.requirement] == ["A1"]
+    assert [element.species for element in finding.requirement] == [
+        PendingSpecies.EXPIRED_ABANDONED
+    ]
+    assert [element.ground for element in finding.requirement] == [
+        acme.said("seat-the-board")
+    ]
+    assert finding.requirement[0].species.cure == "cured by re-presentation"
 
 
 def test_b10_the_equity_release_re_asked_after_the_amendment_is_still_curable():
