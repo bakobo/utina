@@ -1486,6 +1486,21 @@ Make Custos's replayable governance useful to a real organization = goal:
         validUntil, which need a clock: a wall clock is exactly the ambient input axiom 2 forbids,
         and judging them against the citing event's own committed dt is arguable but unruled, so
         Acme's GCDs carry neither field and the question does not arise here.
+        FOURTH, learned from the toolchain during the build rather than reasoned to in advance,
+        and recorded here because it changes who may revoke what: A CONFERRING PARTY NEEDS A
+        REGISTRY OF ITS OWN. The seat's grant to Nina's device was first issued into Acme's
+        governance registry, and under keripy it stayed in escrow and read as unissued — a
+        transaction event log takes its authorization from a seal in the CONTROLLER's key log,
+        and the seat is not Acme. The facade, which keys state on a pair rather than on an
+        anchor, accepted it and said nothing, so this is a case of the real substrate catching
+        what the fixture could not. The governance argument is better than the mechanical one
+        and is the reason this is the shape rather than a workaround: revocation authority
+        follows the registry's controller, so a grant the seat kept in Acme's registry would be
+        one the seat itself could never take back, which is the whole property the adoption
+        exists to secure. So open_registry takes a controller, revoke takes one, and the
+        constructor holds a registry per party instead of one for the domain. Acme still
+        revokes the seat credential it issued (beat 16) and the seat revokes the device grant it
+        issued, which is the same rule applied twice rather than a hierarchy.
         Tradeoffs accepted, all three real. Every identifier in the record moves again, on the
         artifact carrying beats 8, 12, 16, 17 and 19, sixteen days from the demo. utina takes a
         cross-repo dependency on bakobo/schema's published SAID, which is a thing that can move
