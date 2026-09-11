@@ -17,7 +17,8 @@ import pytest
 from bakobo.errors import BakoboError
 
 from utina.enact import Constructor
-from utina.substrate import ENDORSEMENT_SCHEMA, FacadeSubstrate
+from utina.fold import standing
+from utina.substrate import ENDORSEMENT_SCHEMA, ISSUED, REVOKED, FacadeSubstrate
 
 LAW: Mapping[str, object] = {"clauses": ()}
 GAID = "acme:gaid"
@@ -173,6 +174,7 @@ def test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it(f
         "propose",
         "registry",
         "resume",
+        "revoke",
         "seat",
         "substrate",
     }
@@ -318,6 +320,70 @@ def test_a_citation_resolves_by_identifier_and_not_by_the_latest_issuance(seated
 
     assert first_credential != second_credential
     assert event.body["acdc"]["e"]["qp"]["n"] == second_credential
+    assert constructor.substrate.verify_edges(event.body["acdc"]) is True
+
+
+# --- revocation: the registry moves, and the record says so -------------------
+
+
+def test_revoking_a_credential_commits_that_the_registry_moved(seated):
+    """The fold reads registry state out of the record, so the record carries it."""
+    constructor, _, credential = seated
+
+    event = constructor.revoke(credential)
+
+    assert event.kind == "revocation"
+    assert event.body["said"] == credential
+    assert event.body["ri"] == constructor.registry
+    assert event.body["i"] == constructor.gaid, "the domain revokes what it conferred"
+    assert isinstance(event.body["tel"], str) and event.body["tel"]
+    assert "acdc" not in event.body, "the credential has not changed and is not re-embedded"
+    assert constructor.substrate.verify(constructor.gaid, event.body, event.body["sig"])
+
+
+def test_the_fold_and_the_registry_agree_after_a_revocation(seated):
+    """Both currents, read at the same coordinate, and neither consulted the other."""
+    constructor, _, credential = seated
+    registry = constructor.registry
+
+    assert standing.state_over(constructor.emitted, registry, credential) == ISSUED
+
+    constructor.revoke(credential)
+
+    assert standing.state_over(constructor.emitted, registry, credential) == REVOKED
+    assert constructor.substrate.registry_state(registry, credential) == REVOKED
+
+
+def test_revoking_the_same_credential_twice_is_refused(seated):
+    """Registry state is a state machine, and there is no second departure from rev."""
+    constructor, _, credential = seated
+    constructor.revoke(credential)
+
+    with pytest.raises(BakoboError) as caught:
+        constructor.revoke(credential)
+    assert caught.value.code == "e.state.not-issued.f"
+
+
+def test_revoking_before_the_registry_is_opened_is_refused(founded):
+    with pytest.raises(BakoboError) as caught:
+        founded.revoke("E" + "z" * 43)
+    assert caught.value.code == "e.state.registry-unopened.f"
+
+
+def test_a_seats_endorsement_still_validates_after_its_credential_is_revoked(seated):
+    """Beat 19's half of the machinery, at the layer that decides it.
+
+    DI2I asks whether the issuer is the far node's issuee, which is a fact about
+    delegation and not about registry state — so edge validation is untouched by
+    the revocation, and what changes is what the *fold* reads out of the record.
+    Keeping those two separate is the whole of Act III.
+    """
+    constructor, seat, credential = seated
+    constructor.revoke(credential)
+    subject = constructor.propose("approve-budget").said
+
+    event = constructor.endorse(seat, subject, qualification=credential)
+
     assert constructor.substrate.verify_edges(event.body["acdc"]) is True
 
 

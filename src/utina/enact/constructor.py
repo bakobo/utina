@@ -205,6 +205,40 @@ class Constructor:
             self.gaid,
         )
 
+    def revoke(self, credential: SAID) -> Event:
+        """Revoke ``credential`` in the domain's registry, and commit that it moved.
+
+        Two things happen and the order matters. The registry's transaction log
+        takes a ``rev`` — the substrate's business, and what a KERI tool reads —
+        and then the record takes a governance event saying which credential
+        stopped standing in which registry. The second is what the fold folds:
+        registry state is "a member of the evidence bundle rather than an ambient
+        condition read against it", so it has to be *in* the record and not
+        merely true of a log beside it (this.i @exy3u4t7).
+
+        The domain signs, because the registry is the domain's and revocation is
+        an act of whoever conferred the standing. The credential itself does not
+        change and is not re-embedded: it has not moved, and a second copy of it
+        would be a second set of bytes claiming to be the same artifact. What
+        changes is what the registry says about it from this coordinate forward.
+        """
+        self._require_founded()
+        registry = self._registry
+        if registry is None:
+            raise REGISTRY_UNOPENED(gaid=self.gaid, organ=credential)
+        revocation = self.substrate.revoke_acdc(registry, credential)
+        return self._emit(
+            "revocation",
+            {
+                "t": "rev",
+                "i": self.gaid,
+                "ri": registry,
+                "said": credential,
+                "tel": revocation,
+            },
+            self.gaid,
+        )
+
     def propose(self, act: str) -> Event:
         """Commit an act for appraisal."""
         self._require_founded()
