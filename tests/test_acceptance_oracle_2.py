@@ -65,6 +65,7 @@ AT = {
     4: "d3",
     5: "b5",
     6: "d8",
+    7: "d4",
     9: "board-seated",
     10: "board-seated",
     11: "b11",
@@ -225,14 +226,43 @@ def test_b06_a_dividend_is_refused_rather_than_answered(acme):
 # --- Act II — delegation, and the two currents --------------------------------
 
 
-def test_b07_seating_the_board_is_affirmed_under_the_law_it_replaces():
+def test_b07_seating_the_board_is_affirmed_under_the_law_it_replaces(acme):
     """Row 7: judged under A2, plus the delegating seal's coordinate in Acme's
     KEL, the dip in seat 3's KEL, the seat credential's issuance event, and the
-    declared disturbance set."""
-    pytest.skip(owed(
-        "U3.3 the declared disturbance set (tick 7rfv)",
-        "a finding that carries the delegation and issuance coordinates as ground",
-    ))
+    declared disturbance set.
+
+    **The finding's ground is A2 and the two endorsements, and NOT the
+    delegation coordinates**, which is a reading this row takes deliberately.
+    The row's column lists five things the beat shows, and they are not all the
+    same kind of thing: the amendment is lawful because clause A2's slots were
+    filled, and the delegation and the seat credential are *consequences* of it
+    taking force rather than reasons it was lawful. A finding carrying them as
+    ground would say the amendment was affirmed because a delegation happened,
+    which is false and would corrupt the Ground Axiom in the one place the demo
+    most needs it sound. So the finding carries what a finding carries, and the
+    other four facts are asserted against the record, where they live.
+    """
+    amendment = acme.said("seat-the-board")
+    finding = evaluate(acme.corpus, Committed(amendment), at=acme.at(AT[7]))
+
+    assert isinstance(finding, Affirmed)
+    assert finding.clauses == ("A2",), "judged under the law it replaces, not the one it makes"
+    assert len(finding.endorsements) == 2, "Marta and Dev, and nothing else"
+
+    # The declared disturbance set: the hire, which this amendment does kill.
+    assert disturbance.declared(acme.corpus.event(amendment)) == (acme.said(HIRE),)
+
+    # KERI's two halves, answerable at the substrate because key events are not
+    # in the corpus the fold folds (``this.i`` @jdie6v).
+    seat = acme.aid(SEAT)
+    assert acme.substrate.delegator_of(seat) == acme.aid(GAID), "the dip names Acme in di"
+    assert acme.substrate.anchoring_event(seat) is not None, "and Acme sealed that dip"
+
+    # And ACDC's half, which IS in the record.
+    seating = acme.events[acme.at("b8").seq]
+    assert seating.kind == standing.ISSUANCE_KIND
+    assert seating.body["ri"] == acme.registry
+    assert seating.body["acdc"]["a"]["i"] == seat
 
 
 def test_b08_the_seat_screen_shows_two_bindings(acme):
