@@ -30,13 +30,13 @@ pytest.importorskip(
 
 from bakobo.errors import BakoboError
 
-from utina.acme import DEV, DEVICE, MARTA, Q2_FORECAST, QUINN, SEAT
+from utina.acme import DEV, DEVICE, GAID, MARTA, Q2_FORECAST, QUINN, SEAT
 from utina.enact import Constructor
 from utina.fold import Constitution, evaluate
 from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal
-from utina.substrate import DI2I, ENDORSEMENT_SCHEMA, GCD_SCHEMA, ISSUED
+from utina.substrate import DI2I, ENDORSEMENT_SCHEMA, GCD_SCHEMA, ISSUED, REVOKED
 
 #: Where each beat is asked, in the record's own labels. Demo 2 numbers its beats
 #: and the record labels its coordinates, so the mapping is stated once here
@@ -51,8 +51,13 @@ AT = {
     9: "board-seated",
     10: "board-seated",
     11: "b11",
+    12: "d5",
     13: "b13",
     15: "b15",
+    16: "b16",
+    17: "b17",
+    18: "d5",
+    19: "b17",
     24: "d9",
     25: "board-seated",
 }
@@ -63,6 +68,11 @@ LEASE = "sign-office-lease"
 EQUITY = "release-escrowed-equity"
 DIVIDEND = "declare-dividend"
 BUDGET = "approve-budget"
+
+#: The record's name for the annual budget, which is beat 12's subject and the
+#: one beats 18 and 19 re-ask about. Distinct from the act CLASS above: three
+#: acts of one class are tabled, and these rows are about one of them.
+BUDGET_ACT = "approve-budget"
 
 
 def owed(*what: str) -> str:
@@ -225,10 +235,21 @@ def test_b11_the_equity_release_is_cured_across_the_amendment(acme):
     assert len(finding.endorsements) == 2
 
 
-def test_b12_the_budget_carries_on_two_slots_of_three():
+def test_b12_the_budget_carries_on_two_slots_of_three(acme):
     """Row 12: unity reached though one party never acted, and seat 3's
-    endorsement carries its DI2I edge to the seat credential."""
-    pytest.skip(owed("U1.4 the DI2I edge as pre-fold evidence (tick 5fam)"))
+    endorsement carries its DI2I edge to the seat credential.
+
+    Dev's slot is not a no and not a yes. Unity is reached without it, which is
+    what a threshold means and what a quorum count would have obscured.
+    """
+    finding = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[12]))
+    assert isinstance(finding, Affirmed)
+    assert finding.clauses == ("B1",)
+    assert len(finding.endorsements) == 2, "two of three slots, and no act of Dev's"
+
+    seats = acme.events[acme.at(AT[12]).seq]
+    assert seats.body["i"] == acme.aid(SEAT)
+    assert seats.body["acdc"]["e"]["qp"]["o"] == DI2I
 
 
 def test_b13_the_same_signed_no_is_only_pending_under_three_slots(acme):
@@ -336,39 +357,92 @@ def test_b15_the_device_acts_under_a_grant_the_seat_can_revoke(acme):
 def test_b16_the_registry_screen_shows_the_revocation():
     """Row 16: a rev event against the seat credential, with seat 3's KEL
     untouched and its keys still valid."""
-    pytest.skip(owed(
-        "U2.1 a revoke verb on Constructor (tick 3z6a)",
-        "U4.2 the registry screen (tick 27x5)",
-    ))
+    pytest.skip(owed("U4.2 the registry screen (tick 27x5)"))
 
 
-def test_b17_a_new_question_after_the_revocation_is_pending():
+def test_b16_the_revocation_moves_the_registry_and_not_the_key_log(acme):
+    """The substance the screen will show, which the record already carries.
+
+    "Registry state is evidence. Standing is judgment." What the revocation
+    moves is what a registry says about a credential; seat 3's key log is
+    untouched, its keys still verify, and nothing about the office changed. A
+    demo that could not show those two facts side by side would be showing
+    revocation as a punishment rather than as a state transition.
+    """
+    revocation = acme.events[acme.at(AT[16]).seq]
+    credential = acme.events[acme.at("b8").seq].body["acdc"]["d"]
+
+    assert revocation.kind == "revocation"
+    assert revocation.body["said"] == credential
+    assert revocation.body["ri"] == acme.registry
+    assert acme.substrate.registry_state(acme.registry, credential) == REVOKED
+
+    seat = acme.aid(SEAT)
+    assert acme.substrate.delegator_of(seat) == acme.aid(GAID), "still a delegate of Acme"
+    assert acme.substrate.verify(seat, revocation.body, revocation.body["sig"]) is False
+    seating = acme.events[acme.at("b8").seq]
+    assert acme.substrate.verify(
+        acme.gaid, seating.body, seating.body["sig"]
+    ), "the keys that signed before still verify after"
+
+
+def test_b17_a_new_question_after_the_revocation_is_pending(acme):
     """Row 17: a typed requirement naming seat 3's slot — required schema,
-    expected issuer, citing clause."""
-    pytest.skip(owed(
-        "U2.1 a revoke verb on Constructor (tick 3z6a)",
-        "a schema term on the requirement element (tick 54q4)",
-    ))
+    expected issuer, citing clause.
+
+    The revocation is not a verdict about the Q3 budget and the fold does not
+    treat it as one. The slot is simply unfilled, and what the finding owes a
+    reader is what *would* fill it, which is the requirement's whole job.
+    """
+    finding = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[17]))
+    assert isinstance(finding, Pending)
+
+    seat = next(one for one in finding.requirement if one.endorser == acme.aid(SEAT))
+    assert seat.clause == "B1"
+    assert seat.schema == ENDORSEMENT_SCHEMA
+    assert seat.species is PendingSpecies.ABSENT
 
 
-def test_b18_the_earlier_finding_is_byte_identical_when_re_asked_at_its_position():
+def test_b18_the_earlier_finding_is_byte_identical_when_re_asked_at_its_position(acme):
     """Row 18: re-asking row 12's question at row 12's position, ground included."""
-    pytest.skip(
-        owed(
-            "U1 delegation, so that row 12 exists at all",
-            "U2.1 the revocation (tick 3z6a)",
-        )
-    )
+    budget = acme.said(BUDGET_ACT)
+    first = evaluate(acme.corpus, Committed(budget), at=acme.at(AT[12]))
+    again = evaluate(acme.corpus, Committed(budget), at=acme.at(AT[18]))
+
+    assert isinstance(again, Affirmed)
+    assert again == first, "byte-identical, ground included, and not merely equivalent"
 
 
-def test_b19_a_prospective_revocation_falsifies_no_cited_ground():
+def test_b19_a_prospective_revocation_falsifies_no_cited_ground(acme):
     """Row 19, the surprising half: re-asked at a position *after* the
-    revocation, the credential stood at that position and the finding stands."""
-    pytest.skip(
-        owed(
-            "U2.2 the slot judgment asking whether the credential stands at p (tick 6mcq)",
-        )
-    )
+    revocation, the credential stood at that position and the finding stands.
+
+    This is the claim the whole of Act III turns on, and it is one rule rather
+    than a special case: a citation is judged at the coordinate of the act that
+    made it. The seat's endorsement cited a credential that stood when it was
+    cited, and nothing committed later unmakes that. A revocation that reached
+    back would mean any issuer could unmake any past finding at any distance,
+    unilaterally.
+    """
+    budget = acme.said(BUDGET_ACT)
+    before = evaluate(acme.corpus, Committed(budget), at=acme.at(AT[12]))
+    after = evaluate(acme.corpus, Committed(budget), at=acme.at(AT[19]))
+
+    assert isinstance(after, Affirmed)
+    assert after.clauses == before.clauses
+    assert after.endorsements == before.endorsements
+
+    # The BUNDLE differs, and it has to. Issue #82's third rule makes registry
+    # state a member of the evidence bundle rather than an ambient condition, so
+    # a revocation is a new span, a new bundle, and a finding at a new position.
+    # Row 18 is byte-identical because it is asked at beat 12's own coordinate;
+    # this one is the same answer over demonstrably different evidence, which is
+    # the stronger statement of the two.
+    assert after.bundle != before.bundle
+    assert after != before
+
+    credential = acme.events[acme.at("b8").seq].body["acdc"]["d"]
+    assert acme.substrate.registry_state(acme.registry, credential) == REVOKED
 
 
 def test_b20_duplicity_at_the_signing_position_is_self_convicted():

@@ -58,6 +58,8 @@ ORACLE_LABELS = {
     "b11",
     "b13",
     "b15",
+    "b16",
+    "b17",
     "device-granted",
     "d1",
     "d2",

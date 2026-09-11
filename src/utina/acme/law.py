@@ -119,6 +119,11 @@ EQUITY_ACTS = ("release-escrowed-equity",)
 #: a clause in the law for a fixture's convenience.
 Q2_FORECAST = "approve-q2-forecast"
 
+#: The name the record files the Q3 budget under. A third act of the budget
+#: class, tabled after the seat credential is revoked, so that beat 17 asks a new
+#: question over a bundle the revocation is already in.
+Q3_BUDGET = "approve-q3-budget"
+
 #: The act nothing governs.
 UNGOVERNED_ACT = "declare-dividend"
 

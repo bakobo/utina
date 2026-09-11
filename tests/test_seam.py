@@ -25,7 +25,7 @@ from utina.fold.finding import Affirmed, Pending
 from utina.fold.group import Disposition
 from utina.fold.question import Committed, Proposal
 from utina.fold.slots import dispositions
-from utina.substrate import ISSUED, canonical_bytes
+from utina.substrate import ISSUED, REVOKED, canonical_bytes
 
 
 def test_the_committed_law_reads_as_law(acme):
@@ -129,7 +129,16 @@ def test_the_fold_reads_the_seats_standing_out_of_committed_events(acme):
 
     assert folded == ISSUED
     assert before is None, "nothing stands before the event that issued it"
-    assert acme.substrate.registry_state(acme.registry, credential) == ISSUED
+
+    # The record revokes this credential at beat 16, so the substrate's answer is
+    # about NOW and the fold's is about a COORDINATE. They disagree, and the
+    # disagreement is the seam working: a fold that had asked the substrate would
+    # have read the revocation into a question asked before it happened, which is
+    # exactly the ambient read issue #82 rule 3 rules out.
+    assert acme.substrate.registry_state(acme.registry, credential) == REVOKED
+    assert standing.state_over(acme.corpus.upto(acme.at("b16")), acme.registry, credential) == (
+        REVOKED
+    ), "and the fold gets there too, from committed events, at the coordinate that moved it"
 
 
 def test_the_carried_clause_is_one_clause_on_both_sides_of_the_amendment(acme):

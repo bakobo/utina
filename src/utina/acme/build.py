@@ -28,6 +28,7 @@ from .law import (
     NINA,
     ORDINARY_ACTS,
     Q2_FORECAST,
+    Q3_BUDGET,
     QUINN,
     SEAT,
     SEAT_ACTS,
@@ -205,6 +206,18 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # is what DI2I resolves against. Revoke either and the device stops filling
     # the slot at the next coordinate.
     mark("b15", constructor.endorse(device, forecast, qualification=seat_credential))
+
+    # Beat 16 — Acme revokes the seat credential in its own registry. Seat 3's
+    # key log is untouched and its keys are still valid: what moved is what the
+    # registry says about a credential, which is evidence and never authority.
+    mark("b16", constructor.revoke(seat_credential))
+
+    # Beat 17 — a NEW question, asked over a bundle the revocation is already in.
+    # Marta endorses and seat 3 does not, so the slot is unfilled and the fold
+    # names it as a typed requirement rather than treating the revocation as a
+    # verdict. Beats 18 and 19 re-ask beat 12's question from here.
+    q3 = name(Q3_BUDGET, constructor.propose(BUDGET))
+    mark("b17", constructor.endorse(marta, q3))
 
     events = constructor.emitted
     return Acme(
