@@ -16,11 +16,13 @@ import pytest
 from bakobo.errors import BakoboError
 
 from utina.substrate import (
+    DI2I,
     ENDORSEMENT_SCHEMA,
     SAID_PLACEHOLDER,
     FacadeSubstrate,
     canonical_bytes,
     digest,
+    facade,
 )
 
 # --- Canonical bytes ---------------------------------------------------------
@@ -301,3 +303,40 @@ def test_a_facade_credential_that_cannot_verify_is_never_returned():
             {"said": "E" + "s" * 43, "act": "issue", "disp": "endorse"},
         )
     assert caught.value.code == "e.proof.acdc-sig.f"
+
+
+# --- the facade's own DI2I, and its two fail-closed edges ---------------------
+
+
+def test_an_edge_to_an_untargeted_far_node_does_not_validate(substrate):
+    """A far node with no issuee has nobody to be a delegate of.
+
+    The facade's arm of what keripy's DI2I does for the same reason: an
+    untargeted far node names no issuee, so "the endorser holds the seat it
+    claims" has nothing on the far side to hold.
+    """
+    gaid = substrate.incept("acme:gaid")
+    registry = substrate.open_registry(gaid, "acme-governance")
+    untargeted, _ = substrate.issue_acdc(
+        gaid, "E" + "t" * 43, {"seat": "board-seat-3"}, registry=registry
+    )
+    edges = {"qp": {"n": untargeted["d"], "s": "E" + "t" * 43, "o": DI2I}}
+
+    endorsement, _ = substrate.issue_acdc(
+        gaid, ENDORSEMENT_SCHEMA, {"said": "E" + "x" * 43}, edges=edges
+    )
+
+    assert substrate.verify_edges(endorsement) is False
+
+
+def test_a_far_node_whose_attributes_are_not_a_block_has_no_issuee():
+    """Defensive, and asserted directly because the API cannot produce it.
+
+    ``issue_acdc`` always builds an attributes block, so no credential this
+    substrate issues can reach here. The guard exists because the alternative to
+    answering ``None`` is raising on a stranger's bytes, and this module's whole
+    posture is that unverifiable evidence confers nothing rather than erroring.
+    """
+    assert facade._issuee({"a": "not a block"}) is None
+    assert facade._issuee({}) is None
+    assert facade._issuee({"a": {"i": 7}}) is None

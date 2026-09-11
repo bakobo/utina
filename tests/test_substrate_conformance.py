@@ -25,7 +25,14 @@ from pathlib import Path
 import pytest
 from bakobo.errors import BakoboError
 
-from utina.substrate import ACDC_DT, ENDORSEMENT_SCHEMA, ISSUED, REVOKED, SAID_LENGTH
+from utina.substrate import (
+    ACDC_DT,
+    DI2I,
+    ENDORSEMENT_SCHEMA,
+    ISSUED,
+    REVOKED,
+    SAID_LENGTH,
+)
 from utina.substrate.select import NAMES, substrate_named
 
 #: A body with no identifier and no signature: what a caller hands ``said``.
@@ -431,6 +438,103 @@ def test_a_registry_and_its_events_are_deterministic(conformant, substrate_name,
         sad_again["d"],
         revocation_again,
     )
+
+
+# --- verify_edges: the other current, and it is not the fold's ----------------
+
+
+def seated(substrate, gaid):
+    """A domain with a seat, a registry, and a seat credential issued to the seat.
+
+    Returns the seat's identifier and the edge block an endorsement of its would
+    carry: one node naming the seat credential under DI2I, which is the shape
+    ``custos-4.2.md:1425-1428`` requires by name.
+    """
+    seat = substrate.delegate(gaid, "acme:seat3")
+    registry = substrate.open_registry(gaid, "acme-governance")
+    credential, _ = seat_acdc(substrate, gaid, registry, seat)
+    return seat, {"qp": {"n": credential["d"], "s": SEAT_SCHEMA, "o": DI2I}}
+
+
+def endorsement_with(substrate, issuer, edges):
+    sad, _ = substrate.issue_acdc(
+        issuer,
+        ENDORSEMENT_SCHEMA,
+        {"said": SUBJECT, "act": "issue", "disp": "endorse"},
+        edges=edges,
+    )
+    return sad
+
+
+def test_a_credential_carrying_no_edge_validates_trivially(conformant, marta):
+    """Nothing is being claimed, so there is nothing to refuse."""
+    sad, _ = endorsement_acdc(conformant, marta)
+    assert conformant.verify_edges(sad) is True
+
+
+def test_the_seat_itself_satisfies_its_own_seat_credentials_edge(conformant):
+    """DI2I is a superset of I2I: issuer equal to the far node's issuee passes.
+
+    Beat 12's machinery. The organ signs, and the edge says which office it
+    signs as; the check is that the two are the same identifier.
+    """
+    gaid = conformant.incept("acme:gaid")
+    seat, edges = seated(conformant, gaid)
+
+    assert conformant.verify_edges(endorsement_with(conformant, seat, edges)) is True
+
+
+@pytest.mark.parametrize("depth", [1, 2], ids=["device", "device-of-device"])
+def test_a_delegated_identifier_satisfies_the_edge_at_any_depth(conformant, depth):
+    """Beat 15, and the reading WebOfTrust/keripy#1564 settled.
+
+    A delegated AID is one at any depth, bounded by the DND trait at the AID
+    layer rather than by the operator. Reading DI2I as direct-only would forbid
+    a two-layer hierarchy outright and need a second operator for every depth.
+    """
+    gaid = conformant.incept("acme:gaid")
+    seat, edges = seated(conformant, gaid)
+    signer = seat
+    for hop in range(depth):
+        signer = conformant.delegate(signer, f"acme:device{hop}")
+
+    assert conformant.verify_edges(endorsement_with(conformant, signer, edges)) is True
+
+
+def test_an_endorser_who_holds_no_seat_does_not_satisfy_the_edge(conformant):
+    """Beat 14, which is the point of the whole act.
+
+    Quinn's endorsement names a seat credential whose issuee Quinn is not. The
+    edge does not validate, and that answer is not a finding: no verdict of the
+    four is being returned here, and the fold is not in this code path at all.
+    """
+    gaid = conformant.incept("acme:gaid")
+    _, edges = seated(conformant, gaid)
+    quinn = conformant.incept("acme:quinn")
+
+    assert conformant.verify_edges(endorsement_with(conformant, quinn, edges)) is False
+
+
+def test_an_edge_naming_a_far_node_nobody_issued_does_not_validate(conformant):
+    """Fail closed: an edge to a credential this substrate cannot resolve."""
+    gaid = conformant.incept("acme:gaid")
+    absent = {"qp": {"n": "E" + "z" * 43, "s": SEAT_SCHEMA, "o": DI2I}}
+
+    assert conformant.verify_edges(endorsement_with(conformant, gaid, absent)) is False
+
+
+def test_an_edge_whose_operator_is_not_implemented_does_not_validate(conformant):
+    """An operator nobody implements confers nothing, and raises nothing either.
+
+    keripy recognizes NOT and refuses it diagnosably rather than defaulting; at
+    this seam both backends answer the same way, because every way an edge can
+    fail to validate means the same thing.
+    """
+    gaid = conformant.incept("acme:gaid")
+    seat, edges = seated(conformant, gaid)
+    unimplemented = {"qp": {**edges["qp"], "o": "NOT"}}
+
+    assert conformant.verify_edges(endorsement_with(conformant, seat, unimplemented)) is False
 
 
 # --- delegate: a seat is an identifier, and its authority is another's ---------

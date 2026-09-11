@@ -34,6 +34,21 @@ SAID = str
 #: credentials and both planes above read the pin (this.i @7db5c4).
 ENDORSEMENT_SCHEMA = "EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0"
 
+#: Where a credential carries its edges, and the two fields an edge node carries
+#: that this seam reads: the far node's identifier and the operator that
+#: constrains the relation. ACDC's own field names, so a credential utina writes
+#: is one the existing toolchain reads.
+EDGES_FIELD = "e"
+EDGE_NODE_FIELD = "n"
+EDGE_OPERATOR_FIELD = "o"
+
+#: The edge operator a seat's endorsement carries. custos-4.2.md:1425-1428
+#: requires it by name: "a warranty's edge to its warrantor's seat credential
+#: SHALL carry the ACDC edge operator DI2I — the citing credential's issuer must
+#: be the pointed-to credential's issuee or a delegated AID thereof". A superset
+#: of I2I, and the delegation arm admits any depth (WebOfTrust/keripy#1564).
+DI2I = "DI2I"
+
 #: The two states a registry-bound credential can be in, in utina's words rather
 #: than KERI's ilks, because this protocol is above the seam. A credential the
 #: registry never issued is in neither, and reads ``None``.
@@ -206,6 +221,24 @@ class Substrate(Protocol):
         """
         ...
 
+    def verify_edges(self, sad: Mapping[str, object]) -> bool:
+        """Whether every edge ``sad`` carries validates under its own operator.
+
+        This is the *other current*. Custos has "the warrantor holds the seat it
+        claims" checked by edge validation in the existing toolchain before any
+        fold runs, and an unseated warrantor's warranty failing credential
+        verification (``custos-4.2.md:1423-1434``). That check belongs to the
+        substrate and its answer is not a finding: no value this returns is one
+        of the four, and the fold never calls it (this.i @x7crwavm).
+
+        Total and fail-closed, like :meth:`verify`. An edge naming a far node
+        this substrate cannot resolve, an operator it does not implement, and a
+        relation that does not hold are all ``False``, because each of them means
+        the same thing: no authority. A credential carrying no edges validates
+        trivially — there is nothing to check and nothing being claimed.
+        """
+        ...
+
     def issue_acdc(
         self,
         issuer: AID,
@@ -213,6 +246,7 @@ class Substrate(Protocol):
         attributes: Mapping[str, object],
         *,
         registry: SAID | None = None,
+        edges: Mapping[str, object] | None = None,
     ) -> tuple[Mapping[str, object], str]:
         """A credential: constructed, signed, verified, anchored.
 

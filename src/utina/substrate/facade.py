@@ -21,7 +21,17 @@ from types import TracebackType
 
 from .canonical import SAID_PLACEHOLDER, canonical_bytes, digest
 from .errors import ACDC_UNVERIFIABLE, AID_UNKNOWN, ALIAS_TAKEN, NOT_ISSUED, REGISTRY_UNKNOWN
-from .protocol import ACDC_DT, AID, ISSUED, REVOKED, SAID
+from .protocol import (
+    ACDC_DT,
+    AID,
+    DI2I,
+    EDGE_NODE_FIELD,
+    EDGE_OPERATOR_FIELD,
+    EDGES_FIELD,
+    ISSUED,
+    REVOKED,
+    SAID,
+)
 
 #: Domain separation for derived key material, so a key can never be mistaken
 #: for a digest of anything else this module computes.
@@ -37,6 +47,33 @@ _SIG_CODE = "0B"
 ACDC_VERSION = "ACDCfacade"
 
 
+def _edges(sad: Mapping[str, object]) -> dict[str, Mapping[str, object]]:
+    """The edge nodes a credential carries, by name, ignoring the block's own fields.
+
+    ``d`` is the edges block's own identifier and ``o`` a block-level operator;
+    neither is an edge. Anything else whose value is not a mapping is not an edge
+    node either, and a credential that carries no edges at all yields nothing —
+    there is then nothing to validate and nothing being claimed.
+    """
+    block = sad.get(EDGES_FIELD)
+    if not isinstance(block, Mapping):
+        return {}
+    return {
+        name: node
+        for name, node in block.items()
+        if name not in ("d", EDGE_OPERATOR_FIELD) and isinstance(node, Mapping)
+    }
+
+
+def _issuee(sad: Mapping[str, object]) -> AID | None:
+    """The identifier a credential is *about*: its attributes block's ``i``."""
+    block = sad.get("a")
+    if not isinstance(block, Mapping):
+        return None
+    issuee = block.get("i")
+    return issuee if isinstance(issuee, str) else None
+
+
 class FacadeSubstrate:
     """The demo's substrate. Implements :class:`~utina.substrate.Substrate`."""
 
@@ -47,6 +84,7 @@ class FacadeSubstrate:
         self._delegators: dict[AID, AID] = {}
         self._registries: dict[SAID, AID] = {}
         self._states: dict[tuple[SAID, SAID], str] = {}
+        self._credentials: dict[SAID, Mapping[str, object]] = {}
 
     def __enter__(self) -> FacadeSubstrate:
         """A lifecycle this backend does not need, and its sibling does.
@@ -140,6 +178,37 @@ class FacadeSubstrate:
         self._interact(controller, revocation)
         return revocation
 
+    def verify_edges(self, sad: Mapping[str, object]) -> bool:
+        """DI2I over the delegations this substrate recorded.
+
+        The facade's answer to what keripy's ``Verifier.verifyChain`` computes,
+        and it implements the same semantics: the near credential's issuer must
+        be the far node's issuee, *or* a delegated identifier of it at any
+        depth. The first arm is DI2I being a superset of I2I; the second is one
+        walk up the delegator chain, which terminates because a visited set
+        bounds it even over a cycle this substrate could not actually record.
+        """
+        for node in _edges(sad).values():
+            far = self._credentials.get(str(node.get(EDGE_NODE_FIELD)))
+            if far is None or node.get(EDGE_OPERATOR_FIELD) != DI2I:
+                return False
+            if not self._holds(str(sad.get("i")), _issuee(far)):
+                return False
+        return True
+
+    def _holds(self, issuer: AID, issuee: AID | None) -> bool:
+        """Whether ``issuer`` is ``issuee``, or a delegate of it at any depth."""
+        if issuee is None:
+            return False
+        seen: set[AID] = set()
+        at: AID | None = issuer
+        while at is not None and at not in seen:
+            if at == issuee:
+                return True
+            seen.add(at)
+            at = self._delegators.get(at)
+        return False
+
     def registry_state(self, registry: SAID, said: SAID) -> str | None:
         """``None`` says the credential does not stand here, so an unknown
         registry is refused rather than answered: they mean different things."""
@@ -153,6 +222,7 @@ class FacadeSubstrate:
         attributes: Mapping[str, object],
         *,
         registry: SAID | None = None,
+        edges: Mapping[str, object] | None = None,
     ) -> tuple[Mapping[str, object], str]:
         """A credential in the dossier schema's required shape, registry or not.
 
@@ -171,12 +241,16 @@ class FacadeSubstrate:
         fields: dict[str, object] = {"v": ACDC_VERSION, "i": issuer, "s": schema, "a": block}
         if registry is not None:
             fields["ri"] = registry
+        if edges is not None:
+            edge_block: dict[str, object] = dict(edges)
+            fields[EDGES_FIELD] = {"d": self.said(edge_block), **edge_block}
         sad: dict[str, object] = {"v": ACDC_VERSION, "d": self.said(fields), **fields}
         signature = self.sign(issuer, sad)
         if not self.verify(issuer, sad, signature):
             raise ACDC_UNVERIFIABLE(issuer=issuer)
         if registry is not None:
             self._states[(registry, str(sad["d"]))] = ISSUED
+        self._credentials[str(sad["d"])] = sad
         self._interact(issuer, str(sad["d"]))
         return sad, signature
 

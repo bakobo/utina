@@ -44,13 +44,21 @@ from typing import Any
 
 from keri.app import habbing  # type: ignore[import-untyped]
 from keri.core import eventing  # type: ignore[import-untyped]
-from keri.core.coring import Diger, Number, Saider, dumps  # type: ignore[import-untyped]
+from keri.core.coring import (  # type: ignore[import-untyped]
+    Diger,
+    Number,
+    Prefixer,
+    Saider,
+    Seqner,
+    dumps,
+)
 from keri.core.indexing import Siger  # type: ignore[import-untyped]
+from keri.core.serdering import SerderACDC  # type: ignore[import-untyped]
 from keri.core.signing import Salter  # type: ignore[import-untyped]
 from keri.core.structing import SealDigest, SealEvent  # type: ignore[import-untyped]
 from keri.kering import Vrsn_1_0  # type: ignore[import-untyped]
 from keri.vc.proving import credential  # type: ignore[import-untyped]
-from keri.vdr import credentialing  # type: ignore[import-untyped]
+from keri.vdr import credentialing, verifying  # type: ignore[import-untyped]
 from keri.vdr.eventing import Reger  # type: ignore[import-untyped]
 
 from .canonical import canonical_json
@@ -62,7 +70,16 @@ from .errors import (
     REGISTRY_UNKNOWN,
     STORE_NOT_OURS,
 )
-from .protocol import ACDC_DT, AID, ISSUED, REVOKED, SAID
+from .facade import _edges
+from .protocol import (
+    ACDC_DT,
+    AID,
+    EDGE_NODE_FIELD,
+    EDGE_OPERATOR_FIELD,
+    ISSUED,
+    REVOKED,
+    SAID,
+)
 
 #: The demo's pinned salt: sixteen literal bytes. Correct for a fixture whose
 #: purpose is reproducible replay, and a key-management failure in production.
@@ -116,6 +133,7 @@ class KeripySubstrate:
         self._salt = Salter(raw=salt).qb64
         self._hby: Any = None
         self._rgy: Any = None
+        self._verifier: Any = None
 
     # -- lifecycle ------------------------------------------------------------
 
@@ -146,6 +164,7 @@ class KeripySubstrate:
                 reopen=True,
             ),
         )
+        self._verifier = verifying.Verifier(hby=self._hby, reger=self._rgy.reger)
         return self
 
     def __exit__(
@@ -291,6 +310,39 @@ class KeripySubstrate:
         identifier: str = revocation.said
         return identifier
 
+    def verify_edges(self, sad: Mapping[str, object]) -> bool:
+        """Edge validation by the existing toolchain, which is the whole point.
+
+        Each edge goes to ``Verifier.verifyChain``, which returns the far node's
+        registry state or ``None`` where the edge does not verify. Nothing here
+        reimplements an operator: the seated-endorser check the demo turns on is
+        keripy's own DI2I, and utina's contribution is to have written an edge
+        the existing verifier can read (WebOfTrust/keripy#1564).
+
+        Total, like :meth:`verify`, and over a library that raises freely: an
+        operator keripy recognizes but has not implemented raises
+        ``ValidationError``, an unsaved far node raises ``KeyError`` through the
+        registry lookup, and both mean the same thing here — the edge confers
+        nothing. Catching broadly is the contract rather than laziness.
+        """
+        edges = _edges(sad)
+        if not edges:
+            return True
+        try:
+            creder = SerderACDC(sad=dict(sad))
+            for node in edges.values():
+                state = self._verifier.verifyChain(
+                    str(node.get(EDGE_NODE_FIELD)),
+                    node.get(EDGE_OPERATOR_FIELD),
+                    creder.israid,
+                    creder.iseaid,
+                )
+                if state is None:
+                    return False
+        except Exception:
+            return False
+        return True
+
     def registry_state(self, registry: SAID, said: SAID) -> str | None:
         """The credential's state in the registry's TEL, in utina's words.
 
@@ -313,6 +365,7 @@ class KeripySubstrate:
         attributes: Mapping[str, object],
         *,
         registry: SAID | None = None,
+        edges: Mapping[str, object] | None = None,
     ) -> tuple[Mapping[str, object], str]:
         """A real ACDC: the v1 ilkless shape, anchored by an ixn.
 
@@ -340,6 +393,7 @@ class KeripySubstrate:
             issuer=issuer,
             data={"dt": ACDC_DT, **dict(attributes)},
             status=registry,
+            source=None if edges is None else dict(edges),
             version=Vrsn_1_0,
         )
         siger = hab.sign(creder.raw, indexed=True)[0]
@@ -352,6 +406,16 @@ class KeripySubstrate:
             hab.interact(data=[SealDigest(d=creder.said)._asdict()])
         else:
             self._anchor_tel(hab, held, held.issue(said=creder.said, dt=ACDC_DT))
+            # Saved as well as anchored, because a credential that is not in the
+            # credential store cannot be the far node of anybody's edge: the
+            # verifier resolves an edge through .reger.saved before it consults
+            # an operator at all (this.i @x7crwavm).
+            self._verifier.saveCredential(
+                creder,
+                Prefixer(qb64=issuer),
+                Seqner(sn=hab.kever.sner.num),
+                Saider(qb64=hab.kever.serder.said),
+            )
         sad: dict[str, object] = dict(creder.sad)
         return sad, f"{hab.kever.lastEst.d}{COORDINATE}{siger.qb64}"
 
