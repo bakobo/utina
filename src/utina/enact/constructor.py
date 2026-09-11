@@ -212,6 +212,7 @@ class Constructor:
         acts: Sequence[str],
         issuer: AID | None = None,
         presents_as: AID | None = None,
+        nonce: str | None = None,
     ) -> Event:
         """Confer authority on ``delegate``, as a GCD under the domain's registry.
 
@@ -242,6 +243,11 @@ class Constructor:
         is that domain's own act and no stranger's attestation does it. A seat
         conferring on its own device passes itself, because that grant is the
         seat's to make and the seat's to revoke.
+
+        ``nonce`` is needed only when the same party is conferred the same
+        authority twice — re-seating an office after its credential was revoked.
+        Without it the two grants are byte-identical and therefore one
+        credential, which a transaction log correctly refuses to issue again.
         """
         self._require_founded()
         conferring = self.gaid if issuer is None else issuer
@@ -261,6 +267,7 @@ class Constructor:
             {"i": delegate, "facet": facet, "constraints": {"acts": list(acts)}},
             registry=registry,
             rules=GCD_RULES,
+            nonce=nonce,
         )
         return self._emit(
             "issuance",

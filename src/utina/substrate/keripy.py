@@ -367,6 +367,7 @@ class KeripySubstrate:
         registry: SAID | None = None,
         edges: Mapping[str, object] | None = None,
         rules: SAID | None = None,
+        nonce: str | None = None,
     ) -> tuple[Mapping[str, object], str]:
         """A real ACDC: the v1 ilkless shape, anchored by an ixn.
 
@@ -402,6 +403,9 @@ class KeripySubstrate:
             status=registry,
             source=None if edges is None else dict(edges),
             rules=rules,
+            private=nonce is not None,
+            private_credential_nonce=nonce,
+            private_subject_nonce=nonce,
             version=Vrsn_1_0,
         )
         siger = hab.sign(creder.raw, indexed=True)[0]

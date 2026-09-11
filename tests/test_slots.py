@@ -16,9 +16,10 @@ from fractions import Fraction
 from typing import Any
 
 import pytest
+from bakobo.errors import BakoboError
 
 from utina.fold import slots
-from utina.fold.group import Disposition, Group, Slot
+from utina.fold.group import Disposition, Group, Qualification, Slot
 
 HALF = Fraction(1, 2)
 
@@ -738,3 +739,131 @@ def test_an_act_whose_vouched_signer_is_not_its_credentials_issuer_fills_nothing
     events = [grant("EGrant", issuer=NINA, issuee=DEVICE), event]
 
     assert disposition_of(board(), events, NINA) is Disposition.PENDING
+
+
+# --- a slot that names a qualification (this.i @cglayqvw, tick 652c) ----------
+
+DOMAIN = "acme:gaid"
+SEATED = Qualification(schema=slots.GCD_SCHEMA, issuer=DOMAIN)
+
+
+def office() -> Group:
+    """The board, with seat 3's slot naming what its holder must be standing on."""
+    return Group(
+        "MxN",
+        (
+            Slot(MARTA, HALF, SCHEMA),
+            Slot(DEV, HALF, SCHEMA),
+            Slot(NINA, HALF, SCHEMA, SEATED),
+        ),
+    )
+
+
+def seating(said: str = "ESeat", *, registry: str = "EAcmeRegistry") -> Ev:
+    """The domain's credential for the office, which is what entitles it."""
+    return grant(said, issuer=DOMAIN, issuee=NINA, registry=registry)
+
+
+def test_an_office_with_a_standing_credential_fills_its_slot():
+    events = [seating(), signed("EAct1", NINA)]
+
+    assert disposition_of(office(), events, NINA) is Disposition.ENDORSED
+
+
+def test_an_office_with_no_credential_at_all_fills_nothing():
+    """The law names the office; the credential says who is holding it. Without
+    one there is no holder, and an act signed by the office AID is an act by
+    nobody the law has entitled."""
+    assert disposition_of(office(), [signed("EAct1", NINA)], NINA) is Disposition.PENDING
+
+
+def test_an_office_whose_credential_is_revoked_fills_nothing_afterwards():
+    """The whole of tick 652c. Before this, an office could fill its own slot by
+    CITING NOTHING, because the only check on its standing was one it opted into."""
+    events = [
+        seating(),
+        revoked("ERev", "ESeat-credential", registry="EAcmeRegistry"),
+        signed("EAct1", NINA),
+    ]
+
+    assert disposition_of(office(), events, NINA) is Disposition.PENDING
+
+
+def test_an_office_act_before_the_revocation_still_stands():
+    """Act III's rule, and it did not need restating: entitlement is read at the
+    coordinate the act was made from, exactly as a citation's standing is."""
+    events = [
+        seating(),
+        signed("EAct1", NINA),
+        revoked("ERev", "ESeat-credential", registry="EAcmeRegistry"),
+    ]
+
+    assert disposition_of(office(), events, NINA) is Disposition.ENDORSED
+
+
+def test_a_credential_from_the_wrong_issuer_does_not_seat_the_office():
+    """The issuer is committed in the law for this case. A schema alone would let
+    a stranger issue a credential of the right shape, into a registry of their
+    own, and seat themselves in somebody else's Constitution."""
+    events = [
+        grant("EForged", issuer=MALLORY, issuee=NINA, registry="EMalloryRegistry"),
+        signed("EAct1", NINA),
+    ]
+
+    assert disposition_of(office(), events, NINA) is Disposition.PENDING
+
+
+def test_a_credential_issued_to_somebody_else_does_not_seat_the_office():
+    events = [
+        grant("ESeat", issuer=DOMAIN, issuee=MALLORY, registry="EAcmeRegistry"),
+        signed("EAct1", NINA),
+    ]
+
+    assert disposition_of(office(), events, NINA) is Disposition.PENDING
+
+
+def test_an_office_credential_that_does_not_permit_endorsing_seats_nobody():
+    """The same constraint gate the delegate's grant goes through. An office
+    credential bounded by a dimension this fold cannot evaluate is refused."""
+    events = [
+        grant("ESeat", issuer=DOMAIN, issuee=NINA, acts=["observe record"]),
+        signed("EAct1", NINA),
+    ]
+
+    assert disposition_of(office(), events, NINA) is Disposition.PENDING
+
+
+def test_a_slot_with_no_qualification_needs_no_credential():
+    """Acme's founders are slotted as themselves and the law is all that seats
+    them. A fold that required a credential everywhere would have unseated them."""
+    assert disposition_of(office(), [signed("EAct1", MARTA)], MARTA) is Disposition.ENDORSED
+
+
+def test_an_offices_delegate_needs_the_office_seated_as_well_as_its_own_grant():
+    """Both halves, and this is the case that would be easy to lose. The device's
+    authority derives from the office's, so revoking what seats the OFFICE stops
+    the device too — without anything being said about the device at all."""
+    device_grant = grant("EDev", issuer=NINA, issuee=DEVICE, registry="ENinaRegistry")
+    seated = [seating(), device_grant, signed("EAct1", DEVICE)]
+    assert disposition_of(office(), seated, NINA) is Disposition.ENDORSED
+
+    unseated = [
+        seating(),
+        device_grant,
+        revoked("ERev", "ESeat-credential", registry="EAcmeRegistry"),
+        signed("EAct1", DEVICE),
+    ]
+    assert disposition_of(office(), unseated, NINA) is Disposition.PENDING
+
+
+@pytest.mark.parametrize("term", ["schema", "issuer"])
+def test_a_qualification_missing_either_term_is_refused(term):
+    """Not read as absent. "Requires nothing" and "requires something I could not
+    parse" are different statements and must not collapse into one."""
+    terms = {"schema": slots.GCD_SCHEMA, "issuer": DOMAIN}
+    terms[term] = ""
+
+    with pytest.raises(BakoboError) as caught:
+        Qualification(**terms)
+
+    assert caught.value.code == "e.input.missing.qualification-term.f"

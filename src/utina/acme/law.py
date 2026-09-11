@@ -21,7 +21,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
 
-from utina.substrate import ENDORSEMENT_SCHEMA
+from utina.substrate import ENDORSEMENT_SCHEMA, GCD_SCHEMA
 
 #: The governed domain. An *alias*, not an identifier: under keripy a prefix is
 #: a digest of its own inception event and cannot be named beforehand, so the law
@@ -130,11 +130,22 @@ Q3_BUDGET = "approve-q3-budget"
 #: acts are in flight and not about how many classes the law rules.
 CAPITAL_PLAN = "approve-capital-plan"
 
+#: The nonce that makes the re-seating a NEW credential rather than the revoked
+#: one presented again. A revoked credential cannot be reissued — two credentials
+#: with the same issuer, schema, attributes and datetime are the same credential,
+#: and a conforming transaction log refuses the duplicate, which keripy does by
+#: name. A fresh appointment is a fresh credential, and ACDC's salty nonce is
+#: what makes it one. Pinned rather than generated, like the salt and the
+#: registry nonce, because a generated one would end the replay claim.
+RESEATING_NONCE = "0AB1dGluYS1yZXNlYXQtMDAx"
+
 #: The act nothing governs.
 UNGOVERNED_ACT = "declare-dividend"
 
 
-def slot(endorser: str, weight: Fraction) -> Mapping[str, object]:
+def slot(
+    endorser: str, weight: Fraction, qualification: Mapping[str, object] | None = None
+) -> Mapping[str, object]:
     """One committed slot: who may act, with how much weight, and with what evidence.
 
     The weight commits as an exact rational **string** — ``"1/2"`` — which is
@@ -150,12 +161,21 @@ def slot(endorser: str, weight: Fraction) -> Mapping[str, object]:
     rather than assumed (``custos-4.2.md:1946-1951``): the seat credential is a
     second ACDC kind, and a requirement that could not say which of the two it
     wanted would be satisfiable by the wrong one.
+
+    A slot may also name the credential its endorser must HOLD, which is a
+    different statement from the schema above and is what seats an office. Acme's
+    founders carry none — the law entitles them directly — and board seat 3
+    carries one, so that revoking its credential empties its slot instead of
+    leaving the office seated by nothing but its own silence (this.i @cglayqvw).
     """
-    return {
+    committed: dict[str, object] = {
         "endorser": endorser,
         "weight": f"{weight.numerator}/{weight.denominator}",
         "schema": ENDORSEMENT_SCHEMA,
     }
+    if qualification is not None:
+        committed["qualification"] = qualification
+    return committed
 
 
 def clause(
@@ -168,8 +188,28 @@ def clause(
     }
 
 
-def _even(endorsers: Sequence[str], weight: Fraction) -> tuple[Mapping[str, object], ...]:
-    return tuple(slot(endorser, weight) for endorser in endorsers)
+def _even(
+    endorsers: Sequence[str],
+    weight: Fraction,
+    qualifications: Mapping[str, Mapping[str, object]] | None = None,
+) -> tuple[Mapping[str, object], ...]:
+    """Slots of equal weight, each with whatever its endorser must hold, if anything."""
+    held = {} if qualifications is None else qualifications
+    return tuple(slot(endorser, weight, held.get(endorser)) for endorser in endorsers)
+
+
+def seated_by(domain: str) -> Mapping[str, object]:
+    """What board seat 3's holder must be standing on: the domain's own GCD.
+
+    Both terms are committed because §9 asks for both — "which schemas, issued by
+    which registries, confer which powers" (custos-4.2.md:1924). The issuer is
+    named rather than the registry because a registry's identifier is not known
+    when the law that requires it is written: Acme opens its governance registry
+    after the amendment that seats the board. Naming the issuer is the same
+    restriction reached from the other side, and the fold resolves the registry
+    out of the issuance itself.
+    """
+    return {"schema": GCD_SCHEMA, "issuer": domain}
 
 
 def equity_clause(aids: Mapping[str, str]) -> Mapping[str, object]:
@@ -225,10 +265,36 @@ def board_law(aids: Mapping[str, str]) -> Mapping[str, object]:
     it.
     """
     board = [aids[alias] for alias in BOARD]
+    seats = {aids[SEAT]: seated_by(aids[GAID])}
     return {
         "clauses": (
-            clause("B1", ORDINARY_ACTS, _even(board, Fraction(1, 2))),
-            clause("B2", AMENDMENT_ACTS, _even(board, Fraction(1, 3))),
+            clause("B1", ORDINARY_ACTS, _even(board, Fraction(1, 2), seats)),
+            clause("B2", AMENDMENT_ACTS, _even(board, Fraction(1, 3), seats)),
+            equity_clause(aids),
+        ),
+        "seats": (aids[SEAT],),
+    }
+
+
+def lowered_law(aids: Mapping[str, str]) -> Mapping[str, object]:
+    """State 3, after the second amendment lowers the ordinary-acts bar.
+
+    B1's three slots keep their endorsers and take a full share each, so any one
+    of them reaches unity where two were needed before. That is the whole change:
+    B2's retained bar and A3's founders' clause are re-committed byte-identical,
+    for the reason edition 2 re-commits A3 — an amendment replaces the edition
+    rather than adding to it (this.i @wg3jr6).
+
+    It is a real change to B1, so every question in flight under B1 has its cure
+    path closed by it, which is what makes beat 23's computed disturbance set
+    contain BOTH pending questions. The amendment declares only one of them.
+    """
+    board = [aids[alias] for alias in BOARD]
+    seats = {aids[SEAT]: seated_by(aids[GAID])}
+    return {
+        "clauses": (
+            clause("B1", ORDINARY_ACTS, _even(board, Fraction(1, 1), seats)),
+            clause("B2", AMENDMENT_ACTS, _even(board, Fraction(1, 3), seats)),
             equity_clause(aids),
         ),
         "seats": (aids[SEAT],),

@@ -32,7 +32,7 @@ from fractions import Fraction
 
 from bakobo.errors import ErrorCode  # type: ignore[import-untyped]
 
-from utina.fold.group import Group, Slot
+from utina.fold.group import Group, Qualification, Slot
 
 #: Bytes presented as law that will not read as law. Prefix-matches under the
 #: contract's ``e.input.malformed.f`` branch without squatting on it, so a caller
@@ -87,6 +87,23 @@ def _as_mapping(value: object, field: str) -> Mapping[str, object]:
     return value
 
 
+def _as_qualification(value: object) -> Qualification | None:
+    """The credential a slot's endorser must hold, or ``None`` where none is asked.
+
+    Absence is a statement and not a gap: a slot with no qualification names a
+    party the law entitles directly. A malformed one is refused rather than read
+    as absent, because "this slot requires nothing" and "this slot requires
+    something I could not parse" must never collapse into one answer.
+    """
+    if value is None:
+        return None
+    block = _as_mapping(value, "qualification")
+    return Qualification(
+        schema=_as_str(block.get("schema"), "qualification schema"),
+        issuer=_as_str(block.get("issuer"), "qualification issuer"),
+    )
+
+
 def _as_weight(value: object, field: str) -> Fraction:
     """Weights are exact rationals, never floats, because unity must be decidable."""
     try:
@@ -113,6 +130,7 @@ class Clause:
                 endorser=_as_str(slot.get("endorser"), "endorser"),
                 weight=_as_weight(slot.get("weight"), "weight"),
                 schema=_as_str(slot.get("schema"), "schema"),
+                qualification=_as_qualification(slot.get("qualification")),
             )
             for slot in (
                 _as_mapping(raw, "slot")
@@ -175,11 +193,21 @@ def _slot_bytes(slot: Slot) -> bytes:
     different kind of credential would be a different clause, and a head that
     could not tell them apart would let an amendment change what discharges a
     requirement without changing the law head.
+
+    So is the qualification, and for a sharper version of the same reason: it
+    decides who may act in the slot at all, so an amendment that added or dropped
+    one while leaving the head unmoved could unseat an office in silence. An
+    absent qualification contributes two empty parts, which no present one can
+    produce — :class:`~utina.fold.group.Qualification` refuses an empty term — so
+    "requires nothing" and "requires something" never digest alike.
     """
+    qualification = slot.qualification
     return _PART.join(
         (
             slot.endorser.encode("utf-8"),
             f"{slot.weight.numerator}/{slot.weight.denominator}".encode(),
             slot.schema.encode("utf-8"),
+            b"" if qualification is None else qualification.schema.encode("utf-8"),
+            b"" if qualification is None else qualification.issuer.encode("utf-8"),
         )
     )

@@ -225,6 +225,7 @@ class FacadeSubstrate:
         registry: SAID | None = None,
         edges: Mapping[str, object] | None = None,
         rules: SAID | None = None,
+        nonce: str | None = None,
     ) -> tuple[Mapping[str, object], str]:
         """A credential in the dossier schema's required shape, registry or not.
 
@@ -239,8 +240,12 @@ class FacadeSubstrate:
         if registry is not None:
             self._require_registry(registry)
         block: dict[str, object] = {"dt": ACDC_DT, **attributes}
+        if nonce is not None:
+            block = {"u": nonce, **block}
         block = {"d": self.said(block), **block}
         fields: dict[str, object] = {"v": ACDC_VERSION, "i": issuer, "s": schema, "a": block}
+        if nonce is not None:
+            fields["u"] = nonce
         if registry is not None:
             fields["ri"] = registry
         if edges is not None:

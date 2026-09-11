@@ -39,6 +39,7 @@ __all__ = [
     "AID",
     "GROUP_ENDORSER_REPEATED",
     "GROUP_SLOTS_MISSING",
+    "QUALIFICATION_MALFORMED",
     "SAID",
     "SLOT_SCHEMA_MISSING",
     "SLOT_WEIGHT_NOT_POSITIVE",
@@ -107,6 +108,26 @@ SLOT_SCHEMA_MISSING = ErrorCode(
     hint="Commit the schema identifier the slot's evidence must satisfy alongside its weight.",
 )
 
+#: A qualification that names only half of what it needs to. Both terms are
+#: load-bearing: a schema with no issuer would let anybody confer the power, and
+#: an issuer with no schema would let any credential of theirs do it. A slot that
+#: requires nothing says so by carrying no qualification at all, which is a
+#: different statement from carrying a broken one.
+QUALIFICATION_MALFORMED = ErrorCode(
+    code="e.input.missing.qualification-term.f",
+    title="A slot's qualification must name both a schema and an issuer.",
+    detail=(
+        "The qualification names no {field}. custos-4.2.md:1924 leaves it to a domain's "
+        "Constitution to say which schemas, issued by which registries, confer which powers, "
+        "so a qualification missing either term states a power nobody can check."
+    ),
+    args=("field",),
+    hint=(
+        "Commit both terms, or commit no qualification at all where the law entitles the "
+        "endorser directly."
+    ),
+)
+
 GROUP_ENDORSER_REPEATED = ErrorCode(
     code="e.input.multi.slot-endorser.f",
     title="A composition rule slots each endorser at most once.",
@@ -138,9 +159,40 @@ _OUTSTANDING = frozenset({Disposition.PENDING})
 
 
 @dataclass(frozen=True)
+class Qualification:
+    """What a slot's endorser must *hold* in order to act in it at all.
+
+    The distinction from :attr:`Slot.schema` is the whole reason this exists, and
+    it is easy to collapse: ``schema`` types the EVIDENCE an endorsement is, and
+    this types the CREDENTIAL its endorser has to be standing on. A slot with no
+    qualification names a party the law entitles directly — Acme's founders are
+    slotted as themselves and nothing but the law qualifies them. A slot with one
+    names an office, whose holder acts because a credential says so and stops
+    acting when that credential is revoked.
+
+    §9 delegates exactly this to the domain: it is for a Constitution to name
+    "which schemas, issued by which registries, confer which powers"
+    (``custos-4.2.md:1924``). The issuer is committed alongside the schema because
+    a schema alone would let anybody confer the power — a stranger could issue a
+    credential of the right shape naming the office as issuee, into a registry of
+    their own, and a fold that checked only the schema would seat them
+    (``this.i`` @cglayqvw).
+    """
+
+    schema: SAID
+    issuer: AID
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.schema, str) or not self.schema:
+            raise QUALIFICATION_MALFORMED(field="schema")
+        if not isinstance(self.issuer, str) or not self.issuer:
+            raise QUALIFICATION_MALFORMED(field="issuer")
+
+
+@dataclass(frozen=True)
 class Slot:
-    """One candidate endorser, the share of authority the law gives them, and the
-    schema their evidence must satisfy.
+    """One candidate endorser, the share of authority the law gives them, the
+    schema their evidence must satisfy, and what they must hold to act at all.
 
     The schema is committed law rather than an engine constant: ``:1946-1951``
     has each slot "naming the schema its evidence must satisfy", and
@@ -148,11 +200,16 @@ class Slot:
     those schemas back. With one credential kind in the world the distinction was
     invisible; with two it decides whether a requirement for an endorsement reads
     as dischargeable by a seat credential (this.i @z373ew7j).
+
+    ``qualification`` is the second committed term and is ``None`` for a slot the
+    law entitles directly. See :class:`Qualification` for why the two are not one
+    field.
     """
 
     endorser: AID
     weight: Fraction
     schema: SAID
+    qualification: Qualification | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.schema, str) or not self.schema:

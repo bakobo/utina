@@ -27,11 +27,13 @@ from .law import (
     Q2_FORECAST,
     Q3_BUDGET,
     QUINN,
+    RESEATING_NONCE,
     SEAT,
     SEAT_ACTS,
     SEAT_OFFICE,
     SEAT_REGISTRY,
     UNGOVERNED_ACT,
+    lowered_law,
 )
 from .record import Acme
 
@@ -56,6 +58,7 @@ __all__ = [
     "Q2_FORECAST",
     "Q3_BUDGET",
     "QUINN",
+    "RESEATING_NONCE",
     "SEAT",
     "SEAT_ACTS",
     "SEAT_OFFICE",
@@ -63,4 +66,5 @@ __all__ = [
     "UNGOVERNED_ACT",
     "Acme",
     "build",
+    "lowered_law",
 ]

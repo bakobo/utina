@@ -42,8 +42,11 @@ from utina.acme import (
     SEAT,
 )
 from utina.enact import Constructor
-from utina.fold import Constitution, evaluate
-from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies
+from utina.fold import Constitution, disturbance, evaluate
+from utina.fold import slots as slot_predicate
+from utina.fold.evaluate import _disturbed_by
+from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies, SelfConvicted
+from utina.fold.group import Disposition
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal
 from utina.substrate import DI2I, ENDORSEMENT_SCHEMA, GCD_SCHEMA, ISSUED, REVOKED
@@ -69,6 +72,8 @@ AT = {
     18: "d5",
     19: "b17",
     21: "b21",
+    22: "b22",
+    23: "b23",
     24: "d9",
     25: "board-seated",
 }
@@ -79,6 +84,9 @@ LEASE = "sign-office-lease"
 EQUITY = "release-escrowed-equity"
 DIVIDEND = "declare-dividend"
 BUDGET = "approve-budget"
+
+#: The record's name for the amendment that lowers the ordinary-acts bar.
+SECOND_AMENDMENT = "lower-the-bar"
 
 #: The record's name for the annual budget, which is beat 12's subject and the
 #: one beats 18 and 19 re-ask about. Distinct from the act CLASS above: three
@@ -486,19 +494,57 @@ def test_b21_a_second_question_is_pending_under_b1(acme):
     assert isinstance(q3, Pending), "and beat 17's is still pending beside it"
 
 
-def test_b22_the_second_amendment_declares_a_disturbance_set_that_under_declares():
+def test_b22_the_second_amendment_declares_a_disturbance_set_that_under_declares(acme):
     """Row 22: the enactment's declared set names only the Q3 budget, and not the
-    capital plan."""
-    pytest.skip(owed("U3.3 the declared disturbance set on the amending enactment (tick 7rfv)"))
+    capital plan.
+
+    "Declared affirmed" in the script is the AMENDER's claim and not the fold's
+    answer (``this.i`` @bvzzaquc). What this row asserts is the claim: three
+    slots endorsed, unity reached under B2's retained bar, and a declaration
+    naming exactly one of the questions in flight. Row 23 is where the fold
+    speaks.
+    """
+    amendment = acme.corpus.event(acme.said(SECOND_AMENDMENT))
+
+    assert amendment.kind == "enactment"
+    assert disturbance.declared(amendment) == (acme.said(Q3_BUDGET),)
+
+    slots = slot_predicate.dispositions(
+        Constitution.at(acme.corpus, acme.at(AT[22])).clause("B2").group,
+        acme.corpus.upto(acme.at(AT[22])),
+        amendment.said,
+    )
+    assert set(slots.values()) == {Disposition.ENDORSED}, "Marta, Dev and seat 3 all endorsed"
 
 
-def test_b23_the_under_declaring_amendment_is_convicted_on_its_own_bytes():
+def test_b23_the_under_declaring_amendment_is_convicted_on_its_own_bytes(acme):
     """Row 23: declared set against computed set, side by side; the computed set
-    contains both B1 questions, and the mismatch is the proof."""
-    pytest.skip(owed(
-        "U3.3 the fold's computed disturbance set and self-convicted on mismatch (tick 7rfv)",
-        "the finding value an under-declaring amendment returns, owed to Custos (tick 7xe6)",
-    ))
+    contains both B1 questions, and the mismatch is the proof.
+
+    It contains a third as well — demo 1's own retabled budget, pending under B1
+    since D6 — which makes the lie larger than the script anticipated rather
+    than different in kind. What the amendment does NOT disturb is the hire,
+    which the first amendment already closed: an act whose cure path was shut
+    before this enactment was not in flight, so it is not this amendment's to
+    declare.
+    """
+    finding = evaluate(
+        acme.corpus, Committed(acme.said(SECOND_AMENDMENT)), at=acme.at(AT[23])
+    )
+    assert isinstance(finding, SelfConvicted)
+
+    amendment = acme.corpus.event(acme.said(SECOND_AMENDMENT))
+    claimed = disturbance.declared(amendment)
+    computed = _disturbed_by(acme.corpus, amendment, acme.at(AT[23]))
+
+    assert set(computed) == {
+        acme.said(Q3_BUDGET),
+        acme.said(CAPITAL_PLAN),
+        acme.said("approve-budget-retabled"),
+    }
+    assert acme.said(HIRE) not in computed, "already closed by the first amendment"
+    assert set(claimed) < set(computed), "the amender named a proper subset of the truth"
+    assert finding.proof.package == disturbance.package(claimed, computed)
 
 
 # --- Coda ---------------------------------------------------------------------

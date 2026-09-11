@@ -121,7 +121,7 @@ def test_law_shows_the_head_that_identifies_the_edition():
     with world() as record:
         head = record.values  # touched so the fixture cost is visible in the test
     assert head is not None
-    assert "6e367f747a53" in out
+    assert "f3bd6baa1af2" in out
 
 
 def test_law_after_the_amendment_shows_the_board_clauses_and_the_retained_bar():
@@ -226,7 +226,7 @@ def test_a_committed_question_is_judged_under_the_law_it_replaces():
 
 
 def test_a_said_may_be_given_as_a_prefix_of_the_identifier():
-    out = screen("eval", "--said", "E_eNokAC1cx8", "--at", "d4")
+    out = screen("eval", "--said", "EN5r7IOEAPsq", "--at", "d4")
     assert "AFFIRMED" in out and "A2" in out
 
 
@@ -466,7 +466,7 @@ def test_a_defeat_with_no_declination_still_carries_its_ground():
 def test_log_shows_every_committed_event_in_canonical_order():
     out = screen("log")
     assert "COMMITTED LOG AT the end of the record" in out
-    assert "37 events" in out
+    assert "42 events" in out
     assert "Arrival order is not consulted" in out
     seqs = [
         int(line.split()[0])

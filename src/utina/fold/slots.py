@@ -429,10 +429,34 @@ def _fills(
         event.kind == ENDORSEMENT_KIND
         and isinstance(actor, str)
         and event.body.get(ISSUER_FIELD) == actor
+        and _entitled(slot, asof)
         and _acts_for(actor, slot.endorser, asof)
         and acdc.get(SCHEMA_FIELD) == ENDORSEMENT_SCHEMA
         and block.get(ACT_FIELD) == ISSUANCE
         and block.get(SUBJECT_FIELD) == subject
+    )
+
+
+def _entitled(slot: Slot, asof: Sequence[CommittedEvent]) -> bool:
+    """Whether the slot's endorser may act in it at all, at this coordinate.
+
+    A slot with no qualification names a party the law entitles directly, and
+    there is nothing further to check: Acme's founders are slotted as themselves.
+    A slot with one names an OFFICE, and its holder acts because a standing
+    credential says so — so revoking that credential empties the slot, at the
+    next coordinate and not before.
+
+    **This is what makes a revocation bite.** Before it existed the check lived
+    entirely in the citation an endorser volunteered (:func:`_qualified`), so an
+    office whose credential had been revoked could fill its own slot by citing
+    nothing at all — the check was the endorser's to opt into. The entitlement is
+    now read off committed law and looked for in the record, and an endorser who
+    says nothing about themselves is exactly as qualified as the record makes
+    them (``this.i`` @cglayqvw, tick 652c).
+    """
+    wanted = slot.qualification
+    return wanted is None or _standing_grant(
+        asof, schema=wanted.schema, issuer=wanted.issuer, issuee=slot.endorser
     )
 
 
@@ -457,23 +481,43 @@ def _acts_for(actor: AID, endorser: AID, asof: Sequence[CommittedEvent]) -> bool
     act never reaches back to it. It is Act III's rule applied to a second
     credential kind.
     """
-    if actor == endorser:
-        return True
+    return actor == endorser or _standing_grant(
+        asof, schema=GCD_SCHEMA, issuer=endorser, issuee=actor
+    )
+
+
+def _standing_grant(
+    asof: Sequence[CommittedEvent], *, schema: SAID, issuer: AID, issuee: AID
+) -> bool:
+    """Whether the record carries a credential conferring the power to endorse.
+
+    One function for both directions the fold asks in, because they are one
+    question asked of different parties: an office's own entitlement is a
+    credential the domain issued to it, and a delegate's is a credential the
+    office issued to the delegate. Writing them twice would let the two drift on
+    the constraint check, which is the half that is easy to get wrong.
+
+    Standing is judged over ``asof``, so a grant is read at the coordinate it is
+    being used from and revocation needs no special case anywhere.
+    """
     return any(
-        _grants(event, actor, endorser) and stood_at(asof, str(credential(event).get("d")))
+        _confers(event, schema=schema, issuer=issuer, issuee=issuee)
+        and stood_at(asof, str(credential(event).get("d")))
         for event in asof
     )
 
 
-def _grants(event: CommittedEvent, actor: AID, endorser: AID) -> bool:
-    """Whether ``event`` commits a GCD by ``endorser`` letting ``actor`` endorse."""
+def _confers(
+    event: CommittedEvent, *, schema: SAID, issuer: AID, issuee: AID
+) -> bool:
+    """Whether ``event`` commits ``issuer``'s credential of ``schema`` to ``issuee``."""
     acdc = credential(event)
     block = attributes(event)
     return (
         event.kind == ISSUANCE_KIND
-        and acdc.get(SCHEMA_FIELD) == GCD_SCHEMA
-        and acdc.get(ISSUER_FIELD) == endorser
-        and block.get(ATTRIBUTE_ISSUEE_FIELD) == actor
+        and acdc.get(SCHEMA_FIELD) == schema
+        and acdc.get(ISSUER_FIELD) == issuer
+        and block.get(ATTRIBUTE_ISSUEE_FIELD) == issuee
         and _permits_endorsing(block.get(CONSTRAINTS_FIELD))
     )
 

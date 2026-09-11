@@ -271,8 +271,20 @@ class Substrate(Protocol):
         registry: SAID | None = None,
         edges: Mapping[str, object] | None = None,
         rules: SAID | None = None,
+        nonce: str | None = None,
     ) -> tuple[Mapping[str, object], str]:
         """A credential: constructed, signed, verified, anchored.
+
+        ``nonce`` is ACDC's salty nonce, and it exists here for one reason: **a
+        revoked credential cannot be reissued.** Two credentials with the same
+        issuer, schema, attributes and datetime are the same credential, so
+        re-seating an office after its credential was revoked would re-present
+        the revoked artifact, and a conforming transaction log refuses it as
+        duplicitous — keripy raises ``LikelyDuplicitousError``, which is the
+        right answer. A fresh appointment is a fresh credential, and the nonce is
+        what makes it one. Caller-supplied rather than generated, because a
+        generated nonce would put wall-clock randomness into committed bytes and
+        end the replay claim (this.i @65buz7).
 
         ``rules`` names the governance framework the credential is issued under,
         by the ruleset's identifier, and lands in the ACDC's ``r``. A GCD

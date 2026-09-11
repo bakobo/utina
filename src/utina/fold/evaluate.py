@@ -330,6 +330,15 @@ def _disturbed_by(corpus: Corpus, enactment: Event, at: Position) -> tuple[SAID,
     is disturbed by nothing and an act whose own clause the amendment left alone
     is the specificity this requirement turns on.
 
+    **In flight means the cure path was still OPEN**, and not merely that the act
+    was pending. An act a previous amendment already closed is not in flight, and
+    a fold that counted it would have every later amendment inherit every earlier
+    one's disturbances — so an amender could be convicted for failing to declare
+    a question somebody else's amendment had already killed, and the declared set
+    would grow without bound down the chain. Acme's own record shows it: the hire
+    has been expired/abandoned since the board-seating amendment, and the second
+    amendment disturbs it not at all.
+
     Computed at the enactment's *effectuation*, which is where its edition
     started binding, and not at its commitment: an enactment that has not carried
     has disturbed nothing yet, and one that never carries disturbs nothing ever
@@ -347,7 +356,12 @@ def _disturbed_by(corpus: Corpus, enactment: Event, at: Position) -> tuple[SAID,
             continue
         was = evaluate(corpus, Committed(act.said), at=earlier)
         now = evaluate(corpus, Committed(act.said), at=effectuation)
-        if isinstance(was, Pending) and isinstance(now, Pending) and _closed(now):
+        if (
+            isinstance(was, Pending)
+            and not _closed(was)
+            and isinstance(now, Pending)
+            and _closed(now)
+        ):
             disturbed.append(act.said)
     return tuple(sorted(disturbed))
 

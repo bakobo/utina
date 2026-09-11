@@ -31,6 +31,7 @@ from .law import (
     Q2_FORECAST,
     Q3_BUDGET,
     QUINN,
+    RESEATING_NONCE,
     SEAT,
     SEAT_ACTS,
     SEAT_OFFICE,
@@ -38,6 +39,7 @@ from .law import (
     UNGOVERNED_ACT,
     board_law,
     founding_law,
+    lowered_law,
 )
 from .record import Acme
 
@@ -226,6 +228,32 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # amendment that names only one of them is the lie Act IV is about.
     plan = name(CAPITAL_PLAN, constructor.propose(BUDGET))
     mark("b21", constructor.endorse(marta, plan))
+
+    # The seat is re-seated before Act IV can run at all. Beat 16 revoked its
+    # credential, and since tick 652c that empties its slot — so the board cannot
+    # amend, because B2 needs all three. This is an extra beat the script does not
+    # have, and it is the honest consequence of making a revocation bite: an
+    # office whose credential is gone is not an office until one is issued again.
+    reseating = constructor.confer(
+        aids[SEAT], role=SEAT_OFFICE, acts=SEAT_ACTS, nonce=RESEATING_NONCE
+    )
+    name("seat-credential-reissued", reseating)
+    mark("reseated", reseating)
+    reissued = str(reseating.body["acdc"]["d"])
+
+    # Beats 22 and 23 — the amendment that lies. It lowers the ordinary-acts bar,
+    # which closes the cure path of EVERY question in flight under B1, and it
+    # declares only the Q3 budget. The capital plan is disturbed too and is not
+    # named. Beat 22 is the amender's claim; beat 23 is the fold's answer, and
+    # both are asked at the coordinate the amendment carries (this.i @bvzzaquc).
+    lowered = name("lower-the-bar", constructor.enact_amendment(
+        lowered_law(aids), act=AMEND, disturbs=[q3]
+    ))
+    constructor.endorse(marta, lowered)
+    constructor.endorse(dev, lowered)
+    carried = constructor.endorse(seat3, lowered, qualification=reissued)
+    mark("b22", carried)
+    mark("b23", carried)
 
     events = constructor.emitted
     return Acme(
