@@ -15,7 +15,13 @@ dispositions."
 
 1. the act is committed as an event of kind ``endorsement``;
 2. the event embeds a credential (``this.i`` @vi4t4i), and the credential's issuer
-   and the event's vouched signer are both exactly the endorser the slot names;
+   and the event's vouched signer are the same identifier — the *actor*, which is
+   the slot's endorser or a delegate acting for it under (2a);
+2a. where the actor is not the endorser, the record carries a standing GCD whose
+   issuer is the endorser and whose issuee is the actor, and whose constraints
+   this fold can evaluate and do admit an endorsement. Authority comes from that
+   credential and never from the KERI delegation beneath it, which proves a
+   relationship and confers nothing (``this.i`` @cglayqvw);
 3. the credential names the pinned endorsement schema (``this.i`` @7db5c4);
 4. its attributes carry ``act`` of ``"issue"`` — this domain commits no revocation
    operator;
@@ -45,13 +51,14 @@ enforced here as attribution over evidence the substrate has already vouched for
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
+from utina.fold import acts
 from utina.fold.group import AID, SAID, Disposition, Group, Slot
-from utina.fold.standing import stood_at
-from utina.substrate import ENDORSEMENT_SCHEMA
+from utina.fold.standing import ISSUANCE_KIND, REVOCATION_KIND, stood_at
+from utina.substrate import ENDORSEMENT_SCHEMA, GCD_SCHEMA
 
 __all__ = [
     "ACDC_FIELD",
@@ -64,8 +71,13 @@ __all__ = [
     "ENDORSE",
     "ENDORSEMENT_KIND",
     "ENDORSEMENT_SCHEMA",
+    "ENDORSING",
+    "EVALUABLE_CONSTRAINTS",
+    "GCD_SCHEMA",
     "ISSUANCE",
+    "ISSUANCE_KIND",
     "ISSUER_FIELD",
+    "REVOCATION_KIND",
     "REVOKES_FIELD",
     "SCHEMA_FIELD",
     "SUBJECT_FIELD",
@@ -130,6 +142,32 @@ ISSUANCE = "issue"
 """Every endorsement an MxN group counts "MUST carry ``act`` ``"issue"``"
 (``dossier-spec-body.md:371``). Revocation is a different operator, which Acme's law
 does not commit."""
+
+
+ATTRIBUTE_ISSUEE_FIELD = "i"
+"""Where a GCD names the delegate its authority is conferred on: the attributes
+block's ``i``, which is ACDC's issuee."""
+
+CONSTRAINTS_FIELD = "constraints"
+ACTS_FIELD = "acts"
+"""The enabling "may". GCD's rule 1 puts every enforceable constraint inside
+``constraints`` and nothing outside it, so this is the only block consulted —
+the facet, including ``presentsAs``, is descriptive accountability a verifier
+MAY ignore for the authorization decision (bakobo/schema#3)."""
+
+EVALUABLE_CONSTRAINTS = frozenset({ACTS_FIELD})
+"""Every constraint dimension this fold can answer. A grant carrying any other
+is refused rather than honoured in part: "an unrecognized key inside
+``constraints`` is fail-closed — a verifier that does not recognize it MUST
+assume that constraint is unmet and MUST deny". ``jurisdictions``, ``icals``,
+``monetaryLimit`` and their siblings need context no committed byte carries, and
+``validFrom``/``validUntil`` need a wall clock, which axiom 2 forbids
+(``this.i`` @cglayqvw)."""
+
+ENDORSING = (("create", "commitment"),)
+"""The grid point an endorsement occupies. An endorsement and a declination are
+both a party committing itself for or against a tabled act, which is ``create
+commitment``, and a grant has to cover it for its holder to make either."""
 
 
 _PRECEDENCE = ((DECLINE, Disposition.DECLINED), (ENDORSE, Disposition.ENDORSED))
@@ -313,7 +351,7 @@ def _classify_slot(
     standing = [
         event
         for index, event in enumerate(committed)
-        if _fills(event, slot, subject)
+        if _fills(event, slot, subject, committed[: index + 1])
         and slot.endorser not in retracted.get(event.said, ())
         and _qualified(event, committed[: index + 1])
     ]
@@ -368,8 +406,17 @@ def attributes(event: CommittedEvent) -> Mapping[str, object]:
     return block if isinstance(block, Mapping) else {}
 
 
-def _fills(event: CommittedEvent, slot: Slot, subject: SAID) -> bool:
-    """Whether ``event`` is an issuance act by this slot's endorser on this subject.
+def _fills(
+    event: CommittedEvent, slot: Slot, subject: SAID, asof: Sequence[CommittedEvent]
+) -> bool:
+    """Whether ``event`` is an issuance act *for* this slot's endorser on this subject.
+
+    For, rather than by: the act may be the endorser's own, or a delegate's made
+    under authority the endorser granted it (:func:`_acts_for`). The two are
+    checked at the actor rather than at the slot, so the standing requirement
+    that a credential's claimed issuer and the event's vouched signer agree still
+    bites — under a grant those name the delegate, and evidence in which they
+    diverge attributes an act to nobody whichever party is acting.
 
     The disposition itself is not read here: an act that reaches this far has been
     attributed and bound to the subject, and what it *says* is the caller's next
@@ -377,11 +424,78 @@ def _fills(event: CommittedEvent, slot: Slot, subject: SAID) -> bool:
     """
     acdc = credential(event)
     block = attributes(event)
+    actor = acdc.get(ISSUER_FIELD)
     return (
         event.kind == ENDORSEMENT_KIND
-        and acdc.get(ISSUER_FIELD) == slot.endorser
-        and event.body.get(ISSUER_FIELD) == slot.endorser
+        and isinstance(actor, str)
+        and event.body.get(ISSUER_FIELD) == actor
+        and _acts_for(actor, slot.endorser, asof)
         and acdc.get(SCHEMA_FIELD) == ENDORSEMENT_SCHEMA
         and block.get(ACT_FIELD) == ISSUANCE
         and block.get(SUBJECT_FIELD) == subject
     )
+
+
+def _acts_for(actor: AID, endorser: AID, asof: Sequence[CommittedEvent]) -> bool:
+    """Whether ``actor``'s act is the slotted ``endorser``'s: itself, or a delegate.
+
+    **A delegate acts here because a credential says it may, never because it is
+    delegated.** A KERI delegation proves a relationship exists and confers no
+    authority at all — the same fact holds of an identifier delegated to greet
+    visitors and one delegated to sign treaties — so what this looks for is a
+    GCD, the artifact that confers (``this.i`` @cglayqvw).
+
+    The record is *searched* for that grant. The endorsement points at nothing
+    and says nothing about its own entitlement, which is what keeps the arm from
+    resting on a citation anybody could have written: an attacker's endorsement
+    can claim what it likes and there is no field here that reads the claim.
+
+    ``asof`` is the record up to and including the act, so a grant is judged at
+    the coordinate it was used from. That gives the revocation behaviour for
+    free and without a special case — a grant revoked before the act confers
+    nothing, one revoked after leaves the act standing, and one issued after the
+    act never reaches back to it. It is Act III's rule applied to a second
+    credential kind.
+    """
+    if actor == endorser:
+        return True
+    return any(
+        _grants(event, actor, endorser) and stood_at(asof, str(credential(event).get("d")))
+        for event in asof
+    )
+
+
+def _grants(event: CommittedEvent, actor: AID, endorser: AID) -> bool:
+    """Whether ``event`` commits a GCD by ``endorser`` letting ``actor`` endorse."""
+    acdc = credential(event)
+    block = attributes(event)
+    return (
+        event.kind == ISSUANCE_KIND
+        and acdc.get(SCHEMA_FIELD) == GCD_SCHEMA
+        and acdc.get(ISSUER_FIELD) == endorser
+        and block.get(ATTRIBUTE_ISSUEE_FIELD) == actor
+        and _permits_endorsing(block.get(CONSTRAINTS_FIELD))
+    )
+
+
+def _permits_endorsing(constraints: object) -> bool:
+    """Whether a grant's constraints admit an endorsement, refusing what they cannot.
+
+    Two gates, and the first is the one that makes the second safe. A grant
+    carrying any dimension this fold does not implement is refused outright,
+    because GCD's rule 1 makes an unrecognized constraint a denial rather than
+    something to skip — an engine that read ``acts`` and ignored a monetary limit
+    would be honouring a grant in part and reporting it whole. Only then is
+    ``acts`` consulted, and every point an endorsement occupies must be covered.
+
+    An absent ``constraints``, and an ``acts`` this fold cannot read, both deny.
+    The published rules disagree with themselves about whether an absent ``acts``
+    is unconstrained or an empty surface (bakobo/schema#4); this is the
+    fail-closed reading, which is also the one the rest of this module takes.
+    """
+    if not isinstance(constraints, Mapping) or not set(constraints) <= EVALUABLE_CONSTRAINTS:
+        return False
+    entries = constraints.get(ACTS_FIELD)
+    if not isinstance(entries, Sequence) or isinstance(entries, str):
+        return False
+    return acts.permits([one for one in entries if isinstance(one, str)], ENDORSING)

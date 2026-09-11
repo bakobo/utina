@@ -487,3 +487,254 @@ def test_one_declination_two_verdicts_end_to_end():
     assert under_board[DEV] is Disposition.DECLINED
     assert not founders().reachable(under_founders)
     assert board().reachable(under_board)
+
+
+# --- acting for a slot through a granted authority (this.i @cglayqvw) ---------
+
+REGISTRY = "ERegistryOfAcme"
+DEVICE = "acme:nina-device"
+
+#: The one act point an endorsement occupies, and the whole of what a grant has
+#: to cover for its holder to endorse.
+ENDORSING = ["create commitment"]
+
+
+def grant(
+    said: str,
+    *,
+    issuer: str,
+    issuee: str,
+    acts: Any = None,
+    constraints: Any = None,
+    schema: str = slots.GCD_SCHEMA,
+    registry: str = REGISTRY,
+) -> Ev:
+    """One committed GCD issuance: the credential that confers authority.
+
+    ``constraints`` overrides ``acts`` wholesale, so a case can commit a
+    constraint dimension the fold does not implement and prove it denies.
+    """
+    if constraints is None:
+        constraints = {"acts": ENDORSING if acts is None else acts}
+    acdc: dict[str, Any] = {
+        "v": "ACDCtest",
+        "d": f"{said}-credential",
+        "i": issuer,
+        "ri": registry,
+        "s": schema,
+        "a": {
+            "d": f"{said}-attributes",
+            "dt": "2026-01-01T00:00:00.000000+00:00",
+            "i": issuee,
+            "facet": {"role": "board-seat-3-device", "presentsAs": issuer},
+            "constraints": constraints,
+        },
+        "r": "ERulesOfGcd",
+    }
+    body: dict[str, Any] = {"t": "iss", "i": issuer, "ri": registry, "acdc": acdc}
+    return Ev(said=said, kind=slots.ISSUANCE_KIND, body=body)
+
+
+def revoked(said: str, credential: str, *, registry: str = REGISTRY) -> Ev:
+    return Ev(
+        said=said,
+        kind=slots.REVOCATION_KIND,
+        body={"t": "rev", "i": NINA, "ri": registry, "said": credential},
+    )
+
+
+def test_a_delegate_holding_a_standing_grant_fills_its_granters_slot():
+    """Beat 15. Nina's device signs with its own key and fills seat 3's slot.
+
+    Nothing the device says about itself decides this. The fold *searches* the
+    record for a grant whose issuer is the slotted endorser and whose issuee is
+    the acting identifier — the endorsement points at nothing, so there is no
+    citation for a stranger to have written.
+    """
+    events = [grant("EGrant", issuer=NINA, issuee=DEVICE), signed("EAct1", DEVICE)]
+
+    assert disposition_of(board(), events, NINA) is Disposition.ENDORSED
+
+
+def test_a_delegates_declination_declines_its_granters_slot():
+    """The asymmetry holds through a grant: a no is as much an act as a yes."""
+    events = [
+        grant("EGrant", issuer=NINA, issuee=DEVICE),
+        signed("EAct1", DEVICE, disp="decline"),
+    ]
+
+    assert disposition_of(board(), events, NINA) is Disposition.DECLINED
+
+
+def test_a_delegate_with_no_grant_fills_nothing():
+    """The bare act, with the grant taken away — the case the arm must not widen."""
+    assert disposition_of(board(), [signed("EAct1", DEVICE)], NINA) is Disposition.PENDING
+
+
+def test_a_grant_from_somebody_else_does_not_fill_this_slot():
+    """Marta cannot grant away seat 3's authority; she does not hold it."""
+    events = [grant("EGrant", issuer=MARTA, issuee=DEVICE), signed("EAct1", DEVICE)]
+
+    assert disposition_of(board(), events, NINA) is Disposition.PENDING
+
+
+def test_a_grant_to_somebody_else_does_not_let_this_actor_in():
+    """The issuee is the whole of who may act under it."""
+    events = [grant("EGrant", issuer=NINA, issuee="acme:other-device"), signed("EAct1", DEVICE)]
+
+    assert disposition_of(board(), events, NINA) is Disposition.PENDING
+
+
+def test_a_grant_revoked_before_the_act_fills_nothing():
+    """What makes delegated authority revocable at all (``this.i`` @cglayqvw).
+
+    The KERI delegation underneath is permanent and cannot be undone; this is
+    the act that ends the authority, and it ends it going forward.
+    """
+    events = [
+        grant("EGrant", issuer=NINA, issuee=DEVICE),
+        revoked("ERev", "EGrant-credential"),
+        signed("EAct1", DEVICE),
+    ]
+
+    assert disposition_of(board(), events, NINA) is Disposition.PENDING
+
+
+def test_a_grant_revoked_after_the_act_leaves_the_act_standing():
+    """Act III's rule, reused rather than reinvented: the grant *did* stand at p.
+
+    A revocation reaches no earlier act, because no earlier act is judged over a
+    bundle containing it. Nothing here is a special case for grants.
+    """
+    events = [
+        grant("EGrant", issuer=NINA, issuee=DEVICE),
+        signed("EAct1", DEVICE),
+        revoked("ERev", "EGrant-credential"),
+    ]
+
+    assert disposition_of(board(), events, NINA) is Disposition.ENDORSED
+
+
+def test_a_grant_issued_after_the_act_does_not_reach_back_to_it():
+    """Authority is not granted retroactively: at the act there was none."""
+    events = [signed("EAct1", DEVICE), grant("EGrant", issuer=NINA, issuee=DEVICE)]
+
+    assert disposition_of(board(), events, NINA) is Disposition.PENDING
+
+
+def test_a_grant_that_is_not_a_gcd_confers_nothing():
+    """A credential of another schema is another kind of statement entirely."""
+    events = [
+        grant("EGrant", issuer=NINA, issuee=DEVICE, schema="ESomeOtherSchema"),
+        signed("EAct1", DEVICE),
+    ]
+
+    assert disposition_of(board(), events, NINA) is Disposition.PENDING
+
+
+@pytest.mark.parametrize(
+    "acts",
+    [
+        ["observe record"],
+        ["create record"],
+        ["modify commitment"],
+        [],
+        ["nonsense"],
+        [42],
+        "create commitment",
+    ],
+    ids=[
+        "wrong-effect",
+        "wrong-kind",
+        "wrong-effect-2",
+        "empty",
+        "unparseable",
+        "nonstring",
+        "bare-string",
+    ],
+)
+def test_a_grant_whose_acts_do_not_cover_endorsing_confers_nothing(acts):
+    """An endorsement is ``create commitment`` and a grant has to say so.
+
+    "An act is authorized only if EVERY (effect, state-kind) point it occupies
+    is covered here" — so a neighbouring point is not a near miss, it is a no.
+    """
+    events = [grant("EGrant", issuer=NINA, issuee=DEVICE, acts=acts), signed("EAct1", DEVICE)]
+
+    assert disposition_of(board(), events, NINA) is Disposition.PENDING
+
+
+def test_a_grant_covering_endorsing_among_others_confers_it():
+    """Within one field values are ORed, so a wider grant still covers the point."""
+    events = [
+        grant(
+            "EGrant", issuer=NINA, issuee=DEVICE, acts=["observe record", "create commitment"]
+        ),
+        signed("EAct1", DEVICE),
+    ]
+
+    assert disposition_of(board(), events, NINA) is Disposition.ENDORSED
+
+
+def test_a_braced_grant_covering_endorsing_confers_it():
+    """The cross-product form reaches the point as surely as the bare one does."""
+    events = [
+        grant("EGrant", issuer=NINA, issuee=DEVICE, acts=["create {record, commitment}"]),
+        signed("EAct1", DEVICE),
+    ]
+
+    assert disposition_of(board(), events, NINA) is Disposition.ENDORSED
+
+
+@pytest.mark.parametrize(
+    "constraints",
+    [
+        {"acts": ENDORSING, "jurisdictions": ["US"]},
+        {"acts": ENDORSING, "monetaryLimit": "25 CHF"},
+        {"acts": ENDORSING, "icals": []},
+        {"acts": ENDORSING, "validUntil": "2027-01-01T00:00:00.000000+00:00"},
+        {"acts": ENDORSING, "maxDeploysPerDay": 3},
+        {},
+        "unconstrained",
+    ],
+    ids=["jurisdictions", "monetary", "icals", "validUntil", "custom", "none", "not-a-mapping"],
+)
+def test_a_grant_carrying_a_constraint_the_fold_cannot_evaluate_confers_nothing(constraints):
+    """GCD rule 1, from the verifier's side, and it is the whole reason this is safe.
+
+    "An unrecognized key inside ``constraints`` is fail-closed — a verifier that
+    does not recognize it MUST assume that constraint is unmet and MUST deny."
+    utina's fold implements ``acts`` and nothing else, so a grant bounded by a
+    clock, a jurisdiction or a custom key is one this engine must refuse rather
+    than honour in part. An absent ``constraints`` denies for the same reason
+    (bakobo/schema#4 records that the published rules disagree with themselves
+    about this, and this is the fail-closed reading of it).
+    """
+    events = [
+        grant("EGrant", issuer=NINA, issuee=DEVICE, constraints=constraints),
+        signed("EAct1", DEVICE),
+    ]
+
+    assert disposition_of(board(), events, NINA) is Disposition.PENDING
+
+
+def test_an_endorser_acting_as_itself_needs_no_grant():
+    """The law slots the seat, so the seat acting is the slotted party acting.
+
+    Its own qualification is the credential its endorsement cites, judged by
+    :func:`_qualified` — a grant would be asking it to be delegated to itself.
+    """
+    assert disposition_of(board(), [signed("EAct1", NINA)], NINA) is Disposition.ENDORSED
+
+
+def test_an_act_whose_vouched_signer_is_not_its_credentials_issuer_fills_nothing():
+    """Evidence attributing an act to two parties attributes it to nobody.
+
+    The check survives the second arm: it is the *actor* the two must agree on,
+    not the slot's endorser, because under a grant those are different parties.
+    """
+    event = signed("EAct1", DEVICE)
+    event.body["i"] = NINA
+    events = [grant("EGrant", issuer=NINA, issuee=DEVICE), event]
+
+    assert disposition_of(board(), events, NINA) is Disposition.PENDING
