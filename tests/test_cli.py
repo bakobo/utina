@@ -466,7 +466,7 @@ def test_a_defeat_with_no_declination_still_carries_its_ground():
 def test_log_shows_every_committed_event_in_canonical_order():
     out = screen("log")
     assert "COMMITTED LOG AT the end of the record" in out
-    assert "35 events" in out
+    assert "37 events" in out
     assert "Arrival order is not consulted" in out
     seqs = [
         int(line.split()[0])

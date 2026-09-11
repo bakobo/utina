@@ -30,7 +30,17 @@ pytest.importorskip(
 
 from bakobo.errors import BakoboError
 
-from utina.acme import DEV, DEVICE, GAID, MARTA, Q2_FORECAST, QUINN, SEAT
+from utina.acme import (
+    CAPITAL_PLAN,
+    DEV,
+    DEVICE,
+    GAID,
+    MARTA,
+    Q2_FORECAST,
+    Q3_BUDGET,
+    QUINN,
+    SEAT,
+)
 from utina.enact import Constructor
 from utina.fold import Constitution, evaluate
 from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies
@@ -58,6 +68,7 @@ AT = {
     17: "b17",
     18: "d5",
     19: "b17",
+    21: "b21",
     24: "d9",
     25: "board-seated",
 }
@@ -459,14 +470,20 @@ def test_b20_duplicity_at_the_signing_position_is_self_convicted():
 # --- Act IV — the amendment that lies -----------------------------------------
 
 
-def test_b21_a_second_question_is_pending_under_b1():
-    """Row 21: the capital plan, pending alongside row 17's Q3 budget."""
-    pytest.skip(
-        owed(
-            "U1.5 slots naming the seat AID (tick 7tvh)",
-            "U2.1 the revocation (tick 3z6a)",
-        )
-    )
+def test_b21_a_second_question_is_pending_under_b1(acme):
+    """Row 21: the capital plan, pending alongside row 17's Q3 budget.
+
+    Two acts in flight under one clause, which is what makes beat 23's
+    computed disturbance set a set rather than a singleton — and therefore what
+    makes an amendment naming only one of them falsifiable.
+    """
+    finding = evaluate(acme.corpus, Committed(acme.said(CAPITAL_PLAN)), at=acme.at(AT[21]))
+    assert isinstance(finding, Pending)
+    assert {one.clause for one in finding.requirement} == {"B1"}
+    assert {one.endorser for one in finding.requirement} == {acme.aid(DEV), acme.aid(SEAT)}
+
+    q3 = evaluate(acme.corpus, Committed(acme.said(Q3_BUDGET)), at=acme.at(AT[21]))
+    assert isinstance(q3, Pending), "and beat 17's is still pending beside it"
 
 
 def test_b22_the_second_amendment_declares_a_disturbance_set_that_under_declares():

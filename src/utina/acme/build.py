@@ -18,6 +18,7 @@ from utina.substrate import FacadeSubstrate, FoldValues, Substrate
 
 from .law import (
     AMENDMENT_ACTS,
+    CAPITAL_PLAN,
     DEV,
     DEVICE,
     DEVICE_ROLE,
@@ -218,6 +219,13 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # verdict. Beats 18 and 19 re-ask beat 12's question from here.
     q3 = name(Q3_BUDGET, constructor.propose(BUDGET))
     mark("b17", constructor.endorse(marta, q3))
+
+    # Beat 21 — the capital plan, a SECOND question pending under B1 alongside
+    # beat 17's Q3 budget. Two acts in flight under one clause is the whole point
+    # of it: beat 23's computed disturbance set has to contain both, and an
+    # amendment that names only one of them is the lie Act IV is about.
+    plan = name(CAPITAL_PLAN, constructor.propose(BUDGET))
+    mark("b21", constructor.endorse(marta, plan))
 
     events = constructor.emitted
     return Acme(

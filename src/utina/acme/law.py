@@ -124,6 +124,12 @@ Q2_FORECAST = "approve-q2-forecast"
 #: question over a bundle the revocation is already in.
 Q3_BUDGET = "approve-q3-budget"
 
+#: The name the record files the capital plan under. A fourth act of the budget
+#: class, on the same reasoning as the two above: beats 21 to 23 turn on there
+#: being TWO questions pending under B1 at once, which is a fact about how many
+#: acts are in flight and not about how many classes the law rules.
+CAPITAL_PLAN = "approve-capital-plan"
+
 #: The act nothing governs.
 UNGOVERNED_ACT = "declare-dividend"
 
