@@ -41,8 +41,13 @@ def affirmed() -> Affirmed:
     return Affirmed(clauses=("A1",), endorsements=("EEnd1", "EEnd2"), bundle="EBundle1")
 
 
+#: A schema-shaped identifier for an element to require. Every element names one
+#: (custos-4.2.md:1435-1437), and it comes from the slot in real use.
+SCHEMA = "E" + "s" * 43
+
+
 def element(endorser: str = "acme:dev", clause: str = "A1") -> RequirementElement:
-    return RequirementElement(endorser=endorser, clause=clause)
+    return RequirementElement(endorser=endorser, clause=clause, schema=SCHEMA)
 
 
 # --- The type itself ---------------------------------------------------------
@@ -305,20 +310,30 @@ def test_a_pending_finding_refuses_a_set_that_is_not_deduplicated() -> None:
 
 def test_a_requirement_element_citing_no_clause_is_not_a_ground() -> None:
     with pytest.raises(BakoboError) as raised:
-        RequirementElement(endorser="acme:dev", clause="")
+        RequirementElement(endorser="acme:dev", clause="", schema=SCHEMA)
     assert raised.value.is_exactly("e.state.ground-missing.f")
 
 
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"endorser": "", "clause": "A1"},
-        {"endorser": 1, "clause": "A1"},
-        {"endorser": "acme:dev", "clause": 1},
-        {"endorser": "acme:dev", "clause": "A1", "kind": ""},
-        {"endorser": "acme:dev", "clause": "A1", "species": "absent"},
+        {"endorser": "", "clause": "A1", "schema": SCHEMA},
+        {"endorser": 1, "clause": "A1", "schema": SCHEMA},
+        {"endorser": "acme:dev", "clause": 1, "schema": SCHEMA},
+        {"endorser": "acme:dev", "clause": "A1", "schema": SCHEMA, "kind": ""},
+        {"endorser": "acme:dev", "clause": "A1", "schema": SCHEMA, "species": "absent"},
+        {"endorser": "acme:dev", "clause": "A1", "schema": ""},
+        {"endorser": "acme:dev", "clause": "A1", "schema": 1},
     ],
-    ids=["no-endorser", "endorser-not-text", "clause-not-text", "no-kind", "species-not-one"],
+    ids=[
+        "no-endorser",
+        "endorser-not-text",
+        "clause-not-text",
+        "no-kind",
+        "species-not-one",
+        "no-schema",
+        "schema-not-text",
+    ],
 )
 def test_a_requirement_element_refuses_a_field_that_is_not_what_it_claims(
     kwargs: dict[str, object],
@@ -331,7 +346,7 @@ def test_a_requirement_element_refuses_a_field_that_is_not_what_it_claims(
 def test_the_canonical_set_sorts_on_four_fields_and_merges_only_exact_repeats() -> None:
     """:1650-1656: subject, kind, citing-clause bytes, species — and the key sees all four."""
     window = RequirementElement(
-        endorser="acme:dev", clause="A1", species=PendingSpecies.WINDOW_OPEN
+        endorser="acme:dev", clause="A1", schema=SCHEMA, species=PendingSpecies.WINDOW_OPEN
     )
     ordered = canonical_requirement_set(
         [element("acme:nina"), window, element("acme:dev"), element("acme:dev")]
@@ -348,7 +363,7 @@ def test_two_elements_differing_only_in_species_do_not_merge() -> None:
     """:1652-1656 states it outright, and it is why species is in the key at all."""
     absent = element()
     window = RequirementElement(
-        endorser="acme:dev", clause="A1", species=PendingSpecies.WINDOW_OPEN
+        endorser="acme:dev", clause="A1", schema=SCHEMA, species=PendingSpecies.WINDOW_OPEN
     )
     assert absent.dedup_key() != window.dedup_key()
     assert len(canonical_requirement_set([absent, window])) == 2

@@ -40,6 +40,7 @@ __all__ = [
     "GROUP_ENDORSER_REPEATED",
     "GROUP_SLOTS_MISSING",
     "SAID",
+    "SLOT_SCHEMA_MISSING",
     "SLOT_WEIGHT_NOT_POSITIVE",
     "SLOT_WEIGHT_NOT_RATIONAL",
     "Disposition",
@@ -93,6 +94,19 @@ GROUP_SLOTS_MISSING = ErrorCode(
     args=("operator",),
 )
 
+SLOT_SCHEMA_MISSING = ErrorCode(
+    code="e.input.missing.slot-schema.f",
+    title="A slot must name the schema its evidence satisfies.",
+    detail=(
+        "The slot for {endorser} names no schema, so the requirement it makes could not say "
+        "what kind of credential would discharge it. custos-4.2.md:1435-1437 requires a "
+        "requirement element to name its schema by identifier, and an element can only name "
+        "what the slot committed."
+    ),
+    args=("endorser",),
+    hint="Commit the schema identifier the slot's evidence must satisfy alongside its weight.",
+)
+
 GROUP_ENDORSER_REPEATED = ErrorCode(
     code="e.input.multi.slot-endorser.f",
     title="A composition rule slots each endorser at most once.",
@@ -125,12 +139,24 @@ _OUTSTANDING = frozenset({Disposition.PENDING})
 
 @dataclass(frozen=True)
 class Slot:
-    """One candidate endorser and the share of authority the law gives them."""
+    """One candidate endorser, the share of authority the law gives them, and the
+    schema their evidence must satisfy.
+
+    The schema is committed law rather than an engine constant: ``:1946-1951``
+    has each slot "naming the schema its evidence must satisfy", and
+    ``:1435-1437`` then requires a pending finding's requirement elements to name
+    those schemas back. With one credential kind in the world the distinction was
+    invisible; with two it decides whether a requirement for an endorsement reads
+    as dischargeable by a seat credential (this.i @z373ew7j).
+    """
 
     endorser: AID
     weight: Fraction
+    schema: SAID
 
     def __post_init__(self) -> None:
+        if not isinstance(self.schema, str) or not self.schema:
+            raise SLOT_SCHEMA_MISSING(endorser=self.endorser)
         if not isinstance(self.weight, Fraction):
             raise SLOT_WEIGHT_NOT_RATIONAL(
                 endorser=self.endorser, kind=type(self.weight).__name__

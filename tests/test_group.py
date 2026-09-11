@@ -19,6 +19,10 @@ from utina.fold.group import Disposition, Group, Slot
 HALF = Fraction(1, 2)
 THIRD = Fraction(1, 3)
 
+#: The schema a slot names as what its evidence must satisfy. Committed law
+#: (custos-4.2.md:1946-1951), so every slot carries one.
+SCHEMA = "E" + "s" * 43
+
 MARTA = "acme:marta"
 DEV = "acme:dev"
 NINA = "acme:nina"
@@ -27,32 +31,52 @@ MALLORY = "acme:mallory"
 
 def founders() -> Group:
     """Clause A1: two slots at 1/2, so unity needs both."""
-    return Group("MxN", (Slot(MARTA, HALF), Slot(DEV, HALF)))
+    return Group("MxN", (Slot(MARTA, HALF, SCHEMA), Slot(DEV, HALF, SCHEMA)))
 
 
 def board() -> Group:
     """Clause B1: three slots at 1/2, so any two reach unity."""
-    return Group("MxN", (Slot(MARTA, HALF), Slot(DEV, HALF), Slot(NINA, HALF)))
+    return Group(
+        "MxN", (Slot(MARTA, HALF, SCHEMA), Slot(DEV, HALF, SCHEMA), Slot(NINA, HALF, SCHEMA))
+    )
 
 
 def amendment_bar() -> Group:
     """Clause B2: three slots at 1/3, so all three are needed."""
-    return Group("MxN", (Slot(MARTA, THIRD), Slot(DEV, THIRD), Slot(NINA, THIRD)))
+    return Group(
+        "MxN", (Slot(MARTA, THIRD, SCHEMA), Slot(DEV, THIRD, SCHEMA), Slot(NINA, THIRD, SCHEMA))
+    )
 
 
 # --- What a slot will and will not accept -------------------------------------
 
 
 def test_a_slot_carries_an_exact_rational_weight():
-    slot = Slot(MARTA, HALF)
+    slot = Slot(MARTA, HALF, SCHEMA)
     assert slot.endorser == MARTA
     assert slot.weight == Fraction(1, 2)
+    assert slot.schema == SCHEMA
+
+
+@pytest.mark.parametrize("schema", ["", None, 7], ids=["empty", "absent", "not-text"])
+def test_a_slot_naming_no_schema_is_refused(schema):
+    """``custos-4.2.md:1946-1951``, and the SHALL at :1435-1437 that rests on it.
+
+    A slot that named no schema would make a requirement element that could not
+    say what discharges it — and with two credential kinds in the world, a
+    requirement for an endorsement that cannot name its schema is one a seat
+    credential answers (this.i @z373ew7j).
+    """
+    with pytest.raises(BakoboError) as raised:
+        Slot(MARTA, HALF, schema)
+    assert raised.value.code == "e.input.missing.slot-schema.f"
+    assert MARTA in str(raised.value)
 
 
 def test_a_float_weight_is_refused_rather_than_converted():
     """Converting is where the lie enters: Fraction(0.1) is not one tenth."""
     with pytest.raises(BakoboError) as raised:
-        Slot(MARTA, 0.5)  # type: ignore[arg-type]
+        Slot(MARTA, 0.5, SCHEMA)  # type: ignore[arg-type]
     assert raised.value.code == "e.input.format.slot-weight.f"
     assert not raised.value.retryable
     assert "float" in raised.value.detail
@@ -61,19 +85,19 @@ def test_a_float_weight_is_refused_rather_than_converted():
 def test_an_integer_weight_is_refused_too():
     """Exact, but not a Fraction. One rule, so a law parser has one thing to do."""
     with pytest.raises(BakoboError) as raised:
-        Slot(MARTA, 1)  # type: ignore[arg-type]
+        Slot(MARTA, 1, SCHEMA)  # type: ignore[arg-type]
     assert raised.value.code == "e.input.format.slot-weight.f"
 
 
 def test_a_negative_weight_is_refused_because_it_would_invert_an_endorsement():
     with pytest.raises(BakoboError) as raised:
-        Slot(MARTA, Fraction(-1, 2))
+        Slot(MARTA, Fraction(-1, 2), SCHEMA)
     assert raised.value.code == "e.input.range.slot-weight.f"
 
 
 def test_a_zero_weight_is_refused_because_it_can_never_discharge():
     with pytest.raises(BakoboError) as raised:
-        Slot(MARTA, Fraction(0))
+        Slot(MARTA, Fraction(0), SCHEMA)
     assert raised.value.code == "e.input.range.slot-weight.f"
 
 
@@ -88,14 +112,14 @@ def test_a_group_with_no_slots_is_refused():
 
 def test_a_group_may_not_slot_one_endorser_twice():
     with pytest.raises(BakoboError) as raised:
-        Group("MxN", (Slot(MARTA, HALF), Slot(MARTA, HALF)))
+        Group("MxN", (Slot(MARTA, HALF, SCHEMA), Slot(MARTA, HALF, SCHEMA)))
     assert raised.value.code == "e.input.multi.slot-endorser.f"
     assert MARTA in raised.value.detail
 
 
 def test_a_group_finds_its_slot_by_endorser_and_admits_when_it_has_none():
     group = founders()
-    assert group.slot(DEV) == Slot(DEV, HALF)
+    assert group.slot(DEV) == Slot(DEV, HALF, SCHEMA)
     assert group.slot(MALLORY) is None
 
 
@@ -239,7 +263,7 @@ def test_reachability_is_endorsed_plus_pending():
 def test_outstanding_names_only_the_pending_slots_in_the_law_s_order():
     group = board()
     mixed = {MARTA: Disposition.ENDORSED, DEV: Disposition.DECLINED}
-    assert group.outstanding(mixed) == (Slot(NINA, HALF),)
+    assert group.outstanding(mixed) == (Slot(NINA, HALF, SCHEMA),)
 
 
 def test_outstanding_is_empty_once_every_slot_has_acted():
@@ -250,7 +274,9 @@ def test_outstanding_is_empty_once_every_slot_has_acted():
 
 def test_outstanding_keeps_the_committed_order_rather_than_sorting():
     """Canonical order is the order the law committed, which is already a total one."""
-    group = Group("MxN", (Slot(NINA, THIRD), Slot(MARTA, THIRD), Slot(DEV, THIRD)))
+    group = Group(
+        "MxN", (Slot(NINA, THIRD, SCHEMA), Slot(MARTA, THIRD, SCHEMA), Slot(DEV, THIRD, SCHEMA))
+    )
     assert [slot.endorser for slot in group.outstanding({})] == [NINA, MARTA, DEV]
 
 
@@ -259,6 +285,6 @@ def test_outstanding_keeps_the_committed_order_rather_than_sorting():
 
 def test_a_group_whose_weights_cannot_reach_unity_is_permitted_and_unreachable():
     """custos-questions.md Q22: the fold does not rule on the wisdom of committed law."""
-    group = Group("MxN", (Slot(MARTA, THIRD), Slot(DEV, THIRD)))
+    group = Group("MxN", (Slot(MARTA, THIRD, SCHEMA), Slot(DEV, THIRD, SCHEMA)))
     assert not group.reachable({})
     assert not group.satisfied_by({MARTA, DEV})

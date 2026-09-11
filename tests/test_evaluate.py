@@ -40,12 +40,19 @@ from utina.substrate import ENDORSEMENT_SCHEMA
 MARTA, DEV, NINA = "acme:marta", "acme:dev", "acme:nina"
 GAID = "acme:gaid"
 
+#: What every slot below names as the schema its evidence must satisfy.
+SCHEMA = ENDORSEMENT_SCHEMA
+
 
 # --- a committed log, built by hand -------------------------------------------
 
 
 def slots(*pairs):
-    return [{"endorser": who, "weight": weight} for who, weight in pairs]
+    """Committed slots. Each names the schema its evidence must satisfy, which is
+    committed law rather than an engine constant (custos-4.2.md:1946-1951)."""
+    return [
+        {"endorser": who, "weight": weight, "schema": SCHEMA} for who, weight in pairs
+    ]
 
 
 def clause(identifier, governs, *pairs):

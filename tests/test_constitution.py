@@ -92,7 +92,12 @@ from utina.substrate import ENDORSEMENT_SCHEMA  # noqa: E402
 
 
 def slots(*pairs):
-    return [{"endorser": endorser, "weight": weight} for endorser, weight in pairs]
+    """Committed slots. Each names the schema its evidence must satisfy, which is
+    committed law rather than an engine constant (custos-4.2.md:1946-1951)."""
+    return [
+        {"endorser": endorser, "weight": weight, "schema": SCHEMA}
+        for endorser, weight in pairs
+    ]
 
 
 def clause(ident, governs, *pairs):
@@ -102,6 +107,9 @@ def clause(ident, governs, *pairs):
 
 GAID = "acme:gaid"
 MARTA, DEV, NINA = "acme:marta", "acme:dev", "acme:nina"
+
+#: What every slot below names as the schema its evidence must satisfy.
+SCHEMA = ENDORSEMENT_SCHEMA
 
 #: The act class Acme's amendment clause governs, in both editions.
 AMEND = "amend-operating-agreement"

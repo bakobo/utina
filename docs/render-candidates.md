@@ -44,7 +44,7 @@ utina eval sign-office-lease --at d3
   ------------------------------------------------------------------------------------
 
   position    d3 (seq 8)
-  law head    3b8b16f24a68...          clause A1 (MxN), unity 1
+  law head    6e367f747a53...          clause A1 (MxN), unity 1
   subject     EijCMIuLxgp_fVyn7QswUxykLRJBUsD3vDVjS6K-LbM8
 
   slot              weight   disposition   committed act

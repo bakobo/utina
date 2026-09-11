@@ -61,6 +61,13 @@ MALFORMED_LAW = ErrorCode(
 _FIELD = b"\x1f"
 _ITEM = b"\x1d"
 
+#: The byte that separates a slot's own three parts. A third separator rather
+#: than a printable character, for the reason the other two are separators: an
+#: endorser, a weight and a schema identifier are all strings a domain chooses,
+#: and any printable delimiter one of them could contain would let a slot forge
+#: a boundary and commit a clause whose bytes read as a different clause.
+_PART = b"\x1e"
+
 
 def _as_str(value: object, field: str) -> str:
     if not isinstance(value, str):
@@ -105,6 +112,7 @@ class Clause:
             Slot(
                 endorser=_as_str(slot.get("endorser"), "endorser"),
                 weight=_as_weight(slot.get("weight"), "weight"),
+                schema=_as_str(slot.get("schema"), "schema"),
             )
             for slot in (
                 _as_mapping(raw, "slot")
@@ -148,7 +156,7 @@ class Clause:
                 b"slots",
                 _ITEM.join(
                     sorted(
-                        f"{slot.endorser}={slot.weight.numerator}/{slot.weight.denominator}".encode()
+                        _slot_bytes(slot)
                         for slot in self.group.slots
                     )
                 ),
@@ -158,3 +166,20 @@ class Clause:
     def said(self) -> str:
         """This clause's self-addressing identifier: a digest of its own bytes."""
         return hashlib.sha256(self.sub_block()).hexdigest()
+
+
+def _slot_bytes(slot: Slot) -> bytes:
+    """One slot's three committed parts: who may act, how much, and with what.
+
+    The schema is in the bytes because it is law: a clause whose slots wanted a
+    different kind of credential would be a different clause, and a head that
+    could not tell them apart would let an amendment change what discharges a
+    requirement without changing the law head.
+    """
+    return _PART.join(
+        (
+            slot.endorser.encode("utf-8"),
+            f"{slot.weight.numerator}/{slot.weight.denominator}".encode(),
+            slot.schema.encode("utf-8"),
+        )
+    )

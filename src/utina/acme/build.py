@@ -51,13 +51,16 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     """
     substrate = FacadeSubstrate() if substrate is None else substrate
     aids = {alias: substrate.incept(alias) for alias in (GAID, MARTA, DEV, NINA)}
-    marta, dev, nina = aids[MARTA], aids[DEV], aids[NINA]
+    marta, dev = aids[MARTA], aids[DEV]
+    # Nina is incepted and aliased and commits no act. She holds board seat 3's
+    # keys in the story; in the record the seat signs, because the law slots the
+    # office and the substrate holds every party's keys anyway (@z373ew7j).
 
     # Board seat 3 is an office, not a person: a delegated identifier of the
     # domain, whose keys Nina holds (custos-4.2.md:2139-2148, this.i @2a25xudi).
     # It is delegated after the four self-incepted parties so that their key
     # material, derived from the pinned salt by index, does not move.
-    aids[SEAT] = substrate.delegate(aids[GAID], SEAT)
+    seat3 = aids[SEAT] = substrate.delegate(aids[GAID], SEAT)
     constructor = Constructor(substrate, aids[GAID], values=values)
 
     saids: dict[str, str] = {}
@@ -124,10 +127,12 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # event of its own.
     mark("b11", constructor.endorse(dev, equity))
 
-    # D5 — the budget carries on Marta and Nina, with Dev never acting.
+    # D5 — the budget carries on Marta and the seat, with Dev never acting. The
+    # organ signs: the seat is what the law slots, and Nina holds its keys in the
+    # story rather than in the record (this.i @z373ew7j).
     budget = name(BUDGET, constructor.propose(BUDGET))
     constructor.endorse(marta, budget)
-    mark("d5", constructor.endorse(nina, budget))
+    mark("d5", constructor.endorse(seat3, budget))
 
     # D6 — the budget is tabled again and Dev declines it. Same signed no as
     # D3, three slots instead of two, and the fold draws the difference.
@@ -135,12 +140,12 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     constructor.endorse(marta, retabled)
     mark("d6", constructor.decline(dev, retabled))
 
-    # D7 — both founders want the amendment; the seated director does not, and
-    # under B2 that is enough, because amendment authority was never distributed.
+    # D7 — both founders want the amendment; the seated organ does not, and under
+    # B2 that is enough, because amendment authority was never distributed.
     amend = name(AMEND, constructor.propose(AMEND))
     constructor.endorse(marta, amend)
     constructor.endorse(dev, amend)
-    mark("d7", constructor.decline(nina, amend))
+    mark("d7", constructor.decline(seat3, amend))
 
     # D8 — a question the law is silent about. D9 re-asks D1 from here.
     dividend = constructor.propose(UNGOVERNED_ACT)

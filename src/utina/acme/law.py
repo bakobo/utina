@@ -21,6 +21,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
 
+from utina.substrate import ENDORSEMENT_SCHEMA
+
 #: The governed domain. An *alias*, not an identifier: under keripy a prefix is
 #: a digest of its own inception event and cannot be named beforehand, so the law
 #: below is a function of what inception returned rather than of these strings
@@ -59,7 +61,10 @@ GOVERNANCE_REGISTRY = "acme-governance"
 SEAT_SCHEMA = "EGC1M03TgvSUMlGLusG60CIKIBgoiTu9Is_VQgb2eeUm"
 
 FOUNDERS = (MARTA, DEV)
-BOARD = (MARTA, DEV, NINA)
+
+#: Who the board law slots: the two founders and the *seat*, never the director
+#: who holds its keys (this.i @z373ew7j).
+BOARD = (MARTA, DEV, SEAT)
 
 #: What the ordinary-acts clause rules, in the order the record tables them.
 #: ``declare-dividend`` is deliberately absent from every clause: one beat needs
@@ -90,7 +95,7 @@ UNGOVERNED_ACT = "declare-dividend"
 
 
 def slot(endorser: str, weight: Fraction) -> Mapping[str, object]:
-    """One committed slot: who may act, and the share of authority they hold.
+    """One committed slot: who may act, with how much weight, and with what evidence.
 
     The weight commits as an exact rational **string** — ``"1/2"`` — which is
     ``docs/interfaces.md``'s shape for the law body and what
@@ -99,8 +104,18 @@ def slot(endorser: str, weight: Fraction) -> Mapping[str, object]:
     and the two have to be the same thing. The bytes are unchanged either way:
     the canonical encoder writes a ``Fraction`` as ``"1/2"`` too, so no
     identifier moves.
+
+    Every slot of Acme's law names the dossier's endorsement schema, because
+    every clause here is discharged by endorsements. The field is committed
+    rather than assumed (``custos-4.2.md:1946-1951``): the seat credential is a
+    second ACDC kind, and a requirement that could not say which of the two it
+    wanted would be satisfiable by the wrong one.
     """
-    return {"endorser": endorser, "weight": f"{weight.numerator}/{weight.denominator}"}
+    return {
+        "endorser": endorser,
+        "weight": f"{weight.numerator}/{weight.denominator}",
+        "schema": ENDORSEMENT_SCHEMA,
+    }
 
 
 def clause(
@@ -158,6 +173,11 @@ def board_law(aids: Mapping[str, str]) -> Mapping[str, object]:
     unity — and the authority to change the rules is not: three slots at a
     third, so all three are needed. That retained bar is the point of the demo.
 
+    The third slot is board seat 3, an office, and not Nina, who holds its keys.
+    A law that slotted the officer would say a governance power attaches to a
+    person; under the office, a director leaving is a rotation on the seat and
+    the law does not move at all (this.i @z373ew7j).
+
     A3 is re-committed last and unchanged. An amendment replaces the edition
     rather than adding to it (this.i @wg3jr6), so a clause that does not change
     is re-committed rather than left implicitly in force; carrying its bytes is
@@ -171,13 +191,13 @@ def board_law(aids: Mapping[str, str]) -> Mapping[str, object]:
             clause("B2", AMENDMENT_ACTS, _even(board, Fraction(1, 3))),
             equity_clause(aids),
         ),
-        "seats": (aids[NINA],),
+        "seats": (aids[SEAT],),
     }
 
 
 #: Every party under the substrate whose identifier *is* its alias. The facade's
 #: reading of the law above, and what the law constants below are built over.
-ALIASES: Mapping[str, str] = {name: name for name in (GAID, MARTA, DEV, NINA)}
+ALIASES: Mapping[str, str] = {name: name for name in (GAID, MARTA, DEV, NINA, SEAT)}
 
 #: State 1 as the facade sees it, kept as a constant because the demo script and
 #: the unit tests address Acme's founding clauses without building a domain.

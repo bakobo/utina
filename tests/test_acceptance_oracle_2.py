@@ -33,6 +33,7 @@ from utina.fold import Constitution, evaluate
 from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal
+from utina.substrate import ENDORSEMENT_SCHEMA
 
 #: Where each beat is asked, in the record's own labels. Demo 2 numbers its beats
 #: and the record labels its coordinates, so the mapping is stated once here
@@ -118,10 +119,15 @@ def test_b02_open_a_bank_account_is_affirmed(acme):
     assert len(finding.endorsements) == 2
 
 
-def test_b03_the_hire_is_pending_naming_devs_slot():
+def test_b03_the_hire_is_pending_naming_devs_slot(acme):
     """Row 3: a typed requirement naming the required schema, the expected issuer
     and the citing clause, species absent."""
-    pytest.skip(owed("a schema term on the requirement element (tick 54q4)"))
+    finding = evaluate(acme.corpus, Proposal(HIRE), at=acme.at(AT[3]))
+    assert isinstance(finding, Pending)
+    assert [element.endorser for element in finding.requirement] == [acme.aid(DEV)]
+    assert [element.clause for element in finding.requirement] == ["A1"]
+    assert [element.schema for element in finding.requirement] == [ENDORSEMENT_SCHEMA]
+    assert [element.species for element in finding.requirement] == [PendingSpecies.ABSENT]
 
 
 def test_b04_the_office_lease_is_defeated(acme):
@@ -158,20 +164,17 @@ def test_b07_seating_the_board_is_affirmed_under_the_law_it_replaces():
     KEL, the dip in seat 3's KEL, the seat credential's issuance event, and the
     declared disturbance set."""
     pytest.skip(owed(
-        "U1.1 a delegate verb on Substrate (tick 5sfe)",
-        "U1.3 the seat credential (tick 5ocu)",
         "U3.3 the declared disturbance set (tick 7rfv)",
+        "a finding that carries the delegation and issuance coordinates as ground",
     ))
 
 
 def test_b08_the_seat_screen_shows_two_bindings():
     """Row 8: KERI's delegating seal and dip, and the ACDC seat credential with
     its registry state — two bindings on one screen."""
-    pytest.skip(owed(
-        "U1.1 a delegate verb on Substrate (tick 5sfe)",
-        "U1.2 the governance registry (tick 2kks)",
-        "U4.2 the seat screen (tick 27x5)",
-    ))
+    # Both bindings exist now — the dip and its seal, and the credential with its
+    # registry state. What is missing is the screen that shows them side by side.
+    pytest.skip(owed("U4.2 the seat screen (tick 27x5)"))
 
 
 def test_b09_the_hire_re_asked_after_the_amendment_has_no_cure_path():
@@ -207,23 +210,22 @@ def test_b11_the_equity_release_is_cured_across_the_amendment(acme):
 def test_b12_the_budget_carries_on_two_slots_of_three():
     """Row 12: unity reached though one party never acted, and seat 3's
     endorsement carries its DI2I edge to the seat credential."""
-    pytest.skip(owed(
-        "U1.4 the DI2I edge as pre-fold evidence (tick 5fam)",
-        "U1.5 slots naming the seat AID (tick 7tvh)",
-    ))
+    pytest.skip(owed("U1.4 the DI2I edge as pre-fold evidence (tick 5fam)"))
 
 
 def test_b13_the_same_signed_no_is_only_pending_under_three_slots():
     """Row 13: seat 3's slot is still reachable, so a declination delays rather
     than defeats. Demo 1's centerpiece, re-cut for the seated board."""
-    pytest.skip(owed("U1.5 slots naming the seat AID (tick 7tvh)"))
+    # The law slots the seat now; what the record has no act of is the Q2
+    # forecast this row asks about. Demo 1's D6 is the retabled budget.
+    pytest.skip(owed("a Q2-forecast act in the record (U4.3, tick 77uk)"))
 
 
 def test_b14_an_unseated_endorser_fails_credential_verification_before_any_fold():
     """Row 14: the DI2I edge names a seat credential whose issuee Quinn is not,
     and the fold's separate answer is unchanged. The two currents stay unmerged."""
     pytest.skip(owed(
-        "U1.3 the seat credential (tick 5ocu)",
+        "Quinn, an outsider who endorses without a seat, in the record (U4.3, tick 77uk)",
         "U1.4 edge validation as a pre-fold check whose result is evidence (tick 5fam)",
     ))
 
@@ -232,7 +234,7 @@ def test_b15_the_delegated_device_fills_the_seats_slot():
     """Row 15: DI2I validates because the issuer is a delegated AID of the
     issuee. Same slot, different key, no law change."""
     pytest.skip(owed(
-        "U1.1 a delegate verb on Substrate, third stratum (tick 5sfe)",
+        "Nina's delegated device in the record (U4.3, tick 77uk)",
         "U1.4 the DI2I edge (tick 5fam)",
     ))
 

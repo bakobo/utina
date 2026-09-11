@@ -80,14 +80,18 @@ from bakobo.errors import BakoboError  # noqa: E402
 
 from utina.fold.clause import Clause  # noqa: E402
 
+#: The schema a slot names as what its evidence must satisfy — committed law
+#: (custos-4.2.md:1946-1951), so a clause carries one per slot.
+SCHEMA = "E" + "s" * 43
+
 A1 = {
     "id": "A1",
     "governs": ["open-bank-account", "hire-vp-sales"],
     "group": {
         "operator": "MxN",
         "slots": [
-            {"endorser": "acme:marta", "weight": "1/2"},
-            {"endorser": "acme:dev", "weight": "1/2"},
+            {"endorser": "acme:marta", "weight": "1/2", "schema": SCHEMA},
+            {"endorser": "acme:dev", "weight": "1/2", "schema": SCHEMA},
         ],
     },
 }
@@ -115,7 +119,7 @@ def test_weights_are_exact_rationals_never_floats():
     thirds = malformed(
         group={
             "operator": "MxN",
-            "slots": [{"endorser": "acme:marta", "weight": "1/3"}],
+            "slots": [{"endorser": "acme:marta", "weight": "1/3", "schema": SCHEMA}],
         }
     )
     weight = Clause.from_committed(thirds).group.slots[0].weight
@@ -133,8 +137,8 @@ def test_the_sub_block_does_not_depend_on_committed_slot_order():
         group={
             "operator": "MxN",
             "slots": [
-                {"endorser": "acme:dev", "weight": "1/2"},
-                {"endorser": "acme:marta", "weight": "1/2"},
+                {"endorser": "acme:dev", "weight": "1/2", "schema": SCHEMA},
+                {"endorser": "acme:marta", "weight": "1/2", "schema": SCHEMA},
             ],
         }
     )
@@ -152,8 +156,8 @@ def test_a_different_weight_is_a_different_sub_block():
         group={
             "operator": "MxN",
             "slots": [
-                {"endorser": "acme:marta", "weight": "2/3"},
-                {"endorser": "acme:dev", "weight": "1/2"},
+                {"endorser": "acme:marta", "weight": "2/3", "schema": SCHEMA},
+                {"endorser": "acme:dev", "weight": "1/2", "schema": SCHEMA},
             ],
         }
     )

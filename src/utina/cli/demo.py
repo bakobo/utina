@@ -83,7 +83,8 @@ BEATS = (
         "d5",
         "Approve the annual budget",
         "Affirmed while a party has never acted at all. Presence is not the question; "
-        "reachable weight is.",
+        "reachable weight is. The third slot is an office — board seat 3, a delegated "
+        "identifier of Acme — and not the director who holds its keys.",
         ("eval", "approve-budget", "--at", "d5"),
     ),
     Beat(
@@ -98,7 +99,8 @@ BEATS = (
         "d7",
         "Amend the operating agreement",
         "Seating a board distributed ordinary authority and did not distribute the "
-        "authority to change the rules. Under B2 the retained bar bites.",
+        "authority to change the rules. Under B2 the retained bar bites, on a signed "
+        "no from the seat itself.",
         ("eval", "amend-operating-agreement", "--at", "d7"),
     ),
     Beat(

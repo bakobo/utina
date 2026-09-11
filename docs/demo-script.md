@@ -11,7 +11,8 @@ Moves to `utina/docs/demo-script.md` when the repo exists.
 |---|---|---|---|
 | Marta Reyes | founder | `9-marta-as-founder` | `acme:marta` under the facade; a real prefix under keripy |
 | Dev Patel | founder | `9-dev-as-founder` | `acme:dev` |
-| Nina Adeyemi | outside director, seated at E4 | `9-nina-as-director` | `acme:nina` |
+| Nina Adeyemi | outside director; holds board seat 3's keys | `9-nina-as-director` | `acme:nina` |
+| Board seat 3 | the office the amendment seats, a delegated AID of the gAID | `9-acme-as-board-seat-3` | `acme:seat3` |
 | Acme, Inc. | the governed domain (gAID) | `9-acme-as-governed-domain` | `acme:gaid` |
 
 The middle column is what every screen prints. It is a [COIA](https://github.com/dhh1128/coia)
@@ -54,12 +55,19 @@ An active "no" is always a signed declination, never a silent slot.
 
 | Clause | Governs | Slots | Effect |
 |---|---|---|---|
-| B1 | ordinary acts | Marta `w=1/2`, Dev `w=1/2`, Nina `w=1/2` | any two reach unity |
-| B2 | amendment of the operating agreement | Marta `w=1/3`, Dev `w=1/3`, Nina `w=1/3` | all three required |
+| B1 | ordinary acts | Marta `w=1/2`, Dev `w=1/2`, board seat 3 `w=1/2` | any two reach unity |
+| B2 | amendment of the operating agreement | Marta `w=1/3`, Dev `w=1/3`, board seat 3 `w=1/3` | all three required |
 | A3 | release of escrowed founder equity | Marta `w=1/2`, Dev `w=1/2` | **unchanged bytes, unchanged SAID** |
 
 The retained higher bar at B2 is the point: seating a board distributes ordinary authority
 without distributing the authority to change the rules.
+
+**The board law slots the office, not the officer.** What E4 seats is board seat 3, a delegated
+identifier of the gAID whose keys Nina holds, so a director leaving is a rotation on the seat
+rather than an amendment (`this.i` @z373ew7j, `custos-4.2.md:2139-2148`). Every slot also names
+the schema its evidence must satisfy, which `:1435-1437` requires a pending finding's requirement
+elements to name back. Neither changes a beat below: D5, D6 and D7 read "seat 3" where they used
+to read "Nina", and the arithmetic is identical.
 
 **A3 is demo 2's material, and no beat below asks about it.** It is recorded here because
 these tables state what the law screens print, and the record this script runs on commits it:
@@ -75,9 +83,9 @@ amendment (`this.i` @rwo55zyw, tick `6ms6`). Every beat below is unchanged by it
 | D2 | 1 | Hire a VP of Sales | Marta E, Dev P | 0.5 | **pending** | typed requirement naming Dev's slot |
 | D3 | 1 | Sign the office lease, after Dev declines | Marta E, Dev **D** | 0.5 | **defeated** | Dev's declination SAID + clause A1; unity unreachable |
 | D4 | 1→2 | Seat the board (the amendment itself) | Marta E, Dev E under **A2** | 1.0 | **affirmed** | judged under the law it replaces; anchored in an establishment event |
-| D5 | 2 | Approve the annual budget | Marta E, Nina E, Dev P | 1.0 | **affirmed** | unity reached though one party never acted |
-| D6 | 2 | Approve the annual budget, after Dev declines | Marta E, Dev **D**, Nina P | 0.5 | **pending** | Nina's slot still reachable |
-| D7 | 2 | Amend the operating agreement | Marta E, Dev E, Nina **D** under **B2** | 2/3 | **defeated** | the retained bar bites; unity unreachable |
+| D5 | 2 | Approve the annual budget | Marta E, seat 3 E, Dev P | 1.0 | **affirmed** | unity reached though one party never acted |
+| D6 | 2 | Approve the annual budget, after Dev declines | Marta E, Dev **D**, seat 3 P | 0.5 | **pending** | seat 3's slot still reachable |
+| D7 | 2 | Amend the operating agreement | Marta E, Dev E, seat 3 **D** under **B2** | 2/3 | **defeated** | the retained bar bites; unity unreachable |
 | D8 | 2 | May the board declare a dividend? | — no clause governs distributions | — | **refusal** | names the missing rule; not a finding |
 | D9 | — | Re-ask D1 at a position after the amendment | as D1 | 1.0 | **affirmed** | under clause A1, the law in force *then* |
 | D10 | — | Refold the log with events in permuted arrival order | — | — | **byte-identical Constitution** | `custos-4.2.md:3101`, binding |

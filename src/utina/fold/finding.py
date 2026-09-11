@@ -254,14 +254,31 @@ class RequirementElement:
     the carriage, the four-field order and the deduplication key. ``kind`` and
     ``species`` default because Acme's only cure path is the arrival of a missing
     endorsement; an engine with a second one must say which (this.i @7wysgy).
+
+    ``schema`` does not default, because ``:1435-1437`` requires an element to
+    "name their required schemas by schema identifier" and there is no value the
+    engine could supply that would be the law's answer rather than its own. It
+    comes from the slot, which is where a composition rule commits it
+    (``:1946-1951``, this.i @z373ew7j).
     """
 
     endorser: AID
     clause: str
+    schema: SAID
     kind: str = "endorsement"
     species: PendingSpecies = PendingSpecies.ABSENT
 
     def __post_init__(self) -> None:
+        _identifier(
+            self.schema, "a requirement element's schema", "the schema's identifier"
+        )
+        require(
+            self.schema != "",
+            MALFORMED_INPUT,
+            field="a requirement element's schema",
+            expected="the identifier of the schema its evidence must satisfy",
+            found="an empty identifier",
+        )
         _identifier(
             self.endorser, "a requirement element's subject", "the identifier of the party"
         )

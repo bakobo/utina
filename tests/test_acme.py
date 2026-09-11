@@ -28,9 +28,11 @@ from utina.acme import (
     MARTA,
     NINA,
     ORDINARY_ACTS,
+    SEAT,
+    SEAT_SCHEMA,
     build,
 )
-from utina.substrate import canonical_bytes
+from utina.substrate import ENDORSEMENT_SCHEMA, canonical_bytes
 
 #: ``d1`` through ``d9`` and the two named coordinates are ``docs/demo-script.md``'s.
 #: ``b5`` and ``b11`` are ``docs/demo-2-script.md``'s beats 5 and 11, the two
@@ -75,12 +77,35 @@ def test_state_one_gives_each_founder_half_of_both_clauses():
 
 def test_state_two_distributes_ordinary_authority_but_not_amendment_authority():
     """The retained higher bar at B2 is the point of the whole demo."""
-    assert weights(BOARD_LAW, "B1") == dict.fromkeys((MARTA, DEV, NINA), Fraction(1, 2))
-    assert weights(BOARD_LAW, "B2") == dict.fromkeys((MARTA, DEV, NINA), Fraction(1, 3))
+    assert weights(BOARD_LAW, "B1") == dict.fromkeys((MARTA, DEV, SEAT), Fraction(1, 2))
+    assert weights(BOARD_LAW, "B2") == dict.fromkeys((MARTA, DEV, SEAT), Fraction(1, 3))
 
 
-def test_the_amendment_seats_nina():
-    assert BOARD_LAW["seats"] == (NINA,)
+def test_the_amendment_seats_the_office_and_not_the_officer():
+    """@z373ew7j: the law slots board seat 3, and Nina is nowhere in it.
+
+    A law that slotted the director would attach a governance power to a person.
+    Under the office, a director leaving is a rotation on the seat and the
+    committed law does not move at all.
+    """
+    assert BOARD_LAW["seats"] == (SEAT,)
+    assert NINA not in weights(BOARD_LAW, "B1")
+    assert NINA not in weights(BOARD_LAW, "B2")
+
+
+def test_every_slot_names_the_schema_its_evidence_must_satisfy():
+    """``custos-4.2.md:1946-1951``, and the SHALL at :1435-1437 that rests on it.
+
+    Every clause here is discharged by endorsements, so every slot names the
+    dossier's endorsement schema — and it is committed rather than assumed,
+    because the seat credential is a second ACDC kind and a requirement that
+    could not say which it wanted would be satisfiable by the wrong one.
+    """
+    for law in (FOUNDING_LAW, BOARD_LAW):
+        for entry in law["clauses"]:
+            for one in entry["group"]["slots"]:
+                assert one["schema"] == ENDORSEMENT_SCHEMA
+    assert SEAT_SCHEMA != ENDORSEMENT_SCHEMA, "two kinds, or the case above is vacuous"
 
 
 # --- A3, the clause the amendment does not reach (@rwo55zyw, tick 6ms6) -------
@@ -224,13 +249,13 @@ def test_dev_declines_twice_and_both_are_signed_committed_acts(acme_double):
         assert acme_double.substrate.verify(DEV, event.body, event.body["sig"])
 
 
-def test_nina_declines_the_amendment(acme_double):
-    """Beat D7: the retained bar bites because a seated director signs a no."""
+def test_the_seat_declines_the_amendment(acme_double):
+    """Beat D7: the retained bar bites because the seated organ signs a no."""
     assert [
         event.body["i"]
         for event in acme_double.events
         if disp(event) == "decline"
-    ] == [DEV, DEV, NINA]
+    ] == [DEV, DEV, SEAT]
 
 
 # --- The position labels the oracle addresses the log through -----------------

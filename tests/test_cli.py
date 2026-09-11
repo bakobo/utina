@@ -121,7 +121,7 @@ def test_law_shows_the_head_that_identifies_the_edition():
     with world() as record:
         head = record.values  # touched so the fixture cost is visible in the test
     assert head is not None
-    assert "3b8b16f24a68" in out
+    assert "6e367f747a53" in out
 
 
 def test_law_after_the_amendment_shows_the_board_clauses_and_the_retained_bar():
@@ -129,8 +129,8 @@ def test_law_after_the_amendment_shows_the_board_clauses_and_the_retained_bar():
     assert "clause B1" in out and "clause B2" in out
     # A3 is re-committed unchanged, so the edition that seats the board carries it.
     assert "clause A3" in out
-    assert "9-marta-as-founder 1/2, 9-dev-as-founder 1/2, 9-nina-as-director 1/2" in out
-    assert "9-marta-as-founder 1/3, 9-dev-as-founder 1/3, 9-nina-as-director 1/3" in out
+    assert "9-marta-as-founder 1/2, 9-dev-as-founder 1/2, 9-acme-as-board-seat-3 1/2" in out
+    assert "9-marta-as-founder 1/3, 9-dev-as-founder 1/3, 9-acme-as-board-seat-3 1/3" in out
     # B1's slots oversum, so unity does not need everyone; B2's do not.
     assert "sum to 3/2" in out
     assert "every slot is required" in out
@@ -226,7 +226,7 @@ def test_a_committed_question_is_judged_under_the_law_it_replaces():
 
 
 def test_a_said_may_be_given_as_a_prefix_of_the_identifier():
-    out = screen("eval", "--said", "ElpSy5nBM9n9", "--at", "d4")
+    out = screen("eval", "--said", "EVLCXDH-LVrM", "--at", "d4")
     assert "AFFIRMED" in out and "A2" in out
 
 
@@ -267,7 +267,7 @@ def test_an_endorsement_is_not_an_act_and_cannot_be_appraised():
 def test_eval_needs_exactly_one_of_an_act_class_and_a_said():
     for argv in (
         ("eval", "--at", "d1"),
-        ("eval", "hire-vp-sales", "--said", "ElpSy5nBM9n9", "--at", "d4"),
+        ("eval", "hire-vp-sales", "--said", "EVLCXDH-LVrM", "--at", "d4"),
     ):
         status, _, err = shell(*argv)
         assert status == 2, argv
@@ -364,7 +364,7 @@ def test_no_screen_is_wider_than_the_projector(backend):
         ["eval", "open-bank-account", "--at", "d1"],
         ["log"],
         ["replay", "--at", "board-seated"],
-        ["enact", "endorse", "--as", "acme:nina", "--on", "approve-budget-retabled"],
+        ["enact", "endorse", "--as", "acme:seat3", "--on", "approve-budget-retabled"],
         ["demo", "--no-pause"],
     ):
         for line in screen(*argv, "--substrate", backend).splitlines():
@@ -499,7 +499,7 @@ def test_replay_folds_the_permuted_log_to_the_same_bytes():
     assert "REPLAY AT board-seated" in out
     assert "IDENTICAL" in out
     assert "custos-4.2.md:3101" in out
-    assert out.count("3b8b16f2") == 0  # the board law is in force here, not the founding one
+    assert out.count("6e367f74") == 0  # the board law is in force here, not the founding one
     assert "clause sub-blocks" in out
     assert "B1" in out and "B2" in out
 
@@ -598,7 +598,7 @@ def test_no_screen_anywhere_shows_a_truncated_party_identifier(backend: str):
         ["log"],
         ["replay", "--at", "board-seated"],
         ["whois", "9-nina-as-director"],
-        ["enact", "endorse", "--as", "acme:nina", "--on", "approve-budget-retabled"],
+        ["enact", "endorse", "--as", "acme:seat3", "--on", "approve-budget-retabled"],
         ["demo", "--no-pause"],
     ):
         out = screen(*argv, "--substrate", backend)
@@ -619,9 +619,9 @@ def test_the_slot_column_is_the_same_on_both_substrates(backend: str):
 
 
 def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
-    out = screen("enact", "endorse", "--as", "acme:nina", "--on", "approve-budget-retabled")
+    out = screen("enact", "endorse", "--as", "acme:seat3", "--on", "approve-budget-retabled")
     assert "ENACTED" in out
-    assert "9-nina-as-director-at-acme endorses" in out
+    assert "9-acme-as-board-seat-3-at-acme endorses" in out
     # The signature is printed whole and therefore wraps, so the sentence beside it is
     # matched against the screen with its line breaks flattened.
     assert "the substrate verified it before recording" in " ".join(out.split())
@@ -632,8 +632,8 @@ def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
 
 
 def test_enact_can_commit_a_declination_that_defeats():
-    out = screen("enact", "decline", "--as", "acme:nina", "--on", "approve-budget-retabled")
-    assert "9-nina-as-director-at-acme declines" in out
+    out = screen("enact", "decline", "--as", "acme:seat3", "--on", "approve-budget-retabled")
+    assert "9-acme-as-board-seat-3-at-acme declines" in out
     assert "DEFEATED" in out
 
 
@@ -804,7 +804,7 @@ def test_every_query_answers_the_same_way_on_either_substrate():
 def test_a_narrator_still_types_an_alias_under_keripy():
     """@crrtzf: nobody is typing a 44-character prefix in front of an audience."""
     out = screen(
-        "enact", "endorse", "--as", "acme:nina", "--on", "approve-budget-retabled",
+        "enact", "endorse", "--as", "acme:seat3", "--on", "approve-budget-retabled",
         "--substrate", "keripy",
     )
     assert "endorses" in out

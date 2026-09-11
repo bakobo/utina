@@ -77,7 +77,7 @@ examples
   utina eval --said seat-the-board --at d4
   utina replay --at board-seated
   utina whois 9-marta-as-founder
-  utina enact endorse --as acme:nina --on approve-budget-retabled
+  utina enact endorse --as acme:seat3 --on approve-budget-retabled
 """
 
 

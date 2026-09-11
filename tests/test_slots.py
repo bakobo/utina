@@ -22,6 +22,10 @@ from utina.fold.group import Disposition, Group, Slot
 
 HALF = Fraction(1, 2)
 
+#: The schema a slot names as what its evidence must satisfy. Committed law
+#: (custos-4.2.md:1946-1951), so every slot carries one.
+SCHEMA = slots.ENDORSEMENT_SCHEMA
+
 MARTA = "acme:marta"
 DEV = "acme:dev"
 NINA = "acme:nina"
@@ -79,11 +83,13 @@ def signed(
 
 
 def founders() -> Group:
-    return Group("MxN", (Slot(MARTA, HALF), Slot(DEV, HALF)))
+    return Group("MxN", (Slot(MARTA, HALF, SCHEMA), Slot(DEV, HALF, SCHEMA)))
 
 
 def board() -> Group:
-    return Group("MxN", (Slot(MARTA, HALF), Slot(DEV, HALF), Slot(NINA, HALF)))
+    return Group(
+        "MxN", (Slot(MARTA, HALF, SCHEMA), Slot(DEV, HALF, SCHEMA), Slot(NINA, HALF, SCHEMA))
+    )
 
 
 def disposition_of(group: Group, events: list[Ev], endorser: str) -> Disposition:
@@ -273,7 +279,7 @@ def test_a_credential_wrapped_by_a_different_signer_never_counts():
     wrapped.body["i"] = MALLORY
     assert disposition_of(founders(), [wrapped], MARTA) is Disposition.PENDING
     assert disposition_of(
-        Group("MxN", (Slot(MALLORY, HALF),)), [wrapped], MALLORY
+        Group("MxN", (Slot(MALLORY, HALF, SCHEMA),)), [wrapped], MALLORY
     ) is Disposition.PENDING
 
 

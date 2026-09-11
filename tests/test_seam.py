@@ -18,7 +18,7 @@ from __future__ import annotations
 from fractions import Fraction
 
 from conftest import RealValues
-from utina.acme import DEV, MARTA, NINA, SEAT, build
+from utina.acme import DEV, MARTA, SEAT, build
 from utina.fold import evaluate, standing
 from utina.fold.constitution import Constitution
 from utina.fold.finding import Affirmed, Pending
@@ -203,7 +203,7 @@ def test_a_proposal_binds_to_the_latest_act_and_never_aggregates(acme):
     finding = evaluate(acme.corpus, Proposal("approve-budget"), at=acme.at("d6"))
 
     assert isinstance(finding, Pending)
-    assert [element.endorser for element in finding.requirement] == [acme.aid(NINA)]
+    assert [element.endorser for element in finding.requirement] == [acme.aid(SEAT)]
 
     # The counterfactual, computed rather than asserted: pooled across both
     # tablings, Nina's slot reads endorsed and the group reaches unity.

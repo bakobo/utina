@@ -288,16 +288,23 @@ def _requirements(
     ``endorsement`` throughout, and the species distinguishes a slot that has not
     acted (absent, cured by the evidence arriving) from one that has spent itself
     (expired/abandoned, cured only by re-presentation).
+
+    The walk is over the clause's own slots rather than over the classifications,
+    because the schema an element must name lives in the slot and nowhere else
+    (this.i @z373ew7j). The dispositions are read back by endorser, which is
+    exact: a group slots each endorser at most once.
     """
+    held = {one.endorser: one.disposition for one in classified}
     return canonical_requirement_set(
         RequirementElement(
-            endorser=one.endorser,
+            endorser=slot.endorser,
             clause=clause.id,
+            schema=slot.schema,
             kind="endorsement",
             species=species,
         )
-        for one in classified
-        if one.disposition is holding
+        for slot in clause.group.slots
+        if held.get(slot.endorser) is holding
     )
 
 
