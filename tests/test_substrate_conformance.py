@@ -22,6 +22,7 @@ import sys
 from collections.abc import Iterator
 from pathlib import Path
 
+import jsonschema
 import pytest
 from bakobo.errors import BakoboError
 
@@ -29,8 +30,11 @@ from utina.substrate import (
     ACDC_DT,
     DI2I,
     ENDORSEMENT_SCHEMA,
+    GCD_RULES,
+    GCD_SCHEMA,
     ISSUED,
     REVOKED,
+    RULES_FIELD,
     SAID_LENGTH,
 )
 from utina.substrate.select import NAMES, substrate_named
@@ -692,3 +696,120 @@ def test_asking_for_a_substrate_nobody_ships_is_refused():
         substrate_named("quantum")
     assert caught.value.code == "e.feature.substrate-unknown.f"
     assert "facade" in str(caught.value)
+
+
+# --- a GCD: the credential that confers authority ------------------------------
+
+
+#: The attributes of a GCD as ``utina.enact`` will ask for one — an issuee, the
+#: descriptive facet, and the one constraint dimension the fold evaluates.
+def gcd_attributes(issuee: str, *, presents_as: str | None = None) -> dict[str, object]:
+    facet: dict[str, object] = {
+        "role": "board-seat-3",
+        "relationType": "delegation",
+        "exerciseMode": "act",
+    }
+    if presents_as is not None:
+        facet["presentsAs"] = presents_as
+    return {"i": issuee, "facet": facet, "constraints": {"acts": ["create commitment"]}}
+
+
+def test_a_credential_carries_the_governance_framework_it_is_issued_under(conformant):
+    """``rules`` lands in ``r``, in the compact form: the ruleset's identifier.
+
+    A GCD requires ``r`` — "the act of issuing or receiving a GCD credential
+    constitutes binding acceptance of the rules" — so a backend that dropped it
+    would mint a credential no conforming verifier may accept.
+    """
+    gaid = conformant.incept("acme:gaid")
+    seat = conformant.delegate(gaid, "acme:seat-3")
+    registry = conformant.open_registry(gaid, "acme-governance")
+
+    sad, _ = conformant.issue_acdc(
+        gaid, GCD_SCHEMA, gcd_attributes(seat), registry=registry, rules=GCD_RULES
+    )
+
+    assert sad[RULES_FIELD] == GCD_RULES
+
+
+def test_a_credential_issued_under_no_framework_carries_no_rules_field(conformant, marta):
+    """An endorsement is issued under Acme's own committed law and no framework.
+
+    The field is absent rather than empty: a credential naming a ruleset nobody
+    can resolve would be accepting rules it cannot state.
+    """
+    sad, _ = endorsement_acdc(conformant, marta)
+
+    assert RULES_FIELD not in sad
+
+
+def test_a_gcd_carries_the_published_schemas_required_shape(conformant):
+    """Top level and attributes both, against ``schemas/gcd-2.0.1.json``'s own
+    required set — the shape a stranger's validator will ask for."""
+    gaid = conformant.incept("acme:gaid")
+    seat = conformant.delegate(gaid, "acme:seat-3")
+    registry = conformant.open_registry(gaid, "acme-governance")
+
+    sad, signature = conformant.issue_acdc(
+        gaid,
+        GCD_SCHEMA,
+        gcd_attributes(seat, presents_as=seat),
+        registry=registry,
+        rules=GCD_RULES,
+    )
+
+    assert set(sad) >= {"v", "d", "i", "ri", "s", "a", "r"}
+    assert sad["i"] == gaid
+    assert sad["s"] == GCD_SCHEMA
+    assert sad["ri"] == registry
+    attributes = sad["a"]
+    assert attributes["i"] == seat
+    assert attributes["facet"]["presentsAs"] == seat
+    assert attributes["constraints"]["acts"] == ["create commitment"]
+    assert isinstance(signature, str) and signature
+
+
+def test_a_gcd_validates_against_the_vendored_published_document(conformant):
+    """The whole point of adopting a real schema: a stranger's validator passes it.
+
+    ``jsonschema`` rather than anything of utina's, and the vendored document
+    rather than a shape restated here — so this fails if the credential drifts
+    from the published GCD in any field either of them cares about.
+    """
+    document = json.loads(
+        (Path(__file__).resolve().parents[1] / "schemas" / "gcd-2.0.1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    gaid = conformant.incept("acme:gaid")
+    seat = conformant.delegate(gaid, "acme:seat-3")
+    registry = conformant.open_registry(gaid, "acme-governance")
+
+    sad, _ = conformant.issue_acdc(
+        gaid,
+        GCD_SCHEMA,
+        gcd_attributes(seat, presents_as=seat),
+        registry=registry,
+        rules=GCD_RULES,
+    )
+
+    jsonschema.validate(instance=dict(sad), schema=document)
+
+
+def test_a_gcd_is_revocable_through_the_registry_that_issued_it(conformant):
+    """What makes delegated authority revocable at all (``this.i`` @cglayqvw).
+
+    The KERI delegation behind the seat is permanent and cannot be undone; the
+    GCD is what confers the authority, and this is the verb that ends it.
+    """
+    gaid = conformant.incept("acme:gaid")
+    seat = conformant.delegate(gaid, "acme:seat-3")
+    registry = conformant.open_registry(gaid, "acme-governance")
+    sad, _ = conformant.issue_acdc(
+        gaid, GCD_SCHEMA, gcd_attributes(seat), registry=registry, rules=GCD_RULES
+    )
+    assert conformant.registry_state(registry, sad["d"]) == ISSUED
+
+    conformant.revoke_acdc(registry, sad["d"])
+
+    assert conformant.registry_state(registry, sad["d"]) == REVOKED

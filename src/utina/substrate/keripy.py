@@ -366,6 +366,7 @@ class KeripySubstrate:
         *,
         registry: SAID | None = None,
         edges: Mapping[str, object] | None = None,
+        rules: SAID | None = None,
     ) -> tuple[Mapping[str, object], str]:
         """A real ACDC: the v1 ilkless shape, anchored by an ixn.
 
@@ -385,6 +386,12 @@ class KeripySubstrate:
         same four-step dance the registry's own inception took. Without one the
         credential is registry-less and the anchor is an ordinary digest seal,
         which is all the dossier's Endorsed predicate asks for.
+
+        ``rules`` reaches keripy's own ``rules`` parameter, which puts it in the
+        credential's ``r`` — so a GCD's governance framework is carried by the
+        library's code path rather than grafted on above it, and the v1 field
+        order stays ``{v, d, i, ri, s, a, e, r}`` as ``proving.credential``
+        writes it.
         """
         hab = self._hab(issuer)
         held = None if registry is None else self._registry(registry)
@@ -394,6 +401,7 @@ class KeripySubstrate:
             data={"dt": ACDC_DT, **dict(attributes)},
             status=registry,
             source=None if edges is None else dict(edges),
+            rules=rules,
             version=Vrsn_1_0,
         )
         siger = hab.sign(creder.raw, indexed=True)[0]

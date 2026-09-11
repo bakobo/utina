@@ -34,6 +34,25 @@ SAID = str
 #: credentials and both planes above read the pin (this.i @7db5c4).
 ENDORSEMENT_SCHEMA = "EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0"
 
+#: Bakobo's Generalized Cooperative Delegation credential — "an ACDC expressing a
+#: delegate's authorizations, constraints, and duties" — which is the artifact
+#: that CONFERS authority, as against the KERI delegation relationship, which
+#: confers none (``this.i`` @cglayqvw). Version 2.0.1 rather than the current
+#: 3.1.x, and that is forced rather than preferred: 3.x requires the ACDC v2
+#: envelope, and keripy's credential path writes only v1
+#: (``keri/vc/proving.py``). The document is vendored at
+#: ``schemas/gcd-2.0.1.json`` and ``tests/test_schemas.py`` recomputes this pin
+#: from it, so an upstream edit is a red test rather than an untypable credential.
+GCD_SCHEMA = "EAqOeo_YMHDEMZ-dIJTYd72nsoUS-C1RdXtOdfAj7ZxR"
+
+#: The governance framework a GCD is issued under, named by its ruleset's own
+#: identifier because "the act of issuing or receiving a GCD credential
+#: constitutes binding acceptance of the rules". Committed in the compact form —
+#: the SAID alone, which the schema's ``r`` admits — because the rules are the
+#: same for every GCD utina writes and inlining them would put five disclaimers
+#: into every credential's bytes. ``schemas/gcd-rules.json`` is the document.
+GCD_RULES = "ENiUyBCG2MjCHa9djlgHiogd6uZHECc09ZELmQ3fEMzR"
+
 #: Where a credential carries its edges, and the two fields an edge node carries
 #: that this seam reads: the far node's identifier and the operator that
 #: constrains the relation. ACDC's own field names, so a credential utina writes
@@ -41,6 +60,10 @@ ENDORSEMENT_SCHEMA = "EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0"
 EDGES_FIELD = "e"
 EDGE_NODE_FIELD = "n"
 EDGE_OPERATOR_FIELD = "o"
+
+#: Where a credential names the governance framework it is issued under. ACDC's
+#: own field, carried in its compact form — the ruleset's identifier alone.
+RULES_FIELD = "r"
 
 #: The edge operator a seat's endorsement carries. custos-4.2.md:1425-1428
 #: requires it by name: "a warranty's edge to its warrantor's seat credential
@@ -247,8 +270,18 @@ class Substrate(Protocol):
         *,
         registry: SAID | None = None,
         edges: Mapping[str, object] | None = None,
+        rules: SAID | None = None,
     ) -> tuple[Mapping[str, object], str]:
         """A credential: constructed, signed, verified, anchored.
+
+        ``rules`` names the governance framework the credential is issued under,
+        by the ruleset's identifier, and lands in the ACDC's ``r``. A GCD
+        requires it — "the act of issuing or receiving a GCD credential
+        constitutes binding acceptance of the rules" — and an endorsement, which
+        is issued under no framework but Acme's own committed law, omits it.
+        Only the compact form is offered: a SAID, never an inlined ruleset,
+        because a framework every credential restates in full is one whose bytes
+        say five times what its identifier says once.
 
         ``registry`` is the difference between the two kinds. Given one, the
         credential names it in committed bytes and its issuance is a registry

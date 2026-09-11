@@ -30,6 +30,7 @@ from .protocol import (
     EDGES_FIELD,
     ISSUED,
     REVOKED,
+    RULES_FIELD,
     SAID,
 )
 
@@ -223,6 +224,7 @@ class FacadeSubstrate:
         *,
         registry: SAID | None = None,
         edges: Mapping[str, object] | None = None,
+        rules: SAID | None = None,
     ) -> tuple[Mapping[str, object], str]:
         """A credential in the dossier schema's required shape, registry or not.
 
@@ -244,6 +246,8 @@ class FacadeSubstrate:
         if edges is not None:
             edge_block: dict[str, object] = dict(edges)
             fields[EDGES_FIELD] = {"d": self.said(edge_block), **edge_block}
+        if rules is not None:
+            fields[RULES_FIELD] = rules
         sad: dict[str, object] = {"v": ACDC_VERSION, "d": self.said(fields), **fields}
         signature = self.sign(issuer, sad)
         if not self.verify(issuer, sad, signature):
