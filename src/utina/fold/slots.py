@@ -306,7 +306,7 @@ def _classify_slot(
     return SlotDisposition(slot.endorser, Disposition.PENDING)
 
 
-def credential(event: CommittedEvent) -> Mapping[str, object]:  # ~5fam
+def credential(event: CommittedEvent) -> Mapping[str, object]:
     """The credential the event embeds, or an empty mapping — never an error.
 
     Public because the display plane reads the same committed values the
