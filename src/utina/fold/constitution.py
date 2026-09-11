@@ -252,7 +252,7 @@ class Constitution:
     (issue #82, determination 1). Empty where no law is in force at all."""
 
     @classmethod
-    def at(cls, corpus: Corpus, position: Position) -> Constitution:  # ~7rfv
+    def at(cls, corpus: Corpus, position: Position) -> Constitution:
         """Fold the committed law events up to ``position`` into the law in force.
 
         The inception event's law binds at its own coordinate, because genesis is
