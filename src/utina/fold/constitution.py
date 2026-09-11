@@ -54,6 +54,7 @@ from dataclasses import dataclass
 
 from bakobo.errors import ErrorCode  # type: ignore[import-untyped]
 
+from utina.fold import semantics
 from utina.fold.clause import MALFORMED_LAW, Clause
 from utina.fold.corpus import Corpus, Event
 from utina.fold.slots import dispositions
@@ -215,14 +216,20 @@ def _governing(clauses: tuple[Clause, ...], act: str) -> Clause | None:
     return None
 
 
-def _edition_committed_by(event: Event) -> tuple[Clause, ...]:
-    """The clause set a law event commits, read out of the constructor's envelope."""
+def _edition_committed_by(event: Event) -> tuple[tuple[Clause, ...], str | None]:
+    """The clause set a law event commits, and the semantics it pins them in.
+
+    Both come out of one envelope because they are one commitment: a clause set
+    and the lens it is to be read through are not separable claims, and an
+    edition that carried one without the other would be law nobody can apply
+    (``fold/semantics.py``, axiom 4).
+    """
     law = event.body.get(LAW_FIELD)
     if not isinstance(law, Mapping):
         raise MALFORMED_LAW(
             field=LAW_FIELD, expected="a mapping carrying the clauses this event commits"
         )
-    return Clause.edition_from_committed(law.get(CLAUSES_FIELD))
+    return Clause.edition_from_committed(law.get(CLAUSES_FIELD)), semantics.declared(law)
 
 
 def _refuse_a_contradictory_edition(clauses: tuple[Clause, ...]) -> None:
@@ -245,6 +252,13 @@ class Constitution:
 
     law_head: LawHead
     clauses: tuple[Clause, ...]
+    semantics: SAID | None = None
+    """The digest of the external semantics this edition's clauses are expressed
+    in, or ``None`` where the edition pins none. Carried rather than checked here
+    because folding the law and refusing a question are different jobs: a
+    Constitution is the law in force, and whether this engine can apply it is the
+    evaluator's question (``fold/semantics.py``, axiom 4, tick 2uhi)."""
+
     source: SAID = ""
     """The identifier of the law event whose edition this is — the inception, or
     the enactment that took force. Carried because a finding that says a cure
@@ -268,13 +282,16 @@ class Constitution:
         """
         edition: tuple[Clause, ...] = ()
         source = ""
+        pinned: str | None = None
         for event in corpus.upto(position):  # ~5edf
             if _takes_force(corpus, event, position):
-                edition = _edition_committed_by(event)
+                edition, pinned = _edition_committed_by(event)
                 source = event.said
         _refuse_a_contradictory_edition(edition)
         head = hashlib.sha256(_canonical_bytes(edition)).hexdigest()
-        return cls(law_head=LawHead(said=head), clauses=edition, source=source)
+        return cls(
+            law_head=LawHead(said=head), clauses=edition, source=source, semantics=pinned
+        )
 
     def clause(self, id: str) -> Clause:
         """The clause bearing ``id``, or a refusal that it is not in force here."""

@@ -16,12 +16,14 @@ that computes it.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
 from keri.core.coring import Saider  # type: ignore[import-untyped]
 from keri.core.scheming import Schemer  # type: ignore[import-untyped]
 
+from utina.fold.semantics import DOSSIER
 from utina.substrate import GCD_RULES, GCD_SCHEMA
 
 SCHEMAS = Path(__file__).resolve().parents[1] / "schemas"
@@ -103,3 +105,24 @@ def test_the_vendored_ruleset_carries_the_disclaimer_that_bounds_the_gate():
     contradicts it).
     """
     assert "noConstraintOutsideConstraints" in document("gcd-rules.json")
+
+
+def test_the_dossier_semantics_pin_is_the_digest_of_the_vendored_specification():
+    """Axiom 4's pin, checkable against bytes rather than asserted.
+
+    Acme's law commits this digest and the fold refuses any law pinning anything
+    else, so it is the most load-bearing constant in the repo that nothing else
+    would catch if it were wrong. SHA-256 rather than the KERI-native digest,
+    because the fold that consumes it imports no KERI library.
+    """
+    body = (SCHEMAS / "dossier-spec-body.md").read_bytes()
+
+    assert hashlib.sha256(body).hexdigest() == DOSSIER
+
+
+def test_the_vendored_specification_is_the_document_utina_cites():
+    """The docstrings cite it by line number, so it has to be the same document."""
+    body = (SCHEMAS / "dossier-spec-body.md").read_text(encoding="utf-8")
+
+    assert "MxN" in body and "RMxN" in body, "the dossier's threshold operators"
+    assert "Endorsed" in body and "Declined" in body, "and its slot dispositions"

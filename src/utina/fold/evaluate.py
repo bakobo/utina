@@ -41,7 +41,7 @@ import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from utina.fold import disturbance
+from utina.fold import disturbance, semantics
 from utina.fold.clause import Clause
 from utina.fold.constitution import ACT_CLASS_FIELD, ENACTMENT_KIND, Constitution
 from utina.fold.corpus import Corpus, Event
@@ -147,6 +147,15 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
         return subject
 
     law = Constitution.at(corpus, subject.coordinate)
+
+    # Axiom 4, before any clause is read. A law expressed in a semantics this
+    # engine cannot apply is not law this engine may guess at, and the check goes
+    # here rather than inside the clause walk so that an unreadable lens refuses
+    # the whole question instead of one clause of it (fold/semantics.py).
+    unreadable = semantics.refusal_for(law.semantics)
+    if unreadable is not None:
+        return unreadable
+
     clause = law.governing(subject.act)
     if clause is None:
         return _ungoverned(subject.act)
@@ -402,11 +411,14 @@ def _cure_path_closed(
     refuses to rule one act class twice, so a clause with the same identifier
     has the same slots, weights and schemas by construction.
 
-    The third part is not asked yet: the pinned lens is the semantics
-    declaration, which Acme's law does not carry (tick ``2uhi``). Until it does,
-    this test is two-thirds of the one Custos describes, and the missing third
-    can only make a *stable* answer unstable — it cannot make an unstable one
-    stable — so what it costs is a beat, never a wrong closure.
+    The third part is the pinned lens, and it is asked here: two editions can
+    name one clause identifier over one set of bytes and still mean different
+    things, if the semantics those bytes are read through moved between them. A
+    test that compared only the clause would call that stable and it is not —
+    the requirement space a pending act declared at birth was declared under the
+    old lens, and nothing about the new one is bound to agree with it. So a
+    change of semantics closes every cure path, exactly as a change of clause
+    does, and names the enactment that made it (``fold/semantics.py``).
 
     Where the rule moved, the enactment that moved it is the ground: issue #82's
     first determination widened ``expired/abandoned`` to admit the amending
@@ -418,9 +430,12 @@ def _cure_path_closed(
     """
     now = Constitution.at(corpus, at)
     governing = now.governing(subject.act)
-    if governing is not None and governing.said() == clause.said():
-        return ""
-    return now.source
+    stable = (
+        governing is not None
+        and governing.said() == clause.said()
+        and now.semantics == Constitution.at(corpus, subject.coordinate).semantics
+    )
+    return "" if stable else now.source
 
 
 def _requirements(

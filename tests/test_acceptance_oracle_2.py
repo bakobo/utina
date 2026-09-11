@@ -43,10 +43,10 @@ from utina.acme import (
 )
 from utina.cli.aliases import aliases_over
 from utina.cli.appraisal import held_by, registry_holdings
-from utina.cli.render import registry_screen, seat_screen
+from utina.cli.render import law_screen, registry_screen, seat_screen
 from utina.cli.style import Style
 from utina.enact import Constructor
-from utina.fold import Constitution, disturbance, evaluate, standing
+from utina.fold import Constitution, disturbance, evaluate, semantics, standing
 from utina.fold import slots as slot_predicate
 from utina.fold.evaluate import _disturbed_by
 from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies, SelfConvicted
@@ -141,14 +141,40 @@ def test_edition_two_distributes_ordinary_authority_and_carries_a3_unchanged(acm
 # --- Act I — law is computed, not asserted (the recorded opener) ---------------
 
 
-def test_b01_the_constitution_at_inception():
+def test_b01_the_constitution_at_inception(acme):
     """Row 1: three clauses with their SAIDs, operators, slots and weights, and
-    the pinned dossier-semantics digest."""
-    pytest.skip(
-        owed(
-            "U5.2 the semantics-declaration block and its axiom-4 refusal (tick 2uhi)",
-        )
-    )
+    the pinned dossier-semantics digest.
+
+    The pin is the half of this beat a reader will not expect. Acme's clauses are
+    expressed in the dossier specification's terms, so that specification is an
+    external semantics and axiom 4 requires the law to name which revision of it
+    the clauses mean — never the one that happens to be installed.
+    """
+    law = Constitution.at(acme.corpus, acme.at("inception"))
+
+    assert {clause.id for clause in law.clauses} == {"A1", "A2", "A3"}
+    assert all(clause.group.operator == "MxN" for clause in law.clauses)
+    assert all(len(clause.group.slots) == 2 for clause in law.clauses)
+    assert law.semantics == semantics.DOSSIER
+
+    screened = _law_screen(acme, "inception")
+    assert semantics.DOSSIER[:16] in screened
+    assert "the dossier specification, pinned" in screened
+
+
+def test_b01_a_law_pinning_a_semantics_this_engine_cannot_read_is_refused(acme):
+    """The unscheduled beat the script calls the best one available if there is
+    time: flipping the digest produces a refusal rather than a wrong answer.
+
+    Asserted at the seam rather than by building a second record, because what
+    it is about is the fold's disposition toward an unreadable lens and not
+    Acme's bytes. The refusal names what it pinned, so a reader can go and look.
+    """
+    assert semantics.refusal_for(semantics.DOSSIER) is None
+
+    refused = semantics.refusal_for("e" * 64)
+    assert isinstance(refused, Refusal)
+    assert "an implementation of the semantics this law pins" in refused.missing
 
 
 def test_b02_open_a_bank_account_is_affirmed(acme):
@@ -257,14 +283,30 @@ def test_b09_the_hire_re_asked_after_the_amendment_has_no_cure_path(acme):
     assert finding.requirement[0].species.cure == "cured by re-presentation"
 
 
-def test_b10_the_equity_release_re_asked_after_the_amendment_is_still_curable():
+def test_b10_the_equity_release_re_asked_after_the_amendment_is_still_curable(acme):
     """Row 10: species absent, the same requirement as row 5, and the three-part
     stability check shown — same clause SAID, same requirement space, same
-    pinned lens."""
-    pytest.skip(owed(
-        "U3.1 the three-part stability test (tick 6pdw)",
-        "U5.2 the pinned lens (tick 2uhi)",
-    ))
+    pinned lens.
+
+    A3 is carried across the amendment byte-identical, so its cure path stays
+    open and the question is still the question it was. All three parts hold
+    here: the clause identifier is unmoved, the requirement space with it —
+    a clause IS its bytes — and the semantics the law pins did not move either.
+    """
+    before = evaluate(acme.corpus, Proposal(EQUITY), at=acme.at(AT[5]))
+    after = evaluate(acme.corpus, Proposal(EQUITY), at=acme.at(AT[10]))
+
+    assert isinstance(after, Pending)
+    assert [one.species for one in after.requirement] == [PendingSpecies.ABSENT]
+    assert [one.ground for one in after.requirement] == [""], "the cure path is open"
+    assert after.requirement == before.requirement, "the same requirement as row 5"
+
+    first = Constitution.at(acme.corpus, acme.at(AT[5]))
+    second = Constitution.at(acme.corpus, acme.at(AT[10]))
+    assert first.clause("A3").said() == second.clause("A3").said(), "same clause SAID"
+    assert first.clause("A3").group == second.clause("A3").group, "same requirement space"
+    assert first.semantics == second.semantics == semantics.DOSSIER, "same pinned lens"
+    assert first.law_head != second.law_head, "and the edition around it did move"
 
 
 def test_b11_the_equity_release_is_cured_across_the_amendment(acme):
@@ -390,6 +432,17 @@ def test_b15_the_device_acts_under_a_grant_the_seat_can_revoke(acme):
     assert grant["a"]["constraints"] == {"acts": ["create commitment"]}
     assert grant["ri"] != acme.registry, "the seat's own registry, not the domain's"
     assert acme.substrate.registry_state(grant["ri"], grant["d"]) == ISSUED
+
+
+def _law_screen(acme, label: str) -> str:
+    """Beat 1's screen, over the record this oracle is holding."""
+    return law_screen(
+        Constitution.at(acme.corpus, acme.at(label)),
+        label,
+        acme.at(label),
+        aliases_over(acme.aids),
+        Style(enabled=False),
+    )
 
 
 def _seat_screen(acme, label: str) -> str:

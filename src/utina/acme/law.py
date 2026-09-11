@@ -21,6 +21,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
 
+from utina.fold.semantics import DOSSIER, DOSSIER_KEY, SEMANTICS_FIELD
 from utina.substrate import ENDORSEMENT_SCHEMA, GCD_SCHEMA
 
 #: The governed domain. An *alias*, not an identifier: under keripy a prefix is
@@ -228,6 +229,24 @@ def equity_clause(aids: Mapping[str, str]) -> Mapping[str, object]:
     )
 
 
+def semantics_block() -> Mapping[str, object]:
+    """What every edition of Acme's law pins, and why it pins anything.
+
+    Acme's composition rule is expressed in the dossier specification's terms —
+    its operator vocabulary, its slot shape, its three dispositions — so that
+    specification is an external semantics, and axiom 4 (custos-4.2.md:290)
+    requires an external semantics to be pinned by committed digest. An
+    unrecognized or absent pin is refused by the fold rather than assumed at
+    whatever revision happens to be installed (utina.fold.semantics, tick 2uhi).
+
+    Committed in every edition rather than inherited from the first, for the
+    reason A3 is re-committed in every edition: an amendment replaces the edition
+    rather than adding to it (this.i @wg3jr6), so a term left out of a successor
+    is a term that edition does not carry.
+    """
+    return {DOSSIER_KEY: DOSSIER}
+
+
 def founding_law(aids: Mapping[str, str]) -> Mapping[str, object]:
     """State 1, from inception, over the identifiers ``aids`` names.
 
@@ -243,6 +262,7 @@ def founding_law(aids: Mapping[str, str]) -> Mapping[str, object]:
             clause("A2", AMENDMENT_ACTS, _even(founders, Fraction(1, 2))),
             equity_clause(aids),
         ),
+        SEMANTICS_FIELD: semantics_block(),
     }
 
 
@@ -273,6 +293,7 @@ def board_law(aids: Mapping[str, str]) -> Mapping[str, object]:
             equity_clause(aids),
         ),
         "seats": (aids[SEAT],),
+        SEMANTICS_FIELD: semantics_block(),
     }
 
 
@@ -298,6 +319,7 @@ def lowered_law(aids: Mapping[str, str]) -> Mapping[str, object]:
             equity_clause(aids),
         ),
         "seats": (aids[SEAT],),
+        SEMANTICS_FIELD: semantics_block(),
     }
 
 

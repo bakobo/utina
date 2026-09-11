@@ -404,6 +404,15 @@ def law_screen(
         "",
         field(
             style,
+            "semantics",
+            (
+                f"{abbrev(law.semantics, 16)}   the dossier specification, pinned"
+                if law.semantics
+                else "none pinned, so this law is not evaluable (axiom 4)"
+            ),
+        ),
+        field(
+            style,
             "head",
             f"{abbrev(law.law_head.said):<25}"
             f"over {len(law.clauses)} clauses, ordered by clause SAID",

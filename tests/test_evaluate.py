@@ -37,10 +37,16 @@ from utina.fold.finding import (
 )
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal
+from utina.fold.semantics import DOSSIER, DOSSIER_KEY, SEMANTICS_FIELD
 from utina.fold.triple import Position
 from utina.substrate import ENDORSEMENT_SCHEMA
 
 MARTA, DEV, NINA = "acme:marta", "acme:dev", "acme:nina"
+#: Every synthetic law here pins the semantics its clauses are expressed in,
+#: because axiom 4 refuses one that does not and a fixture without it would be
+#: testing the refusal rather than the rule under test (fold/semantics.py).
+PINNED: dict[str, object] = {SEMANTICS_FIELD: {DOSSIER_KEY: DOSSIER}}
+
 GAID = "acme:gaid"
 
 #: What every slot below names as the schema its evidence must satisfy.
@@ -93,7 +99,11 @@ class Log:
         return said
 
     def law(self, name: str, kind: str, clauses: list[dict[str, object]]) -> str:
-        return self._add(name, kind, {"t": kind, "i": GAID, "law": {"clauses": clauses}})
+        return self._add(
+            name,
+            kind,
+            {"t": kind, "i": GAID, "law": {"clauses": clauses, **PINNED}},
+        )
 
     def act(self, name: str, kind: str) -> str:
         return self._add(name, "act", {"t": "act", "i": GAID, "act": kind})
@@ -103,7 +113,7 @@ class Log:
             "t": "enact",
             "i": GAID,
             "act": act,
-            "law": {"clauses": clauses},
+            "law": {"clauses": clauses, **PINNED},
         }
         if disturbs is not None:
             body["disturbs"] = tuple(disturbs)
