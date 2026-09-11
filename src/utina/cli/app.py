@@ -27,7 +27,12 @@ from bakobo.errors import BakoboError  # type: ignore[import-untyped]
 
 from utina.acme import Acme
 from utina.cli.aliases import Aliases, aliases_over
-from utina.cli.appraisal import appraise, question_from, resolve_subject
+from utina.cli.appraisal import (
+    appraise,
+    question_from,
+    resolve_credential,
+    resolve_subject,
+)
 from utina.cli.errors import ALIAS_UNKNOWN, COMMAND_MALFORMED
 from utina.cli.render import (
     enact_screen,
@@ -202,6 +207,7 @@ def build_parser(console: Console) -> _Parser:
     enact.add_argument("disposition", choices=("endorse", "decline"))
     enact.add_argument("--as", dest="actor", required=True, metavar="AID")
     enact.add_argument("--on", dest="subject", required=True, metavar="TOKEN")
+    enact.add_argument("--citing", dest="citing", metavar="TOKEN")
 
     demo = commands.add_parser(
         "demo", out=console.out, parents=[backend],
@@ -330,7 +336,11 @@ def enact_command(args: argparse.Namespace, console: Console) -> int:
             record.substrate, record.gaid, values=record.values, events=record.events
         )
         verb = constructor.endorse if args.disposition == "endorse" else constructor.decline
-        event = verb(_actor(record, args.actor), subject)
+        event = verb(
+            _actor(record, args.actor),
+            subject,
+            qualification=resolve_credential(record.saids, record.events, args.citing),
+        )
 
         corpus = RealValues().corpus(constructor.emitted)
         after = appraise(

@@ -31,7 +31,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from utina import coia
-from utina.acme import DEV, DEVICE, GAID, MARTA, NINA, SEAT
+from utina.acme import DEV, DEVICE, GAID, MARTA, NINA, QUINN, SEAT
 from utina.cli.errors import ALIAS_PREFIX_AMBIGUOUS
 
 __all__ = ["PARTIES", "SCOPE", "Aliases", "Party", "aliases_over"]
@@ -74,6 +74,7 @@ PARTIES: Mapping[str, Party] = {
     NINA: Party("Nina", "director"),
     SEAT: Party("Acme", "board seat 3"),
     DEVICE: Party("Acme", "board seat 3 device"),
+    QUINN: Party("Quinn", "outsider"),
 }
 
 

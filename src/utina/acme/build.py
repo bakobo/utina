@@ -28,6 +28,7 @@ from .law import (
     NINA,
     ORDINARY_ACTS,
     Q2_FORECAST,
+    QUINN,
     SEAT,
     SEAT_ACTS,
     SEAT_OFFICE,
@@ -70,6 +71,11 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # domain, and delegated last so that nothing already incepted moves. The
     # delegation is what lets DI2I resolve; it is not what lets the device act.
     device = aids[DEVICE] = substrate.delegate(seat3, DEVICE)
+
+    # Quinn, incepted last so nothing already incepted moves. He commits no act:
+    # beat 14's endorsement is refused at commitment, so the record's own story
+    # about Quinn is that he is a real party who never got into it.
+    aids[QUINN] = substrate.incept(QUINN)
     constructor = Constructor(substrate, aids[GAID], values=values)
 
     saids: dict[str, str] = {}

@@ -28,7 +28,10 @@ pytest.importorskip(
     reason="the fold has no evaluate() yet — see docs/demo-2-script.md for what it owes",
 )
 
-from utina.acme import DEV, DEVICE, MARTA, SEAT
+from bakobo.errors import BakoboError
+
+from utina.acme import DEV, DEVICE, MARTA, Q2_FORECAST, QUINN, SEAT
+from utina.enact import Constructor
 from utina.fold import Constitution, evaluate
 from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies
 from utina.fold.question import Committed, Proposal
@@ -247,13 +250,39 @@ def test_b13_the_same_signed_no_is_only_pending_under_three_slots(acme):
     assert declining.body["acdc"]["a"]["disp"] == "decline"
 
 
-def test_b14_an_unseated_endorser_fails_credential_verification_before_any_fold():
+def test_b14_an_unseated_endorser_fails_credential_verification_before_any_fold(acme):
     """Row 14: the DI2I edge names a seat credential whose issuee Quinn is not,
-    and the fold's separate answer is unchanged. The two currents stay unmerged."""
-    pytest.skip(owed(
-        "Quinn, an outsider who endorses without a seat, in the record (U4.3, tick 77uk)",
-        "U1.4 edge validation as a pre-fold check whose result is evidence (tick 5fam)",
-    ))
+    and the fold's separate answer is unchanged. The two currents stay unmerged.
+
+    This beat is not a committed event and cannot be: under refusal at
+    commitment (``this.i`` @x7crwavm) the attempt never reaches the record, so
+    the driver performs it live and the CLI prints the refusal. The row is
+    therefore written as the attempt itself — the claim really is made, and
+    really is refused.
+    """
+    constructor = Constructor.resume(
+        acme.substrate, acme.gaid, values=acme.values, events=acme.events
+    )
+    seating = acme.events[acme.at("b8").seq]
+    before = len(constructor.emitted)
+
+    with pytest.raises(BakoboError) as refused:
+        constructor.endorse(
+            acme.aid(QUINN),
+            acme.said(Q2_FORECAST),
+            qualification=seating.body["acdc"]["d"],
+        )
+
+    assert refused.value.code == "e.proof.edge-unvalidated.f"
+    assert not refused.value.retryable, "an unseated endorser stays unseated"
+    assert len(constructor.emitted) == before, "the record did not move"
+
+    # The fold's own answer, recomputed over the unchanged record: still row
+    # 13's. The toolchain's current ran and stopped; the governance current
+    # never heard about it.
+    finding = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[13]))
+    assert isinstance(finding, Pending)
+    assert [element.endorser for element in finding.requirement] == [acme.aid(SEAT)]
 
 
 def test_b15_the_delegated_device_fills_the_seats_slot(acme):

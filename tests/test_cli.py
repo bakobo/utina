@@ -631,6 +631,80 @@ def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
     assert "nothing here is written to disk" in out
 
 
+def test_a_citation_names_a_credential_and_not_the_event_that_carried_it():
+    """``--citing seat-credential`` has to reach the credential, one level in.
+
+    The record's own names point at events, so a resolver that returned what
+    ``--on`` returns would hand the constructor an event identifier and the
+    citation would resolve to nothing — refused, for a reason nobody could find.
+    """
+    from utina.cli.appraisal import resolve_credential
+
+    with world() as record:
+        seating = record.events[record.at("b8").seq]
+        assert resolve_credential(record.saids, record.events, "seat-credential") == (
+            seating.body["acdc"]["d"]
+        )
+
+
+def test_a_citation_of_nothing_stays_nothing():
+    """An endorser who cites no credential makes no claim about their
+    qualification, which is not the same as making an empty one."""
+    from utina.cli.appraisal import resolve_credential
+
+    with world() as record:
+        assert resolve_credential(record.saids, record.events, None) is None
+
+
+def test_a_citation_the_record_cannot_resolve_is_handed_on_unchanged():
+    """Judged where the claim is made, not rewritten here into one that resolves.
+
+    A token naming nothing committed reaches the constructor as itself and is
+    refused there — which is the plane that decides whether a citation bears its
+    endorser out.
+    """
+    from utina.cli.appraisal import resolve_credential
+
+    with world() as record:
+        unknown = "E" + "z" * 43
+        assert resolve_credential(record.saids, record.events, unknown) == unknown
+        assert resolve_credential(record.saids, record.events, "not-a-name") == "not-a-name"
+
+
+def test_enact_can_cite_a_qualification_and_the_toolchain_checks_it():
+    """Beat 15's shape, performed live: the device's endorsement carries its edge."""
+    out = screen(
+        "enact", "endorse",
+        "--as", "acme:nina-device",
+        "--on", "approve-q2-forecast",
+        "--citing", "seat-credential",
+    )
+    assert "ENACTED" in out
+    assert "9-acme-as-board-seat-3-device" in out
+    assert "AFFIRMED" in out, "the device's yes carries the forecast to unity"
+
+
+def test_enact_refuses_an_unseated_endorser_who_cites_a_seat_credential():
+    """Beat 14. Quinn cites a seat credential whose issuee he is not.
+
+    The toolchain refuses before any fold runs, so the act is never committed —
+    the screen is an error rather than a finding, and the exit status says so.
+    The fold is not consulted and has no opinion to give.
+    """
+    status, out, err = shell(
+        "enact", "endorse",
+        "--as", "acme:quinn",
+        "--on", "approve-q2-forecast",
+        "--citing", "seat-credential",
+    )
+
+    assert status != 0, "a refusal is not a verdict, and must not exit clean"
+    printed = " ".join((out + err).split())
+    assert "e.proof.edge-unvalidated.f" in printed
+    assert "ENACTED" not in printed
+    assert "AFFIRMED" not in printed and "PENDING" not in printed
+
+
 def test_enact_can_commit_a_declination_that_defeats():
     out = screen("enact", "decline", "--as", "acme:seat3", "--on", "approve-budget-retabled")
     assert "9-acme-as-board-seat-3-at-acme declines" in out

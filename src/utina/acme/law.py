@@ -42,6 +42,12 @@ NINA = "acme:nina"
 #: and not a reissued credential (custos-4.2.md:2139-2148, this.i @2a25xudi).
 SEAT = "acme:seat3"
 
+#: Quinn Okafor, an outsider. Incepted and aliased and committing no act, exactly
+#: as Nina does — he exists so that beat 14 has a real party to refuse rather than
+#: a hypothetical one. He holds no seat, and the endorsement he offers citing the
+#: seat credential is refused by edge validation before any fold runs.
+QUINN = "acme:quinn"
+
 #: The device Nina signs from, delegated from the *seat* rather than from Nina or
 #: from the domain. It fills seat 3's slot because the seat granted it authority
 #: to, in a GCD the seat issued and can revoke — never because the delegation

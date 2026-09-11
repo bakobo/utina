@@ -88,6 +88,31 @@ def resolve_subject(
     return token
 
 
+def resolve_credential(
+    names: Mapping[str, SAID], events: tuple[Event, ...], token: str | None
+) -> SAID | None:
+    """The *credential* ``token`` names, out of the issuance that committed it.
+
+    A citation names a credential and not the event that carried it, so this
+    cannot reuse :func:`resolve_subject`: the record's own names point at events,
+    and the credential lives one level inside. ``None`` in, ``None`` out, because
+    an endorser who cites nothing is making no claim about their qualification
+    rather than making an empty one.
+
+    A token that resolves to no committed credential is handed back unchanged, so
+    that a citation nobody can follow is refused by the constructor — which is
+    where the claim is judged — rather than rewritten here into one that can be.
+    """
+    if token is None:
+        return None
+    said = names.get(token, token)
+    for event in events:
+        acdc = event.body.get("acdc")
+        if event.said == said and isinstance(acdc, Mapping) and isinstance(acdc.get("d"), str):
+            return str(acdc["d"])
+    return said
+
+
 def question_from(
     names: Mapping[str, SAID], events: tuple[Event, ...], act: str | None, said: str | None
 ) -> Question:
