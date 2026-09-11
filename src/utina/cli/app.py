@@ -29,7 +29,9 @@ from utina.acme import Acme
 from utina.cli.aliases import Aliases, aliases_over
 from utina.cli.appraisal import (
     appraise,
+    held_by,
     question_from,
+    registry_holdings,
     resolve_credential,
     resolve_subject,
 )
@@ -39,7 +41,9 @@ from utina.cli.render import (
     eval_screen,
     law_screen,
     log_screen,
+    registry_screen,
     replay_screen,
+    seat_screen,
     whois_screen,
 )
 from utina.cli.style import RED, Style
@@ -209,6 +213,20 @@ def build_parser(console: Console) -> _Parser:
     enact.add_argument("--on", dest="subject", required=True, metavar="TOKEN")
     enact.add_argument("--citing", dest="citing", metavar="TOKEN")
 
+    seat = commands.add_parser(
+        "seat", out=console.out, parents=[backend],
+        help="one office, with KERI's binding and ACDC's side by side",
+    )
+    seat.add_argument("seat", metavar="OFFICE")
+    seat.add_argument("--at", metavar="POSITION")
+
+    registry = commands.add_parser(
+        "registry", out=console.out, parents=[backend],
+        help="what a credential registry says, folded at a position",
+    )
+    registry.add_argument("--registry", metavar="SAID")
+    registry.add_argument("--at", metavar="POSITION")
+
     demo = commands.add_parser(
         "demo", out=console.out, parents=[backend],
         help="walk the ten beats of docs/demo-script.md",
@@ -320,6 +338,49 @@ def replay_command(args: argparse.Namespace, console: Console) -> int:
     return 0
 
 
+def seat_command(args: argparse.Namespace, console: Console) -> int:
+    """One office, with KERI's binding and ACDC's shown side by side.
+
+    The delegation half is asked of the substrate, because key events are not in
+    the corpus the fold folds (``this.i`` @jdie6v) and are answerable there or
+    nowhere. The credential half is folded from committed events, because
+    registry state is a member of the evidence bundle and a screen that read it
+    off a transaction log would be showing the fold something it may not use.
+    That split is the seam, on one screen, which is the beat.
+    """
+    with _world(args) as record:
+        label, position = _position(record, args.at)
+        seat = _actor(record, args.seat)
+        upto = record.corpus.upto(position)
+        delegation = {
+            "delegator": record.substrate.delegator_of(seat),
+            "seal": record.substrate.anchoring_event(seat),
+        }
+        credential = held_by(upto, seat)
+        console.out.write(
+            seat_screen(
+                seat, label, position, delegation, credential,
+                _aliases(record), console.style,
+            )
+        )
+    return 0
+
+
+def registry_command(args: argparse.Namespace, console: Console) -> int:
+    """What a registry says about everything in it, folded at one coordinate."""
+    with _world(args) as record:
+        label, position = _position(record, args.at)
+        upto = record.corpus.upto(position)
+        registry = record.registry if args.registry is None else args.registry
+        console.out.write(
+            registry_screen(
+                str(registry), record.gaid, label, position,
+                registry_holdings(upto, str(registry)), _aliases(record), console.style,
+            )
+        )
+    return 0
+
+
 def enact_command(args: argparse.Namespace, console: Console) -> int:
     """The constructor's verb: a party acts, and the act lands on the record.
 
@@ -374,6 +435,8 @@ COMMANDS: Mapping[str, Callable[[argparse.Namespace, Console], int]] = {
     "replay": replay_command,
     "whois": whois_command,
     "enact": enact_command,
+    "seat": seat_command,
+    "registry": registry_command,
     "demo": demo_command,
 }
 

@@ -23,6 +23,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from utina.cli.errors import COMMAND_MALFORMED, SAID_PREFIX_AMBIGUOUS
+from utina.fold import slots as slot_predicate
+from utina.fold import standing
 from utina.fold.clause import Clause
 from utina.fold.constitution import ACT_CLASS_FIELD, Constitution
 from utina.fold.corpus import Corpus, Event
@@ -33,7 +35,15 @@ from utina.fold.refusal import Refusal
 from utina.fold.slots import SlotDisposition, classify
 from utina.fold.triple import SAID, Position
 
-__all__ = ["Appraisal", "appraise", "question_from", "resolve_subject"]
+__all__ = [
+    "Appraisal",
+    "appraise",
+    "held_by",
+    "question_from",
+    "registry_holdings",
+    "resolve_credential",
+    "resolve_subject",
+]
 
 #: The domain's display name. ``utina.acme.GAID`` is the identifier; this is what a
 #: person calls it, and the CLI's whole world is this one domain.
@@ -111,6 +121,72 @@ def resolve_credential(
         if event.said == said and isinstance(acdc, Mapping) and isinstance(acdc.get("d"), str):
             return str(acdc["d"])
     return said
+
+
+def held_by(upto: tuple[Event, ...], seat: str) -> dict[str, object]:
+    """The standing credential the record shows this office holding, folded.
+
+    The LAST issuance naming the office as issuee, because an office re-seated
+    after a revocation holds the newer credential and a screen showing the older
+    one would report an office as empty while it is filled. Its state is read at
+    the same coordinate, so the two halves of the row cannot disagree.
+    """
+    held: dict[str, object] = {
+        "said": "",
+        "schema": "",
+        "issuer": "",
+        "issuee": seat,
+        "registry": "",
+        "state": None,
+        "acts": "",
+    }
+    for event in upto:
+        acdc = slot_predicate.credential(event)
+        block = slot_predicate.attributes(event)
+        if event.kind != standing.ISSUANCE_KIND or block.get("i") != seat:
+            continue
+        constraints = block.get("constraints")
+        registry = str(event.body.get("ri", ""))
+        said = str(acdc.get("d", ""))
+        may = constraints.get("acts", ()) if isinstance(constraints, Mapping) else ()
+        held = {
+            "said": said,
+            "schema": acdc.get("s", ""),
+            "issuer": acdc.get("i", ""),
+            "issuee": seat,
+            "registry": registry,
+            "state": standing.state_over(upto, registry, said),
+            "acts": ", ".join(str(one) for one in may),
+        }
+    return held
+
+
+def registry_holdings(upto: tuple[Event, ...], registry: str) -> list[dict[str, object]]:
+    """Every credential this registry issued, with its state and what moved it."""
+    rows: list[dict[str, object]] = []
+    for event in upto:
+        if event.kind != standing.ISSUANCE_KIND or event.body.get("ri") != registry:
+            continue
+        said = str(slot_predicate.credential(event).get("d"))
+        moved = next(
+            (
+                one.said
+                for one in upto
+                if one.kind == standing.REVOCATION_KIND
+                and one.body.get("ri") == registry
+                and one.body.get("said") == said
+            ),
+            "",
+        )
+        rows.append(
+            {
+                "said": said,
+                "issued": event.position.seq,
+                "state": standing.state_over(upto, registry, said) or "unknown",
+                "moved": moved,
+            }
+        )
+    return rows
 
 
 def question_from(

@@ -41,8 +41,12 @@ from utina.acme import (
     QUINN,
     SEAT,
 )
+from utina.cli.aliases import aliases_over
+from utina.cli.appraisal import held_by, registry_holdings
+from utina.cli.render import registry_screen, seat_screen
+from utina.cli.style import Style
 from utina.enact import Constructor
-from utina.fold import Constitution, disturbance, evaluate
+from utina.fold import Constitution, disturbance, evaluate, standing
 from utina.fold import slots as slot_predicate
 from utina.fold.evaluate import _disturbed_by
 from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies, SelfConvicted
@@ -205,12 +209,30 @@ def test_b07_seating_the_board_is_affirmed_under_the_law_it_replaces():
     ))
 
 
-def test_b08_the_seat_screen_shows_two_bindings():
+def test_b08_the_seat_screen_shows_two_bindings(acme):
     """Row 8: KERI's delegating seal and dip, and the ACDC seat credential with
-    its registry state — two bindings on one screen."""
-    # Both bindings exist now — the dip and its seal, and the credential with its
-    # registry state. What is missing is the screen that shows them side by side.
-    pytest.skip(owed("U4.2 the seat screen (tick 27x5)"))
+    its registry state — two bindings on one screen.
+
+    The beat is that they are SEPARATE and that only one of them confers. KERI's
+    half is dual-anchored and permanent; ACDC's is the credential a revocation
+    can take back. Asserted here as the two facts the screen renders, so the row
+    is about the record rather than about a layout.
+    """
+    seat = acme.aid(SEAT)
+    seating = acme.events[acme.at("b8").seq]
+    credential = seating.body["acdc"]
+
+    assert acme.substrate.delegator_of(seat) == acme.aid(GAID), "the dip names Acme in di"
+    assert acme.substrate.anchoring_event(seat) is not None, "and Acme sealed that dip"
+
+    assert credential["a"]["i"] == seat, "issuee is the seat itself"
+    assert credential["ri"] == acme.registry
+    upto = acme.corpus.upto(acme.at("b8"))
+    assert standing.state_over(upto, acme.registry, credential["d"]) == ISSUED
+
+    screened = _seat_screen(acme, "b8")
+    assert "KERI" in screened and "ACDC" in screened
+    assert "issued, as the fold reads it here" in screened
 
 
 def test_b09_the_hire_re_asked_after_the_amendment_has_no_cure_path(acme):
@@ -370,13 +392,65 @@ def test_b15_the_device_acts_under_a_grant_the_seat_can_revoke(acme):
     assert acme.substrate.registry_state(grant["ri"], grant["d"]) == ISSUED
 
 
+def _seat_screen(acme, label: str) -> str:
+    """Beat 8's screen, rendered over the record THIS oracle is holding.
+
+    Built here rather than shelled out to, because a subprocess would build a
+    second Acme and the row would be asserting a screen about a different set of
+    identifiers than the ones it just checked.
+    """
+    seat = acme.aid(SEAT)
+    upto = acme.corpus.upto(acme.at(label))
+    return seat_screen(
+        seat,
+        label,
+        acme.at(label),
+        {
+            "delegator": acme.substrate.delegator_of(seat),
+            "seal": acme.substrate.anchoring_event(seat),
+        },
+        held_by(upto, seat),
+        aliases_over(acme.aids),
+        Style(enabled=False),
+    )
+
+
+def _registry_screen(acme, label: str) -> str:
+    """Beat 16's screen, over the same record, for the same reason."""
+    upto = acme.corpus.upto(acme.at(label))
+    return registry_screen(
+        str(acme.registry),
+        acme.gaid,
+        label,
+        acme.at(label),
+        registry_holdings(upto, str(acme.registry)),
+        aliases_over(acme.aids),
+        Style(enabled=False),
+    )
+
+
 # --- Act III — revocation, and what it cannot do ------------------------------
 
 
-def test_b16_the_registry_screen_shows_the_revocation():
+def test_b16_the_registry_screen_shows_the_revocation(acme):
     """Row 16: a rev event against the seat credential, with seat 3's KEL
-    untouched and its keys still valid."""
-    pytest.skip(owed("U4.2 the registry screen (tick 27x5)"))
+    untouched and its keys still valid.
+
+    The screen names the act that moved the state, because a state with no act
+    behind it is a claim rather than a record — and it folds that state from
+    committed events rather than reading the transaction log, which is issue #82
+    rule 3 applied to a display plane.
+    """
+    credential = acme.events[acme.at("b8").seq].body["acdc"]["d"]
+    revocation = acme.events[acme.at(AT[16]).seq]
+
+    screened = _registry_screen(acme, "b16")
+    assert "revoked" in screened
+    assert credential[:12] in screened
+    assert revocation.said[:12] in screened
+
+    before = _registry_screen(acme, "b15")
+    assert "revoked" not in before, "and not one coordinate earlier"
 
 
 def test_b16_the_revocation_moves_the_registry_and_not_the_key_log(acme):

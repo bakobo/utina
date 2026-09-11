@@ -365,6 +365,8 @@ def test_no_screen_is_wider_than_the_projector(backend):
         ["log"],
         ["replay", "--at", "board-seated"],
         ["enact", "endorse", "--as", "acme:seat3", "--on", "approve-budget-retabled"],
+        ["seat", "acme:seat3", "--at", "b8"],
+        ["registry", "--at", "b16"],
         ["demo", "--no-pause"],
     ):
         for line in screen(*argv, "--substrate", backend).splitlines():
@@ -909,3 +911,67 @@ def test_the_demo_walks_every_beat_on_keripy_and_exits_zero():
     assert [beat.id.upper() for beat in PROLOGUE + BEATS] == re.findall(
         r"BEAT (\S+)", out
     )
+
+
+# --- utina seat and utina registry (tick 27x5) --------------------------------
+
+
+def test_the_seat_screen_shows_both_bindings_side_by_side():
+    """Beat 8. KERI's half and ACDC's half on one screen, and only one confers."""
+    out = screen("seat", "acme:seat3", "--at", "b8")
+
+    assert "KERI" in out and "ACDC" in out
+    assert "delegator" in out and "seal" in out, "the dip's di and the approving seal"
+    assert "credential" in out and "registry" in out
+    assert "issued" in out, "registry state, at this position"
+    with world() as record:
+        assert record.aids["acme:seat3"] in out or "board-seat-3" in out
+
+
+def test_the_seat_screen_reads_registry_state_at_the_position_it_is_asked_from():
+    """Not the substrate's answer about now. After beat 16 the two differ, and a
+    screen headed by a coordinate owes the answer computed at that coordinate."""
+    before = screen("seat", "acme:seat3", "--at", "b8")
+    after = screen("seat", "acme:seat3", "--at", "b17")
+
+    assert "issued, as the fold reads it here" in before
+    assert "revoked, as the fold reads it here" in after
+
+
+def test_the_seat_screen_follows_the_office_to_its_newest_credential():
+    """An office re-seated after a revocation holds the newer credential, and a
+    screen showing the older one would report a filled office as empty."""
+    reseated = screen("seat", "acme:seat3", "--at", "b22")
+
+    assert "issued, as the fold reads it here" in reseated
+
+
+def test_the_registry_screen_shows_what_moved_and_what_moved_it():
+    """Beat 16. A state with no act behind it is a claim rather than a record."""
+    out = screen("registry", "--at", "b16")
+
+    assert "revoked" in out
+    with world() as record:
+        credential = record.events[record.at("b8").seq].body["acdc"]["d"]
+        revocation = record.events[record.at("b16").seq]
+    assert credential[:12] in out, "the credential the revocation names"
+    assert revocation.said[:12] in out, "and the act that moved it"
+
+
+def test_the_registry_screen_folds_its_state_rather_than_reading_a_transaction_log():
+    """Issue #82 rule 3: registry state is a member of the evidence bundle. A
+    screen that asked the substrate would show the fold something it may not use,
+    so the row moves only at the coordinate the committed revocation sits at."""
+    before = screen("registry", "--at", "b15")
+    after = screen("registry", "--at", "b16")
+
+    assert "issued" in before and "revoked" not in before
+    assert "revoked" in after
+
+
+def test_the_registry_screen_lists_every_credential_the_registry_issued():
+    """Two by the end: the seat credential, revoked, and its re-seating."""
+    out = screen("registry", "--at", "b23")
+
+    rows = [line for line in out.splitlines() if line.strip().startswith("E")]
+    assert len(rows) == 2

@@ -29,7 +29,7 @@ known gap rather than an oversight (this.i @clsaid).
 from __future__ import annotations
 
 import textwrap
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping, Sequence
 from fractions import Fraction
 from typing import cast
 
@@ -603,6 +603,149 @@ def whois_screen(
             ),
         ]
     )
+
+
+# --- utina seat ---------------------------------------------------------------
+
+
+def seat_screen(  # ~27x5
+    seat: str,
+    label: str,
+    position: Position,
+    delegation: Mapping[str, object],
+    credential: Mapping[str, object],
+    aliases: Aliases,
+    style: Style,
+) -> str:
+    """One office, and the two independent bindings that make it one.
+
+    **Draft register — Daniel's to overwrite.** The narration below is written so
+    the screen is not mute, not because its wording is settled.
+
+    The two halves are shown side by side because the demo's claim is that they
+    are separate and that only one of them confers anything. KERI's half says a
+    relationship exists and is dual-anchored — the organ signed its own ``dip``
+    naming Acme, and Acme sealed that inception into its own key log, and neither
+    alone is a delegation. It says nothing about what the office may do. ACDC's
+    half is the credential that says so, and it is the half a revocation can take
+    back (``this.i`` @cglayqvw).
+
+    Registry state is the FOLD's, read from committed events at this position,
+    not the substrate's answer about now. The two can disagree — after beat 16
+    they do — and the one that belongs on a screen headed by a coordinate is the
+    one computed at that coordinate.
+    """
+    state = credential.get("state")
+    return _screen(
+        [
+            MARGIN + style.strong(f"SEAT {aliases.full(seat)}"),
+            MARGIN + RULE,
+            "",
+            field(style, "position", f"{label} (seq {position.seq})"),
+            "",
+            MARGIN + style.strong("KERI — a relationship, dual-anchored"),
+            field(style, "identifier", seat, indent=4),
+            field(
+                style,
+                "delegator",
+                f"{aliases.full(str(delegation['delegator']))}, named in the dip's di",
+                indent=4,
+            ),
+            field(
+                style,
+                "seal",
+                f"{abbrev(str(delegation['seal']), 16)}   the delegator's own approving event",
+                indent=4,
+            ),
+            "",
+            MARGIN + style.strong("ACDC — the credential that confers the authority"),
+            field(style, "credential", abbrev(str(credential["said"]), 16), indent=4),
+            field(style, "schema", abbrev(str(credential["schema"]), 16), indent=4),
+            field(style, "issuer", aliases.full(str(credential["issuer"])), indent=4),
+            field(style, "issuee", aliases.full(str(credential["issuee"])), indent=4),
+            field(style, "registry", abbrev(str(credential["registry"]), 16), indent=4),
+            field(
+                style,
+                "state",
+                f"{state if state else 'no standing to read'}, as the fold reads it here",
+                indent=4,
+            ),
+            field(style, "may", str(credential.get("acts", "")), indent=4),
+            "",
+            *textwrap.wrap(
+                "The two bindings are independent and only the second one confers. A "
+                "delegation of ilk delegation proves that a relationship exists, and "
+                "the same fact would hold of an identifier delegated to greet visitors; "
+                "it is permanent, and nothing can undo it. What the office may do is "
+                "the credential's business, and because it is a credential it can be "
+                "revoked — at which point this slot empties and the office is an office "
+                "nobody holds.",
+                width=WRAP,
+                initial_indent=MARGIN,
+                subsequent_indent=MARGIN,
+            ),
+        ]
+    )
+
+
+# --- utina registry -----------------------------------------------------------
+
+
+def registry_screen(  # ~27x5
+    registry: str,
+    controller: str,
+    label: str,
+    position: Position,
+    holdings: Sequence[Mapping[str, object]],
+    aliases: Aliases,
+    style: Style,
+) -> str:
+    """What a registry says about every credential in it, at one coordinate.
+
+    **Draft register — Daniel's to overwrite.**
+
+    Every row is folded from committed events rather than read off a transaction
+    log: registry state is "a member of the evidence bundle rather than an
+    ambient condition read against it" (issue #82 rule 3), so a screen that
+    asked the substrate would be showing something the fold is not allowed to
+    use. The revoking event is named on the row it moved, because a state with
+    no act behind it is a claim rather than a record.
+    """
+    lines = [
+        MARGIN + style.strong(f"REGISTRY {abbrev(registry, 16)}"),
+        MARGIN + RULE,
+        "",
+        field(style, "position", f"{label} (seq {position.seq})"),
+        field(style, "controller", aliases.full(controller)),
+        "",
+        _row("credential", "at seq", "state here", "moved by"),
+    ]
+    for held in holdings:
+        lines.append(
+            _row(
+                abbrev(str(held["said"]), 12),
+                f"{held['issued']}",
+                str(held["state"]),
+                "" if not held.get("moved") else abbrev(str(held["moved"]), 12),
+            )
+        )
+    lines.extend(
+        [
+            "",
+            *textwrap.wrap(
+                "Registry state is evidence, and standing is judgment. A revocation "
+                "moves what this registry says about a credential and moves nothing "
+                "else: the office's key log is untouched, its keys still verify, and "
+                "every finding that cited the credential while it stood still stands "
+                "at its own coordinate. What a revocation reaches is the next act, not "
+                "the last one.",
+                width=WRAP,
+                initial_indent=MARGIN,
+                subsequent_indent=MARGIN,
+            ),
+        ]
+    )
+    return _screen(lines)
 
 
 # --- utina enact --------------------------------------------------------------
