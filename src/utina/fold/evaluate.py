@@ -369,7 +369,7 @@ def _bundle_identifier(evidence: EvidenceBundle) -> SAID:
 # --- step 5: unity unreachable -------------------------------------------------
 
 
-def _unreachable(  # ~6pdw
+def _unreachable(
     clause: Clause,
     classified: Sequence[SlotDisposition],
     spent: tuple[RequirementElement, ...],
