@@ -368,7 +368,7 @@ def attributes(event: CommittedEvent) -> Mapping[str, object]:
     return block if isinstance(block, Mapping) else {}
 
 
-def _fills(event: CommittedEvent, slot: Slot, subject: SAID) -> bool:  # ~6mcq
+def _fills(event: CommittedEvent, slot: Slot, subject: SAID) -> bool:
     """Whether ``event`` is an issuance act by this slot's endorser on this subject.
 
     The disposition itself is not read here: an act that reaches this far has been

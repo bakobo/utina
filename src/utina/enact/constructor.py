@@ -59,7 +59,7 @@ SCHEMA_FIELD = "s"
 #: specification's own label for a qualification-proof edge
 #: (``dossier-spec-body.md``'s endorsement schema, ``e.qp``), which is exactly
 #: what a seat credential is: proof the endorser may act on this subject.
-QUALIFICATION_EDGE = "qp"  # ~3z6a
+QUALIFICATION_EDGE = "qp"
 
 
 class Constructor:
