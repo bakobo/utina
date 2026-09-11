@@ -17,7 +17,7 @@ dimension it does not. ``acts`` is string parsing over committed bytes with no
 clock and no KERI library in it, so it is one the fold can honestly answer;
 ``jurisdictions``, ``icals``, ``monetaryLimit`` and their siblings each need
 context no committed byte carries, and ``validFrom``/``validUntil`` need a wall
-clock, which is the ambient input axiom 2 forbids (``this.i`` @cglayqvw, ~5c5z).
+clock, which is the ambient input axiom 2 forbids (``this.i`` @cglayqvw).
 
 **The grammar is the published pattern, not the prose beside it.** The schema
 constrains each entry with a regular expression, and the vocabulary below is
