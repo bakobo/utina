@@ -1508,3 +1508,71 @@ Make Custos's replayable governance useful to a real organization = goal:
         honest only because the fold denies the rest rather than ignoring it — an engine that
         carried a GCD and silently skipped its constraints would be the "looks like verification
         and is not" failure this whole line of reasoning exists to avoid.
+
+    A slot names what its endorser must hold, not only what its evidence must be = decision:
+      id: y76zc4bz
+      why: >
+        Recorded AFTER the code commit it justifies (d12ddb8), which inverts this repo's own
+        discipline. Saying so rather than back-dating it: the decision was Daniel's, made in
+        conversation on 2026-09-11, and the node is late because the build ran straight from his
+        ruling into the change. The ordering rule exists so that a decision is reasoned about
+        before it is implemented, and here it was — in chat, on tick 652c — but the artifact
+        that is meant to be the source of truth trailed the code, and that is worth one sentence
+        of honesty in the tree rather than a tidy history.
+        THE DEFECT. Measured on the record after beat 16 revoked the seat credential: the seat
+        endorsing while CITING the revoked credential was committed and not counted, and the
+        seat endorsing while citing NOTHING filled its slot and the finding was affirmed. So
+        revoking the credential custos-4.2.md:1420-1425 calls standing-conferring conferred no
+        standing the fold checked. _fills short-circuited when the actor was the slot's own
+        endorser, and an act citing nothing was qualified trivially, so the only check on an
+        office's standing was one the office opted into by volunteering a citation. Beat 17's
+        "seat 3 unfilled" was true only because the record happened to have the seat not acting,
+        and a viewer asking "what if it endorses anyway?" would have got affirmed. Act III would
+        have been theatre.
+        THE CHOICE. A slot gains a second committed term, the credential its ENDORSER must be
+        standing on, distinct from the schema its EVIDENCE must satisfy (@z373ew7j committed the
+        first; this is the second and they are easy to collapse). Absent for Marta and Dev, whom
+        the law entitles directly. Present for board seat 3, which is an office and whose holder
+        acts because a credential says so. Section 9 delegates exactly this to the domain —
+        "which schemas, issued by which registries, confer which powers" (1924) — so this is
+        committed law the fold reads rather than an engine rule, which is the same argument
+        @z373ew7j made for the evidence schema.
+        Rejected leaving it, which was my own lean for the schedule: the credential is called
+        standing-conferring in the ratified text and a credential that confers no standing is a
+        prop. Rejected inferring it from delegation — the seat is a delegated AID and the
+        founders are not — because key events are out of the corpus (@jdie6v) and because a
+        delegation relationship confers nothing anyway (@cglayqvw), which is the error this
+        whole line of work exists to stop repeating.
+        The ISSUER is committed alongside the schema, and this is the half that would be easy to
+        drop. A schema alone lets anybody confer the power: a stranger issues a credential of the
+        right shape naming the office as issuee, into a registry of their own, and seats
+        themselves in somebody else's Constitution. The issuer is named rather than the registry
+        because a registry's identifier does not exist when the law requiring it is written —
+        Acme opens its governance registry after the amendment that seats the board — and the
+        fold resolves the registry out of the issuance itself.
+        TWO THINGS THE BUILD FORCED, neither foreseen, both kept because they are true.
+        FIRST, A REVOKED CREDENTIAL CANNOT BE REISSUED. Act IV needs the seat voting, so the
+        office had to be re-seated; the obvious re-seating produced bytes identical to the
+        revoked credential, which means it WAS that credential, and keripy refused the duplicate
+        iss by name. That is the correct answer and the facade would have accepted it silently —
+        the second time in this build that the real substrate caught what the fixture could not.
+        A fresh appointment is a fresh credential, so the seam takes ACDC's salty nonce, pinned
+        like the salt and the registry nonce (@7jrbt3, @exy3u4t7) because a generated one would
+        put wall-clock randomness into committed bytes and end the replay claim.
+        SECOND, _disturbed_by was counting acts that were ALREADY closed. "In flight" means the
+        cure path was still open, not merely that the act was pending. Without that, every later
+        amendment inherits every earlier amendment's disturbances, the declared set grows without
+        bound down the chain, and an amender is convicted for failing to declare a question
+        somebody else's amendment already killed. Acme's own record showed it: the hire has been
+        expired/abandoned since the board-seating amendment and the second amendment disturbs it
+        not at all. This is a correctness fix to U3.3 and it would have been invisible until a
+        third amendment existed.
+        Tradeoffs accepted. Every clause's bytes move, so every identifier in the record moves
+        for the third time this build, and the committed d3 rendering and the CLI's pins were
+        regenerated with it; demo 1's nine verdicts are unchanged, which is the gate that
+        matters. Acme's record gains a re-seating beat the demo-2 script does not have, and it
+        is the honest consequence of making a revocation bite: an office whose credential is
+        gone is not an office until one is issued again. And beat 23's computed disturbance set
+        has three members where the script expected two, because demo 1's retabled budget is
+        pending under B1 as well — the lie is larger than the script anticipated rather than
+        different in kind.
