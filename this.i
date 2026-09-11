@@ -1309,3 +1309,43 @@ Make Custos's replayable governance useful to a real organization = goal:
         what the LAW asked for. Tradeoff accepted: every clause's bytes change, so every
         identifier in the record moves once more, and a domain that writes a clause must now
         decide which schema each slot wants rather than inheriting the one the engine knew.
+
+    An unvalidated edge is refused at commitment, not folded as evidence = decision:
+      id: x7crwavm
+      why: >
+        1423-1434 requires a warranty's edge to its warrantor's seat credential to carry DI2I,
+        so that "the warrantor holds the seat it claims" is checked by edge validation in the
+        existing toolchain BEFORE any fold runs, and says an unseated warrantor's warranty
+        "fails credential verification". It then adds the sentence the demo exists to show:
+        "That check is evidence the fold consumes, never a verdict: the two currents stay
+        unmerged." There are two readings of where the check's result lives. Chose refusal at
+        commitment: the constructor validates the edge and declines to commit an endorsement
+        whose edge does not validate, exactly as _emit already declines to commit an event
+        whose own signature does not verify. Rejected committing the failure as a typed
+        evidence fact the fold then reads, which is what the build plan assumed. Two reasons.
+        Axiom 2 closes the fold's inputs at COMMITTED values, and a verification result
+        computed at presentation time is not one — an engine that folded it would have widened
+        the triple by a fourth input nobody committed. And the unseated endorsement is not
+        evidence of anything: a credential whose edge does not validate confers nothing, so
+        admitting it to the record would mean recording an act that never had authority in
+        order to say that it did not. Under refusal, beat 14 shows a commitment that did not
+        happen beside a fold answer that did not move, which is the two currents in their
+        strongest form — the toolchain's current ran and stopped, and the governance current
+        never heard about it. Daniel ruled it tentatively on 2026-09-11, explicitly to see
+        whether it becomes uncomfortable; the discomfort to watch for is "evidence the fold
+        consumes" becoming a sentence the demo cannot show, and if that bites, the failure
+        becomes a committed fact and the slot predicate gains a conjunct.
+        The seam grows one verb, verify_edges(sad) -> bool, total and fail-closed like verify:
+        an edge naming a far node the substrate cannot resolve, an operator it does not
+        implement, and a relation that does not hold are all False, because each of them means
+        the same thing — no authority. keripy answers through Verifier.verifyChain, which
+        returns the far node's registry state or None and requires the far node to be SAVED in
+        the Reger, so a registry-bound issuance now writes the credential to the credential
+        store as well as to the transaction log; the facade implements DI2I itself over the
+        delegations it recorded, which is one walk up the delegator chain with a visited set.
+        Both implement the semantics WebOfTrust/keripy#1564 settled rather than the ones the
+        ACDC text alone compels: issuer == issuee satisfies DI2I outright because it is a
+        superset of I2I, and the delegation arm admits any depth, each hop requiring the
+        delegator to have ANCHORED the delegate's dip. utina's delegate verb already anchors
+        (@2a25xudi), which is the half that would otherwise have looked correct everywhere
+        except under a real validator.
