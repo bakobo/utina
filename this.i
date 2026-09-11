@@ -1349,3 +1349,35 @@ Make Custos's replayable governance useful to a real organization = goal:
         delegator to have ANCHORED the delegate's dip. utina's delegate verb already anchors
         (@2a25xudi), which is the half that would otherwise have looked correct everywhere
         except under a real validator.
+
+    A requirement element names the event that closed its cure path = decision:
+      id: waihlx27
+      why: >
+        Issue 82's first two rules, ruled 2026-08-27, are one test read twice: a pending
+        finding's requirement space is reachable at a later position only if the clause it
+        declared at birth is still the clause in force. Chose to ask it as one comparison —
+        the clause SAID at the act's own coordinate against the clause governing that act class
+        at the appraisal position — and to carry the amending enactment as the element's GROUND
+        where they differ. Rejected a fifth pending species, per determination 1's own
+        preference: expired/abandoned already means "cured by re-presentation", and the
+        amendment is a committed ground where the species' original eviction receipt is not.
+        Rejected putting the ground on the Pending finding rather than on the element, because
+        the species is per-element and an element that says "no longer curable" without saying
+        what did it is an assertion. The field defaults to empty and stays empty for every cure
+        that is just the arrival of missing evidence: an absent slot needs no citation.
+        The test is two-thirds of the three Custos describes. Same clause SAID carries same
+        requirement space here, because a clause IS its bytes and an edition refuses to rule one
+        act class twice, so equal identifiers mean equal slots, weights and schemas by
+        construction. The third part, the same pinned lens, is the semantics declaration Acme's
+        law does not carry yet (tick 2uhi) — and the asymmetry is safe in the direction that
+        matters: a lens that moved could only make a STABLE answer unstable, never an unstable
+        one stable, so what the missing third costs is a beat and never a wrong closure.
+        Only the pending branch consults it. A finding that reached a terminal value stands at
+        its coordinate forever and re-asking it returns the same answer under the law in force
+        then, which is the utility claim the demo closes on; rule 1 reaches acts still in flight
+        and nothing else. And a proposal can never close, because it is judged under the law at
+        the position it is asked from, so the two clauses are the same clause by construction.
+        Constitution gains one field for this: the identifier of the law event whose edition it
+        is. A finding that says a cure path closed has to name what closed it, and the fold had
+        no way to say which enactment that was — it computed the edition and forgot where it
+        came from.
