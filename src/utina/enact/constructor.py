@@ -22,6 +22,8 @@ from utina.substrate import (
     EDGE_NODE_FIELD,
     EDGE_OPERATOR_FIELD,
     ENDORSEMENT_SCHEMA,
+    GCD_RULES,
+    GCD_SCHEMA,
     SAID,
     Event,
     FoldValues,
@@ -190,38 +192,74 @@ class Constructor:
         """The domain's registry, or ``None`` before one is opened."""
         return self._registry
 
-    def seat(self, organ: AID, *, schema: SAID, office: str) -> Event:
-        """Commit the domain's seat credential for ``organ``.
+    def confer(
+        self,
+        delegate: AID,
+        *,
+        role: str,
+        acts: Sequence[str],
+        issuer: AID | None = None,
+        presents_as: AID | None = None,
+    ) -> Event:
+        """Confer authority on ``delegate``, as a GCD under the domain's registry.
 
-        The second credential kind, and its obligations are not the
-        endorsement's: "a seat credential names the organ's AID as issuee,
-        issued under the domain's registry" (``custos-4.2.md:1420-1425``), typed
-        by a schema identifier and revocable through that registry. The issuee
-        is the *seat* rather than whoever holds its keys, which is what makes
-        tenure a rotation instead of a reissuance.
+        **This verb is where authority comes from, and the KERI delegation
+        underneath it is not.** A delegator and a delegate standing in a
+        relationship whose ilk is delegation proves a relationship exists and
+        confers nothing — the same fact holds of an identifier delegated to greet
+        visitors and one delegated to sign treaties (``this.i`` @cglayqvw). What
+        a delegate may do is this credential's business, and because it is a
+        credential it is revocable, where the relationship is permanent.
 
-        The domain is the issuer, because seating an organ of a domain is that
-        domain's own act and no stranger's attestation does it. The schema is
-        the caller's: which schemas confer which powers is committed law, not
-        something this object may name (``:1924``).
+        It is the seat credential of ``custos-4.2.md:1420-1425`` — "a seat
+        credential names the organ's AID as issuee, issued under the domain's
+        registry", typed by a schema identifier and revocable through that
+        registry — and it is also the grant a seat makes to a device it acts
+        through. One verb, because they are one kind of statement.
+
+        ``acts`` is the only constraint dimension committed, and that is a
+        completeness claim rather than an omission: GCD's rule 1 makes an
+        unrecognized key inside ``constraints`` fail-closed, so a dimension the
+        fold cannot evaluate must not be written for it to ignore. ``role`` and
+        ``presents_as`` land in the descriptive facet, which the published rules
+        say a verifier MAY ignore for the authorization decision — the facet
+        tells a reader what the relationship is, and ``constraints`` alone gates
+        (bakobo/schema#3).
+
+        ``issuer`` defaults to the domain, because seating an organ of a domain
+        is that domain's own act and no stranger's attestation does it. A seat
+        conferring on its own device passes itself, because that grant is the
+        seat's to make and the seat's to revoke.
         """
         self._require_founded()
         registry = self._registry
         if registry is None:
-            raise REGISTRY_UNOPENED(gaid=self.gaid, organ=organ)
+            raise REGISTRY_UNOPENED(gaid=self.gaid, organ=delegate)
+        conferring = self.gaid if issuer is None else issuer
+        facet: dict[str, object] = {
+            "role": role,
+            "relationType": "delegation",
+            "exerciseMode": "act",
+        }
+        if presents_as is not None:
+            facet["presentsAs"] = presents_as
         sad, signature = self.substrate.issue_acdc(
-            self.gaid, schema, {"i": organ, "seat": office}, registry=registry
+            conferring,
+            GCD_SCHEMA,
+            {"i": delegate, "facet": facet, "constraints": {"acts": list(acts)}},
+            registry=registry,
+            rules=GCD_RULES,
         )
         return self._emit(
             "issuance",
             {
                 "t": "iss",
-                "i": self.gaid,
+                "i": conferring,
                 "ri": registry,
                 "acdc": sad,
                 "acdc_sig": signature,
             },
-            self.gaid,
+            conferring,
         )
 
     def revoke(self, credential: SAID) -> Event:

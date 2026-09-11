@@ -51,14 +51,14 @@ SEAT_OFFICE = "board-seat-3"
 #: credential is revocable (custos-4.2.md:1420-1422).
 GOVERNANCE_REGISTRY = "acme-governance"
 
-#: The schema Acme's seat credential is typed by: the SAID of
-#: ``schemas/acme-seat.json``, computed the way ACDC computes a schema
-#: identifier and checked against the document by ``tests/test_schemas.py``.
-#: It is *Acme's* schema and it is pinned in Acme's law, because §9 leaves it to
-#: the domain's Constitution to name which schemas, issued by which registries,
-#: confer which powers (custos-4.2.md:1924) — so the fold reads it out of
-#: committed law and holds no constant of its own.
-SEAT_SCHEMA = "EGC1M03TgvSUMlGLusG60CIKIBgoiTu9Is_VQgb2eeUm"
+#: What board seat 3's grant lets its holder do, over the GCD act grid: create a
+#: commitment. An endorsement and a declination are both exactly that — a party
+#: committing itself for or against a tabled act — and the seat's authority under
+#: Acme's law reaches nothing else, so the grant says nothing else. Every other
+#: constraint dimension is deliberately absent: GCD's rule 1 makes an
+#: unrecognized key inside ``constraints`` fail-closed, so a dimension utina's
+#: fold cannot evaluate must not be written for it to skip (this.i @cglayqvw).
+SEAT_ACTS = ("create commitment",)
 
 FOUNDERS = (MARTA, DEV)
 

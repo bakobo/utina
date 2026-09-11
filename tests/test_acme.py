@@ -13,8 +13,11 @@ oracle asserts them.
 
 from __future__ import annotations
 
+import json
 from fractions import Fraction
+from pathlib import Path
 
+import jsonschema
 import pytest
 from bakobo.errors import BakoboError
 
@@ -29,10 +32,18 @@ from utina.acme import (
     NINA,
     ORDINARY_ACTS,
     SEAT,
-    SEAT_SCHEMA,
+    SEAT_OFFICE,
     build,
 )
-from utina.substrate import ENDORSEMENT_SCHEMA, canonical_bytes
+from utina.substrate import ENDORSEMENT_SCHEMA, GCD_RULES, GCD_SCHEMA, canonical_bytes
+
+#: The published GCD as vendored, so the record's own credential is checked
+#: against the document rather than against a shape restated here.
+GCD_DOCUMENT = json.loads(
+    (Path(__file__).resolve().parents[1] / "schemas" / "gcd-2.0.1.json").read_text(
+        encoding="utf-8"
+    )
+)
 
 #: ``d1`` through ``d9`` and the two named coordinates are ``docs/demo-script.md``'s.
 #: ``b5`` and ``b11`` are ``docs/demo-2-script.md``'s beats 5 and 11, the two
@@ -105,7 +116,7 @@ def test_every_slot_names_the_schema_its_evidence_must_satisfy():
         for entry in law["clauses"]:
             for one in entry["group"]["slots"]:
                 assert one["schema"] == ENDORSEMENT_SCHEMA
-    assert SEAT_SCHEMA != ENDORSEMENT_SCHEMA, "two kinds, or the case above is vacuous"
+    assert GCD_SCHEMA != ENDORSEMENT_SCHEMA, "two kinds, or the case above is vacuous"
 
 
 # --- A3, the clause the amendment does not reach (@rwo55zyw, tick 6ms6) -------
@@ -187,6 +198,41 @@ def test_the_corpus_is_what_the_constructor_emitted(acme_double):
     assert acme_double.events
     for event in acme_double.events:
         assert acme_double.substrate.verify(event.body["i"], event.body, event.body["sig"])
+
+
+def test_the_seat_credential_in_the_record_is_a_real_gcd(acme_double):
+    """The adoption's whole claim, checked on Acme's own committed bytes.
+
+    Not a lookalike and not a shape restated in a test: the credential the
+    record carries validates against the published document under a stranger's
+    validator, names the published schema, and is issued under the published
+    governance framework.
+    """
+    issuances = [event for event in acme_double.events if event.kind == "issuance"]
+    assert issuances, "the record has to seat its board for any of this to mean anything"
+    credential = issuances[0].body["acdc"]
+
+    jsonschema.validate(instance=dict(credential), schema=GCD_DOCUMENT)
+    assert credential["s"] == GCD_SCHEMA
+    assert credential["r"] == GCD_RULES
+
+
+def test_the_seat_credential_says_what_authority_the_seat_inherited(acme_double):
+    """A seat holds power because a credential says which, never because it is
+    delegated: the delegation relationship confers nothing (``this.i`` @cglayqvw).
+
+    ``create commitment`` is what an endorsement and a declination both are, and
+    it is the whole of what Acme's law lets the seat do. Every other constraint
+    dimension is absent because the fold cannot evaluate it, and GCD's rule 1
+    makes a dimension a verifier does not recognize a denial rather than a skip.
+    """
+    credential = next(
+        event.body["acdc"] for event in acme_double.events if event.kind == "issuance"
+    )
+
+    assert credential["a"]["i"] == acme_double.aid(SEAT), "issued to the office"
+    assert credential["a"]["constraints"] == {"acts": ["create commitment"]}
+    assert credential["a"]["facet"]["role"] == SEAT_OFFICE
 
 
 def test_the_founding_law_is_committed_at_inception(acme_double):

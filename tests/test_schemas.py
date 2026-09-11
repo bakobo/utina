@@ -22,7 +22,6 @@ from pathlib import Path
 from keri.core.coring import Saider  # type: ignore[import-untyped]
 from keri.core.scheming import Schemer  # type: ignore[import-untyped]
 
-from utina.acme import SEAT_SCHEMA
 from utina.substrate import GCD_RULES, GCD_SCHEMA
 
 SCHEMAS = Path(__file__).resolve().parents[1] / "schemas"
@@ -38,37 +37,6 @@ def said_of(name: str) -> str:
     """The schema identifier keripy computes for the document as it stands on disk."""
     said: str = Schemer(sed=document(name)).said
     return said
-
-
-def test_the_seat_schema_pin_is_the_digest_of_the_committed_document():
-    """Acme's law names this identifier, so the document has to derive it."""
-    assert said_of("acme-seat.json") == SEAT_SCHEMA
-
-
-def test_the_seat_schema_carries_its_own_identifier_in_its_id():
-    """ACDC's convention, and what makes the document self-describing.
-
-    The identifier is computed with ``$id`` held at a dummy of its own length,
-    so a document whose ``$id`` is its own SAID is stable under recomputation —
-    which is what lets a stranger check the pin without being told the answer.
-    """
-    document = json.loads((SCHEMAS / "acme-seat.json").read_text(encoding="utf-8"))
-    assert document["$id"] == SEAT_SCHEMA
-
-
-def test_the_seat_schema_requires_the_fields_custos_names():
-    """``custos-4.2.md:1420-1425``: typed by schema, registry-bound, issuee named.
-
-    A schema that left ``ri`` or the issuee optional would type a credential
-    that satisfies the schema and not the requirement, which is worse than
-    having no schema at all: the toolchain would pass it.
-    """
-    document = json.loads((SCHEMAS / "acme-seat.json").read_text(encoding="utf-8"))
-    assert "ri" in document["required"]
-    attributes = next(
-        form for form in document["properties"]["a"]["oneOf"] if form.get("type") == "object"
-    )
-    assert {"i", "seat"} <= set(attributes["required"])
 
 
 def test_the_gcd_schema_pin_is_the_digest_of_the_vendored_document():
@@ -88,12 +56,28 @@ def test_the_vendored_gcd_is_the_published_one_and_not_a_lookalike():
     """The fields the adoption rests on, asserted against the document itself."""
     gcd = document("gcd-2.0.1.json")
     assert gcd["title"] == "Generalized Cooperative Delegation Credential"
-    assert set(gcd["required"]) == {"v", "d", "i", "ri", "s", "a", "r"}
-    attributes = next(
-        form for form in gcd["properties"]["a"]["oneOf"] if form.get("type") == "object"
-    )
-    assert "i" in attributes["required"]
-    assert "acts" in attributes["properties"]["constraints"]["properties"]
+    assert "acts" in _gcd_attributes()["properties"]["constraints"]["properties"]
+
+
+def test_the_gcd_requires_the_fields_custos_names_of_a_seat_credential():
+    """``custos-4.2.md:1420-1425``: typed by schema, registry-bound, issuee named.
+
+    The seat credential is now a GCD, so the question is whether the *published*
+    schema still types the artifact Custos asks for. A schema that left ``ri`` or
+    the issuee optional would type a credential satisfying the schema and not the
+    requirement, which is worse than having no schema at all: the toolchain would
+    pass it. This passes, which is the substantive reason the adoption is
+    possible and not merely tidy.
+    """
+    assert "ri" in document("gcd-2.0.1.json")["required"]
+    assert "i" in _gcd_attributes()["required"]
+
+
+def _gcd_attributes() -> dict:
+    """The GCD's expanded attributes form — the object one, never the SAID one."""
+    forms = document("gcd-2.0.1.json")["properties"]["a"]["oneOf"]
+    expanded: dict = next(form for form in forms if form.get("type") == "object")
+    return expanded
 
 
 def test_the_gcd_rules_pin_is_the_digest_of_the_vendored_ruleset():

@@ -26,8 +26,8 @@ from .law import (
     NINA,
     ORDINARY_ACTS,
     SEAT,
+    SEAT_ACTS,
     SEAT_OFFICE,
-    SEAT_SCHEMA,
     UNGOVERNED_ACT,
     board_law,
     founding_law,
@@ -124,7 +124,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # rather than at inception because nothing before this beat is issued under
     # it, and opening it writes no committed event.
     constructor.open_registry(GOVERNANCE_REGISTRY)
-    seating = constructor.seat(aids[SEAT], schema=SEAT_SCHEMA, office=SEAT_OFFICE)
+    seating = constructor.confer(aids[SEAT], role=SEAT_OFFICE, acts=SEAT_ACTS)
     name("seat-credential", seating)
     mark("b8", seating)
     seat_credential = str(seating.body["acdc"]["d"])

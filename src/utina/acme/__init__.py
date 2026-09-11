@@ -22,8 +22,8 @@ from .law import (
     NINA,
     ORDINARY_ACTS,
     SEAT,
+    SEAT_ACTS,
     SEAT_OFFICE,
-    SEAT_SCHEMA,
     UNGOVERNED_ACT,
 )
 from .record import Acme
@@ -44,8 +44,8 @@ __all__ = [
     "NINA",
     "ORDINARY_ACTS",
     "SEAT",
+    "SEAT_ACTS",
     "SEAT_OFFICE",
-    "SEAT_SCHEMA",
     "UNGOVERNED_ACT",
     "Acme",
     "build",

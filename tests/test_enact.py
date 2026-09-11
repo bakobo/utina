@@ -11,17 +11,35 @@ Nothing here returns a finding, because nothing here judges.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
+from pathlib import Path
 
+import jsonschema
 import pytest
 from bakobo.errors import BakoboError
 
 from utina.enact import Constructor
 from utina.fold import standing
-from utina.substrate import ENDORSEMENT_SCHEMA, ISSUED, REVOKED, FacadeSubstrate
+from utina.substrate import (
+    ENDORSEMENT_SCHEMA,
+    GCD_RULES,
+    GCD_SCHEMA,
+    ISSUED,
+    REVOKED,
+    FacadeSubstrate,
+)
 
 LAW: Mapping[str, object] = {"clauses": ()}
 GAID = "acme:gaid"
+
+#: The published GCD, as vendored, so what the constructor writes is checked
+#: against the document a stranger would validate against.
+GCD_DOCUMENT = json.loads(
+    (Path(__file__).resolve().parents[1] / "schemas" / "gcd-2.0.1.json").read_text(
+        encoding="utf-8"
+    )
+)
 
 
 @pytest.fixture
@@ -164,6 +182,7 @@ def test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it(f
     verbs = {name for name in dir(founded) if not name.startswith("_")}
     assert verbs == {
         "anchoring_event",
+        "confer",
         "decline",
         "emitted",
         "enact_amendment",
@@ -175,7 +194,6 @@ def test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it(f
         "registry",
         "resume",
         "revoke",
-        "seat",
         "substrate",
     }
 
@@ -192,33 +210,99 @@ def test_a_domain_has_no_registry_until_one_is_opened(founded):
     assert len(founded.emitted) == before
 
 
-def test_seating_an_organ_before_the_registry_is_opened_is_refused(founded):
-    """Fail closed: a seat credential nobody can revoke leaves standing unaskable.
+def test_conferring_authority_before_the_registry_is_opened_is_refused(founded):
+    """Fail closed: a grant nobody can revoke is the one shape this must not mint.
 
-    ``custos-4.2.md:1420-1422`` makes a standing-conferring credential revocable
-    through its registry, so issuing one outside a registry would produce
-    evidence whose registry state no fold could ever read.
+    Authority comes from a revocable credential and from nothing else
+    (``this.i`` @cglayqvw), so a GCD outside a registry would confer authority
+    that no act of the conferring party could ever take back — the KERI
+    delegation underneath it being permanent.
     """
     with pytest.raises(BakoboError) as caught:
-        founded.seat("acme:seat3", schema="E" + "t" * 43, office="board-seat-3")
+        founded.confer("acme:seat3", role="board-seat-3", acts=["create commitment"])
     assert caught.value.code == "e.state.registry-unopened.f"
     assert not caught.value.retryable
 
 
-def test_a_seat_credential_names_the_organ_as_issuee_under_the_domains_registry(founded):
-    """The second credential kind, and the three things that make it one."""
+def test_a_grant_names_the_delegate_as_issuee_under_the_domains_registry(founded):
+    """The second credential kind, and the things that make it one."""
     registry = founded.open_registry("acme-governance")
 
-    event = founded.seat("acme:seat3", schema="E" + "t" * 43, office="board-seat-3")
+    event = founded.confer("acme:seat3", role="board-seat-3", acts=["create commitment"])
 
     assert event.kind == "issuance"
     assert event.body["ri"] == registry
     credential = event.body["acdc"]
-    assert credential["i"] == founded.gaid, "the domain seats its own organ"
+    assert credential["i"] == founded.gaid, "the domain confers its own authority"
     assert credential["ri"] == registry, "revocable through the registry it names"
-    assert credential["a"]["i"] == "acme:seat3", "the issuee is the seat itself"
-    assert credential["a"]["seat"] == "board-seat-3"
+    assert credential["s"] == GCD_SCHEMA, "a GCD, not a schema of utina's own"
+    assert credential["r"] == GCD_RULES, "issued under the published framework"
+    assert credential["a"]["i"] == "acme:seat3", "the issuee is the delegate"
+    assert credential["a"]["facet"]["role"] == "board-seat-3"
+    assert credential["a"]["facet"]["relationType"] == "delegation"
+    assert credential["a"]["facet"]["exerciseMode"] == "act"
+    assert credential["a"]["constraints"]["acts"] == ["create commitment"]
     assert founded.substrate.verify(founded.gaid, event.body, event.body["sig"])
+
+
+def test_a_grant_carries_no_presents_as_unless_one_is_asked_for(founded):
+    """The seat presents as itself, so the field would be saying nothing.
+
+    It is descriptive either way — the rules make ``constraints`` the whole of
+    the authorization decision (bakobo/schema#3) — but a field asserting that an
+    identifier presents as itself is noise in committed bytes.
+    """
+    founded.open_registry("acme-governance")
+
+    event = founded.confer("acme:seat3", role="board-seat-3", acts=["create commitment"])
+
+    assert "presentsAs" not in event.body["acdc"]["a"]["facet"]
+
+
+def test_a_grant_may_say_which_office_its_delegate_presents_under(founded):
+    """Beat 15's device: it signs with its own key and presents as the seat."""
+    founded.open_registry("acme-governance")
+
+    event = founded.confer(
+        "acme:nina-device",
+        role="board-seat-3-device",
+        acts=["create commitment"],
+        presents_as="acme:seat3",
+    )
+
+    assert event.body["acdc"]["a"]["facet"]["presentsAs"] == "acme:seat3"
+
+
+def test_a_grant_is_conferred_by_the_party_that_holds_the_authority(founded):
+    """The seat grants to its own device; the domain is not the issuer there.
+
+    A grant issued by the domain would be the domain delegating, which is a
+    different fact about who answers for the delegate and who may end it.
+    """
+    seat = founded.substrate.delegate(founded.gaid, "acme:seat3")
+    device = founded.substrate.delegate(seat, "acme:nina-device")
+    founded.open_registry("acme-governance")
+
+    event = founded.confer(
+        device,
+        role="board-seat-3-device",
+        acts=["create commitment"],
+        issuer=seat,
+        presents_as=seat,
+    )
+
+    assert event.body["acdc"]["i"] == seat
+    assert event.body["i"] == seat
+    assert founded.substrate.verify(seat, event.body, event.body["sig"])
+
+
+def test_a_grant_validates_against_the_published_gcd_document(founded):
+    """A stranger's validator passes what Acme's constructor writes."""
+    founded.open_registry("acme-governance")
+
+    event = founded.confer("acme:seat3", role="board-seat-3", acts=["create commitment"])
+
+    jsonschema.validate(instance=dict(event.body["acdc"]), schema=GCD_DOCUMENT)
 
 
 # --- the qualification an endorser cites, and the check on it (@x7crwavm) -----
@@ -233,7 +317,7 @@ def seated(founded):
     """
     seat = founded.substrate.delegate(founded.gaid, "acme:seat3")
     founded.open_registry("acme-governance")
-    event = founded.seat(seat, schema="E" + "t" * 43, office="board-seat-3")
+    event = founded.confer(seat, role="board-seat-3", acts=["create commitment"])
     return founded, seat, str(event.body["acdc"]["d"])
 
 
@@ -252,7 +336,7 @@ def test_a_seats_endorsement_carries_a_di2i_edge_to_its_seat_credential(seated):
     edge = event.body["acdc"]["e"]["qp"]
     assert edge["n"] == credential
     assert edge["o"] == "DI2I"
-    assert edge["s"] == "E" + "t" * 43, "the far node's schema, read off the far node"
+    assert edge["s"] == GCD_SCHEMA, "the far node's schema, read off the far node"
     assert constructor.substrate.verify_edges(event.body["acdc"]) is True
 
 
@@ -312,7 +396,7 @@ def test_a_citation_resolves_by_identifier_and_not_by_the_latest_issuance(seated
     """
     constructor, _, first_credential = seated
     second_seat = constructor.substrate.delegate(constructor.gaid, "acme:seat4")
-    second = constructor.seat(second_seat, schema="E" + "t" * 43, office="board-seat-4")
+    second = constructor.confer(second_seat, role="board-seat-4", acts=["create commitment"])
     second_credential = str(second.body["acdc"]["d"])
     subject = constructor.propose("approve-budget").said
 
