@@ -282,6 +282,7 @@ def test_a_grant_is_conferred_by_the_party_that_holds_the_authority(founded):
     seat = founded.substrate.delegate(founded.gaid, "acme:seat3")
     device = founded.substrate.delegate(seat, "acme:nina-device")
     founded.open_registry("acme-governance")
+    founded.open_registry("acme-seat3", controller=seat)
 
     event = founded.confer(
         device,

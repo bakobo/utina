@@ -31,7 +31,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from utina import coia
-from utina.acme import DEV, GAID, MARTA, NINA, SEAT
+from utina.acme import DEV, DEVICE, GAID, MARTA, NINA, SEAT
 from utina.cli.errors import ALIAS_PREFIX_AMBIGUOUS
 
 __all__ = ["PARTIES", "SCOPE", "Aliases", "Party", "aliases_over"]
@@ -64,13 +64,16 @@ class Party:
 
 #: Acme's cast, keyed by the alias constants ``utina.acme`` names them by. Marta and
 #: Dev are the founders; Nina is the outside director the amendment seats at D4; the
-#: domain itself is aliased too, so ``utina whois`` can answer for it.
+#: domain itself is aliased too, so ``utina whois`` can answer for it. The device is
+#: named for the seat rather than for Nina, because what a reader needs to see on a
+#: line is whose authority the act was made under.
 PARTIES: Mapping[str, Party] = {
     GAID: Party("Acme", "governed domain"),
     MARTA: Party("Marta", "founder"),
     DEV: Party("Dev", "founder"),
     NINA: Party("Nina", "director"),
     SEAT: Party("Acme", "board seat 3"),
+    DEVICE: Party("Acme", "board seat 3 device"),
 }
 
 

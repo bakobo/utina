@@ -56,6 +56,9 @@ ORACLE_LABELS = {
     "b5",
     "b8",
     "b11",
+    "b13",
+    "b15",
+    "device-granted",
     "d1",
     "d2",
     "d3",
@@ -283,14 +286,19 @@ def subject_of(event):
     return acdc["a"].get("said") if isinstance(acdc, dict) else None
 
 
-def test_dev_declines_twice_and_both_are_signed_committed_acts(acme_double):
-    """A no is never a silence, and two nos are two events."""
+def test_dev_declines_three_times_and_each_is_a_signed_committed_act(acme_double):
+    """A no is never a silence, and three nos are three events.
+
+    D3's office lease, D6's retabled budget, and beat 13's Q2 forecast. The
+    third is the same signed no as the first two and the fold draws a different
+    consequence from it, which is what beats 13 and 15 are for.
+    """
     declinations = [
         event
         for event in acme_double.events
         if disp(event) == "decline" and event.body["i"] == DEV
     ]
-    assert len(declinations) == 2
+    assert len(declinations) == 3
     for event in declinations:
         assert acme_double.substrate.verify(DEV, event.body, event.body["sig"])
 
@@ -301,7 +309,7 @@ def test_the_seat_declines_the_amendment(acme_double):
         event.body["i"]
         for event in acme_double.events
         if disp(event) == "decline"
-    ] == [DEV, DEV, SEAT]
+    ] == [DEV, DEV, SEAT, DEV]
 
 
 # --- The position labels the oracle addresses the log through -----------------

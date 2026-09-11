@@ -28,12 +28,12 @@ pytest.importorskip(
     reason="the fold has no evaluate() yet — see docs/demo-2-script.md for what it owes",
 )
 
-from utina.acme import DEV, MARTA
+from utina.acme import DEV, DEVICE, MARTA, SEAT
 from utina.fold import Constitution, evaluate
 from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal
-from utina.substrate import ENDORSEMENT_SCHEMA
+from utina.substrate import DI2I, ENDORSEMENT_SCHEMA, GCD_SCHEMA, ISSUED
 
 #: Where each beat is asked, in the record's own labels. Demo 2 numbers its beats
 #: and the record labels its coordinates, so the mapping is stated once here
@@ -48,6 +48,8 @@ AT = {
     9: "board-seated",
     10: "board-seated",
     11: "b11",
+    13: "b13",
+    15: "b15",
     24: "d9",
     25: "board-seated",
 }
@@ -57,6 +59,7 @@ HIRE = "hire-vp-sales"
 LEASE = "sign-office-lease"
 EQUITY = "release-escrowed-equity"
 DIVIDEND = "declare-dividend"
+BUDGET = "approve-budget"
 
 
 def owed(*what: str) -> str:
@@ -225,12 +228,23 @@ def test_b12_the_budget_carries_on_two_slots_of_three():
     pytest.skip(owed("U1.4 the DI2I edge as pre-fold evidence (tick 5fam)"))
 
 
-def test_b13_the_same_signed_no_is_only_pending_under_three_slots():
+def test_b13_the_same_signed_no_is_only_pending_under_three_slots(acme):
     """Row 13: seat 3's slot is still reachable, so a declination delays rather
-    than defeats. Demo 1's centerpiece, re-cut for the seated board."""
-    # The law slots the seat now; what the record has no act of is the Q2
-    # forecast this row asks about. Demo 1's D6 is the retabled budget.
-    pytest.skip(owed("a Q2-forecast act in the record (U4.3, tick 77uk)"))
+    than defeats. Demo 1's centerpiece, re-cut for the seated board.
+
+    The same signed no as D3's, and the fold draws a different consequence from
+    it because the law now has three slots and unity is still within reach of
+    the one that has not acted. Nothing about the declination changed.
+    """
+    finding = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[13]))
+    assert isinstance(finding, Pending)
+    assert [element.endorser for element in finding.requirement] == [acme.aid(SEAT)]
+    assert [element.clause for element in finding.requirement] == ["B1"]
+    assert [element.species for element in finding.requirement] == [PendingSpecies.ABSENT]
+
+    declining = acme.events[acme.at(AT[13]).seq]
+    assert declining.body["i"] == acme.aid(DEV)
+    assert declining.body["acdc"]["a"]["disp"] == "decline"
 
 
 def test_b14_an_unseated_endorser_fails_credential_verification_before_any_fold():
@@ -242,13 +256,49 @@ def test_b14_an_unseated_endorser_fails_credential_verification_before_any_fold(
     ))
 
 
-def test_b15_the_delegated_device_fills_the_seats_slot():
+def test_b15_the_delegated_device_fills_the_seats_slot(acme):
     """Row 15: DI2I validates because the issuer is a delegated AID of the
-    issuee. Same slot, different key, no law change."""
-    pytest.skip(owed(
-        "Nina's delegated device in the record (U4.3, tick 77uk)",
-        "U1.4 the DI2I edge (tick 5fam)",
-    ))
+    issuee. Same slot, different key, no law change.
+
+    The script's "via device" is two committed facts and neither is the
+    delegation. The seat's GCD grant is what lets the device act at all, and the
+    fold finds it by searching the record rather than by following anything the
+    endorsement claims (``this.i`` @cglayqvw). DI2I is the toolchain's separate
+    check on the edge to the seat credential, which is what makes the *unseated*
+    case of row 14 fail — the two currents, again, on one act.
+    """
+    before = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[13]))
+    assert isinstance(before, Pending), "row 13's question, which the device carries"
+
+    finding = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[15]))
+    assert isinstance(finding, Affirmed)
+    assert finding.clauses == ("B1",)
+
+    acting = acme.events[acme.at(AT[15]).seq]
+    assert acting.body["i"] == acme.aid(DEVICE), "the device signed, not the seat"
+    assert acting.body["acdc"]["e"]["qp"]["o"] == DI2I
+    seating = acme.events[acme.at("b8").seq]
+    assert acting.body["acdc"]["e"]["qp"]["n"] == seating.body["acdc"]["d"]
+
+
+def test_b15_the_device_acts_under_a_grant_the_seat_can_revoke(acme):
+    """The half of row 15 the script does not say out loud, and the reason the
+    row is safe: the device's authority is a credential, not a relationship.
+
+    The KERI delegation behind the device is permanent — keripy has no
+    un-delegation, and a delegate's interaction events need no approval ever —
+    so if the delegation conferred the authority there would be no way to end
+    it. The grant is issued by the seat, names the device as issuee, and stands
+    in the domain's registry until the seat says otherwise.
+    """
+    grant = acme.events[acme.at("device-granted").seq].body["acdc"]
+
+    assert grant["s"] == GCD_SCHEMA
+    assert grant["i"] == acme.aid(SEAT), "the seat grants what the seat holds"
+    assert grant["a"]["i"] == acme.aid(DEVICE)
+    assert grant["a"]["constraints"] == {"acts": ["create commitment"]}
+    assert grant["ri"] != acme.registry, "the seat's own registry, not the domain's"
+    assert acme.substrate.registry_state(grant["ri"], grant["d"]) == ISSUED
 
 
 # --- Act III — revocation, and what it cannot do ------------------------------

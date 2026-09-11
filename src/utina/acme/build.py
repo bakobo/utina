@@ -19,15 +19,19 @@ from utina.substrate import FacadeSubstrate, FoldValues, Substrate
 from .law import (
     AMENDMENT_ACTS,
     DEV,
+    DEVICE,
+    DEVICE_ROLE,
     EQUITY_ACTS,
     GAID,
     GOVERNANCE_REGISTRY,
     MARTA,
     NINA,
     ORDINARY_ACTS,
+    Q2_FORECAST,
     SEAT,
     SEAT_ACTS,
     SEAT_OFFICE,
+    SEAT_REGISTRY,
     UNGOVERNED_ACT,
     board_law,
     founding_law,
@@ -61,6 +65,11 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # It is delegated after the four self-incepted parties so that their key
     # material, derived from the pinned salt by index, does not move.
     seat3 = aids[SEAT] = substrate.delegate(aids[GAID], SEAT)
+
+    # Beat 15's device: delegated from the SEAT, not from Nina and not from the
+    # domain, and delegated last so that nothing already incepted moves. The
+    # delegation is what lets DI2I resolve; it is not what lets the device act.
+    device = aids[DEVICE] = substrate.delegate(seat3, DEVICE)
     constructor = Constructor(substrate, aids[GAID], values=values)
 
     saids: dict[str, str] = {}
@@ -162,6 +171,34 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     name(UNGOVERNED_ACT, dividend)
     mark("d8", dividend)
     mark("d9", dividend)
+
+    # Beats 13 and 15 — the Q2 forecast, a second act of the budget class, tabled
+    # after D8 so that nothing demo 1 asks about moves. Marta yes, Dev no: the
+    # same signed no as D3 and D6, and with three slots it delays rather than
+    # defeats, because seat 3's slot is still reachable.
+    forecast = name(Q2_FORECAST, constructor.propose(BUDGET))
+    constructor.endorse(marta, forecast)
+    mark("b13", constructor.decline(dev, forecast))
+
+    # The seat opens its OWN registry. A transaction log accepts issuances only
+    # from the identifier that controls it, and the governance consequence is the
+    # point rather than the mechanism: revocation authority follows the
+    # registry's controller, so a grant the seat kept in ACME's registry would be
+    # one the seat could never take back.
+    constructor.open_registry(SEAT_REGISTRY, controller=seat3)
+    granting = constructor.confer(
+        device, role=DEVICE_ROLE, acts=SEAT_ACTS, issuer=seat3, presents_as=seat3
+    )
+    name("device-grant", granting)
+    mark("device-granted", granting)
+
+    # Beat 15 — Nina signs from her device, and the forecast reaches unity. Two
+    # committed things make it fill seat 3's slot, and neither is the delegation:
+    # the seat's GCD grant, which the fold finds by searching rather than by
+    # following a citation, and the seat credential the endorsement cites, which
+    # is what DI2I resolves against. Revoke either and the device stops filling
+    # the slot at the next coordinate.
+    mark("b15", constructor.endorse(device, forecast, qualification=seat_credential))
 
     events = constructor.emitted
     return Acme(

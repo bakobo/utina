@@ -45,15 +45,16 @@ SUBJECT_UNKNOWN = ErrorCode(
 
 REGISTRY_UNOPENED = ErrorCode(
     code="e.state.registry-unopened.f",
-    title="This domain has no credential registry yet.",
+    title="This conferring party has no credential registry yet.",
     detail=(
-        "A seat credential for {organ} was asked for and the domain {gaid} has opened no "
-        "registry, so the credential would be unrevokable. A standing-conferring credential "
-        "that cannot be revoked leaves registry state unaskable, and registry state is the "
-        "evidence a standing judgment is computed over."
+        "A grant to {organ} was asked for and {gaid} has opened no registry, so the "
+        "credential would be unrevokable. Authority that cannot be revoked is the one shape "
+        "this must not mint: the delegation beneath a grant is permanent, so the credential "
+        "is the only thing that can ever end it, and a credential outside a registry leaves "
+        "registry state unaskable."
     ),
     args=("gaid", "organ"),
-    hint="Open the domain's registry before seating an organ under it.",
+    hint="Open the conferring party's own registry before conferring authority under it.",
 )
 
 RECORD_UNRESUMABLE = ErrorCode(

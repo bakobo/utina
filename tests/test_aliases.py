@@ -18,7 +18,7 @@ import pytest
 from bakobo.errors import BakoboError  # type: ignore[import-untyped]
 
 from utina import coia
-from utina.acme import DEV, GAID, MARTA, NINA, SEAT
+from utina.acme import DEV, DEVICE, GAID, MARTA, NINA, SEAT
 from utina.cli.aliases import PARTIES, SCOPE, Aliases, aliases_over
 from utina.cli.world import world
 
@@ -101,7 +101,7 @@ def test_every_alias_carries_the_demo_flag(table: Aliases) -> None:
 
 def test_the_party_table_covers_exactly_what_acme_incepts(facade_aids: dict[str, str]) -> None:
     """A party with no entry would render as a raw identifier, which is a gap."""
-    assert set(PARTIES) == set(facade_aids) == {GAID, MARTA, DEV, NINA, SEAT}
+    assert set(PARTIES) == set(facade_aids) == {GAID, MARTA, DEV, NINA, SEAT, DEVICE}
 
 
 def test_the_domain_itself_is_aliased_too(table: Aliases, facade_aids: dict[str, str]) -> None:

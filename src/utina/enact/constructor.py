@@ -83,7 +83,7 @@ class Constructor:
         self._emitted: list[Event] = []
         self._saids: set[SAID] = set()
         self._founded = False
-        self._registry: SAID | None = None
+        self._registries: dict[AID, SAID] = {}
 
     @property
     def emitted(self) -> tuple[Event, ...]:
@@ -174,23 +174,35 @@ class Constructor:
         self.substrate.rotate(self.gaid, event.said)
         return event
 
-    def open_registry(self, alias: str) -> SAID:
-        """Open the domain's credential registry, and hold its identifier.
+    def open_registry(self, alias: str, *, controller: AID | None = None) -> SAID:
+        """Open a credential registry for ``controller``, and hold its identifier.
 
         No corpus event. A registry's own inception confers nothing on anybody:
         what bears on a standing judgment is the issuance and the revocation,
         and those are committed as governance events below. The registry itself
         is substrate machinery, like a rotation, and stays out of the log the
         fold folds (this.i @jdie6v, @exy3u4t7).
+
+        ``controller`` defaults to the domain. It exists because **a transaction
+        event log accepts issuances only from the identifier that controls it** —
+        the authorizing seal lands in the controller's key log, and a registry
+        whose controller never sealed the issuance leaves the credential in
+        escrow rather than issued. So a party conferring authority of its own
+        needs a registry of its own, and that is the right shape rather than a
+        workaround: revocation authority follows the registry's controller, so a
+        seat's grant kept in the *domain's* registry would be a grant the seat
+        itself could never take back (this.i @cglayqvw).
         """
         self._require_founded()
-        self._registry = self.substrate.open_registry(self.gaid, alias)
-        return self._registry
+        holder = self.gaid if controller is None else controller
+        registry = self.substrate.open_registry(holder, alias)
+        self._registries[holder] = registry
+        return registry
 
     @property
     def registry(self) -> SAID | None:
         """The domain's registry, or ``None`` before one is opened."""
-        return self._registry
+        return self._registries.get(self.gaid)
 
     def confer(
         self,
@@ -232,10 +244,10 @@ class Constructor:
         seat's to make and the seat's to revoke.
         """
         self._require_founded()
-        registry = self._registry
-        if registry is None:
-            raise REGISTRY_UNOPENED(gaid=self.gaid, organ=delegate)
         conferring = self.gaid if issuer is None else issuer
+        registry = self._registries.get(conferring)
+        if registry is None:
+            raise REGISTRY_UNOPENED(gaid=conferring, organ=delegate)
         facet: dict[str, object] = {
             "role": role,
             "relationType": "delegation",
@@ -262,7 +274,7 @@ class Constructor:
             conferring,
         )
 
-    def revoke(self, credential: SAID) -> Event:
+    def revoke(self, credential: SAID, *, controller: AID | None = None) -> Event:
         """Revoke ``credential`` in the domain's registry, and commit that it moved.
 
         Two things happen and the order matters. The registry's transaction log
@@ -273,27 +285,29 @@ class Constructor:
         condition read against it", so it has to be *in* the record and not
         merely true of a log beside it (this.i @exy3u4t7).
 
-        The domain signs, because the registry is the domain's and revocation is
-        an act of whoever conferred the standing. The credential itself does not
+        The registry's controller signs, because revocation is an act of whoever
+        conferred the standing and a transaction log takes its authorization from
+        the identifier that controls it. The credential itself does not
         change and is not re-embedded: it has not moved, and a second copy of it
         would be a second set of bytes claiming to be the same artifact. What
         changes is what the registry says about it from this coordinate forward.
         """
         self._require_founded()
-        registry = self._registry
+        holder = self.gaid if controller is None else controller
+        registry = self._registries.get(holder)
         if registry is None:
-            raise REGISTRY_UNOPENED(gaid=self.gaid, organ=credential)
+            raise REGISTRY_UNOPENED(gaid=holder, organ=credential)
         revocation = self.substrate.revoke_acdc(registry, credential)
         return self._emit(
             "revocation",
             {
                 "t": "rev",
-                "i": self.gaid,
+                "i": holder,
                 "ri": registry,
                 "said": credential,
                 "tel": revocation,
             },
-            self.gaid,
+            holder,
         )
 
     def propose(self, act: str) -> Event:

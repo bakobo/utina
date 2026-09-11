@@ -42,6 +42,17 @@ NINA = "acme:nina"
 #: and not a reissued credential (custos-4.2.md:2139-2148, this.i @2a25xudi).
 SEAT = "acme:seat3"
 
+#: The device Nina signs from, delegated from the *seat* rather than from Nina or
+#: from the domain. It fills seat 3's slot because the seat granted it authority
+#: to, in a GCD the seat issued and can revoke — never because the delegation
+#: exists, which proves a relationship and confers nothing (this.i @cglayqvw).
+DEVICE = "acme:nina-device"
+
+#: What the seat's grant to its device calls the relationship. Descriptive: the
+#: published rules make ``constraints`` the whole of the authorization decision,
+#: so this tells a reader what the grant is for and gates nothing.
+DEVICE_ROLE = "board-seat-3-device"
+
 #: The office the seat credential names, in Acme's own vocabulary. A label for a
 #: reader; nothing computes over it, because what the law slots is the seat's
 #: identifier.
@@ -50,6 +61,12 @@ SEAT_OFFICE = "board-seat-3"
 #: Acme's own credential registry, through which a standing-conferring
 #: credential is revocable (custos-4.2.md:1420-1422).
 GOVERNANCE_REGISTRY = "acme-governance"
+
+#: Board seat 3's own registry, through which the seat revokes what the seat
+#: granted. Separate from the domain's because a transaction log takes its
+#: authorization from the identifier that controls it, and because revocation
+#: authority ought to follow the party whose authority was conferred.
+SEAT_REGISTRY = "acme-seat3"
 
 #: What board seat 3's grant lets its holder do, over the GCD act grid: create a
 #: commitment. An endorsement and a declination are both exactly that — a party
@@ -89,6 +106,12 @@ AMENDMENT_ACTS = ("amend-operating-agreement",)
 #: themselves. That is why A3 can be carried across the amendment unchanged for a
 #: reason rather than as a fixture's control (this.i @rwo55zyw).
 EQUITY_ACTS = ("release-escrowed-equity",)
+
+#: The name the record files the Q2 forecast under. A second act of the budget
+#: class rather than a class of its own: beats 13 to 15 turn on two tablings of
+#: one kind of decision, not on two kinds, and giving it its own class would put
+#: a clause in the law for a fixture's convenience.
+Q2_FORECAST = "approve-q2-forecast"
 
 #: The act nothing governs.
 UNGOVERNED_ACT = "declare-dividend"

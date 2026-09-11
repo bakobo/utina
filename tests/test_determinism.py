@@ -88,7 +88,7 @@ def test_the_thing_being_compared_is_not_empty(name: str, tmp_path: Path):
     built = acme_in_a_separate_process(name, tmp_path / "only")
 
     assert len(built["saids"]) == len(set(built["saids"])) > 15  # type: ignore[arg-type]
-    assert len(set(built["aids"].values())) == 5  # type: ignore[union-attr]
+    assert len(set(built["aids"].values())) == 6  # type: ignore[union-attr]
     assert built["anchor"], "the board-seating amendment is anchored, or D4 is a story"
 
 
