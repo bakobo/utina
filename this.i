@@ -1413,3 +1413,83 @@ Make Custos's replayable governance useful to a real organization = goal:
         declaration's ORDER would make one falsehood two different proofs. The pair field is
         left empty: the two contradicting commitments are in one event, so there are not two
         identifiers to name, and the ruled payload is the package alone anyway (1659-1660).
+
+    Authority comes from a revocable credential, never from the delegation relationship = decision:
+      id: cglayqvw
+      why: >
+        Daniel ruled this on 2026-09-11, against the position I had reached, and the argument is
+        his: a delegator and a delegate standing in a relationship whose ilk is delegation proves
+        that a RELATIONSHIP exists and confers no authority whatever. A president may delegate an
+        identifier for greeting schoolchildren and another for negotiating arms-reduction
+        treaties, and KERI cannot tell them apart — both are a dip naming a delegator and an
+        interaction event sealing it. The conferral of authority is a separate artifact, and in
+        Bakobo's stack that artifact is the GCD (bakobo/schema), an ACDC expressing a delegate's
+        authorizations, constraints and duties. So a seat does not hold governance power because
+        it is delegated from the gAID; it holds it because a credential says which power it
+        inherited, and that credential is revocable.
+        Three things fall out, and the first two correct what I had built toward.
+        FIRST, tick 3un3 is settled and its beat-15 slot rule is dead in both of its forms. I had
+        proposed that an endorsement fills a slot if it CITES a qualification whose issuee is the
+        slotted endorser; Daniel's objection was that naming a SAID in an edge is a claim anybody
+        can make. I then proposed keying on the KERI delegation, committed as a governance event.
+        Rejected: the relationship confers nothing, so a fold reading it would be reading a fact
+        that does not bear on authority at all — a subtler error than the citation one and harder
+        to see. The predicate keys on a standing GCD whose issuer is the slotted endorser and
+        whose issuee is the acting AID, found by SEARCHING the record rather than by following a
+        citation the acting party wrote. Nothing the endorser says about itself enters.
+        Also rejected, and worth recording because it was the previous session's lean: an IPEX
+        presentation transcript anchored in the record, with a pre-committed nonce converting
+        "the nonce was novel" into "the challenge's coordinate precedes the grant's". It works,
+        and it answers a question nobody here is asking — a presentation proves the presenter
+        controlled signing keys at the presentation's coordinate, which the endorsement's own
+        signature already proves at its own. And @2a25xudi's accepted tradeoff is fatal to it as
+        a DEMO: every party's keys come from one salt in one keystore, so a live presentation
+        here is the keystore proving something to itself. Recorded as the destination for real
+        custody, built now for nothing.
+        SECOND, revocability is now uniform and the KERI side's inability to un-delegate stops
+        mattering. Measured on the pinned keripy: only dip and drt carry a delegator
+        (core/eventing.py:2819-2827, whose else branch reads "not delegable event icp, rot, ixn"),
+        so a delegate's interaction events need no approval ever and utina anchors a credential in
+        an interaction event; a drt needs the delegate's own signature as well as the delegator's
+        seal (:3224-3226), so a delegator holding none of the delegate's keys cannot rotate it to
+        null; superseding recovery rule B (:3175-3199) lets a delegator choose between competing
+        delegated rotations but not author one; and there is no un-delegation concept in the
+        library at all. The relationship is permanent — di is written only into a dip
+        (:676-677), a drt takes its delegator from kever state (:2825), and the prefix is a digest
+        over the dip including di. All of which is harmless once authority lives in the
+        credential, because a frozen delegate holding a revoked GCD is signing events no fold
+        counts. Revocation state answers the whole question, through the machinery U2.1 and U2.2
+        already built: stood_at, at the citing coordinate.
+        THIRD, what the fold may gate on. presentsAs is NOT it, and this corrects a claim I made
+        to Daniel: gcd.schema.json:113 says "presenting-as without this granted capability is
+        impersonation", but index.md:78 says "the facet is descriptive; only constraints gates the
+        authorization decision", rule 1 says "nothing outside constraints constrains", and
+        schema/this.i's facet node says the facet is "descriptive accountability a verifier MAY
+        ignore for the authorization decision". The rules win over the field description, the
+        contradiction is filed as bakobo/schema#3, and presentsAs becomes a display fact for the
+        seat screen. Gating on the credential's own i and a.i is stronger anyway — identity rather
+        than metadata.
+        Version is gcd-2.0.1, EAqOeo_YMHDEMZ-dIJTYd72nsoUS-C1RdXtOdfAj7ZxR, and it is forced
+        rather than preferred. The current GCD is 3.1.x, which requires rd and the ACDC v2
+        envelope with v2 most-compact SAIDs; keripy's credential path builds only the v1 envelope
+        (vc/proving.py:19-50), the acm ilk reaches no further than core/serdering.py, and
+        @exy3u4t7 already measured that keripy's v2 defaults raise. index.md calls 2.0.1 "the same
+        semantic content on the v1 envelope", so this is a published GCD with a real SAID and not
+        a lookalike. When keripy grows v2, the pin moves and the record churns again.
+        Constraint scope: Acme's GCDs carry acts and nothing else. GCD's rule 1 makes an
+        unrecognized key inside constraints fail-closed — "a verifier that does not recognize it
+        MUST assume that constraint is unmet and MUST deny" — which is the slot predicate's own
+        posture (fold/slots.py:33-37) arriving from the other direction, so the rule and the
+        engine already agree and the predicate denies on any constraint key it does not implement.
+        utina implements acts, the effect x state-kind grid, because it is string parsing over
+        committed bytes with no KERI and no clock in it. Rejected implementing validFrom and
+        validUntil, which need a clock: a wall clock is exactly the ambient input axiom 2 forbids,
+        and judging them against the citing event's own committed dt is arguable but unruled, so
+        Acme's GCDs carry neither field and the question does not arise here.
+        Tradeoffs accepted, all three real. Every identifier in the record moves again, on the
+        artifact carrying beats 8, 12, 16, 17 and 19, sixteen days from the demo. utina takes a
+        cross-repo dependency on bakobo/schema's published SAID, which is a thing that can move
+        under it. And utina evaluates a small fraction of GCD's constraint surface, which is
+        honest only because the fold denies the rest rather than ignoring it — an engine that
+        carried a GCD and silently skipped its constraints would be the "looks like verification
+        and is not" failure this whole line of reasoning exists to avoid.
