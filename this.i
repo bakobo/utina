@@ -1280,3 +1280,32 @@ Make Custos's replayable governance useful to a real organization = goal:
         registry_state answers for screens and for the constructor's own fail-closed checks.
         That split is what keeps the two currents unmerged at the layer where they could quietly
         merge.
+
+    A slot names the office that may act and the schema its evidence must satisfy = decision:
+      id: z373ew7j
+      why: >
+        Two changes to one committed field, taken together because they are one statement about
+        what a slot is, and because each alone would move every identifier in the record.
+        FIRST, the law slots the SEAT rather than Nina. 2139-2148 asks for a seated organ to be
+        a delegated identifier of the gAID, and slotting the officer instead of the office
+        quietly says a governance power attaches to a human rather than to a post someone holds:
+        a director leaving would then be a reissued credential and an amended law, where under
+        the office it is a rotation on the seat and nothing else moves. Nina stays an incepted
+        party with an alias and commits no act in the record — she holds the seat's keys in the
+        story, and the fixture models that as the seat signing, because the substrate holds
+        every party's keys anyway (@2a25xudi's tradeoff, restated where it bites).
+        SECOND, a slot names the schema its evidence must satisfy. 1946-1951 describes exactly
+        that — "each slot naming the schema its evidence must satisfy" — and 1435-1437 then
+        SHALLs the consequence: "Requirement elements in typed requirement sets SHALL name their
+        required schemas by schema identifier in the same discipline." utina satisfied neither,
+        invisibly, because one endorsement schema existed and the slot predicate pinned it as an
+        engine constant. A second credential kind (@exy3u4t7) ends that: a requirement for an
+        endorsement must not read as dischargeable by a seat credential, and the engine could
+        not say which it wanted. Chose to commit the schema in the slot and have the fold read
+        it from the law, over defaulting it on the requirement element from a constant the way
+        kind and species are defaulted (@7wysgy). Rejected the default because a schema the
+        engine supplies is not a requirement the law made — it is an ambient input wearing a
+        field's clothes, and the whole reason the element names a schema is so a reader can see
+        what the LAW asked for. Tradeoff accepted: every clause's bytes change, so every
+        identifier in the record moves once more, and a domain that writes a clause must now
+        decide which schema each slot wants rather than inheriting the one the engine knew.
