@@ -174,6 +174,121 @@ def test_only_the_issuer_can_revoke_their_own_act():
     assert disposition_of(founders(), events, MARTA) is Disposition.ENDORSED
 
 
+# --- The citation a slot judgment asks about: did it stand when it was cited? --
+
+SEAT = "acme:seat3"
+SEAT_CREDENTIAL = "ESeatCredential"
+REGISTRY = "ERegistry"
+SEAT_SCHEMA = "E" + "t" * 43
+
+
+def issuance(said: str, credential: str = SEAT_CREDENTIAL, registry: str = REGISTRY) -> Ev:
+    """The domain issuing a seat credential to the seat, in its registry."""
+    return Ev(
+        said=said,
+        kind="issuance",
+        body={
+            "t": "iss",
+            "i": "acme:gaid",
+            "ri": registry,
+            "acdc": {"d": credential, "i": "acme:gaid", "s": SEAT_SCHEMA, "a": {"i": SEAT}},
+        },
+    )
+
+
+def revocation(said: str, credential: str = SEAT_CREDENTIAL, registry: str = REGISTRY) -> Ev:
+    return Ev(
+        said=said,
+        kind="revocation",
+        body={"t": "rev", "i": "acme:gaid", "ri": registry, "said": credential},
+    )
+
+
+def citing(said: str, issuer: str, cited: str = SEAT_CREDENTIAL) -> Ev:
+    """An endorsement citing ``cited`` as the endorser's qualification."""
+    event = signed(said, issuer)
+    event.body["acdc"]["e"] = {
+        "d": f"{said}-edges",
+        "qp": {"n": cited, "s": SEAT_SCHEMA, "o": "DI2I"},
+    }
+    return event
+
+
+def seat_group() -> Group:
+    return Group("MxN", (Slot(SEAT, HALF, SCHEMA), Slot(DEV, HALF, SCHEMA)))
+
+
+def test_a_citation_that_stands_when_cited_fills_the_slot():
+    events = [issuance("E1"), citing("E2", SEAT)]
+    assert disposition_of(seat_group(), events, SEAT) is Disposition.ENDORSED
+
+
+def test_a_citation_revoked_before_it_was_cited_does_not_fill_the_slot():
+    """Beat 17: a new question after the revocation finds the seat's slot unfilled.
+
+    Not defeated and not an error — *pending*, naming the slot, because nothing
+    attributable to that slot has arrived. The credential was revoked before the
+    endorsement cited it, so the endorsement cites something that did not stand.
+    """
+    events = [issuance("E1"), revocation("E2"), citing("E3", SEAT)]
+    assert disposition_of(seat_group(), events, SEAT) is Disposition.PENDING
+
+
+def test_a_citation_revoked_after_it_was_cited_still_fills_the_slot():
+    """Beats 18 and 19, and the sentence Nicholas banked: evidence does not un-arrive.
+
+    The revocation is in the bundle and reaches nothing, because the citation is
+    judged at the coordinate it was made from. A prospective revocation
+    falsifies no cited ground — the credential did stand at p.
+    """
+    events = [issuance("E1"), citing("E2", SEAT), revocation("E3")]
+    assert disposition_of(seat_group(), events, SEAT) is Disposition.ENDORSED
+
+
+def test_the_same_endorsement_reads_the_same_way_however_far_past_the_revocation():
+    """The re-ask at a later position, which is beat 19's surprise.
+
+    Appending more record after the revocation cannot move it, because none of
+    it is in the bundle the citation is judged over.
+    """
+    events = [issuance("E1"), citing("E2", SEAT), revocation("E3")]
+    later = [*events, signed("E4", DEV), revocation("E5", credential="EOther")]
+    assert disposition_of(seat_group(), later, SEAT) is Disposition.ENDORSED
+
+
+def test_a_citation_the_record_never_issued_does_not_fill_the_slot():
+    """Fail closed: a citation nobody can follow is exactly as good as none."""
+    events = [citing("E1", SEAT)]
+    assert disposition_of(seat_group(), events, SEAT) is Disposition.PENDING
+
+
+def test_an_unseated_endorsers_citation_is_not_the_folds_question(): 
+    """The two currents, from the fold's side.
+
+    Whether the *relation* holds — that this endorser is the cited credential's
+    issuee or a delegate of it — is edge validation's question, and the fold
+    does not ask it: Dev citing the seat's credential fills *Dev's* slot here,
+    because the credential stood. What stops that endorsement existing at all is
+    the constructor refusing to commit it (this.i @x7crwavm), which is a
+    different current and a different code path.
+    """
+    events = [issuance("E1"), citing("E2", DEV)]
+    assert disposition_of(seat_group(), events, DEV) is Disposition.ENDORSED
+
+
+def test_an_edges_block_the_fold_cannot_read_as_edges_leaves_the_slot_filled():
+    """The block's own identifier is not an edge, and neither is a stray value."""
+    event = signed("E2", SEAT)
+    event.body["acdc"]["e"] = {"d": "E2-edges", "junk": "not a node"}
+    assert disposition_of(seat_group(), [issuance("E1"), event], SEAT) is Disposition.ENDORSED
+
+
+def test_an_edge_naming_no_credential_leaves_the_slot_unfilled():
+    event = signed("E2", SEAT)
+    event.body["acdc"]["e"] = {"d": "E2-edges", "qp": {"s": SEAT_SCHEMA, "o": "DI2I"}}
+    assert disposition_of(seat_group(), [issuance("E1"), event], SEAT) is Disposition.PENDING
+
+
 # --- Retraction, bounded by settlement: Q18 as amended, this.i @nuxitore -------
 
 

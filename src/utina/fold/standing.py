@@ -26,18 +26,50 @@ registry would answer a question nobody asked.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Protocol
 
-from utina.fold.slots import CommittedEvent, credential
 from utina.substrate import ISSUED, REVOKED
+
+SAID = str
+"""A self-addressing digest of committed bytes."""
 
 __all__ = [
     "ISSUANCE_KIND",
     "REGISTRY_FIELD",
     "REVOCATION_KIND",
     "SUBJECT_FIELD",
+    "CommittedEvent",
+    "registry_of",
     "state_over",
+    "stood_at",
 ]
+
+
+class CommittedEvent(Protocol):
+    """The read-only view of a committed event this module needs.
+
+    Declared here rather than imported from ``utina.fold.slots``, which declares
+    the same shape for the same reason (``this.i`` @yenp2x): the slot predicate
+    now asks *this* module whether a cited credential stood, so an import the
+    other way would close a cycle. Two four-line protocols over one structural
+    shape is the cheaper of the two prices.
+    """
+
+    @property
+    def said(self) -> str: ...
+
+    @property
+    def kind(self) -> str: ...
+
+    @property
+    def body(self) -> Mapping[str, object]: ...
+
+
+def _acdc(event: CommittedEvent) -> Mapping[str, object]:
+    """The credential an event embeds, or an empty mapping — never an error."""
+    embedded = event.body.get("acdc")
+    return embedded if isinstance(embedded, Mapping) else {}
 
 ISSUANCE_KIND = "issuance"
 """The event kind that commits a registry-bound credential's issuance. It embeds
@@ -86,8 +118,45 @@ def state_over(
     for event in events:
         if event.body.get(REGISTRY_FIELD) != registry:
             continue
-        if event.kind == ISSUANCE_KIND and credential(event).get("d") == said:
+        if event.kind == ISSUANCE_KIND and _acdc(event).get("d") == said:
             state = ISSUED
         elif event.kind == REVOCATION_KIND and event.body.get(SUBJECT_FIELD) == said:
             state = REVOKED
     return state
+
+
+def registry_of(events: Iterable[CommittedEvent], said: SAID) -> SAID | None:
+    """The registry a committed issuance of ``said`` names, or ``None``.
+
+    Read out of the issuance rather than taken from a caller, because the
+    registry a credential is revocable through is a fact the credential's own
+    issuance committed. A credential this record never issued has no registry
+    here, which is the same fail-closed answer as one issued somewhere else.
+    """
+    for event in events:
+        if event.kind == ISSUANCE_KIND and _acdc(event).get("d") == said:
+            registry = event.body.get(REGISTRY_FIELD)
+            return registry if isinstance(registry, str) else None
+    return None
+
+
+def stood_at(asof: Sequence[CommittedEvent], said: SAID) -> bool:
+    """Whether ``said`` stood in its own registry over the record ``asof``.
+
+    ``asof`` is the record *as of a coordinate* — the committed events up to and
+    including the one whose standing is in question — and that is the whole
+    point of this function's shape. Custos names registry state as one of the
+    four things a slot judgment asks (``:1958-1962``), and issue #82's fourth
+    rule fixes which coordinate it asks about: "a prospective revocation
+    falsifies nothing — the credential *did stand at p*, and revocation changes
+    its state going forward". So a citation is judged at the coordinate of the
+    act that made it, never at the position the question is asked from.
+
+    That is what lets the same question be re-asked after a revocation and come
+    back with the same answer, while a *new* act citing the same credential
+    fails: the first cited a credential that stood when it was cited, and the
+    second does not. Neither is a special case here; both are this one rule
+    applied at two coordinates.
+    """
+    registry = registry_of(asof, said)
+    return registry is not None and state_over(asof, registry, said) == ISSUED

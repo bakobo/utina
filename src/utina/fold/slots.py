@@ -23,7 +23,12 @@ dispositions."
 6. its attributes' ``said`` is the subject under appraisal;
 7. its issuer has not retracted it while the act it endorses was still in flight
    (``this.i`` @nuxitore — a withdrawal after the act settles is inert, because
-   withdrawal is not falsification).
+   withdrawal is not falsification);
+8. every credential it cites as the endorser's qualification *stood* at the
+   coordinate it was cited from. Custos names registry state as one of the four
+   things this judgment asks (``:1958-1962``), and the coordinate it asks about
+   is the citing act's own: "the credential did stand at p, and revocation
+   changes its state going forward" (issue #82, rule 4).
 
 Anything else — an unrecognized disposition, a body whose fields are not strings,
 an event of another kind that happens to read like an endorsement — is PENDING.
@@ -45,6 +50,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from utina.fold.group import AID, SAID, Disposition, Group, Slot
+from utina.fold.standing import stood_at
 from utina.substrate import ENDORSEMENT_SCHEMA
 
 __all__ = [
@@ -53,6 +59,8 @@ __all__ = [
     "ATTRIBUTES_FIELD",
     "DECLINE",
     "DISPOSITION_FIELD",
+    "EDGES_FIELD",
+    "EDGE_NODE_FIELD",
     "ENDORSE",
     "ENDORSEMENT_KIND",
     "ENDORSEMENT_SCHEMA",
@@ -106,6 +114,15 @@ REVOKES_FIELD = "revokes"
 """Names an earlier act of the same issuer's that no longer stands. utina's facade
 substrate has no TEL to revoke an endorsement through, so the retraction is committed
 as an ordinary event; see ``docs/custos-questions.md`` Q18, which is a guess."""
+
+EDGES_FIELD = "e"
+"""Where a credential carries the edges it cites. A seated endorser's endorsement
+cites its seat credential here, under DI2I; the substrate checks the *relation*
+(this.i @x7crwavm) and the fold asks the different question of whether what was
+cited stood when it was cited."""
+
+EDGE_NODE_FIELD = "n"
+"""Where an edge names the credential it points at."""
 
 ENDORSE = "endorse"
 DECLINE = "decline"
@@ -295,15 +312,44 @@ def _classify_slot(
 ) -> SlotDisposition:
     standing = [
         event
-        for event in committed
+        for index, event in enumerate(committed)
         if _fills(event, slot, subject)
         and slot.endorser not in retracted.get(event.said, ())
+        and _qualified(event, committed[: index + 1])
     ]
     for wanted, disposition in _PRECEDENCE:
         for event in standing:
             if attributes(event).get(DISPOSITION_FIELD) == wanted:
                 return SlotDisposition(slot.endorser, disposition, event.said)
     return SlotDisposition(slot.endorser, Disposition.PENDING)
+
+
+def _qualified(event: CommittedEvent, asof: tuple[CommittedEvent, ...]) -> bool:
+    """Whether every credential this act cites stood when this act cited it.
+
+    ``asof`` is the record up to and including this act, so the question is
+    asked at the citing coordinate and not at the position the caller is asking
+    from. That is the whole of Act III: a revocation reaches no earlier act,
+    because no earlier act's citation is judged over a bundle containing it, and
+    it reaches every later one, because theirs are (``:1958-1962``, issue #82
+    rule 4, this.i @x7crwavm).
+
+    An act that cites nothing is qualified trivially: the founders are slotted as
+    themselves and cite no credential, because nothing qualifies them beyond
+    being who the law names. A citation the record cannot resolve to an issuance
+    is not qualified at all — fail closed, and never an exception, because a
+    citation nobody can follow is exactly as good as none.
+    """
+    block = credential(event).get(EDGES_FIELD)
+    if not isinstance(block, Mapping):
+        return True
+    for name, node in block.items():
+        if name == "d" or not isinstance(node, Mapping):
+            continue
+        cited = node.get(EDGE_NODE_FIELD)
+        if not isinstance(cited, str) or not stood_at(asof, cited):
+            return False
+    return True
 
 
 def credential(event: CommittedEvent) -> Mapping[str, object]:

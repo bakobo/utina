@@ -128,6 +128,37 @@ def test_a_revocation_naming_no_credential_leaves_the_state_alone():
     assert standing.state_over(events, REGISTRY, SEAT_CREDENTIAL) == ISSUED
 
 
+def test_a_credential_stands_only_where_its_own_issuance_named_a_registry():
+    """``registry_of`` reads the registry off the issuance, and refuses a non-string.
+
+    A record whose issuance names no registry, or names something that is not an
+    identifier, leaves the credential with no registry to stand in — which is
+    the same answer as a credential nobody issued, and for the same reason.
+    """
+    assert standing.registry_of([issuance("E1")], SEAT_CREDENTIAL) == REGISTRY
+    assert standing.registry_of([], SEAT_CREDENTIAL) is None
+
+    malformed = Ev(
+        said="E1",
+        kind=standing.ISSUANCE_KIND,
+        body={"t": "iss", "ri": 7, "acdc": {"d": SEAT_CREDENTIAL}},
+    )
+    assert standing.registry_of([malformed], SEAT_CREDENTIAL) is None
+    assert standing.stood_at([malformed], SEAT_CREDENTIAL) is False
+
+
+def test_stood_at_asks_at_the_coordinate_it_is_given():
+    """The whole of Act III, in two calls over the same record.
+
+    Sliced before the revocation the credential stood; sliced after it did not.
+    Nothing about the function knows which coordinate matters — the caller hands
+    it the record as of the act whose citation is in question.
+    """
+    events = [issuance("E1"), revocation("E2")]
+    assert standing.stood_at(events[:1], SEAT_CREDENTIAL) is True
+    assert standing.stood_at(events, SEAT_CREDENTIAL) is False
+
+
 def test_a_registry_field_that_is_not_the_registry_contributes_nothing():
     events = [Ev(said="E1", body={"t": "iss", "ri": 7, "acdc": {"d": SEAT_CREDENTIAL}})]
     assert standing.state_over(events, REGISTRY, SEAT_CREDENTIAL) is None
