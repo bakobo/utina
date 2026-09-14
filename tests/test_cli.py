@@ -1053,3 +1053,55 @@ def test_a_brief_screen_is_ascii_and_fits_the_projector():
         assert out.isascii(), argv
         for line in out.splitlines():
             assert len(line) <= 96, (argv, line)
+
+
+# --- utina disturbance (tick 27x5) --------------------------------------------
+
+
+def test_the_disturbance_screen_shows_both_sets_side_by_side():
+    """Beat 23. The gap is read off the rows rather than asserted underneath them."""
+    out = screen("disturbance", "lower-the-bar", "--at", "b23")
+
+    assert "declared" in out and "computed" in out
+    assert "approve-q3-budget" in out, "the one the amendment named"
+    assert "approve-capital" in out, "and one it did not"
+    rows = [line for line in out.splitlines() if line.strip().startswith("approve-")]
+    assert len(rows) == 3
+
+
+def test_the_disturbance_screen_counts_what_was_declared_against_what_was_true():
+    out = screen("disturbance", "lower-the-bar", "--at", "b23")
+
+    assert "1 of the 3 it disturbs" in out
+
+
+def test_the_disturbance_screen_computes_with_the_evaluators_own_function():
+    """A screen that reimplemented the computation could disagree with the finding
+    printed beside it, and the whole beat is that one record yields one answer."""
+    from utina.fold.evaluate import _disturbed_by
+
+    out = screen("disturbance", "lower-the-bar", "--at", "b23")
+    with world() as record:
+        amendment = record.corpus.event(record.said("lower-the-bar"))
+        computed = _disturbed_by(record.corpus, amendment, record.at("b23"))
+
+    for said in computed:
+        assert said[:12] in out
+
+
+def test_a_disturbance_of_an_uncommitted_token_shows_an_empty_record_not_an_error():
+    """A question about bytes nobody committed is ill-posed, and the honest screen
+    is the one showing that the record has nothing to say."""
+    out = screen("disturbance", "E" + "z" * 43, "--at", "b23")
+
+    assert "0 of the 0 it disturbs" in out
+
+
+def test_an_honest_amendment_shows_two_matching_columns():
+    """The first amendment declared the hire and disturbed exactly the hire. The
+    screen has to be able to show a true declaration, or a room learns nothing
+    from being shown a false one."""
+    out = screen("disturbance", "seat-the-board", "--at", "board-seated")
+
+    assert "1 of the 1 it disturbs" in out
+    assert "hire-vp-sales" in out

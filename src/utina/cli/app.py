@@ -38,6 +38,7 @@ from utina.cli.appraisal import (
 from utina.cli.errors import ALIAS_UNKNOWN, COMMAND_MALFORMED
 from utina.cli.render import (
     brief_screen,
+    disturbance_screen,
     enact_screen,
     eval_screen,
     law_screen,
@@ -50,7 +51,9 @@ from utina.cli.render import (
 from utina.cli.style import RED, Style
 from utina.cli.world import RealValues, world
 from utina.enact import Constructor
+from utina.fold import disturbance
 from utina.fold.constitution import Constitution
+from utina.fold.evaluate import _disturbed_by as disturbed_by
 from utina.fold.question import Committed
 from utina.fold.triple import Position
 from utina.substrate import FACADE, NAMES
@@ -229,6 +232,13 @@ def build_parser(console: Console) -> _Parser:
     registry.add_argument("--registry", metavar="SAID")
     registry.add_argument("--at", metavar="POSITION")
 
+    disturbance_parser = commands.add_parser(
+        "disturbance", out=console.out, parents=[backend],
+        help="an amendment's declared disturbance set against the computed one",
+    )
+    disturbance_parser.add_argument("amendment", metavar="TOKEN")
+    disturbance_parser.add_argument("--at", metavar="POSITION")
+
     demo = commands.add_parser(
         "demo", out=console.out, parents=[backend],
         help="walk the ten beats of docs/demo-script.md",
@@ -384,6 +394,41 @@ def registry_command(args: argparse.Namespace, console: Console) -> int:
     return 0
 
 
+def disturbance_command(args: argparse.Namespace, console: Console) -> int:
+    """Beat 23: an amendment's declared disturbance set against the computed one.
+
+    The computed side is asked of the evaluator's own function rather than
+    recomputed here, because a screen that reimplemented it could disagree with
+    the finding printed beside it — and the whole beat is that two readers of one
+    record compute one answer.
+
+    A token naming nothing committed renders two empty columns rather than
+    raising. A question about bytes nobody committed is ill-posed, and the honest
+    screen is the one showing that the record has nothing to say — the same
+    posture :func:`resolve_subject` takes one layer up.
+    """
+    with _world(args) as record:
+        label, position = _position(record, args.at)
+        said = resolve_subject(record.saids, record.events, args.amendment)
+        amendment = record.corpus.event(said)
+        claimed = () if amendment is None else disturbance.declared(amendment)
+        computed = (
+            () if amendment is None else disturbed_by(record.corpus, amendment, position)
+        )
+        console.out.write(
+            disturbance_screen(
+                said,
+                label,
+                position,
+                claimed,
+                computed,
+                {value: key for key, value in record.saids.items()},
+                console.style,
+            )
+        )
+    return 0
+
+
 def enact_command(args: argparse.Namespace, console: Console) -> int:
     """The constructor's verb: a party acts, and the act lands on the record.
 
@@ -440,6 +485,7 @@ COMMANDS: Mapping[str, Callable[[argparse.Namespace, Console], int]] = {
     "enact": enact_command,
     "seat": seat_command,
     "registry": registry_command,
+    "disturbance": disturbance_command,
     "demo": demo_command,
 }
 

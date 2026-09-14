@@ -57,7 +57,7 @@ from utina.fold.slots import (
     attributes,
     credential,
 )
-from utina.fold.triple import Position
+from utina.fold.triple import SAID, Position
 
 __all__ = [
     "abbrev",
@@ -89,6 +89,12 @@ FIELD = 12
 #: alias has to fit: ``9-nina-as-director`` is exactly this long, which is why the
 #: short form is the one the columns use (this.i @clscop).
 SLOT = 18
+
+#: The question column on the disturbance screen, wide enough for the record's
+#: own names in full. A truncated name is unreadable from the back of a room, and
+#: this screen has four columns rather than the slot table's five, so the width
+#: is there to spend.
+QUESTION = 26
 
 #: Where prose wraps. Under the hundred columns the projector gives, with the margin and
 #: a field label's worth of hanging indent already counted.
@@ -837,6 +843,71 @@ def registry_screen(  # ~27x5
                 "every finding that cited the credential while it stood still stands "
                 "at its own coordinate. What a revocation reaches is the next act, not "
                 "the last one.",
+                width=WRAP,
+                initial_indent=MARGIN,
+                subsequent_indent=MARGIN,
+            ),
+        ]
+    )
+    return _screen(lines)
+
+
+# --- utina disturbance --------------------------------------------------------
+
+
+def disturbance_screen(  # ~27x5
+    amendment: SAID,
+    label: str,
+    position: Position,
+    claimed: Sequence[SAID],
+    computed: Sequence[SAID],
+    names: Mapping[SAID, str],
+    style: Style,
+) -> str:
+    """What an amendment declared it disturbs, what it actually did, side by side.
+
+    **Draft register — Daniel's to overwrite.**
+
+    The two columns are the beat. A document cannot lie about itself in a way a
+    stranger can compute, and this is the screen where it does: the amender said
+    one set, the fold computed another from the same bytes the amender signed,
+    and anybody holding the log gets the same two columns with no judge, no vote
+    and no appeal to anything outside the record.
+
+    Rows are the union of both sets in canonical order, with a mark in each
+    column, so the gap is read off the rows rather than asserted underneath them.
+    Naming them by the record's own labels where it has one, because
+    ``approve-capital-plan`` is the thing a room can hold and a 44-character
+    identifier is not — the identifier is there too, abbreviated, since the label
+    is a display name and the identifier is what was committed.
+    """
+    lines = [
+        MARGIN + style.strong(f"DISTURBANCE {abbrev(amendment)}"),
+        MARGIN + RULE,
+        "",
+        field(style, "position", f"{label} (seq {position.seq})"),
+        field(style, "declared", f"{len(claimed)} of the {len(computed)} it disturbs"),
+        "",
+        MARGIN
+        + style.label(f"{'question':<{QUESTION}}{'declared':<10}{'computed':<10}identifier"),
+    ]
+    for said in sorted(set(claimed) | set(computed)):
+        declared_mark = "yes" if said in claimed else "-"
+        computed_mark = "yes" if said in computed else "-"
+        lines.append(
+            f"{MARGIN}{abbrev(names.get(said, said), QUESTION - 3):<{QUESTION}}"
+            f"{declared_mark:<10}{computed_mark:<10}{abbrev(said)}"
+        )
+    lines.extend(
+        [
+            "",
+            *textwrap.wrap(
+                "A declaration is a claim, and a claim is what can be false. The fold "
+                "computes the true set from the same committed bytes the amendment "
+                "signed, so a mismatch is not an accusation anybody has to be trusted "
+                "about: it is arithmetic, and the proof package names both sets in "
+                "canonical order so two readers holding one record compute one "
+                "identifier for one falsehood.",
                 width=WRAP,
                 initial_indent=MARGIN,
                 subsequent_indent=MARGIN,
