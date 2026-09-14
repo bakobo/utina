@@ -975,3 +975,81 @@ def test_the_registry_screen_lists_every_credential_the_registry_issued():
 
     rows = [line for line in out.splitlines() if line.strip().startswith("E")]
     assert len(rows) == 2
+
+
+# --- utina eval --brief (tick 5dnq) -------------------------------------------
+
+
+BRIEF_BEATS = (
+    ("eval", "approve-budget", "--at", "b17"),
+    ("eval", "approve-budget", "--at", "d5"),
+    ("eval", "sign-office-lease", "--at", "d3"),
+    ("eval", "declare-dividend", "--at", "d8"),
+    ("eval", "--said", "lower-the-bar", "--at", "b23"),
+)
+
+
+@pytest.mark.parametrize("argv", BRIEF_BEATS, ids=[a[1] + a[-1] for a in BRIEF_BEATS])
+def test_a_brief_screen_fits_the_budget_the_live_beats_have(argv):
+    """Eight to ten lines. A screen a room cannot hold is a screen nobody reads,
+    and the live beats spend their minutes on narration rather than on scrolling."""
+    out = screen(*argv, "--brief")
+
+    lines = [line for line in out.splitlines() if line.strip()]
+    assert 3 <= len(lines) <= 10, (argv, len(lines), out)
+
+
+@pytest.mark.parametrize("argv", BRIEF_BEATS, ids=[a[1] + a[-1] for a in BRIEF_BEATS])
+def test_a_brief_screen_says_the_same_thing_as_the_full_one(argv):
+    """The brief form drops detail, never meaning. A compact screen that could
+    disagree with the full one would be a second path to a governance answer."""
+    full = screen(*argv)
+    brief = screen(*argv, "--brief")
+
+    assert verdict_word_of(brief) == verdict_word_of(full)
+
+
+def verdict_word_of(out: str) -> str:
+    return out.splitlines()[0].split()[0]
+
+
+def test_a_brief_finding_keeps_the_arithmetic_and_the_ground():
+    """The two things the audience is there to check. A brief screen that cut
+    either would be asking to be believed rather than showing its working."""
+    out = screen("eval", "approve-budget", "--at", "b17", "--brief")
+
+    assert "endorsed" in out and "reachable" in out, "both sums"
+    assert "1/2" in out, "and the weights they are computed from"
+    assert "ground" in out
+    assert "B1" in out, "under the clause that governs it"
+
+
+def test_a_brief_finding_still_names_the_law_it_was_judged_under():
+    """A verdict with no law head is an opinion. The digest is what makes the
+    answer checkable against a record, so it survives every cut."""
+    out = screen("eval", "approve-budget", "--at", "d5", "--brief")
+
+    with world() as record:
+        from utina.fold import Constitution
+
+        head = Constitution.at(record.corpus, record.at("d5")).law_head.said
+    assert head[:12] in out
+
+
+def test_a_brief_refusal_is_still_visibly_not_a_verdict():
+    """The distinction the full screen spends four lines on. Brief may compress
+    it; it may not lose it, because a refusal read as a fifth verdict is the one
+    misreading this engine cannot afford."""
+    out = screen("eval", "declare-dividend", "--at", "d8", "--brief")
+
+    assert "REFUSED" in out
+    assert "NOT EVALUABLE" in out
+    assert "missing" in out
+
+
+def test_a_brief_screen_is_ascii_and_fits_the_projector():
+    for argv in BRIEF_BEATS:
+        out = screen(*argv, "--brief")
+        assert out.isascii(), argv
+        for line in out.splitlines():
+            assert len(line) <= 96, (argv, line)

@@ -37,6 +37,7 @@ from utina.cli.appraisal import (
 )
 from utina.cli.errors import ALIAS_UNKNOWN, COMMAND_MALFORMED
 from utina.cli.render import (
+    brief_screen,
     enact_screen,
     eval_screen,
     law_screen,
@@ -184,6 +185,7 @@ def build_parser(console: Console) -> _Parser:
     evaluate.add_argument("act", nargs="?", metavar="ACT-CLASS")
     evaluate.add_argument("--said", metavar="TOKEN")
     evaluate.add_argument("--at", required=True, metavar="POSITION")
+    evaluate.add_argument("--brief", action="store_true", help="the same answer in 8-10 lines")
 
     log = commands.add_parser(
         "log", out=console.out, parents=[backend],
@@ -289,7 +291,8 @@ def eval_command(args: argparse.Namespace, console: Console) -> int:
         question = question_from(record.saids, record.events, args.act, args.said)
         label, position = _position(record, args.at)
         appraisal = appraise(record.corpus, question, at=position, label=label)
-        console.out.write(eval_screen(appraisal, _aliases(record), console.style))
+        draw = brief_screen if args.brief else eval_screen
+        console.out.write(draw(appraisal, _aliases(record), console.style))
     return 0
 
 

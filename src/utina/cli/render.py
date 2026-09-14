@@ -196,6 +196,95 @@ def eval_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:  #
     return _screen(_finding_lines(appraisal, outcome, aliases, style))
 
 
+def brief_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
+    """The same appraisal in eight to ten lines, for a beat that has to be held.
+
+    The live half of demo 2 is thirteen beats in about eighteen minutes, so the
+    binding constraint is not compute — the whole ten-beat demo-1 run executes in
+    0.22 seconds — it is how much screen a room can take in while somebody talks
+    over it. This drops what a reader can reconstruct and keeps what they came to
+    check.
+
+    **What survives every cut, and why.** The verdict, because it is the answer.
+    The law head, because a verdict with no law head is an opinion and the digest
+    is what makes the answer checkable against a record. The slot table with its
+    weights and both sums, because the audience is here to check arithmetic and
+    arithmetic with the subtrahend missing is not checkable (``this.i`` @clarth).
+    And the ground, because the Ground Axiom makes it part of what a finding IS
+    rather than an annotation on it — a brief screen that cut it would be asking
+    to be believed.
+
+    What goes: the column header, the separator rule above the sums, the subject
+    identifier, and the per-element cure lines, which collapse to one. A refusal
+    keeps the four words that make it visibly not a fifth verdict and loses the
+    paragraph explaining them, because by that point in the run it has been said.
+    """
+    outcome = appraisal.outcome
+    if isinstance(outcome, Refusal):
+        return _screen(
+            [
+                MARGIN + style.banner("REFUSED - NOT EVALUABLE", REFUSAL_COLOUR),
+                MARGIN + RULE,
+                MARGIN + f"{appraisal.label} (seq {appraisal.position.seq})",
+                "",
+                *wrapped(style, "missing", aliased(outcome.missing, aliases)),
+            ]
+        )
+    clause = cast(Clause, appraisal.clause)
+    held = {one.endorser: one.disposition for one in appraisal.slots}
+    word = outcome.verdict.value.upper()
+    return _screen(
+        [
+            MARGIN
+            + style.banner(f"{word:<10}", VERDICT_COLOUR[outcome.verdict])
+            + f"  {appraisal.headline}",
+            MARGIN + RULE,
+            MARGIN
+            + f"{appraisal.label} (seq {appraisal.position.seq}), "
+            + f"clause {clause.id} ({clause.group.operator}), unity 1, "
+            + f"law head {abbrev(appraisal.law.law_head.said)}",
+            "",
+            *_arithmetic(appraisal, clause, aliases, style)[1:-3],
+            MARGIN
+            + f"endorsed {rational(clause.group.endorsed_weight(held))} of 1, "
+            + ("unity reached" if clause.group.satisfied(held) else "not reached")
+            + f"; reachable {rational(clause.group.reachable_weight(held))}, "
+            + ("still reachable" if clause.group.reachable(held) else "unreachable"),
+            "",
+            *wrapped(style, "ground", _brief_ground(outcome, aliases)),
+        ]
+    )
+
+
+def _brief_ground(finding: Finding, aliases: Aliases) -> str:
+    """One line of ground, whatever the verdict — never no line.
+
+    Four values and no default case, for the reason :func:`ground_of` has none: a
+    codomain that grew a fifth member should fail here loudly rather than print a
+    verdict with nothing under it.
+    """
+    if isinstance(finding, Affirmed):
+        return (
+            f"clause {', '.join(finding.clauses)}, reached by "
+            + ", ".join(abbrev(said) for said in finding.endorsements)
+        )
+    if isinstance(finding, Defeated):
+        citation = finding.citation
+        spent = citation.declination
+        where = "" if spent is None else f", spent by {aliases.full(spent.endorser)}"
+        return (
+            f"clause {citation.clause}, {citation.defeater_class.name.lower()}{where}"
+        )
+    if isinstance(finding, Pending):
+        first = finding.requirement[0]
+        return (
+            ", ".join(aliases.full(one.endorser) for one in finding.requirement)
+            + f" - {first.kind} under clause {first.clause}, {first.species.value[1]}"
+        )
+    convicted = cast(SelfConvicted, finding)
+    return f"self-convicted on its own bytes, proof {abbrev(convicted.proof.package, 16)}"
+
+
 def _finding_lines(
     appraisal: Appraisal, finding: Finding, aliases: Aliases, style: Style
 ) -> list[str]:
