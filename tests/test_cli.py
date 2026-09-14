@@ -1105,3 +1105,138 @@ def test_an_honest_amendment_shows_two_matching_columns():
 
     assert "1 of the 1 it disturbs" in out
     assert "hire-vp-sales" in out
+
+
+# --- utina demo2 (tick 77uk) ---------------------------------------------------
+
+
+def test_the_demo2_beats_are_the_scripts_beats_in_the_scripts_order():
+    """The run-of-show is ``docs/demo-2-script.md``'s, not a driver's invention."""
+    from utina.cli.demo2 import KERNELS, LEAVE_BEHIND, LIVE, OPENER
+
+    assert [beat.id for beat in OPENER] == ["1", "2", "3", "4", "5", "6"]
+    assert [beat.id for beat in LIVE] == [
+        "7", "9", "10", "13", "8", "12", "14", "16", "17", "19", "20", "22", "23"
+    ]
+    assert [beat.id for beat in LEAVE_BEHIND] == ["11", "15", "18", "21", "24", "25"]
+    assert len(KERNELS) == 6, "six kernels, not five"
+    assert sum(len(kernel.beats) for kernel in KERNELS) == 13, "thirteen live beats"
+
+
+def test_every_beat_of_the_script_appears_exactly_once():
+    """Twenty-five beats, and no beat in two parts. A beat that ran twice would
+    make the leave-behind disagree with what the room was shown."""
+    from utina.cli.demo2 import LEAVE_BEHIND, LIVE, OPENER
+
+    everything = [beat.id for beat in OPENER + LIVE + LEAVE_BEHIND]
+    assert sorted(everything, key=int) == [str(n) for n in range(1, 26)]
+    assert len(everything) == len(set(everything))
+
+
+def test_the_demo2_live_part_runs_end_to_end_and_exits_zero():
+    """Including beat 14, whose command is MEANT to fail: a driver that treated
+    its exit status as failure would report the demo broken when it worked."""
+    out = screen("demo2", "--part", "live", "--no-pause")
+
+    assert "BEAT 7" in out and "BEAT 23" in out
+    assert "e.proof.edge-unvalidated.f" in out, "beat 14's refusal, in the transcript"
+
+
+def test_the_demo2_opener_runs_on_keripy_without_being_asked():
+    """Its job is the this-is-really-KERI claim with real prefixes on screen. An
+    opener that ran on the facade would make the claim in words and show the
+    opposite."""
+    out = screen("demo2", "--part", "opener", "--no-pause")
+
+    assert "--substrate keripy" in out
+    assert "BEAT 1" in out and "BEAT 6" in out
+
+
+def test_the_demo2_live_part_uses_the_brief_screen_for_its_evaluations():
+    """Eighteen minutes for thirteen beats: the full screen is too tall to hold."""
+    from utina.cli.demo2 import LIVE
+
+    evaluations = [beat for beat in LIVE if beat.argv and beat.argv[0] == "eval"]
+    assert evaluations
+    for beat in evaluations:
+        assert "--brief" in beat.argv, beat.id
+
+
+def test_the_opener_uses_the_full_screen_density():
+    """Recorded, and the one place the audience reads a whole finding."""
+    from utina.cli.demo2 import OPENER
+
+    for beat in OPENER:
+        assert "--brief" not in beat.argv, beat.id
+
+
+def test_a_blocked_beat_is_loud_rather_than_skipped():
+    """Beat 20 is on the never-cut list. A rehearsal that silently omitted it
+    would time a run that is not the run."""
+    out = screen("demo2", "--beat", "20", "--no-pause")
+
+    assert "BEAT 20" in out
+    assert "NOT BUILT" in out
+    assert "3h6k" in out, "and it names the tick that would unblock it"
+
+
+def test_a_kernel_card_says_what_the_room_expects_before_the_beat_lands():
+    """The beats were chosen where this audience's intuition is wrong, so a beat
+    that lands only if the wrong intuition was voiced needs it voiced."""
+    out = screen("demo2", "--part", "live", "--no-pause")
+
+    assert "KERNEL" in out
+    assert "expects:" in out and "happens:" in out
+    assert "revoking undoes the decision" in out
+
+
+def test_the_cut_order_is_the_scripts_and_names_beats_that_exist():
+    """Decided now rather than at the lectern."""
+    from utina.cli.demo2 import CUT_ORDER, LIVE
+
+    assert CUT_ORDER == ("12", "17", "10", "13")
+    live = {beat.id for beat in LIVE}
+    assert set(CUT_ORDER) <= live
+
+
+def test_an_unknown_demo2_beat_names_the_ones_that_exist():
+    status, _, err = shell("demo2", "--beat", "99", "--no-pause")
+
+    assert status != 0
+    assert "e.input.unknown.label.f" in err or "99" in err
+
+
+def test_the_demo2_leave_behind_runs_the_beats_the_room_never_sees():
+    """Six beats at full screen density, sent with the follow-up."""
+    out = screen("demo2", "--part", "leave-behind", "--no-pause")
+
+    assert "BEAT 11" in out and "BEAT 25" in out
+    assert "BEAT 7" not in out, "the live beats are not replayed here"
+
+
+def test_the_demo2_full_run_is_every_beat_of_the_script():
+    """What gets recorded for the follow-up: the whole twenty-five, in order."""
+    out = screen("demo2", "--part", "full", "--no-pause")
+
+    for beat in range(1, 26):
+        assert f"BEAT {beat} " in out or f"BEAT {beat}\n" in out, beat
+
+
+def test_the_demo2_walk_pauses_between_beats_and_not_after_the_last():
+    """A pause after the final beat would leave the narrator holding a prompt
+    with nothing behind it."""
+    import io
+
+    from utina.cli.app import Console
+    from utina.cli.demo2 import OPENER, walk2
+
+    pauses = []
+    console = Console(
+        out=io.StringIO(),
+        err=io.StringIO(),
+        pause=lambda: pauses.append(1),
+    )
+
+    walk2(console, part="opener", pause=True, substrate="facade")
+
+    assert len(pauses) == len(OPENER) - 1

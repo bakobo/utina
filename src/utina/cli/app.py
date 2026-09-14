@@ -35,6 +35,7 @@ from utina.cli.appraisal import (
     resolve_credential,
     resolve_subject,
 )
+from utina.cli.demo2 import PARTS
 from utina.cli.errors import ALIAS_UNKNOWN, COMMAND_MALFORMED
 from utina.cli.render import (
     brief_screen,
@@ -245,6 +246,14 @@ def build_parser(console: Console) -> _Parser:
     )
     demo.add_argument("--no-pause", dest="no_pause", action="store_true")
     demo.add_argument("--beat", metavar="ID")
+
+    demo2 = commands.add_parser(
+        "demo2", out=console.out, parents=[backend],
+        help="walk docs/demo-2-script.md: the opener, the live thirteen, or all of it",
+    )
+    demo2.add_argument("--part", choices=PARTS, default="live")
+    demo2.add_argument("--no-pause", dest="no_pause", action="store_true")
+    demo2.add_argument("--beat", metavar="ID")
 
     return parser
 
@@ -464,6 +473,19 @@ def enact_command(args: argparse.Namespace, console: Console) -> int:
     return 0
 
 
+def demo2_command(args: argparse.Namespace, console: Console) -> int:
+    from utina.cli.demo2 import walk2
+
+    return walk2(
+        console,
+        part=args.part,
+        beat=args.beat,
+        pause=not args.no_pause,
+        substrate=args.substrate,
+        store=args.store,
+    )
+
+
 def demo_command(args: argparse.Namespace, console: Console) -> int:
     from utina.cli.demo import walk
 
@@ -487,6 +509,7 @@ COMMANDS: Mapping[str, Callable[[argparse.Namespace, Console], int]] = {
     "registry": registry_command,
     "disturbance": disturbance_command,
     "demo": demo_command,
+    "demo2": demo2_command,
 }
 
 
