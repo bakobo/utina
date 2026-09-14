@@ -194,7 +194,7 @@ def _screen(lines: Iterable[str]) -> str:
 # --- utina eval ---------------------------------------------------------------
 
 
-def eval_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:  # ~5dnq
+def eval_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
     """One appraisal, rendered as a finding or — visibly differently — as a refusal."""
     outcome = appraisal.outcome
     if isinstance(outcome, Refusal):
@@ -712,7 +712,7 @@ def whois_screen(
 # --- utina seat ---------------------------------------------------------------
 
 
-def seat_screen(  # ~27x5
+def seat_screen(
     seat: str,
     label: str,
     position: Position,
@@ -795,7 +795,7 @@ def seat_screen(  # ~27x5
 # --- utina registry -----------------------------------------------------------
 
 
-def registry_screen(  # ~27x5
+def registry_screen(
     registry: str,
     controller: str,
     label: str,
@@ -855,7 +855,7 @@ def registry_screen(  # ~27x5
 # --- utina disturbance --------------------------------------------------------
 
 
-def disturbance_screen(  # ~27x5
+def disturbance_screen(
     amendment: SAID,
     label: str,
     position: Position,
