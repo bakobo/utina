@@ -270,7 +270,7 @@ def _retracts(event: CommittedEvent) -> tuple[SAID, AID] | None:
     return None
 
 
-def _retracted(  # ~3h6k
+def _retracted(
     group: Group, committed: tuple[CommittedEvent, ...], subject: SAID
 ) -> dict[SAID, set[AID]]:
     """Which retractions reached their act, and by whom.
