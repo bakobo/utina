@@ -468,7 +468,7 @@ def test_a_defeat_with_no_declination_still_carries_its_ground():
 def test_log_shows_every_committed_event_in_canonical_order():
     out = screen("log")
     assert "COMMITTED LOG AT the end of the record" in out
-    assert "42 events" in out
+    assert "43 events" in out
     assert "Arrival order is not consulted" in out
     seqs = [
         int(line.split()[0])
@@ -621,9 +621,15 @@ def test_the_slot_column_is_the_same_on_both_substrates(backend: str):
 
 
 def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
-    out = screen("enact", "endorse", "--as", "acme:seat3", "--on", "approve-budget-retabled")
+    """Nina's device rather than the seat itself. After beat 20 the seat's voice
+    is poisoned, so a live act signed as the seat demonstrates the taint instead
+    of the before/after this beat is for — which is the mechanism working, and
+    the wrong illustration for this screen."""
+    out = screen(
+        "enact", "endorse", "--as", "acme:nina-device", "--on", "approve-budget-retabled"
+    )
     assert "ENACTED" in out
-    assert "9-acme-as-board-seat-3-at-acme endorses" in out
+    assert "9-acme-as-board-seat-3-device-at-acme endorses" in out
     # The signature is printed whole and therefore wraps, so the sentence beside it is
     # matched against the screen with its line breaks flattened.
     assert "the substrate verified it before recording" in " ".join(out.split())
@@ -708,9 +714,21 @@ def test_enact_refuses_an_unseated_endorser_who_cites_a_seat_credential():
 
 
 def test_enact_can_commit_a_declination_that_defeats():
-    out = screen("enact", "decline", "--as", "acme:seat3", "--on", "approve-budget-retabled")
-    assert "9-acme-as-board-seat-3-at-acme declines" in out
+    out = screen(
+        "enact", "decline", "--as", "acme:nina-device", "--on", "approve-budget-retabled"
+    )
+    assert "9-acme-as-board-seat-3-device-at-acme declines" in out
     assert "DEFEATED" in out
+
+
+def test_a_live_act_by_a_party_whose_voice_is_poisoned_shows_the_taint():
+    """Beat 20's consequence, live. The seat may still sign — nothing stops it —
+    and the record answers that its voice no longer carries the question."""
+    out = screen("enact", "endorse", "--as", "acme:seat3", "--on", "approve-budget-retabled")
+
+    assert "ENACTED" in out, "the act is committed; the constructor does not judge"
+    assert "unresolved-conflict" in out
+    assert "cured by an owned act of the party whose conflict it is" in out
 
 
 def test_enact_against_an_ungoverned_act_is_refused_by_the_fold_not_by_the_verb():
@@ -1170,14 +1188,23 @@ def test_the_opener_uses_the_full_screen_density():
         assert "--brief" not in beat.argv, beat.id
 
 
-def test_a_blocked_beat_is_loud_rather_than_skipped():
-    """Beat 20 is on the never-cut list. A rehearsal that silently omitted it
-    would time a run that is not the run."""
-    out = screen("demo2", "--beat", "20", "--no-pause")
+def test_every_beat_of_the_run_of_show_has_a_command_to_run():
+    """The whole run-of-show executes. Beat 20 was the last beat without one and
+    it was ruled on 2026-09-15."""
+    from utina.cli.demo2 import LEAVE_BEHIND, LIVE, OPENER
 
-    assert "BEAT 20" in out
-    assert "NOT BUILT" in out
-    assert "3h6k" in out, "and it names the tick that would unblock it"
+    assert all(beat.argv for beat in OPENER + LIVE + LEAVE_BEHIND)
+
+
+def test_beat_20_shows_the_taint_rather_than_a_self_conviction():
+    """The ruled value. Beat 19 re-asked and held; this re-asks and moves."""
+    nineteen = screen("demo2", "--beat", "19", "--no-pause")
+    twenty = screen("demo2", "--beat", "20", "--no-pause")
+
+    assert "AFFIRMED" in nineteen
+    assert "PENDING" in twenty
+    assert "unresolved-conflict" in twenty
+    assert "SELF-CONVICTED" not in twenty
 
 
 def test_a_kernel_card_says_what_the_room_expects_before_the_beat_lands():

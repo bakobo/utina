@@ -48,9 +48,10 @@ class Beat:
     is an endorsement the toolchain refuses, and a driver that treated its exit
     status as failure would report the demo broken at the moment it worked.
 
-    ``blocked`` marks a beat the engine does not carry yet. It prints its card
-    and says what it owes instead of running, so a rehearsal can be timed end to
-    end with the gap visible rather than silently absent.
+    There is no "not built yet" flag any more. Beat 20 was the last beat that
+    needed one and it was ruled on 2026-09-15, so the run-of-show is the whole
+    run-of-show. If a beat is ever blocked again, the five lines that printed a
+    NOT BUILT card are in this file's history rather than carried unused here.
     """
 
     id: str
@@ -58,7 +59,6 @@ class Beat:
     narration: str
     argv: tuple[str, ...] = ()
     refuses: bool = False
-    blocked: str = ""
 
 
 @dataclass(frozen=True)
@@ -263,13 +263,14 @@ KERNELS = (
             Beat(
                 "20",
                 "Duplicity at seat 3's signing position",
-                "And the one thing that does reach back. Revocation and undercut are "
-                "different mechanisms and the engine keeps them structurally apart.",
-                blocked=(
-                    "the undercut is not built: tick 3h6k is an open fork on what this "
-                    "beat returns, and the fixture behind it needs a committed event "
-                    "recording that duplicity was observed"
-                ),
+                "And the contrast. Beat 19 re-asked and the answer held; this re-asks "
+                "the same question after seat 3 was seen signing two contradictory "
+                "key events, and the answer moves. Not backwards — beat 12 still "
+                "stands at its own coordinate — but the voice is poisoned from here "
+                "on, and no amount of further evidence cures it. Only an act of seat "
+                "3's own does. Revocation and undercut are different mechanisms and "
+                "the engine keeps them on separate code paths.",
+                ("eval", "--said", "approve-budget", "--at", "b20", "--brief"),
             ),
         ),
     ),
@@ -421,17 +422,13 @@ def walk2(
         argv = one.argv + _backend_argv(backend, store)
         for line in _announce(one, argv):
             console.out.write(line + "\n")
-        if one.blocked:
-            for line in _unbuilt(one):
-                console.out.write(line + "\n")
-        else:
-            # A beat whose refusal IS the beat prints it into the transcript
-            # rather than onto the error stream. Beat 14's whole content is the
-            # toolchain declining, and a recording that carried it on a separate
-            # stream would show the demo's best moment out of order or not at all.
-            where = replace(console, err=console.out) if one.refuses else console
-            outcome = run(argv, where)
-            status = max(status, 0 if one.refuses else outcome)
+        # A beat whose refusal IS the beat prints it into the transcript rather
+        # than onto the error stream. Beat 14's whole content is the toolchain
+        # declining, and a recording that carried it on a separate stream would
+        # show the demo's best moment out of order or not at all.
+        where = replace(console, err=console.out) if one.refuses else console
+        outcome = run(argv, where)
+        status = max(status, 0 if one.refuses else outcome)
         if pause and index < len(sequence) - 1:
             console.pause()
     return status
@@ -466,7 +463,7 @@ def _kernel_card(kernel: Kernel) -> list[str]:
 
 def _announce(beat: Beat, argv: tuple[str, ...]) -> list[str]:
     """The card that introduces a beat, and the command as though it were typed."""
-    lines = [
+    return [
         "",
         MARGIN + RULE,
         f"{MARGIN}BEAT {beat.id:<6}{beat.title}",
@@ -474,22 +471,6 @@ def _announce(beat: Beat, argv: tuple[str, ...]) -> list[str]:
             beat.narration, width=WRAP, initial_indent=MARGIN, subsequent_indent=MARGIN
         ),
         "",
-    ]
-    if not beat.blocked:
-        lines.extend([f"{MARGIN}$ utina {' '.join(argv)}", ""])
-    return lines
-
-
-def _unbuilt(beat: Beat) -> list[str]:
-    """What a blocked beat prints instead of a screen.
-
-    Loud rather than skipped. A rehearsal that silently omitted a beat would time
-    a run that is not the run, and this beat is on the never-cut list.
-    """
-    return [
-        MARGIN + "NOT BUILT",
-        *textwrap.wrap(
-            beat.blocked, width=WRAP, initial_indent=MARGIN, subsequent_indent=MARGIN
-        ),
+        f"{MARGIN}$ utina {' '.join(argv)}",
         "",
     ]

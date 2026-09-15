@@ -41,7 +41,7 @@ import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from utina.fold import disturbance, semantics
+from utina.fold import bearing, disturbance, semantics
 from utina.fold.clause import Clause
 from utina.fold.constitution import ACT_CLASS_FIELD, ENACTMENT_KIND, Constitution
 from utina.fold.corpus import Corpus, Event
@@ -60,7 +60,7 @@ from utina.fold.finding import (
     canonical_requirement_set,
     select_defeat,
 )
-from utina.fold.group import Disposition
+from utina.fold.group import AID, Disposition
 from utina.fold.question import Committed, Proposal, Question
 from utina.fold.refusal import Refusal
 from utina.fold.slots import SlotDisposition, classify, declinations, endorsements
@@ -183,6 +183,10 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
         clause, classified, Disposition.DECLINED, PendingSpecies.EXPIRED_ABANDONED
     )
     held = {one.endorser: one.disposition for one in classified}
+
+    tainted = _tainted(corpus, subject, clause, classified, at)
+    if tainted is not None:
+        return tainted
 
     if clause.group.satisfied(held):
         return Affirmed(
@@ -375,9 +379,92 @@ def _disturbed_by(corpus: Corpus, enactment: Event, at: Position) -> tuple[SAID,
     return tuple(sorted(disturbed))
 
 
+def _tainted(
+    corpus: Corpus,
+    subject: _Subject,
+    clause: Clause,
+    classified: Sequence[SlotDisposition],
+    at: Position,
+) -> Finding | None:
+    """The finding an observed duplicity converts this question into, if any.
+
+    Consulted after the requirement space is built and before a verdict is
+    chosen, because "no finding is terminal while any enumerated check in the
+    question's committed requirement space is unexamined" (``:1755-1757``) and a
+    bearing conviction is one of those checks.
+
+    The dispatch is ``fold/bearing.py``'s and the two arms are the text's. A
+    convicted SUBJECT fires self-convicted, and the proof package names the
+    contradicting pair. A convicted CITED third party fires the taint succession:
+    pending, species unresolved-conflict, ground the observation. Neither arm
+    reaches backwards — the walk only sees observations at or before ``at``, so a
+    finding asked at a coordinate before the observation is untouched, which is
+    the whole difference between this and a revocation.
+    """
+    committer = _committer(corpus, subject)
+    ground = [one.said for one in classified if one.said is not None]
+    acts = _attributions(corpus, at)
+    for event in corpus.upto(at):
+        party = bearing.convicted(event)
+        if party is None:
+            continue
+        which = bearing.role(party, committer=committer, ground=ground, acts=acts)
+        if which is bearing.Role.SUBJECT:
+            return SelfConvicted(proof=Proof(package=event.said, pair=bearing.pair_of(event)))
+        if which is bearing.Role.CITED:
+            return Pending(
+                requirement=(
+                    RequirementElement(
+                        endorser=party,
+                        clause=clause.id,
+                        schema=clause.group.slots[0].schema,
+                        species=PendingSpecies.UNRESOLVED_CONFLICT,
+                        ground=bearing.taint_ground(event),
+                    ),
+                )
+            )
+    return None
+
+
+def _committer(corpus: Corpus, subject: _Subject) -> AID:
+    """Who committed the act this question is about, or ``""`` where nobody did."""
+    event = corpus.event(subject.said)
+    if event is None:
+        return ""
+    who = event.body.get("i")
+    return who if isinstance(who, str) else ""
+
+
+def _attributions(corpus: Corpus, at: Position) -> dict[SAID, AID]:
+    """Every committed act at or before ``at``, by the party that committed it.
+
+    Read off the events rather than taken from a caller, because pertinence is
+    derived and never declared (``:1688``): an act's author is a fact about its
+    committed bytes, and a fold that accepted an attribution would let a writer
+    name somebody else's artifact as their own.
+    """
+    attributed: dict[SAID, AID] = {}
+    for event in corpus.upto(at):
+        who = event.body.get("i")
+        if isinstance(who, str):
+            attributed[event.said] = who
+    return attributed
+
+
 def _closed(finding: Pending) -> bool:
-    """Whether a pending finding's cure path is shut, which its elements say."""
-    return any(element.ground != "" for element in finding.requirement)
+    """Whether a pending finding's cure path was shut *by an amendment*.
+
+    Keyed on the species rather than on the presence of a ground, which is what
+    this tested when an amendment was the only thing that could close one. A
+    taint names a ground too, and it is a different closure with a different
+    cure — an owned act rather than re-presentation — so a test that read any
+    ground as an amendment's would report a tainted act as newly disturbed by
+    whatever amendment happened to come next (``this.i`` @f3pmxu3x).
+    """
+    return any(
+        element.species is PendingSpecies.EXPIRED_ABANDONED
+        for element in finding.requirement
+    )
 
 
 def _effectuation(corpus: Corpus, enactment: Event, at: Position) -> Position | None:

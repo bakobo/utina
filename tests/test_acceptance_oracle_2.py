@@ -46,7 +46,7 @@ from utina.cli.appraisal import held_by, registry_holdings
 from utina.cli.render import law_screen, registry_screen, seat_screen
 from utina.cli.style import Style
 from utina.enact import Constructor
-from utina.fold import Constitution, disturbance, evaluate, semantics, standing
+from utina.fold import Constitution, bearing, disturbance, evaluate, semantics, standing
 from utina.fold import slots as slot_predicate
 from utina.fold.evaluate import _disturbed_by
 from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies, SelfConvicted
@@ -76,6 +76,7 @@ AT = {
     17: "b17",
     18: "d5",
     19: "b17",
+    20: "b20",
     21: "b21",
     22: "b22",
     23: "b23",
@@ -621,14 +622,70 @@ def test_b19_a_prospective_revocation_falsifies_no_cited_ground(acme):
     assert acme.substrate.registry_state(acme.registry, credential) == REVOKED
 
 
-def test_b20_duplicity_at_the_signing_position_is_self_convicted():
-    """Row 20: the canonical proof package naming the contradictory pair, and the
-    statement that superseding recovery does not reconcile it. Revocation and
-    undercut never share a code path."""
-    pytest.skip(
-        owed(
-            "U2.3 the undercut, via bearing, structurally separate from revocation (tick 3h6k)",
-        )
+def test_b20_duplicity_at_a_cited_third_party_taints_the_voice(acme):
+    """Row 20, with its expected value ruled 2026-09-15 (``this.i`` @f3pmxu3x).
+
+    The script expected self-convicted. The text gives pending with species
+    unresolved-conflict, because the convict's role dispatches the edge and seat
+    3 is a CITED THIRD PARTY here — the subject is the budget act, committed by
+    the gAID, and seat 3's endorsement is the affirmation's ground.
+
+    The beat's work is unchanged. Beat 19 re-asked this question after a
+    revocation and got the same answer; this re-asks it after duplicity and the
+    answer moves. That contrast is what the row exists for, and only the verdict
+    word differs from what the script wrote.
+    """
+    finding = evaluate(acme.corpus, Committed(acme.said(BUDGET_ACT)), at=acme.at(AT[20]))
+
+    assert isinstance(finding, Pending)
+    assert [one.species for one in finding.requirement] == [
+        PendingSpecies.UNRESOLVED_CONFLICT
+    ]
+    assert [one.endorser for one in finding.requirement] == [acme.aid(SEAT)]
+    assert finding.requirement[0].ground == acme.events[acme.at(AT[20]).seq].said
+
+    # No missing bytes cure a taint, and the requirement says which act does.
+    assert finding.requirement[0].species.cure == (
+        "cured by an owned act of the party whose conflict it is"
+    )
+
+
+def test_b20_the_taint_reaches_forward_and_leaves_the_record_it_made(acme):
+    """"What was affirmed above stands at its coordinate forever" (``:1805``).
+
+    Beat 12's finding is untouched at its own coordinate, and so is beat 19's,
+    which sits between the endorsement and the observation. A taint that reached
+    backwards would be the rewrite ``:1741`` forbids — the reversal is a new
+    fact, never a change to an old one.
+    """
+    budget = Committed(acme.said(BUDGET_ACT))
+
+    assert isinstance(evaluate(acme.corpus, budget, at=acme.at(AT[12])), Affirmed)
+    assert isinstance(evaluate(acme.corpus, budget, at=acme.at(AT[19])), Affirmed)
+    assert isinstance(evaluate(acme.corpus, budget, at=acme.at(AT[20])), Pending)
+
+
+def test_b20_the_undercut_shares_no_code_path_with_revocation(acme):
+    """Issue #82's determination 4 asks that the two be unmistakable in the
+    bearing machinery. They are different mechanisms with different reaches: the
+    revocation at beat 16 moved a registry and no finding, and this moved a
+    finding and no registry.
+    """
+    import utina.fold.bearing as bearing_module
+    import utina.fold.standing as standing_module
+
+    assert "standing" not in dir(bearing_module)
+    assert "bearing" not in dir(standing_module)
+
+    observation = acme.events[acme.at(AT[20]).seq]
+    assert observation.kind == bearing.DUPLICITY_KIND
+    assert "ri" not in observation.body, "an undercut touches no registry"
+
+    credential = acme.events[acme.at("b8").seq].body["acdc"]["d"]
+    upto = acme.corpus.upto(acme.at(AT[20]))
+    assert standing.state_over(upto, acme.registry, credential) == REVOKED
+    assert standing.state_over(upto, acme.registry, credential) == REVOKED, (
+        "and the registry says exactly what it said before the observation"
     )
 
 

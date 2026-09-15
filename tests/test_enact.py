@@ -189,6 +189,7 @@ def test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it(f
         "endorse",
         "gaid",
         "incept_domain",
+        "observe_duplicity",
         "open_registry",
         "propose",
         "registry",
@@ -657,3 +658,39 @@ def test_resume_refuses_a_record_whose_positions_do_not_run_from_zero(founded, v
     with pytest.raises(BakoboError) as caught:
         Constructor.resume(founded.substrate, GAID, values=values, events=events)
     assert caught.value.code == "e.input.format.resume-record.f"
+
+
+
+# --- observing duplicity, which is not convicting (this.i @f3pmxu3x) ----------
+
+
+def test_an_observation_names_the_party_and_the_contradicting_pair(founded):
+    """The domain signs, because observing is an act and an act is somebody's."""
+    event = founded.observe_duplicity("acme:seat3", ["ESecond", "EFirst"])
+
+    assert event.kind == "duplicity"
+    assert event.body["i"] == founded.gaid
+    assert event.body["party"] == "acme:seat3"
+    assert founded.substrate.verify(founded.gaid, event.body, event.body["sig"])
+
+
+def test_an_observations_pair_is_committed_in_canonical_order(founded):
+    """A set is a set. A record that moved with the order of observation would
+    make one duplicity two facts, which is the disturbance package's reasoning."""
+    first = founded.observe_duplicity("acme:seat3", ["ESecond", "EFirst"])
+
+    assert first.body["pair"] == ("EFirst", "ESecond")
+
+
+def test_observing_duplicity_touches_no_registry(founded):
+    """Determination 4 asks that revocation and undercut be unmistakable in the
+    bearing machinery. A verb that quietly moved a registry would make the
+    separation a matter of layout rather than a property."""
+    registry = founded.open_registry("acme-governance")
+    credential = founded.confer(
+        "acme:seat3", role="board-seat-3", acts=["create commitment"]
+    ).body["acdc"]["d"]
+
+    founded.observe_duplicity("acme:seat3", ["EFirst", "ESecond"])
+
+    assert founded.substrate.registry_state(registry, credential) == ISSUED

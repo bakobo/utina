@@ -349,6 +349,37 @@ class Constructor:
         """
         return self._dispose(aid, subject, "decline", qualification)
 
+    def observe_duplicity(self, party: AID, pair: Sequence[SAID]) -> Event:
+        """Commit that ``party`` was observed signing two contradictory things.
+
+        **This records an observation; it does not convict.** A conviction is
+        conviction-grade at the governance tier "only within frames that
+        committed the violated predicate — no committed predicate, no conviction,
+        and the pair is ordinary evidence to consume" (``custos-4.2.md:1680-1683``),
+        and Acme's law commits no predicate about signing duplicity. So the only
+        tier that can convict here is the key tier, under KERI's
+        superseding-recovery calculus, which no plane above the substrate may run
+        (``this.i`` @yrkrqj). The domain commits what it observed, and the fold
+        consumes that as evidence — the same posture it already takes toward a
+        signature it cannot re-check (``this.i`` @f3pmxu3x).
+
+        The domain signs, because observing is an act and an act is somebody's.
+        The pair is committed in canonical order rather than as observed, for the
+        reason the disturbance proof package is: a set is a set, and a record that
+        moved with the order of observation would make one duplicity two facts.
+
+        What this deliberately does NOT do is touch a registry. A revocation and
+        an undercut are different mechanisms and issue #82's determination 4 asks
+        that they be unmistakable in the bearing machinery; sharing a verb would
+        make the separation a matter of layout.
+        """
+        self._require_founded()
+        return self._emit(
+            "duplicity",
+            {"t": "dup", "i": self.gaid, "party": party, "pair": tuple(sorted(pair))},
+            self.gaid,
+        )
+
     def anchoring_event(self, said: SAID) -> SAID | None:
         """The identifier of the establishment event that sealed ``said``.
 

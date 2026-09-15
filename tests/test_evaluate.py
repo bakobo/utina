@@ -912,3 +912,103 @@ def test_two_weights_that_only_sum_to_unity_as_rationals_do_reach_it():
 
     assert isinstance(finding, Affirmed)
     assert sum(Fraction(1, 3) for _ in range(3)) == 1
+
+
+# --- bearing: what an observed duplicity does to a finding (@f3pmxu3x) --------
+
+
+def observed(log, party: str, name: str = "dup") -> str:
+    """A committed duplicity observation naming ``party``'s signing position."""
+    return log._add(name, "duplicity", {"t": "dup", "i": GAID, "party": party})
+
+
+def affirmed_hire(log) -> str:
+    log.law("founding", "inception", BOARD_LAW)
+    act = log.act("hire", "hire")
+    log.endorse(MARTA, act)
+    log.endorse(DEV, act)
+    return act
+
+
+def test_a_duplicity_observation_naming_an_uncited_party_is_inert():
+    """The arm that matters most. "Duplicity elsewhere in a subject's history
+    taints that history's standing, but it does not convert this question's
+    finding" (``:1751-1753``) — a fold that let any convicted party poison every
+    finding would make one bad actor fatal to a whole record."""
+    log = Log()
+    act = affirmed_hire(log)
+    observed(log, NINA)
+
+    assert isinstance(evaluate(log.corpus, Committed(act), at=log.now), Affirmed)
+
+
+def test_a_duplicity_observation_at_a_cited_endorser_taints_the_voice():
+    """A convicted cited third party fires the taint succession, and the finding
+    names the party and the observation that poisoned it."""
+    log = Log()
+    act = affirmed_hire(log)
+    mark = observed(log, DEV)
+
+    finding = evaluate(log.corpus, Committed(act), at=log.now)
+
+    assert isinstance(finding, Pending)
+    assert [one.species for one in finding.requirement] == [
+        PendingSpecies.UNRESOLVED_CONFLICT
+    ]
+    assert [one.endorser for one in finding.requirement] == [DEV]
+    assert [one.ground for one in finding.requirement] == [mark]
+
+
+def test_a_duplicity_observation_at_the_subjects_committer_convicts_the_question():
+    """The other arm, which Acme's own record never exercises: a convicted
+    SUBJECT fires the edge into self-convicted (``:1689-1691``)."""
+    log = Log()
+    act = affirmed_hire(log)
+    mark = observed(log, GAID)
+
+    finding = evaluate(log.corpus, Committed(act), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == mark
+
+
+def test_a_taint_reaches_forward_and_never_backward():
+    """"What was affirmed above stands at its coordinate forever" (``:1805``)."""
+    log = Log()
+    act = affirmed_hire(log)
+    before = log.now
+    observed(log, DEV)
+
+    assert isinstance(evaluate(log.corpus, Committed(act), at=before), Affirmed)
+    assert isinstance(evaluate(log.corpus, Committed(act), at=log.now), Pending)
+
+
+def test_a_question_about_an_uncommitted_subject_is_not_tainted_by_anybody():
+    """A subject the record does not carry has no committer, so no party is its
+    committer either — and an empty attribution must not match an empty party."""
+    log = Log()
+    log.law("founding", "inception", BOARD_LAW)
+    observed(log, "")
+
+    outcome = evaluate(log.corpus, Committed("ENothingCommitted"), at=log.now)
+
+    assert isinstance(outcome, Refusal)
+
+
+def test_an_event_the_record_cannot_attribute_is_nobodys_artifact():
+    """Pertinence is derived, never declared (``:1688``). An event whose author
+    is not an identifier attributes to nobody, so it can neither be a convicted
+    party's cited artifact nor shield one — and it must not raise on the way
+    past, because a fold that stopped on a stranger's malformed byte would let
+    anybody stop it."""
+    log = Log()
+    act = affirmed_hire(log)
+    log._add("anonymous", "act", {"t": "act", "i": 42, "act": "hire"})
+    observed(log, DEV)
+
+    finding = evaluate(log.corpus, Committed(act), at=log.now)
+
+    assert isinstance(finding, Pending)
+    assert [one.species for one in finding.requirement] == [
+        PendingSpecies.UNRESOLVED_CONFLICT
+    ]

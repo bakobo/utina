@@ -229,6 +229,15 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     plan = name(CAPITAL_PLAN, constructor.propose(BUDGET))
     mark("b21", constructor.endorse(marta, plan))
 
+    # Beat 20 — a witness observes board seat 3 signing two contradictory key
+    # events, and Acme commits what was observed. Acme does not CONVICT: a
+    # governance-tier conviction needs a frame that committed the violated
+    # predicate and Acme's law commits none, so the conviction is key-tier and
+    # the fold reads that it happened (this.i @f3pmxu3x). Placed after beat 21 so
+    # that every question asked earlier is untouched — which is the whole
+    # difference between this and a revocation.
+    mark("b20", constructor.observe_duplicity(seat3, [f"{seat3}-kel-2a", f"{seat3}-kel-2b"]))
+
     # The seat is re-seated before Act IV can run at all. Beat 16 revoked its
     # credential, and since tick 652c that empties its slot — so the board cannot
     # amend, because B2 needs all three. This is an extra beat the script does not
