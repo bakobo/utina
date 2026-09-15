@@ -1576,3 +1576,71 @@ Make Custos's replayable governance useful to a real organization = goal:
         has three members where the script expected two, because demo 1's retabled budget is
         pending under B1 as well — the lie is larger than the script anticipated rather than
         different in kind.
+
+    Duplicity at a cited third party taints the voice, and does not convict the question = decision:
+      id: f3pmxu3x
+      why: >
+        Beat 20 re-asks beat 12's question over a bundle carrying duplicity at board seat 3's
+        signing position. docs/demo-2-script.md expects SELF-CONVICTED and says duplicity "does
+        reach back". Daniel ruled on 2026-09-15, after the four governing spans were read back
+        to him, that the value is PENDING with species unresolved-conflict, reaching forward.
+        The fixture does not move; the expected value does.
+        WHY THE SCRIPT'S READING IS REASONABLE, recorded because it nearly went the other way.
+        The transition table at 1672 permits the edge in as many words — affirmed to
+        self-convicted, "a contradictory pair bearing on the question enters the bundle" — and
+        1706 says affirmed and defeated are final "except for one event: the arrival of a
+        contradictory pair bearing on the same question, which moves either to self-convicted".
+        Read alone, those two sentences settle it for the script.
+        WHY THEY DO NOT. Both turn on BEARING, and the paragraph immediately after the table
+        defines it and then routes it: "The convict's role dispatches the edge: a convicted
+        subject fires the edge into self-convicted; a convicted cited third party fires the taint
+        succession of the duplicity section — the finding's voice is poisoned, not the question"
+        (1689-1694). So the table row is the SUBJECT case, and a document that states an edge
+        before it states the edge's condition is a document that will be misread in exactly this
+        direction. Beat 12's subject is the budget act, committed by the gAID (propose emits
+        under self.gaid); seat 3's endorsement is the affirmation's GROUND. Third party, so the
+        role dispatches to taint. The succession rule closes the loop: a successor may reverse a
+        terminal value only on evidence falsifying a cited ground, "an undercut, computable
+        through the bearing rule" (1734-1740), so the undercut inherits the same dispatch.
+        WHAT TAINT YIELDS (1805-1813): "what was affirmed above stands at its coordinate forever.
+        The taint's consequence is a succession: at the next position the fold returns pending
+        with the taint as its typed requirement, species unresolved-conflict — no missing bytes
+        cure a taint, no log growth cures it; only a committed act owned by the party whose
+        conflict it is."
+        THE BEAT LOSES NOTHING, which is what made the ruling cheap. What beats 18, 19 and 20 are
+        built on is that re-asking after a revocation gives the SAME answer and re-asking after
+        duplicity gives a DIFFERENT one. Under taint the re-ask returns pending/unresolved-conflict
+        where beat 19 returned affirmed, so the answer still moves; "does reach back" was loose for
+        "the same question now answers differently". And even the script's own reading would not
+        have rewritten beat 12, because 1741 says "the prior finding stands at its coordinate, and
+        the reversal is a new fact, not a rewrite". Only the verdict word changes. The demo gains
+        the one pending species it otherwise never exercises — beats 3, 5, 10 and 17 are all
+        absent and beat 9 is expired/abandoned — and gains the sharpest sentence in the section
+        with it.
+        Rejected moving the duplicity to the gAID's signing position, which would make
+        self-convicted correct: it means Acme signing two conflicting budget acts, which is a
+        different story, it discards the third-party distinction entirely, and Act IV already
+        shows a self-conviction on an amendment's own bytes.
+        THE CONVICTION IS KEY-TIER AND THE FOLD CANNOT RUN IT, which decides the shape of the
+        machinery rather than being an aside. 1680-1683: a conviction is conviction-grade at the
+        registry and governance tiers "only within frames that committed the violated predicate —
+        no committed predicate, no conviction, and the pair is ordinary evidence to consume".
+        Acme's law commits no predicate about signing duplicity, so the conviction can only be
+        key-tier under KERI's superseding-recovery calculus, and no plane above the substrate may
+        import a KERI library (@yrkrqj). So the record carries a committed event recording that
+        duplicity WAS OBSERVED, and the fold consumes that as evidence rather than computing the
+        conviction itself. That is the same posture the fold already takes toward signatures —
+        a committed event is one the substrate verified (fold/slots.py) — and it is stated here
+        rather than discovered, because "the fold reads that a conviction happened" is a weaker
+        claim than "the fold convicts" and the demo must not blur them.
+        The bearing machinery is its own module and shares no code path with revocation. Issue
+        82's determination 4 asks specifically that an implementation "make the two unmistakable
+        in the bearing machinery", and the two are genuinely different: a revocation moves what a
+        registry says about a credential and reaches no finding backwards or forwards, while a
+        taint poisons a party's voice from the observation onward and cannot be cured by evidence
+        at all. Sharing a path would make that a coincidence of layout rather than a property.
+        One repair rides along. _closed() tested whether a requirement element carried any
+        ground, which was written when the only closed cure path was an amendment's. A taint also
+        names a ground, so the test now keys on the species that actually means it,
+        expired/abandoned. Equivalent today and correct once a second kind of ground exists —
+        without it a tainted act would read as newly disturbed by whatever amendment came next.
