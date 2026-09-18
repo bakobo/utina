@@ -793,6 +793,95 @@ Make Custos's replayable governance useful to a real organization = goal:
         `FORCE_COLOR=1`, which is documented in the epilog rather than discoverable in `--help`'s
         option list.
 
+    Each stream decides its own color = decision:
+      id: ig3tc5om
+      why: >
+        @clcolr said "decided by the stream" and the code decided it once, from stdout, for both
+        streams: `Console.over` sets a single `color` flag from `_takes_colour(out, environ)` and
+        `render_error` writes to `err` under it. So a terminal run with stderr redirected wrote
+        escape sequences into the file, and a run with stdout redirected printed a colorless error
+        to a terminal — the second harmless, the first a corrupted artifact. Reproduced on main
+        before the fix (tick 3ebe). Chose to carry a Style per stream and have a renderer take the
+        one belonging to the stream it writes to, which is what "decided by the stream" already
+        meant. Rejected painting stderr from stdout's capability on the argument that the two are
+        usually the same terminal: they are, right up to the one case that produces a bad file, and
+        a rule that is right by coincidence cannot be tested. This narrows @clcolr rather than
+        reversing it — the isatty/NO_COLOR/FORCE_COLOR precedence is unchanged and now runs twice.
+
+    Color values come from the 256-palette, never from the sixteen theme slots = decision:
+      id: qi3inaua
+      why: >
+        The first implementation painted with SGR 30-37 (`31` red, `32` green, `33` yellow). Those
+        indices are the user's terminal theme and every terminal remaps them, so the verdict colors
+        were whatever the machine in the room happened to be configured for — under a light or
+        solarized profile, a yellow that is olive and a green that is grey. Chose the 256-color
+        indices 16-255, which are fixed by the xterm cube and render identically everywhere, and
+        chose an explicit gray index for scaffolding in place of SGR 2, which terminals implement
+        least consistently of all and which some ignore. Two rungs only, `256` and `none`. Rejected
+        a 16-color rung, because every slot in it is the thing being escaped. Rejected truecolor,
+        which is not available on the terminal this is demoed from — both facts measured 2026-08-15
+        and recorded in entviz's docs/terminal-pill.md §2, whose palette is pinned for this reason.
+        Tradeoff accepted, and it is a real one: the only terminal detected as incapable is
+        `TERM=dumb`, which announces itself. A terminal that lacks 256-color support without saying
+        so gets escape sequences it cannot render, and there is no fix that is not a capability
+        query — which would have to work over ssh, inside a pipe and inside a test, and does not.
+        The failure is at least legible: a reader sees an escape sequence rather than a color that
+        means something other than what the palette says.
+
+    One meaning per color, and the meaning is the health state rather than the screen element = decision:
+      id: w6bpgbwi
+      why: >
+        The request was for color that shows healthy governance against governance blockage, and
+        the obvious reading — paint the verdicts — is wrong in a way that would teach the audience
+        the opposite of what the engine computes. A defeat is healthy governance: a signed no
+        correctly spending a slot is the arithmetic working, and D3 exists to show that. Pending is
+        not a blockage, and demo 2's kernel 2 turns on one pending act whose cure path is open
+        against another whose is shut. Custos's own permitted-transition table (custos-4.2.md:1662-
+        1673) says the same thing structurally: pending is the only verdict with an edge to a normal
+        outcome, affirmed and defeated are settled, self-convicted is absorbing — so liveness is
+        orthogonal to whether the answer was yes. Blockage in utina is three predicates the fold
+        already computes and the screens printed flat: reachability (`Group.reachable`), curability
+        (`RequirementElement.species`) and integrity (self-conviction, and a declared disturbance
+        set that differs from the computed one). Chose to give each color one meaning and paint it
+        wherever that meaning appears, so that green in the disposition column, green on the sums
+        row and a green banner are the same claim at three altitudes. Consequences that look like
+        taste and are not: `revoked` on the registry screen is amber and not red, because beat 16's
+        whole argument is that a revocation is ordinary and bounded, and red would put a malfunction
+        into the one beat built to show there is none; "unity not reached" is amber while "unity
+        unreachable" is red, so red appears exactly when the path is dead. Rejected a color per
+        screen element, which is what a renderer grown one screen at a time produces by default.
+
+    The columns' three colors are lightness-spaced, and the palette assumes a dark background = decision:
+      id: b3nr4mq3
+      why: >
+        `endorsed`, `declined` and `pending` are the only colors that ever sit in one column beside
+        each other, so they are the only ones whose separation cannot rely on being alone on the
+        screen. Red and green is also the classic confusion, and the demo's centerpiece is exactly
+        endorsed against declined in front of a room that will contain a deuteranope. Chose indices
+        whose Oklab lightnesses run 0.628 / 0.762 / 0.887 — adjacent gaps of 0.134 and 0.125, level
+        with the entviz palette's own worst adjacent gap, which was picked for this property — so
+        the column reads dark / mid / light and survives color deficiency, a projector's crushed
+        gamut, and a greyscale photograph of the screen. That monotone spacing is the property to
+        protect if an index is ever swapped; hue alone is not the guarantee. The two banner-only
+        colors are exempt, because a refusal screen has no table at all (@clrfsl) and a
+        self-convicted banner sits over a table that is all green (beat 22), so what matters there
+        is hue distance from green rather than lightness. Chose a dark background and said so:
+        searched the plausible hue families and no red/green/amber triple in the 256 palette clears
+        3:1 against black AND against white, so a palette that serves both does not exist. On a
+        light terminal amber 220 is 1.4:1 and the sums row is unreadable. The previous SGR scheme
+        assumed dark too; this only makes the assumption legible enough to be argued with.
+
+    An identifier is never painted = constraint:
+      id: pumwsfto
+      why: >
+        Color on a SAID, a law head or a party identifier is noise on the hardest thing on the
+        screen, and worse than noise: it suggests a distinction a reader could act on, when the
+        only safe act is to compare the value whole (@clcoia, @clhndl). A reader who believes two
+        green identifiers are the same pair has been misled by the renderer. So identifiers,
+        aliases, weights and fractions stay unpainted, and what carries the judgment is the note
+        beside them. Rejected painting a party by role, which would put the display plane in the
+        business of asserting standing (@cldspl).
+
     Identifiers are abbreviated to a prefix that is also a valid handle = decision:
       id: clhndl
       why: >
