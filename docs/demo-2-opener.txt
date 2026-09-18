@@ -1,4 +1,6 @@
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 1     The law Acme committed at inception
   Three clauses, two founders, half the weight each, and the digest of the semantics the
@@ -36,6 +38,8 @@
     slots     9-marta-as-founder 1/2, 9-dev-as-founder 1/2
     weights   the slots sum to 1, so every slot is required
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 2     Open a bank account
   Both founders endorse and unity is reached. The affirmation carries the endorsements
@@ -62,10 +66,12 @@
     reached by  EL5LXWAM9Y2k..., ENAI9K4JQLDp...
     evidence    41a4c6487c62e31e...
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 3     Hire a VP of Sales
   Marta has endorsed and Dev has not acted. Pending is not a hedge: it names the slot
-  whose act would discharge it. Left pending on purpose — Act II comes back for it.
+  whose act would discharge it. Left pending on purpose — beat 9 comes back for it.
 
   $ utina eval hire-vp-sales --at d2 --substrate keripy
 
@@ -86,6 +92,8 @@
   ground - what would discharge this
     9-dev-as-founder-at-acme endorsement under clause A1, absent
                              cured by the arrival of the missing evidence
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 4     Sign the office lease, after Dev declines
@@ -117,9 +125,11 @@
                 a signed declination, which spends that slot's weight, and the weight
                 that can still arrive no longer reaches unity.
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 5     Release escrowed founder equity
-  The founders' own clause, which the amendment in Act II will not touch. Also left
+  The founders' own clause, which the amendment at beat 7 will not touch. Also left
   pending on purpose, and for a different reason than beat 3 was.
 
   $ utina eval release-escrowed-equity --at b5 --substrate keripy
@@ -141,6 +151,8 @@
   ground - what would discharge this
     9-dev-as-founder-at-acme endorsement under clause A3, absent
                              cured by the arrival of the missing evidence
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 6     May the board declare a dividend?

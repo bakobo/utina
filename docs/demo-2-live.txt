@@ -1,9 +1,13 @@
 
+
+
   ------------------------------------------------------------------------------------
   KERNEL  The amendment as hinge
   expects: a document is adopted
   happens: a seat AID is delegated, a seat credential is issued, and the enactment
     declares what it disturbs
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 7     Seat the board: the amendment itself
@@ -23,11 +27,15 @@
 
   ground      clause A2, reached by EZpAipEPRsXi..., Eb8K1JtYH7ka...
 
+
+
   ------------------------------------------------------------------------------------
   KERNEL  What the amendment did to two pending acts
   expects: an amendment changes everything, or nothing
   happens: the cure path closes for one and stays open for the other, decided by whether
     the clause moved
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 9     The hire, re-asked after the amendment
@@ -49,6 +57,8 @@
   ground      9-dev-as-founder-at-acme, 9-acme-as-board-seat-3-at-acme - endorsement
               under clause B1, absent
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 10    The equity release, re-asked after the amendment
   Beat 5's question, from the same coordinate, and the opposite answer. Clause A3 was
@@ -68,17 +78,21 @@
 
   ground      9-dev-as-founder-at-acme - endorsement under clause A3, absent
 
+
+
   ------------------------------------------------------------------------------------
   KERNEL  Same signed no, two answers
   expects: a "no" means no
   happens: defeat under two slots, pending under three. The Constitution changed; the
     arithmetic did the rest
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 13    The Q2 forecast, after Dev declines
-  The same signed no as the opener's beat 4, from the same person, under the board's
-  clause. Defeat became pending, because with three slots the ceiling still clears
-  unity. Nothing about the declination changed.
+  The same signed no as beat 4, from the same person, under the board's clause. Defeat
+  became pending, because with three slots the ceiling still clears unity. Nothing about
+  the declination changed.
 
   $ utina eval approve-budget --at b13 --brief
 
@@ -93,11 +107,15 @@
 
   ground      9-acme-as-board-seat-3-at-acme - endorsement under clause B1, absent
 
+
+
   ------------------------------------------------------------------------------------
   KERNEL  Two currents, unmerged
   expects: the credential check *is* the answer
   happens: the toolchain rejects an unseated endorser before any fold runs, and the fold
     answers separately
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 8     Board seat 3, and the two bindings that make it an office
@@ -134,6 +152,8 @@
   be revoked — at which point this slot empties and the office is an office nobody
   holds.
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 12    The annual budget, on two slots of three
   Unity is reached while a party has never acted at all. Presence is not the question;
@@ -152,6 +172,8 @@
   endorsed 1 of 1, unity reached; reachable 3/2, still reachable
 
   ground      clause B1, reached by EGwcp9EgsuwT..., EqDH_-4f2rNl...
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 14    Quinn endorses without a seat
@@ -175,11 +197,15 @@ ERROR  e.proof.edge-unvalidated.f
   Cite the credential whose issuee is the endorser, or an identifier delegated from that
   issuee. An endorser who holds no such credential cites none.
 
+
+
   ------------------------------------------------------------------------------------
   KERNEL  Revocation, and what it cannot do
   expects: revoking undoes the decision
   happens: it changes the next answer and not the last one — and then duplicity, which
     does reach back
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 16    Acme revokes the seat credential
@@ -204,6 +230,8 @@ ERROR  e.proof.edge-unvalidated.f
   stood still stands at its own coordinate. What a revocation reaches is the next act,
   not the last one.
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 17    The Q3 budget, a new question after the revocation
   Seat 3's slot is now unfilled — not refused, unfilled, because the office is an office
@@ -224,6 +252,8 @@ ERROR  e.proof.edge-unvalidated.f
   ground      9-dev-as-founder-at-acme, 9-acme-as-board-seat-3-at-acme - endorsement
               under clause B1, absent
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 19    Beat 12's question, re-asked after the revocation
   The surprising half. Same answer, over demonstrably different evidence: the credential
@@ -242,6 +272,8 @@ ERROR  e.proof.edge-unvalidated.f
   endorsed 1 of 1, unity reached; reachable 3/2, still reachable
 
   ground      clause B1, reached by EGwcp9EgsuwT..., EqDH_-4f2rNl...
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 20    Duplicity at seat 3's signing position
@@ -266,11 +298,15 @@ ERROR  e.proof.edge-unvalidated.f
   ground      9-acme-as-board-seat-3-at-acme - endorsement under clause B1,
               unresolved-conflict
 
+
+
   ------------------------------------------------------------------------------------
   KERNEL  The amendment that lies
   expects: law is a document
   happens: a document cannot be convicted of lying about itself; this one is, on its own
     bytes
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 22    The second amendment: lower the ordinary-acts bar
@@ -290,6 +326,8 @@ ERROR  e.proof.edge-unvalidated.f
   endorsed 1 of 1, unity reached; reachable 1, still reachable
 
   ground      self-convicted on its own bytes, proof 6653f1c18c19f812...
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 23    What it declared it disturbs, against what it did

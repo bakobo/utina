@@ -1,4 +1,6 @@
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 11    The equity release, cured across the amendment
   Beat 10's question once Dev acts. Cured under the clause that never moved.
@@ -23,6 +25,8 @@
     clauses     A3
     reached by  E0-aE1sSVC0R..., EgPbNtk_ST_c...
     evidence    17b31b38aab27ca9...
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 15    Nina endorses from her delegated device
@@ -52,6 +56,8 @@
     reached by  EjXUr3ahWnmd..., ErqN_GR5WqTj...
     evidence    7e1b907885f2cf13...
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 18    Beat 12's question, re-asked at beat 12's own position
   Byte-identical to the original finding, ground included. Beat 19 is the same answer
@@ -78,6 +84,8 @@
     clauses     B1
     reached by  EGwcp9EgsuwT..., EqDH_-4f2rNl...
     evidence    c6ead4eef3fda121...
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 21    The capital plan
@@ -107,6 +115,8 @@
     9-acme-as-board-seat-3-at-acme endorsement under clause B1, absent
                                    cured by the arrival of the missing evidence
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 24    The first decision, re-asked from the end of the record
   The past is recomputable under the law in force then: still affirmed, still under A1,
@@ -132,6 +142,8 @@
     clauses     A1
     reached by  E7rZDgjVNGiJ..., ETFRV_i1XbrD...
     evidence    93aa741dad2022da...
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 25    Refold the whole log in permuted arrival order

@@ -98,7 +98,7 @@ OPENER = (
         "3",
         "Hire a VP of Sales",
         "Marta has endorsed and Dev has not acted. Pending is not a hedge: it names "
-        "the slot whose act would discharge it. Left pending on purpose — Act II "
+        "the slot whose act would discharge it. Left pending on purpose — beat 9 "
         "comes back for it.",
         ("eval", "hire-vp-sales", "--at", "d2"),
     ),
@@ -112,7 +112,7 @@ OPENER = (
     Beat(
         "5",
         "Release escrowed founder equity",
-        "The founders' own clause, which the amendment in Act II will not touch. Also "
+        "The founders' own clause, which the amendment at beat 7 will not touch. Also "
         "left pending on purpose, and for a different reason than beat 3 was.",
         ("eval", "release-escrowed-equity", "--at", "b5"),
     ),
@@ -178,7 +178,7 @@ KERNELS = (
             Beat(
                 "13",
                 "The Q2 forecast, after Dev declines",
-                "The same signed no as the opener's beat 4, from the same person, "
+                "The same signed no as beat 4, from the same person, "
                 "under the board's clause. Defeat became pending, because with three "
                 "slots the ceiling still clears unity. Nothing about the declination "
                 "changed.",
@@ -451,6 +451,8 @@ def _kernel_card(kernel: Kernel, style: Style) -> list[str]:
     """
     return [
         "",
+        "",
+        "",
         MARGIN + style.paint(RULE, SCAFFOLD),
         f"{MARGIN}{style.strong('KERNEL')}  {kernel.title}",
         *_claim(style, "expects", kernel.expects),
@@ -484,7 +486,13 @@ def _announce(beat: Beat, argv: tuple[str, ...], style: Style) -> list[str]:
     next command starts finds the one bright line. Nothing on the card carries a
     governance meaning, so nothing on it takes a semantic color.
     """
+    # Three blank lines above the rule, not one. A beat card describes the screen
+    # BELOW it, and with one line of air the card sat as close to the previous
+    # beat's ground block as to its own command — so a reader scanning a scrollback
+    # had to work out which way the narration pointed (Daniel, after giving it).
     return [
+        "",
+        "",
         "",
         MARGIN + style.paint(RULE, SCAFFOLD),
         f"{MARGIN}{style.strong(f'BEAT {beat.id:<6}')}{beat.title}",

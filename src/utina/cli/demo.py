@@ -182,7 +182,13 @@ def _announce(beat: Beat, argv: tuple[str, ...], style: Style) -> list[str]:
     the one bright line on the card. Nothing here carries a governance meaning, so
     nothing here takes a semantic color.
     """
+    # Three blank lines above the rule, not one. A beat card describes the screen
+    # BELOW it, and with one line of air the card sat as close to the previous
+    # beat's ground block as to its own command — so a reader scanning a scrollback
+    # had to work out which way the narration pointed (Daniel, after giving it).
     return [
+        "",
+        "",
         "",
         MARGIN + style.paint(RULE, SCAFFOLD),
         f"{MARGIN}{style.strong(f'BEAT {beat.id.upper():<6}')}{beat.title}",
