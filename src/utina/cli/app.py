@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import textwrap
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
@@ -38,6 +39,8 @@ from utina.cli.appraisal import (
 from utina.cli.demo2 import PARTS
 from utina.cli.errors import ALIAS_UNKNOWN, COMMAND_MALFORMED
 from utina.cli.render import (
+    MARGIN,
+    WRAP,
     brief_screen,
     disturbance_screen,
     enact_screen,
@@ -550,21 +553,35 @@ COMMANDS: Mapping[str, Callable[[argparse.Namespace, Console], int]] = {
 
 
 def render_error(error: BakoboError, style: Style) -> str:
-    """An error as complete sentences, with its code and its retryability."""
-    lines = [
-        f"{style.banner('ERROR', SPENT)}  {error.code}",
-        f"  {error.title}",
-    ]
+    """An error as complete sentences, with its code and its retryability.
+
+    Wrapped to the same width and margin as every other paragraph the CLI prints. It
+    was not, and the error whose detail runs longest is the one demo 2 plays live —
+    beat 14, whose whole content is the toolchain refusing an unqualified endorsement.
+    That detail is 400-odd characters, and unwrapped it reached the projector as one
+    line the terminal broke wherever it happened to run out, unindented and aligned
+    with nothing, at the moment the demo wants to show the tool working correctly.
+    """
+    lines = [f"{style.banner('ERROR', SPENT)}  {error.code}", *_sentences(error.title)]
     if error.detail:
-        lines.append(f"  {error.detail}")
-    lines.append(
-        "  Retrying will not help: this condition is permanent."
-        if not error.retryable
-        else "  Retrying may help: this condition is transient."
+        lines.extend(_sentences(error.detail))
+    lines.extend(
+        _sentences(
+            "Retrying will not help: this condition is permanent."
+            if not error.retryable
+            else "Retrying may help: this condition is transient."
+        )
     )
     if error.hint:
-        lines.append(f"  {error.hint}")
+        lines.extend(_sentences(error.hint))
     return "\n".join(lines) + "\n"
+
+
+def _sentences(text: str) -> list[str]:
+    """One block of an error, wrapped into the margin every screen uses."""
+    return textwrap.wrap(
+        text, width=WRAP, initial_indent=MARGIN, subsequent_indent=MARGIN
+    )
 
 
 def run(argv: Sequence[str], console: Console) -> int:

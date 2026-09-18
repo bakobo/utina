@@ -1,0 +1,172 @@
+
+  ------------------------------------------------------------------------------------
+  BEAT 1     The law Acme committed at inception
+  Three clauses, two founders, half the weight each, and the digest of the semantics the
+  clauses are written in. Nothing is judged yet. A law that did not pin its semantics
+  would be refused rather than read at whatever revision happens to be installed.
+
+  $ utina law --at inception --substrate keripy
+
+  LAW IN FORCE AT inception (seq 0)
+  ------------------------------------------------------------------------------------
+
+  semantics   08fd67445b6f1a96...   the dossier specification, pinned
+  head        51d03abbfb85...          over 3 clauses, ordered by clause SAID
+  bytes       801 canonical bytes, digested SHA-256
+  parties     9-acme-as-board-seat-3-at-acme, 9-acme-as-board-seat-3-device-at-acme,
+              9-acme-as-governed-domain-at-acme, 9-dev-as-founder-at-acme,
+              9-marta-as-founder-at-acme, 9-nina-as-director-at-acme,
+              9-quinn-as-outsider-at-acme
+  aliases     Display names, not identifiers, and local to Acme. The slot lists below
+              drop the shared 'at acme'. Run utina whois <alias> for the identifier
+              behind one.
+
+  clause A1   MxN, unity 1                          d5a7c7eefcc7...
+    governs   open-bank-account, hire-vp-sales, sign-office-lease, approve-budget
+    slots     9-marta-as-founder 1/2, 9-dev-as-founder 1/2
+    weights   the slots sum to 1, so every slot is required
+
+  clause A2   MxN, unity 1                          370fdb27c704...
+    governs   amend-operating-agreement
+    slots     9-marta-as-founder 1/2, 9-dev-as-founder 1/2
+    weights   the slots sum to 1, so every slot is required
+
+  clause A3   MxN, unity 1                          edc9c67e719d...
+    governs   release-escrowed-equity
+    slots     9-marta-as-founder 1/2, 9-dev-as-founder 1/2
+    weights   the slots sum to 1, so every slot is required
+
+  ------------------------------------------------------------------------------------
+  BEAT 2     Open a bank account
+  Both founders endorse and unity is reached. The affirmation carries the endorsements
+  that reached it rather than asserting that they did.
+
+  $ utina eval open-bank-account --at d1 --substrate keripy
+
+  AFFIRMED    may Acme perform an act of the class open-bank-account?
+  ------------------------------------------------------------------------------------
+
+  position    d1 (seq 3)
+  law head    51d03abbfb85...          clause A1 (MxN), unity 1
+  subject     ECYuJOxTVvzHhYiaiPVZjBSLjq6mc21FltYQsGugAKs2
+
+  slot              weight   disposition   committed act
+  9-marta-as-founder   1/2   endorsed      EL5LXWAM9Y2k...
+  9-dev-as-founder     1/2   endorsed      ENAI9K4JQLDp...
+                    ------
+  endorsed               1   of 1          unity reached
+  reachable              1   of 1          unity still reachable
+
+  ground
+    clauses     A1
+    reached by  EL5LXWAM9Y2k..., ENAI9K4JQLDp...
+    evidence    41a4c6487c62e31e...
+
+  ------------------------------------------------------------------------------------
+  BEAT 3     Hire a VP of Sales
+  Marta has endorsed and Dev has not acted. Pending is not a hedge: it names the slot
+  whose act would discharge it. Left pending on purpose — Act II comes back for it.
+
+  $ utina eval hire-vp-sales --at d2 --substrate keripy
+
+  PENDING     may Acme perform an act of the class hire-vp-sales?
+  ------------------------------------------------------------------------------------
+
+  position    d2 (seq 5)
+  law head    51d03abbfb85...          clause A1 (MxN), unity 1
+  subject     EBloouPzyh0EOtIeuo6SkW4dG1rQl2c2E7PQ8hPxt51X
+
+  slot              weight   disposition   committed act
+  9-marta-as-founder   1/2   endorsed      EMdNssZFX8Cy...
+  9-dev-as-founder     1/2   pending       -
+                    ------
+  endorsed             1/2   of 1          unity not reached
+  reachable              1   of 1          unity still reachable
+
+  ground - what would discharge this
+    9-dev-as-founder-at-acme endorsement under clause A1, absent
+                             cured by the arrival of the missing evidence
+
+  ------------------------------------------------------------------------------------
+  BEAT 4     Sign the office lease, after Dev declines
+  A signed no spends its slot, so the weight that could still arrive no longer reaches
+  unity. Watch the reachable row, not the endorsed one.
+
+  $ utina eval sign-office-lease --at d3 --substrate keripy
+
+  DEFEATED    may Acme perform an act of the class sign-office-lease?
+  ------------------------------------------------------------------------------------
+
+  position    d3 (seq 8)
+  law head    51d03abbfb85...          clause A1 (MxN), unity 1
+  subject     EPnmUK39AMUCzGv4pqG2HNAoLQxtVBIypKD1YDMAuXuv
+
+  slot              weight   disposition   committed act
+  9-marta-as-founder   1/2   endorsed      EL9LHhrRFq0s...
+  9-dev-as-founder     1/2   declined      EKh0ViYSqK5U...
+                    ------
+  endorsed             1/2   of 1          unity not reached
+  reachable            1/2   of 1          unity unreachable: a declined slot is spent
+
+  ground
+    clause      A1
+    defeater    authority (the actor lacked the invoked power)
+    subcode     9-dev-as-founder-at-acme
+    citation    the declination EKh0ViYSqK5U... committed by 9-dev-as-founder-at-acme
+    reason      Unity is unreachable under clause A1: 9-dev-as-founder-at-acme committed
+                a signed declination, which spends that slot's weight, and the weight
+                that can still arrive no longer reaches unity.
+
+  ------------------------------------------------------------------------------------
+  BEAT 5     Release escrowed founder equity
+  The founders' own clause, which the amendment in Act II will not touch. Also left
+  pending on purpose, and for a different reason than beat 3 was.
+
+  $ utina eval release-escrowed-equity --at b5 --substrate keripy
+
+  PENDING     may Acme perform an act of the class release-escrowed-equity?
+  ------------------------------------------------------------------------------------
+
+  position    b5 (seq 10)
+  law head    51d03abbfb85...          clause A3 (MxN), unity 1
+  subject     EPf5NL50o3ttI6JF5kWbp4MSm_ng7uKOW3SzTnFf9VSP
+
+  slot              weight   disposition   committed act
+  9-marta-as-founder   1/2   endorsed      EEFvHaNau-rp...
+  9-dev-as-founder     1/2   pending       -
+                    ------
+  endorsed             1/2   of 1          unity not reached
+  reachable              1   of 1          unity still reachable
+
+  ground - what would discharge this
+    9-dev-as-founder-at-acme endorsement under clause A3, absent
+                             cured by the arrival of the missing evidence
+
+  ------------------------------------------------------------------------------------
+  BEAT 6     May the board declare a dividend?
+  No clause governs distributions. The engine refuses rather than legislating, and the
+  refusal names what is missing. Not a fifth verdict, and the screen says so in as many
+  words.
+
+  $ utina eval declare-dividend --at d8 --substrate keripy
+
+  REFUSED - NOT EVALUABLE
+  ------------------------------------------------------------------------------------
+  This is not a verdict. A refusal is an operational fact: the evaluator declining an
+  ill-posed question rather than legislating the missing rule.
+
+  question    may Acme perform an act of the class declare-dividend?
+  position    d8 (seq 26)
+  law head    2df5c3323492...
+
+  missing     a committed clause governing acts of the class declare-dividend
+  detail      The law in force at this position rules no clause over this class of act.
+              Where committed law runs out the fold refuses rather than legislating the
+              missing rule, so this is not a pending finding: nothing anyone endorses
+              would discharge it, because there is no rule for an endorsement to
+              satisfy. Commit a clause that governs the class.
+
+  the law in force here governs
+    B1          open-bank-account, hire-vp-sales, sign-office-lease, approve-budget
+    B2          amend-operating-agreement
+    A3          release-escrowed-equity

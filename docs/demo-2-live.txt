@@ -1,0 +1,318 @@
+
+  ------------------------------------------------------------------------------------
+  KERNEL  The amendment as hinge
+  expects: a document is adopted
+  happens: a seat AID is delegated, a seat credential is issued, and the enactment
+    declares what it disturbs
+
+  ------------------------------------------------------------------------------------
+  BEAT 7     Seat the board: the amendment itself
+  The enactment that changes the law is judged under the law it replaces — clause A2,
+  not the B2 it commits. Succession is never retroactive, and everything after this beat
+  uses the board this one creates.
+
+  $ utina eval --said seat-the-board --at d4 --brief
+
+  AFFIRMED    was the committed act Ey2g0YlgPNWXnm7xXbHrtPtRe6PN-qy2mPsMFvehxLNQ lawful?
+  ------------------------------------------------------------------------------------
+  d4 (seq 13), clause A2 (MxN), unity 1, law head f3bd6baa1af2...
+
+  9-marta-as-founder   1/2   endorsed      EZpAipEPRsXi...
+  9-dev-as-founder     1/2   endorsed      Eb8K1JtYH7ka...
+  endorsed 1 of 1, unity reached; reachable 1, still reachable
+
+  ground      clause A2, reached by EZpAipEPRsXi..., Eb8K1JtYH7ka...
+
+  ------------------------------------------------------------------------------------
+  KERNEL  What the amendment did to two pending acts
+  expects: an amendment changes everything, or nothing
+  happens: the cure path closes for one and stays open for the other, decided by whether
+    the clause moved
+
+  ------------------------------------------------------------------------------------
+  BEAT 9     The hire, re-asked after the amendment
+  Beat 3's question, from the far side. Clause A1 is repealed, so the cure path is shut
+  and the enactment that shut it is the ground. Still pending — but a different species
+  of pending, and it names which.
+
+  $ utina eval hire-vp-sales --at board-seated --brief
+
+  PENDING     may Acme perform an act of the class hire-vp-sales?
+  ------------------------------------------------------------------------------------
+  board-seated (seq 13), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+
+  9-marta-as-founder   1/2   endorsed      ENzStORRBBmE...
+  9-dev-as-founder     1/2   pending       -
+  9-acme-as-board-se...   1/2   pending       -
+  endorsed 1/2 of 1, not reached; reachable 3/2, still reachable
+
+  ground      9-dev-as-founder-at-acme, 9-acme-as-board-seat-3-at-acme - endorsement
+              under clause B1, absent
+
+  ------------------------------------------------------------------------------------
+  BEAT 10    The equity release, re-asked after the amendment
+  Beat 5's question, from the same coordinate, and the opposite answer. Clause A3 was
+  carried across byte-identical, so it is the same clause and the cure path never
+  closed. Same amendment, two pending acts, two outcomes, decided by whether the rule
+  under each one moved.
+
+  $ utina eval release-escrowed-equity --at board-seated --brief
+
+  PENDING     may Acme perform an act of the class release-escrowed-equity?
+  ------------------------------------------------------------------------------------
+  board-seated (seq 13), clause A3 (MxN), unity 1, law head 8191a249fc6b...
+
+  9-marta-as-founder   1/2   endorsed      EgPbNtk_ST_c...
+  9-dev-as-founder     1/2   pending       -
+  endorsed 1/2 of 1, not reached; reachable 1, still reachable
+
+  ground      9-dev-as-founder-at-acme - endorsement under clause A3, absent
+
+  ------------------------------------------------------------------------------------
+  KERNEL  Same signed no, two answers
+  expects: a "no" means no
+  happens: defeat under two slots, pending under three. The Constitution changed; the
+    arithmetic did the rest
+
+  ------------------------------------------------------------------------------------
+  BEAT 13    The Q2 forecast, after Dev declines
+  The same signed no as the opener's beat 4, from the same person, under the board's
+  clause. Defeat became pending, because with three slots the ceiling still clears
+  unity. Nothing about the declination changed.
+
+  $ utina eval approve-budget --at b13 --brief
+
+  PENDING     may Acme perform an act of the class approve-budget?
+  ------------------------------------------------------------------------------------
+  b13 (seq 29), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+
+  9-marta-as-founder   1/2   endorsed      EjXUr3ahWnmd...
+  9-dev-as-founder     1/2   declined      ES5LId2ZmlTC...
+  9-acme-as-board-se...   1/2   pending       -
+  endorsed 1/2 of 1, not reached; reachable 1, still reachable
+
+  ground      9-acme-as-board-seat-3-at-acme - endorsement under clause B1, absent
+
+  ------------------------------------------------------------------------------------
+  KERNEL  Two currents, unmerged
+  expects: the credential check *is* the answer
+  happens: the toolchain rejects an unseated endorser before any fold runs, and the fold
+    answers separately
+
+  ------------------------------------------------------------------------------------
+  BEAT 8     Board seat 3, and the two bindings that make it an office
+  KERI's half is a delegation, dual-anchored: seat 3 signed its own dip naming Acme, and
+  Acme sealed that inception into its own key log. It proves a relationship and confers
+  nothing. ACDC's half is the credential that confers, and it is the half that can be
+  revoked.
+
+  $ utina seat acme:seat3 --at b8
+
+  SEAT 9-acme-as-board-seat-3-at-acme
+  ------------------------------------------------------------------------------------
+
+  position    b8 (seq 14)
+
+  KERI — a relationship, dual-anchored
+    identifier  acme:seat3
+    delegator   9-acme-as-governed-domain-at-acme, named in the dip's di
+    seal        E9JwXIWzuR6ic8AZ...   the delegator's own approving event
+
+  ACDC — the credential that confers the authority
+    credential  E1eY46Jhp41JZWFS...
+    schema      EAqOeo_YMHDEMZ-d...
+    issuer      9-acme-as-governed-domain-at-acme
+    issuee      9-acme-as-board-seat-3-at-acme
+    registry    E-czbRJteLSJXjEH...
+    state       issued, as the fold reads it here
+    may         create commitment
+
+  The two bindings are independent and only the second one confers. A delegation of ilk
+  delegation proves that a relationship exists, and the same fact would hold of an
+  identifier delegated to greet visitors; it is permanent, and nothing can undo it. What
+  the office may do is the credential's business, and because it is a credential it can
+  be revoked — at which point this slot empties and the office is an office nobody
+  holds.
+
+  ------------------------------------------------------------------------------------
+  BEAT 12    The annual budget, on two slots of three
+  Unity is reached while a party has never acted at all. Presence is not the question;
+  reachable weight is. Seat 3's endorsement carries an edge to its seat credential, and
+  the toolchain checked that edge before the record ever saw it.
+
+  $ utina eval approve-budget --at d5 --brief
+
+  AFFIRMED    may Acme perform an act of the class approve-budget?
+  ------------------------------------------------------------------------------------
+  d5 (seq 18), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+
+  9-marta-as-founder   1/2   endorsed      EqDH_-4f2rNl...
+  9-dev-as-founder     1/2   pending       -
+  9-acme-as-board-se...   1/2   endorsed      EGwcp9EgsuwT...
+  endorsed 1 of 1, unity reached; reachable 3/2, still reachable
+
+  ground      clause B1, reached by EGwcp9EgsuwT..., EqDH_-4f2rNl...
+
+  ------------------------------------------------------------------------------------
+  BEAT 14    Quinn endorses without a seat
+  Quinn cites a seat credential whose issuee he is not. This is the beat where the two
+  currents separate: edge validation refuses the citation before any fold runs, so
+  nothing is committed and the fold is never consulted. Re-ask beat 13 afterwards and
+  the answer has not moved, because the governance current never heard about this.
+
+  $ utina enact endorse --as acme:quinn --on approve-q2-forecast --citing seat-credential
+
+ERROR  e.proof.edge-unvalidated.f
+  The credential cited as this endorser's qualification does not bear them out.
+  acme:quinn offered an endorsement citing E1eY46Jhp41JZWFSdX9bR88MUy7yVLD_zXczulwDtppY
+  as the credential that qualifies them to give it, and edge validation refuses the
+  citation: under the DI2I operator the citing credential's issuer must be the cited
+  credential's issuee, or a delegated identifier of it. The endorsement was issued and
+  anchored in the endorser's own key log — they really did make the claim — and it was
+  not committed to the record, because an endorsement whose qualification does not
+  validate confers nothing.
+  Retrying will not help: this condition is permanent.
+  Cite the credential whose issuee is the endorser, or an identifier delegated from that
+  issuee. An endorser who holds no such credential cites none.
+
+  ------------------------------------------------------------------------------------
+  KERNEL  Revocation, and what it cannot do
+  expects: revoking undoes the decision
+  happens: it changes the next answer and not the last one — and then duplicity, which
+    does reach back
+
+  ------------------------------------------------------------------------------------
+  BEAT 16    Acme revokes the seat credential
+  The registry moves and nothing else does. Seat 3's key log is untouched and its keys
+  still verify. Registry state is evidence, and the screen names the act that moved it,
+  because a state with no act behind it is a claim rather than a record.
+
+  $ utina registry --at b16
+
+  REGISTRY E-czbRJteLSJXjEH...
+  ------------------------------------------------------------------------------------
+
+  position    b16 (seq 32)
+  controller  9-acme-as-governed-domain-at-acme
+
+  credential        at seq   state here    moved by
+  E1eY46Jhp41J...       14   revoked       EDF4FOERyYjn...
+
+  Registry state is evidence, and standing is judgment. A revocation moves what this
+  registry says about a credential and moves nothing else: the office's key log is
+  untouched, its keys still verify, and every finding that cited the credential while it
+  stood still stands at its own coordinate. What a revocation reaches is the next act,
+  not the last one.
+
+  ------------------------------------------------------------------------------------
+  BEAT 17    The Q3 budget, a new question after the revocation
+  Seat 3's slot is now unfilled — not refused, unfilled, because the office is an office
+  nobody holds until a credential says otherwise. The finding names what would fill it
+  rather than treating the revocation as a verdict.
+
+  $ utina eval approve-budget --at b17 --brief
+
+  PENDING     may Acme perform an act of the class approve-budget?
+  ------------------------------------------------------------------------------------
+  b17 (seq 34), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+
+  9-marta-as-founder   1/2   endorsed      E8e6pNo1h2ky...
+  9-dev-as-founder     1/2   pending       -
+  9-acme-as-board-se...   1/2   pending       -
+  endorsed 1/2 of 1, not reached; reachable 3/2, still reachable
+
+  ground      9-dev-as-founder-at-acme, 9-acme-as-board-seat-3-at-acme - endorsement
+              under clause B1, absent
+
+  ------------------------------------------------------------------------------------
+  BEAT 19    Beat 12's question, re-asked after the revocation
+  The surprising half. Same answer, over demonstrably different evidence: the credential
+  stood when it was cited, and nothing committed later unmakes that. A revocation that
+  reached back would let any issuer unmake any past finding at any distance, alone.
+
+  $ utina eval --said approve-budget --at b17 --brief
+
+  AFFIRMED    was the committed act Ebnz13phAfQySQoQ-qxY26rhgItCJgtyZIaouyhvFqQg lawful?
+  ------------------------------------------------------------------------------------
+  b17 (seq 34), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+
+  9-marta-as-founder   1/2   endorsed      EqDH_-4f2rNl...
+  9-dev-as-founder     1/2   pending       -
+  9-acme-as-board-se...   1/2   endorsed      EGwcp9EgsuwT...
+  endorsed 1 of 1, unity reached; reachable 3/2, still reachable
+
+  ground      clause B1, reached by EGwcp9EgsuwT..., EqDH_-4f2rNl...
+
+  ------------------------------------------------------------------------------------
+  BEAT 20    Duplicity at seat 3's signing position
+  And the contrast. Beat 19 re-asked and the answer held; this re-asks the same question
+  after seat 3 was seen signing two contradictory key events, and the answer moves. Not
+  backwards — beat 12 still stands at its own coordinate — but the voice is poisoned
+  from here on, and no amount of further evidence cures it. Only an act of seat 3's own
+  does. Revocation and undercut are different mechanisms and the engine keeps them on
+  separate code paths.
+
+  $ utina eval --said approve-budget --at b20 --brief
+
+  PENDING     was the committed act Ebnz13phAfQySQoQ-qxY26rhgItCJgtyZIaouyhvFqQg lawful?
+  ------------------------------------------------------------------------------------
+  b20 (seq 37), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+
+  9-marta-as-founder   1/2   endorsed      EqDH_-4f2rNl...
+  9-dev-as-founder     1/2   pending       -
+  9-acme-as-board-se...   1/2   endorsed      EGwcp9EgsuwT...
+  endorsed 1 of 1, unity reached; reachable 3/2, still reachable
+
+  ground      9-acme-as-board-seat-3-at-acme - endorsement under clause B1,
+              unresolved-conflict
+
+  ------------------------------------------------------------------------------------
+  KERNEL  The amendment that lies
+  expects: law is a document
+  happens: a document cannot be convicted of lying about itself; this one is, on its own
+    bytes
+
+  ------------------------------------------------------------------------------------
+  BEAT 22    The second amendment: lower the ordinary-acts bar
+  The board passes it unanimously, all three slots, unity reached — and the fold has
+  already convicted it. The verdict says self-convicted and does not say why. The next
+  beat is why.
+
+  $ utina eval --said lower-the-bar --at b22 --brief
+
+  SELF-CONVICTED  was the committed act E1SJbJcfICQgp3XyaCAgGEEX_QWuoTfA5ttxe1--4rks lawful?
+  ------------------------------------------------------------------------------------
+  b22 (seq 42), clause B2 (MxN), unity 1, law head 8191a249fc6b...
+
+  9-marta-as-founder   1/3   endorsed      EvPGyg5CIRrj...
+  9-dev-as-founder     1/3   endorsed      EpdfKevBb4Au...
+  9-acme-as-board-se...   1/3   endorsed      EBWx7WrWIp-5...
+  endorsed 1 of 1, unity reached; reachable 1, still reachable
+
+  ground      self-convicted on its own bytes, proof 6653f1c18c19f812...
+
+  ------------------------------------------------------------------------------------
+  BEAT 23    What it declared it disturbs, against what it did
+  The amendment declared one pending question and closed the cure path of three. Nobody
+  has to be trusted about that: the fold computes the true set from the same bytes the
+  amendment signed, and any stranger holding the log gets these two columns. A document
+  cannot lie about itself in a way a reader can compute. This one can be shown to have.
+
+  $ utina disturbance lower-the-bar --at b23
+
+  DISTURBANCE E1SJbJcfICQg...
+  ------------------------------------------------------------------------------------
+
+  position    b23 (seq 42)
+  declared    1 of the 3 it disturbs
+
+  question                  declared  computed  identifier
+  approve-budget-retabled   -         yes       E3CkC7KlYyV8...
+  approve-capital-plan      -         yes       E3VUf10ojy8G...
+  approve-q3-budget         yes       yes       EC9k5Z-Ag8Tz...
+
+  A declaration is a claim, and a claim is what can be false. The fold computes the true
+  set from the same committed bytes the amendment signed, so a mismatch is not an
+  accusation anybody has to be trusted about: it is arithmetic, and the proof package
+  names both sets in canonical order so two readers holding one record compute one
+  identifier for one falsehood.

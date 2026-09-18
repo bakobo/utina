@@ -1,0 +1,158 @@
+
+  ------------------------------------------------------------------------------------
+  BEAT 11    The equity release, cured across the amendment
+  Beat 10's question once Dev acts. Cured under the clause that never moved.
+
+  $ utina eval release-escrowed-equity --at b11
+
+  AFFIRMED    may Acme perform an act of the class release-escrowed-equity?
+  ------------------------------------------------------------------------------------
+
+  position    b11 (seq 15)
+  law head    8191a249fc6b...          clause A3 (MxN), unity 1
+  subject     EdVmO4oxF6j8Zkb_OpbpRyYhxL3VhHMKLWgJQoAFxSso
+
+  slot              weight   disposition   committed act
+  9-marta-as-founder   1/2   endorsed      EgPbNtk_ST_c...
+  9-dev-as-founder     1/2   endorsed      E0-aE1sSVC0R...
+                    ------
+  endorsed               1   of 1          unity reached
+  reachable              1   of 1          unity still reachable
+
+  ground
+    clauses     A3
+    reached by  E0-aE1sSVC0R..., EgPbNtk_ST_c...
+    evidence    17b31b38aab27ca9...
+
+  ------------------------------------------------------------------------------------
+  BEAT 15    Nina endorses from her delegated device
+  The third delegation stratum. The device signs with its own key and fills seat 3's
+  slot, because the seat granted it authority in a credential the seat can revoke —
+  never because the delegation exists.
+
+  $ utina eval approve-budget --at b15
+
+  AFFIRMED    may Acme perform an act of the class approve-budget?
+  ------------------------------------------------------------------------------------
+
+  position    b15 (seq 31)
+  law head    8191a249fc6b...          clause B1 (MxN), unity 1
+  subject     EIha84VWIvyD3kE4M8EI-z5h9lkspXHjbzhKBywImozI
+
+  slot              weight   disposition   committed act
+  9-marta-as-founder   1/2   endorsed      EjXUr3ahWnmd...
+  9-dev-as-founder     1/2   declined      ES5LId2ZmlTC...
+  9-acme-as-board-se...   1/2   endorsed      ErqN_GR5WqTj...
+                    ------
+  endorsed               1   of 1          unity reached
+  reachable              1   of 1          unity still reachable
+
+  ground
+    clauses     B1
+    reached by  EjXUr3ahWnmd..., ErqN_GR5WqTj...
+    evidence    7e1b907885f2cf13...
+
+  ------------------------------------------------------------------------------------
+  BEAT 18    Beat 12's question, re-asked at beat 12's own position
+  Byte-identical to the original finding, ground included. Beat 19 is the same answer
+  over a grown bundle; this is the same answer over the same one.
+
+  $ utina eval --said approve-budget --at d5
+
+  AFFIRMED    was the committed act Ebnz13phAfQySQoQ-qxY26rhgItCJgtyZIaouyhvFqQg lawful?
+  ------------------------------------------------------------------------------------
+
+  position    d5 (seq 18)
+  law head    8191a249fc6b...          clause B1 (MxN), unity 1
+  subject     Ebnz13phAfQySQoQ-qxY26rhgItCJgtyZIaouyhvFqQg
+
+  slot              weight   disposition   committed act
+  9-marta-as-founder   1/2   endorsed      EqDH_-4f2rNl...
+  9-dev-as-founder     1/2   pending       -
+  9-acme-as-board-se...   1/2   endorsed      EGwcp9EgsuwT...
+                    ------
+  endorsed               1   of 1          unity reached
+  reachable            3/2   of 1          unity still reachable
+
+  ground
+    clauses     B1
+    reached by  EGwcp9EgsuwT..., EqDH_-4f2rNl...
+    evidence    c6ead4eef3fda121...
+
+  ------------------------------------------------------------------------------------
+  BEAT 21    The capital plan
+  A second question pending under B1, alongside beat 17's. Two questions in flight is
+  what makes beat 23's computed set a set rather than a singleton.
+
+  $ utina eval --said approve-capital-plan --at b21
+
+  PENDING     was the committed act E3VUf10ojy8GZc_5wS-5NGKSomFjoFy87mYiigrhKE3A lawful?
+  ------------------------------------------------------------------------------------
+
+  position    b21 (seq 36)
+  law head    8191a249fc6b...          clause B1 (MxN), unity 1
+  subject     E3VUf10ojy8GZc_5wS-5NGKSomFjoFy87mYiigrhKE3A
+
+  slot              weight   disposition   committed act
+  9-marta-as-founder   1/2   endorsed      E6sWX4faOVhx...
+  9-dev-as-founder     1/2   pending       -
+  9-acme-as-board-se...   1/2   pending       -
+                    ------
+  endorsed             1/2   of 1          unity not reached
+  reachable            3/2   of 1          unity still reachable
+
+  ground - what would discharge this
+    9-dev-as-founder-at-acme endorsement under clause B1, absent
+                             cured by the arrival of the missing evidence
+    9-acme-as-board-seat-3-at-acme endorsement under clause B1, absent
+                                   cured by the arrival of the missing evidence
+
+  ------------------------------------------------------------------------------------
+  BEAT 24    The first decision, re-asked from the end of the record
+  The past is recomputable under the law in force then: still affirmed, still under A1,
+  asked from a position where A1 is no longer the law.
+
+  $ utina eval --said open-bank-account --at d9
+
+  AFFIRMED    was the committed act E9LNkisX-EfNzavJsJmBUx8IyDX_7jmCpAIL6cSvt5kY lawful?
+  ------------------------------------------------------------------------------------
+
+  position    d9 (seq 26)
+  law head    f3bd6baa1af2...          clause A1 (MxN), unity 1
+  subject     E9LNkisX-EfNzavJsJmBUx8IyDX_7jmCpAIL6cSvt5kY
+
+  slot              weight   disposition   committed act
+  9-marta-as-founder   1/2   endorsed      ETFRV_i1XbrD...
+  9-dev-as-founder     1/2   endorsed      E7rZDgjVNGiJ...
+                    ------
+  endorsed               1   of 1          unity reached
+  reachable              1   of 1          unity still reachable
+
+  ground
+    clauses     A1
+    reached by  E7rZDgjVNGiJ..., ETFRV_i1XbrD...
+    evidence    93aa741dad2022da...
+
+  ------------------------------------------------------------------------------------
+  BEAT 25    Refold the whole log in permuted arrival order
+  Binding at custos-4.2.md:3101, and one command. The same committed bytes in a
+  different arrival order fold to a byte-identical Constitution.
+
+  $ utina replay --at board-seated
+
+  REPLAY AT board-seated (seq 13)
+  ------------------------------------------------------------------------------------
+
+  canonical   8191a249fc6bd9f0...      over 821 canonical bytes, 3 clauses
+  permuted    8191a249fc6bd9f0...      the same events, presented in arrival order seed 7
+  result      IDENTICAL
+
+  custos-4.2.md:3101 binds this: a stream presented in permuted arrival order folds to a
+  byte-identical Constitution. Byte-identical, not merely equivalent, which is why the
+  two heads above are compared over the bytes they digest and not over the clauses they
+  mean.
+
+  clause sub-blocks, in the order the head ranges over them
+    13312f04e6ac4e1a... B2
+    5bad68ce389b9a3e... B1
+    709b5b56f6843cbf... A3
