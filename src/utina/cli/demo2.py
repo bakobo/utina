@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING
 
 from utina.acme import LABEL_UNKNOWN
 from utina.cli.render import MARGIN, RULE, WRAP
+from utina.cli.style import SCAFFOLD, Style
 from utina.substrate import FACADE, KERIPY
 
 if TYPE_CHECKING:  # pragma: no cover - the import exists only for the annotation
@@ -417,10 +418,10 @@ def walk2(
     for index, one in enumerate(sequence):
         kernel = _kernel_of(one)
         if kernel is not None:
-            for line in _kernel_card(kernel):
+            for line in _kernel_card(kernel, console.style):
                 console.out.write(line + "\n")
         argv = one.argv + _backend_argv(backend, store)
-        for line in _announce(one, argv):
+        for line in _announce(one, argv, console.style):
             console.out.write(line + "\n")
         # A beat whose refusal IS the beat prints it into the transcript rather
         # than onto the error stream. Beat 14's whole content is the toolchain
@@ -440,37 +441,57 @@ def _backend_argv(substrate: str, store: Path | None) -> tuple[str, ...]:
     return argv if store is None else (*argv, "--store", str(store))
 
 
-def _kernel_card(kernel: Kernel) -> list[str]:
-    """The card that opens a kernel: what the room expects, and what happens."""
+def _kernel_card(kernel: Kernel, style: Style) -> list[str]:
+    """The card that opens a kernel: what the room expects, and what happens.
+
+    The two labels are painted and the two claims are not, because the claims are the
+    thing being read and a label is where to look. `expects` and `happens` are a
+    contradiction the kernel is about to resolve, and neither side of it is a governance
+    verdict, so neither takes a semantic color.
+    """
     return [
         "",
-        MARGIN + RULE,
-        f"{MARGIN}KERNEL  {kernel.title}",
-        *textwrap.wrap(
-            f"expects: {kernel.expects}",
-            width=WRAP,
-            initial_indent=MARGIN,
-            subsequent_indent=MARGIN + "  ",
-        ),
-        *textwrap.wrap(
-            f"happens: {kernel.happens}",
-            width=WRAP,
-            initial_indent=MARGIN,
-            subsequent_indent=MARGIN + "  ",
-        ),
+        MARGIN + style.paint(RULE, SCAFFOLD),
+        f"{MARGIN}{style.strong('KERNEL')}  {kernel.title}",
+        *_claim(style, "expects", kernel.expects),
+        *_claim(style, "happens", kernel.happens),
     ]
 
 
-def _announce(beat: Beat, argv: tuple[str, ...]) -> list[str]:
-    """The card that introduces a beat, and the command as though it were typed."""
+def _claim(style: Style, label: str, text: str) -> list[str]:
+    """One of a kernel card's two claims, wrapped, with its label painted after the wrap.
+
+    Painting before the wrap would put the escape sequence's bytes into ``textwrap``'s
+    width budget and could split one across lines, which is the same constraint
+    ``render.wrapped`` documents.
+    """
+    lines = textwrap.wrap(
+        f"{label}: {text}",
+        width=WRAP,
+        initial_indent=MARGIN,
+        subsequent_indent=MARGIN + "  ",
+    )
+    cut = len(MARGIN) + len(label) + 1
+    head = MARGIN + style.paint(f"{label}:", SCAFFOLD) + lines[0][cut:]
+    return [head, *lines[1:]]
+
+
+def _announce(beat: Beat, argv: tuple[str, ...], style: Style) -> list[str]:
+    """The card that introduces a beat, and the command as though it were typed.
+
+    Chrome, not content: a scaffolding rule, a bold ``BEAT`` tag, prose narration, and
+    the echoed command bold behind a scaffolding prompt, so a room scanning for where the
+    next command starts finds the one bright line. Nothing on the card carries a
+    governance meaning, so nothing on it takes a semantic color.
+    """
     return [
         "",
-        MARGIN + RULE,
-        f"{MARGIN}BEAT {beat.id:<6}{beat.title}",
+        MARGIN + style.paint(RULE, SCAFFOLD),
+        f"{MARGIN}{style.strong(f'BEAT {beat.id:<6}')}{beat.title}",
         *textwrap.wrap(
             beat.narration, width=WRAP, initial_indent=MARGIN, subsequent_indent=MARGIN
         ),
         "",
-        f"{MARGIN}$ utina {' '.join(argv)}",
+        f"{MARGIN}{style.paint('$', SCAFFOLD)} {style.strong('utina ' + ' '.join(argv))}",
         "",
     ]

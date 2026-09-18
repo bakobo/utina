@@ -415,6 +415,236 @@ def test_a_terminal_is_coloured():
     assert Console.over(Terminal(), StringIO(), environ={}).color is True
 
 
+def test_a_dumb_terminal_is_not_coloured():
+    console = Console.over(Terminal(), Terminal(), environ={"TERM": "dumb"})
+    assert console.color is False
+
+
+def test_force_colour_beats_a_dumb_terminal():
+    console = Console.over(
+        Terminal(), Terminal(), environ={"TERM": "dumb", "FORCE_COLOR": "1"}
+    )
+    assert console.color is True
+
+
+# --- colour is decided per stream (tick 3ebe, this.i @ig3tc5om) ----------------
+#
+# The two streams are usually the same terminal. These pin the cases where they are
+# not, which is where deciding once from stdout wrote escape sequences into a file.
+
+
+def test_a_redirected_stderr_is_not_coloured_while_stdout_is():
+    console = Console.over(Terminal(), StringIO(), environ={})
+    assert console.style.enabled is True
+    assert console.err_style.enabled is False
+
+
+def test_a_terminal_stderr_is_coloured_while_stdout_is_redirected():
+    console = Console.over(StringIO(), Terminal(), environ={})
+    assert console.style.enabled is False
+    assert console.err_style.enabled is True
+
+
+def test_an_error_on_a_redirected_stderr_carries_no_escapes():
+    out, err = Terminal(), StringIO()
+    status = run(
+        ("whois", "nosuchparty"), Console.over(out, err, environ={})
+    )
+    assert status == 2
+    assert "\x1b[" not in err.getvalue()
+    assert "Nothing in this domain is called that." in err.getvalue()
+
+
+def test_err_style_follows_colour_when_no_stream_was_asked():
+    """A hand-built console says it once, which is what every test here does."""
+    console = Console(out=StringIO(), err=StringIO(), color=True)
+    assert console.err_style.enabled is True
+
+
+# --- colour: one meaning per colour, everywhere it appears ---------------------
+
+
+SCREENS = [
+    ("law", "--at", "inception"),
+    ("eval", "open-bank-account", "--at", "d1"),
+    ("eval", "hire-vp-sales", "--at", "d2"),
+    ("eval", "sign-office-lease", "--at", "d3"),
+    ("eval", "hire-vp-sales", "--at", "board-seated", "--brief"),
+    ("eval", "declare-dividend", "--at", "d8"),
+    ("eval", "--said", "lower-the-bar", "--at", "b22"),
+    ("disturbance", "lower-the-bar", "--at", "b23"),
+    ("registry", "--at", "b16"),
+    ("seat", "acme:seat3", "--at", "b8"),
+    ("log", "--at", "d3"),
+    ("replay", "--at", "board-seated"),
+    ("whois", "9-marta-as-founder"),
+]
+
+
+@pytest.mark.parametrize("argv", SCREENS, ids=[one[0] + ":" + one[-1] for one in SCREENS])
+def test_stripping_the_escapes_yields_the_plain_form_on_every_screen(argv):
+    """The property that lets colour be added anywhere without reading every screen.
+
+    Extended from the one D3 case to every screen, because painting reached the
+    columns and the sums, where padding sits inside the escape sequence and a
+    trailing painted field would keep whitespace the plain form's ``rstrip`` removes.
+    """
+    _, plain, _ = shell(*argv, color=False)
+    _, painted, _ = shell(*argv, color=True)
+    assert "\x1b[" in painted, "nothing on this screen is painted at all"
+    assert "\x1b[" not in plain
+    assert ANSI.sub("", painted) == plain
+
+
+def painted_with(text: str, sgr: str, needle: str) -> bool:
+    """Whether ``needle`` appears painted in ``sgr`` somewhere in ``text``."""
+    return f"\x1b[{sgr}m{needle}" in text
+
+
+def test_the_disposition_column_carries_each_dispositions_colour():
+    from utina.cli.style import AWAITING, REACHED, SPENT
+
+    _, painted, _ = shell("eval", "approve-budget", "--at", "b13", color=True)
+    assert painted_with(painted, REACHED, "endorsed")
+    assert painted_with(painted, SPENT, "declined")
+    assert painted_with(painted, AWAITING, "pending")
+
+
+def test_an_unreachable_unity_is_spent_and_a_merely_unreached_one_is_awaiting():
+    """The distinction the whole scheme turns on (this.i @w6bpgbwi).
+
+    Red appears when the path is dead, not when the act is merely unfinished. D3 is
+    the beat where both rows are short of unity and only one of them is blocked.
+    """
+    from utina.cli.style import AWAITING, SPENT
+
+    _, painted, _ = shell("eval", "sign-office-lease", "--at", "d3", color=True)
+    assert painted_with(painted, AWAITING, "unity not reached")
+    assert painted_with(painted, SPENT, "unity unreachable: a declined slot is spent")
+
+
+def test_a_reached_unity_is_reached_on_both_rows():
+    from utina.cli.style import REACHED
+
+    _, painted, _ = shell("eval", "open-bank-account", "--at", "d1", color=True)
+    assert painted_with(painted, REACHED, "unity reached")
+    assert painted_with(painted, REACHED, "unity still reachable")
+
+
+def test_a_revocation_is_awaiting_and_never_spent():
+    """Beat 16's argument is that revoking is ordinary, so it is not painted as a fault.
+
+    Pinned because this is the decision a later reader is most likely to "fix" into
+    red on the reasonable-sounding grounds that a revocation is bad news.
+    """
+    from utina.cli.style import AWAITING, REACHED, SPENT
+
+    _, revoked, _ = shell("registry", "--at", "b16", color=True)
+    assert painted_with(revoked, AWAITING, "revoked")
+    assert not painted_with(revoked, SPENT, "revoked")
+
+    # The same registry before the revocation, where the one credential still stands.
+    _, standing, _ = shell("registry", "--at", "b8", color=True)
+    assert painted_with(standing, REACHED, "issued")
+
+
+def test_the_rule_under_a_headline_takes_the_headlines_colour():
+    from utina.cli.render import RULE
+    from utina.cli.style import REFUSAL_COLOR, SCAFFOLD, VERDICT_COLOR
+    from utina.fold.finding import Verdict
+
+    _, defeated, _ = shell("eval", "sign-office-lease", "--at", "d3", color=True)
+    assert painted_with(defeated, VERDICT_COLOR[Verdict.DEFEATED], RULE)
+
+    _, refused, _ = shell("eval", "declare-dividend", "--at", "d8", color=True)
+    assert painted_with(refused, REFUSAL_COLOR, RULE)
+
+    _, law, _ = shell("law", "--at", "inception", color=True)
+    assert painted_with(law, SCAFFOLD, RULE)
+
+
+def test_a_refusal_has_no_entry_among_the_verdict_colours():
+    """this.i @clrfsl: a table entry would be the first step towards a fifth verdict."""
+    from utina.cli.style import REFUSAL_COLOR, VERDICT_COLOR
+
+    assert len(VERDICT_COLOR) == 4
+    assert REFUSAL_COLOR not in VERDICT_COLOR.values()
+
+
+def test_the_discharge_species_is_painted_by_whether_the_cure_path_is_open():
+    from utina.cli.style import AWAITING, SPECIES_COLOR, SPENT
+    from utina.fold.finding import PendingSpecies
+
+    assert SPECIES_COLOR[PendingSpecies.ABSENT] == AWAITING
+    assert SPECIES_COLOR[PendingSpecies.WINDOW_OPEN] == AWAITING
+    assert SPECIES_COLOR[PendingSpecies.EXPIRED_ABANDONED] == SPENT
+
+    _, painted, _ = shell("eval", "hire-vp-sales", "--at", "d2", color=True)
+    assert painted_with(painted, AWAITING, "absent")
+    assert painted_with(painted, AWAITING, "cured by the arrival of the missing evidence")
+
+
+def test_the_species_is_painted_on_the_brief_screen_too():
+    """The brief screen is the live demo's default, so it carries the same signal."""
+    from utina.cli.style import AWAITING
+
+    _, painted, _ = shell("eval", "hire-vp-sales", "--at", "d2", "--brief", color=True)
+    assert painted_with(painted, AWAITING, "absent")
+
+
+def test_a_wrapped_mark_never_splits_an_escape_sequence():
+    """``wrapped`` paints after wrapping, so no line can hold a partial escape.
+
+    The failure this forbids is silent and ugly: ``textwrap`` counting escape bytes
+    towards its width, then breaking inside one.
+    """
+    from utina.cli.render import wrapped
+    from utina.cli.style import AWAITING, Style
+
+    style = Style(True)
+    long = " ".join(["overlong"] * 40) + " absent " + " ".join(["trailing"] * 20)
+    lines = wrapped(style, "ground", long, mark="absent", tint=AWAITING)
+    assert len(lines) > 1, "the fixture has to actually wrap for this to test anything"
+    assert painted_with("\n".join(lines), AWAITING, "absent")
+    # Every escape introducer on every line is a whole, well-formed sequence: the count
+    # of "\x1b[" equals the count of sequences the ANSI pattern can match.
+    for line in lines:
+        assert line.count("\x1b[") == len(ANSI.findall(line))
+
+
+def test_the_enact_screens_before_and_after_carry_verdict_colours():
+    from utina.cli.style import AWAITING, REACHED
+
+    _, painted, _ = shell(
+        "enact", "endorse", "--as", "acme:dev", "--on", "hire-vp-sales", color=True
+    )
+    assert painted_with(painted, AWAITING, "PENDING")
+    assert painted_with(painted, REACHED, "AFFIRMED")
+
+
+def test_the_replay_result_is_painted_by_whether_the_folds_agree():
+    from utina.cli.style import REACHED
+
+    _, painted, _ = shell("replay", "--at", "board-seated", color=True)
+    assert painted_with(painted, REACHED, "IDENTICAL")
+
+
+def test_a_full_identifier_is_never_painted():
+    """this.i @pumwsfto. Colour on an identifier suggests a check a reader cannot make."""
+    _, painted, _ = shell("eval", "open-bank-account", "--at", "d1", color=True)
+    subject = next(
+        line for line in painted.splitlines() if "subject" in line
+    )
+    assert subject.count("\x1b[") == 2, "only the label is painted on the subject line"
+
+    _, whois, _ = shell("whois", "9-marta-as-founder", color=True)
+    identifier = next(
+        line for line in whois.splitlines() if line.strip().startswith("\x1b[")
+        and "identifier" in ANSI.sub("", line)
+    )
+    assert identifier.count("\x1b[") == 2
+
+
 # --- the finding renderer, over the whole codomain -----------------------------
 
 

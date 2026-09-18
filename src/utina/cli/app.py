@@ -49,7 +49,7 @@ from utina.cli.render import (
     seat_screen,
     whois_screen,
 )
-from utina.cli.style import RED, Style
+from utina.cli.style import SPENT, Style
 from utina.cli.world import RealValues, world
 from utina.enact import Constructor
 from utina.fold import disturbance
@@ -81,9 +81,12 @@ parties
   screens the scope is always Acme, so the columns drop it. To see the identifier
   behind an alias, ask for it: utina whois 9-marta-as-founder.
 
-colour
-  On when the output is a terminal. NO_COLOR turns it off, FORCE_COLOR turns it on
-  through a pipe. No screen ever carries a meaning in colour alone.
+color
+  On when the output is a terminal, and decided per stream, so a redirected stderr
+  stays plain. NO_COLOR turns it off, FORCE_COLOR turns it on through a pipe,
+  TERM=dumb turns it off. Six colors, each meaning one thing everywhere it appears:
+  green reached, red spent, amber awaiting, magenta convicted, blue not evaluable,
+  grey scaffolding. No screen ever carries a meaning in color alone.
 
 examples
   utina law --at inception
@@ -105,36 +108,66 @@ def _wait_for_a_keypress() -> None:  # pragma: no cover - stdin belongs to the n
 
 @dataclass(frozen=True)
 class Console:
-    """Where output goes, whether it takes colour, and how it waits."""
+    """Where output goes, whether each stream takes color, and how it waits.
+
+    ``err_color`` defaults to ``None``, meaning "whatever ``color`` says", so a caller
+    that knows both streams are the same place — every test that constructs one by hand —
+    says it once. :meth:`over` asks each real stream separately, which is the whole point
+    of tick 3ebe (this.i @ig3tc5om).
+    """
 
     out: TextIO
     err: TextIO
     color: bool = False
+    err_color: bool | None = None
     pause: Callable[[], None] = dataclass_field(default=_no_pause)
 
     @classmethod
     def over(
         cls, out: TextIO, err: TextIO, *, environ: Mapping[str, str]
     ) -> Console:
-        """A console over real streams, with colour decided by the stream itself."""
+        """A console over real streams, with color decided by each stream itself."""
         return cls(
             out=out,
             err=err,
-            color=_takes_colour(out, environ),
+            color=_takes_color(out, environ),
+            err_color=_takes_color(err, environ),
             pause=_wait_for_a_keypress,
         )
 
     @property
     def style(self) -> Style:
+        """The style for ``out``, which is where every screen goes."""
         return Style(self.color)
 
+    @property
+    def err_style(self) -> Style:
+        """The style for ``err``, which is where an error goes.
 
-def _takes_colour(stream: TextIO, environ: Mapping[str, str]) -> bool:
-    """NO_COLOR beats FORCE_COLOR beats the stream, which is the usual precedence."""
+        Deciding this from ``out`` is what put escape sequences into a redirected stderr:
+        the two streams are usually the same terminal, right up to the one case that
+        writes a corrupted file, and a rule that is right by coincidence cannot be
+        tested (this.i @ig3tc5om).
+        """
+        return Style(self.color if self.err_color is None else self.err_color)
+
+
+def _takes_color(stream: TextIO, environ: Mapping[str, str]) -> bool:
+    """NO_COLOR beats FORCE_COLOR beats TERM beats the stream, which is the precedence.
+
+    ``TERM=dumb`` is the one terminal that announces it cannot render this, and it is
+    checked below FORCE_COLOR so that an explicit request still wins. A terminal that
+    lacks 256-color support without saying so is not detected, and that is accepted
+    rather than solved: there is no capability query that works over ssh and inside a
+    test, the ladder has only the two rungs (this.i @qi3inaua), and the failure is
+    legible — a reader sees an escape sequence rather than a wrong color.
+    """
     if environ.get("NO_COLOR"):
         return False
     if environ.get("FORCE_COLOR"):
         return True
+    if environ.get("TERM") == "dumb":
+        return False
     return stream.isatty()
 
 
@@ -519,7 +552,7 @@ COMMANDS: Mapping[str, Callable[[argparse.Namespace, Console], int]] = {
 def render_error(error: BakoboError, style: Style) -> str:
     """An error as complete sentences, with its code and its retryability."""
     lines = [
-        f"{style.banner('ERROR', RED)}  {error.code}",
+        f"{style.banner('ERROR', SPENT)}  {error.code}",
         f"  {error.title}",
     ]
     if error.detail:
@@ -548,7 +581,7 @@ def run(argv: Sequence[str], console: Console) -> int:
         # path that would exit non-zero is error(), which raises instead.
         return 0
     except BakoboError as error:
-        console.err.write(render_error(error, console.style))
+        console.err.write(render_error(error, console.err_style))
         return 2
 
 

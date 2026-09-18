@@ -35,7 +35,19 @@ from typing import cast
 
 from utina.cli.aliases import Aliases
 from utina.cli.appraisal import Appraisal
-from utina.cli.style import GREEN, REFUSAL_COLOUR, VERDICT_COLOUR, Style
+from utina.cli.style import (
+    AWAITING,
+    CONVICTED,
+    DISPOSITION_COLOR,
+    NOT_EVALUABLE,
+    REACHED,
+    REFUSAL_COLOR,
+    SCAFFOLD,
+    SPECIES_COLOR,
+    SPENT,
+    VERDICT_COLOR,
+    Style,
+)
 from utina.fold.clause import Clause
 from utina.fold.constitution import Constitution
 from utina.fold.corpus import Event
@@ -58,6 +70,7 @@ from utina.fold.slots import (
     credential,
 )
 from utina.fold.triple import SAID, Position
+from utina.substrate import ISSUED, REVOKED
 
 __all__ = [
     "abbrev",
@@ -166,25 +179,96 @@ def field(style: Style, label: str, value: str, indent: int = 2, width: int = FI
     return f"{' ' * indent}{style.label(f'{label:<{width}}')}{value}"
 
 
-def wrapped(style: Style, label: str, text: str, indent: int = 2) -> list[str]:
+def wrapped(
+    style: Style,
+    label: str,
+    text: str,
+    indent: int = 2,
+    *,
+    mark: str | None = None,
+    tint: str | None = None,
+) -> list[str]:
     """One labelled line whose value is prose, hanging under its own label.
 
     Never broken at a hyphen. Every alias on these screens is one hyphenated token, and
     a wrap that split ``9-marta-as-founder-at-acme`` across two lines would leave a
     fragment on each of them that reads like a shorter alias — which is a smaller
     version of the confusion this whole commission exists to remove.
+
+    ``mark`` is one word inside ``text`` to paint in ``tint``, and it is applied **after**
+    the wrap and after the head is sliced, for two reasons that are both about escape
+    sequences having bytes and no width: ``textwrap`` would count them towards ``WRAP``
+    and wrap short, and a break could land in the middle of one. Painting last means the
+    wrap is computed on the plain text and no escape can be split. If a wrap happens to
+    divide ``mark`` anyway, no color is applied and the word is still the word — which is
+    the direction this has to fail in.
     """
     pad = " " * (indent + FIELD)
     lines = textwrap.wrap(
         text, width=WRAP, initial_indent=pad, subsequent_indent=pad, break_on_hyphens=False
     )
     head = " " * indent + style.label(f"{label:<{FIELD}}") + lines[0][indent + FIELD :]
-    return [head, *lines[1:]]
+    painted = [head, *lines[1:]]
+    if mark is not None and tint is not None:
+        painted = [one.replace(mark, style.paint(mark, tint)) for one in painted]
+    return painted
 
 
-def _row(slot: str, weight: str, disposition: str, note: str) -> str:
-    """One line of the arithmetic table, in the columns every other line uses."""
-    return f"{MARGIN}{slot:<{SLOT}}{weight:>6}   {disposition:<14}{note}".rstrip()
+#: What a credential's registry state is painted in. **A revocation is AWAITING and not
+#: SPENT**, which is a decision and not an oversight (this.i @w6bpgbwi): beat 16's whole
+#: argument is that revoking is ordinary and bounded — the registry moves and nothing
+#: else does — and red would put a malfunction into the one beat built to show there is
+#: none. Amber says the slot is now awaiting a credential, which is exactly what beat 17
+#: then shows. Anything else, including the "unknown" the fold returns where nothing
+#: committed issues that credential here, reads as a thing there is no standing to answer.
+_STATE_COLOR = {ISSUED: REACHED, REVOKED: AWAITING}
+
+
+def state_tint(state: str) -> str:
+    """What to paint a registry state in, for the two screens that print one."""
+    return _STATE_COLOR.get(state, NOT_EVALUABLE)
+
+
+def headline(style: Style, text: str, sgr: str = SCAFFOLD) -> list[str]:
+    """A headline and the rule under it, which is painted in the headline's color.
+
+    One rule with no exceptions: gray under a neutral heading, the verdict's color under
+    a verdict banner, blue under a refusal. Eighty-four characters of color is the most
+    legible thing on the screen from the back of a room, and it carries no meaning the
+    banner above it did not already carry in words.
+
+    ``text`` arrives already painted, because a banner is bold and a heading is not.
+    """
+    return [MARGIN + text, MARGIN + style.paint(RULE, sgr)]
+
+
+def _row(
+    slot: str,
+    weight: str,
+    disposition: str,
+    note: str,
+    *,
+    style: Style | None = None,
+    tint: str | None = None,
+    note_tint: str | None = None,
+) -> str:
+    """One line of the arithmetic table, in the columns every other line uses.
+
+    Two painting rules, both forced by the ``rstrip`` below. The disposition column is
+    padded before it is painted, so the columns align in both forms — but only when a
+    note follows it, because a *trailing* painted field keeps the padding that the plain
+    form's ``rstrip`` removes, and the two forms would then differ by whitespace inside
+    an escape sequence. The note is last, so it is painted without padding and there is
+    nothing to strip in either form. Dropping the pad when the note is empty changes no
+    plain output, since ``rstrip`` was already removing it.
+    """
+    cell = f"{disposition:<14}" if note else disposition
+    if style is not None and tint is not None:
+        cell = style.paint(cell, tint)
+    tail = note
+    if style is not None and note_tint is not None and note:
+        tail = style.paint(note, note_tint)
+    return f"{MARGIN}{slot:<{SLOT}}{weight:>6}   {cell}{tail}".rstrip()
 
 
 def _screen(lines: Iterable[str]) -> str:
@@ -229,8 +313,11 @@ def brief_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
     if isinstance(outcome, Refusal):
         return _screen(
             [
-                MARGIN + style.banner("REFUSED - NOT EVALUABLE", REFUSAL_COLOUR),
-                MARGIN + RULE,
+                *headline(
+                    style,
+                    style.banner("REFUSED - NOT EVALUABLE", REFUSAL_COLOR),
+                    REFUSAL_COLOR,
+                ),
                 MARGIN + f"{appraisal.label} (seq {appraisal.position.seq})",
                 "",
                 *wrapped(style, "missing", aliased(outcome.missing, aliases)),
@@ -239,27 +326,63 @@ def brief_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
     clause = cast(Clause, appraisal.clause)
     held = {one.endorser: one.disposition for one in appraisal.slots}
     word = outcome.verdict.value.upper()
+    tint = VERDICT_COLOR[outcome.verdict]
+    satisfied = clause.group.satisfied(held)
+    reachable = clause.group.reachable(held)
     return _screen(
         [
-            MARGIN
-            + style.banner(f"{word:<10}", VERDICT_COLOUR[outcome.verdict])
-            + f"  {appraisal.headline}",
-            MARGIN + RULE,
+            *headline(
+                style,
+                style.banner(f"{word:<10}", tint) + f"  {appraisal.headline}",
+                tint,
+            ),
             MARGIN
             + f"{appraisal.label} (seq {appraisal.position.seq}), "
             + f"clause {clause.id} ({clause.group.operator}), unity 1, "
             + f"law head {abbrev(appraisal.law.law_head.said)}",
             "",
             *_arithmetic(appraisal, clause, aliases, style)[1:-3],
+            # The two phrases the full screen puts on its own sums rows, collapsed onto
+            # one line and painted the same way, so the brief form makes the same claim
+            # in the same colors as the form it abbreviates.
             MARGIN
             + f"endorsed {rational(clause.group.endorsed_weight(held))} of 1, "
-            + ("unity reached" if clause.group.satisfied(held) else "not reached")
+            + style.paint(
+                "unity reached" if satisfied else "not reached",
+                REACHED if satisfied else AWAITING,
+            )
             + f"; reachable {rational(clause.group.reachable_weight(held))}, "
-            + ("still reachable" if clause.group.reachable(held) else "unreachable"),
+            + style.paint(
+                "still reachable" if reachable else "unreachable",
+                REACHED if reachable else SPENT,
+            ),
             "",
-            *wrapped(style, "ground", _brief_ground(outcome, aliases)),
+            *wrapped(
+                style,
+                "ground",
+                _brief_ground(outcome, aliases),
+                mark=_species_mark(outcome),
+                tint=_species_tint(outcome),
+            ),
         ]
     )
+
+
+def _species_mark(finding: Finding) -> str | None:
+    """The discharge species named in a pending finding's ground, or ``None``.
+
+    Only a pending finding has one, and the ground names the first requirement element's,
+    which is the element the brief line reports. Painting it is the finest-grained thing
+    color says here: whether this act is waiting on evidence that can still arrive, or on
+    a cure path the record has closed.
+    """
+    return finding.requirement[0].species.name_ if isinstance(finding, Pending) else None
+
+
+def _species_tint(finding: Finding) -> str | None:
+    if not isinstance(finding, Pending):
+        return None
+    return SPECIES_COLOR[finding.requirement[0].species]
 
 
 def _brief_ground(finding: Finding, aliases: Aliases) -> str:
@@ -299,11 +422,13 @@ def _finding_lines(
     # assumption about luck: tests/test_cli.py asserts it beat by beat.
     clause = cast(Clause, appraisal.clause)
     word = finding.verdict.value.upper()
+    tint = VERDICT_COLOR[finding.verdict]
     return [
-        MARGIN
-        + style.banner(f"{word:<10}", VERDICT_COLOUR[finding.verdict])
-        + f"  {appraisal.headline}",
-        MARGIN + RULE,
+        *headline(
+            style,
+            style.banner(f"{word:<10}", tint) + f"  {appraisal.headline}",
+            tint,
+        ),
         "",
         field(style, "position", f"{appraisal.label} (seq {appraisal.position.seq})"),
         field(
@@ -339,15 +464,26 @@ def _arithmetic(
                 rational(slot.weight),
                 disposition.disposition.value,
                 acted,
+                style=style,
+                tint=DISPOSITION_COLOR[disposition.disposition],
             )
         )
     lines.append(_row("", "------", "", ""))
+    # The two sums are where the health of the clause is stated, so they carry the two
+    # colors that say it. "Not reached" is AWAITING and not SPENT: the endorsed sum
+    # falling short of unity is an act in flight, and the row below is the one that says
+    # whether it can still land. So red appears on exactly the screens where the path is
+    # dead, which is what makes D3 against D6 legible at a glance (this.i @w6bpgbwi).
+    satisfied = clause.group.satisfied(held)
+    reachable = clause.group.reachable(held)
     lines.append(
         _row(
             "endorsed",
             rational(clause.group.endorsed_weight(held)),
             "of 1",
-            "unity reached" if clause.group.satisfied(held) else "unity not reached",
+            "unity reached" if satisfied else "unity not reached",
+            style=style,
+            note_tint=REACHED if satisfied else AWAITING,
         )
     )
     lines.append(
@@ -356,8 +492,10 @@ def _arithmetic(
             rational(clause.group.reachable_weight(held)),
             "of 1",
             "unity still reachable"
-            if clause.group.reachable(held)
+            if reachable
             else "unity unreachable: a declined slot is spent",
+            style=style,
+            note_tint=REACHED if reachable else SPENT,
         )
     )
     return lines
@@ -395,16 +533,23 @@ def ground_of(finding: Finding, aliases: Aliases, style: Style) -> list[str]:
             # hangs under the value rather than at a fixed indent. A keripy party used
             # to run straight into its own value here with no space between them.
             width = max(FIELD, len(label) + 1)
+            # The species and its cure are one claim in two sentences, so they take one
+            # color: AWAITING while the missing evidence can still arrive, SPENT where
+            # the record closed the path, CONVICTED where only the party's own act cures.
+            # `field` pads the label and never the value, so painting inside the value is
+            # safe here in a way it is not inside anything `wrapped` touches.
+            tint = SPECIES_COLOR[element.species]
             lines.append(
                 field(
                     style,
                     label,
-                    f"{element.kind} under clause {element.clause}, {element.species.name_}",
+                    f"{element.kind} under clause {element.clause}, "
+                    + style.paint(element.species.name_, tint),
                     indent=4,
                     width=width,
                 )
             )
-            lines.append(" " * (4 + width) + element.species.cure)
+            lines.append(" " * (4 + width) + style.paint(element.species.cure, tint))
         return lines
     convicted = cast(SelfConvicted, finding)
     return [
@@ -461,8 +606,11 @@ def _refusal_lines(
     appraisal: Appraisal, refusal: Refusal, aliases: Aliases, style: Style
 ) -> list[str]:
     lines = [
-        MARGIN + style.banner("REFUSED - NOT EVALUABLE", REFUSAL_COLOUR),
-        MARGIN + RULE,
+        *headline(
+            style,
+            style.banner("REFUSED - NOT EVALUABLE", REFUSAL_COLOR),
+            REFUSAL_COLOR,
+        ),
         *textwrap.wrap(
             _NOT_A_VERDICT, width=WRAP, initial_indent=MARGIN, subsequent_indent=MARGIN
         ),
@@ -494,16 +642,20 @@ def law_screen(
     disclosed once rather than merely assumed (this.i @clscop).
     """
     lines = [
-        MARGIN + style.strong(f"LAW IN FORCE AT {label} (seq {position.seq})"),
-        MARGIN + RULE,
+        *headline(style, style.strong(f"LAW IN FORCE AT {label} (seq {position.seq})")),
         "",
         field(
             style,
             "semantics",
+            # An unpinned semantics is the same fact a refusal carries, arriving earlier:
+            # the law cannot be read, so nothing under it can be evaluated. It takes the
+            # refusal's color rather than a verdict's, because it is not an answer.
             (
                 f"{abbrev(law.semantics, 16)}   the dossier specification, pinned"
                 if law.semantics
-                else "none pinned, so this law is not evaluable (axiom 4)"
+                else style.paint(
+                    "none pinned, so this law is not evaluable (axiom 4)", NOT_EVALUABLE
+                )
             ),
         ),
         field(
@@ -574,8 +726,7 @@ def log_screen(
 ) -> str:
     """The committed events, in the one order the fold consumes them in."""
     lines = [
-        MARGIN + style.strong(f"COMMITTED LOG AT {label} (seq {position.seq})"),
-        MARGIN + RULE,
+        *headline(style, style.strong(f"COMMITTED LOG AT {label} (seq {position.seq})")),
         "",
         f"{MARGIN}{len(events)} events, in canonical order: anchoring coordinate first, "
         "then identifier.",
@@ -633,8 +784,7 @@ def replay_screen(
     """The Constitution recomputed twice, from the same bytes in two arrival orders."""
     canonical = straight.canonical_bytes()
     lines = [
-        MARGIN + style.strong(f"REPLAY AT {label} (seq {position.seq})"),
-        MARGIN + RULE,
+        *headline(style, style.strong(f"REPLAY AT {label} (seq {position.seq})")),
         "",
         field(
             style,
@@ -648,7 +798,17 @@ def replay_screen(
             f"{abbrev(shuffled.law_head.said, 16):<25}"
             f"the same events, presented in arrival order seed {seed}",
         ),
-        field(style, "result", replay_verdict(canonical, shuffled.canonical_bytes())),
+        # The determinism claim, and the one line the last beat of both demos exists
+        # for. Identical is REACHED; a difference means this fold consulted something
+        # that is not committed, which is the worst answer any screen here can give.
+        field(
+            style,
+            "result",
+            style.paint(
+                replay_verdict(canonical, shuffled.canonical_bytes()),
+                REACHED if canonical == shuffled.canonical_bytes() else SPENT,
+            ),
+        ),
         "",
         *textwrap.wrap(
             "custos-4.2.md:3101 binds this: a stream presented in permuted arrival order "
@@ -687,8 +847,7 @@ def whois_screen(
     """
     return _screen(
         [
-            MARGIN + style.strong(f"WHOIS {aliases.full(identifier)}"),
-            MARGIN + RULE,
+            *headline(style, style.strong(f"WHOIS {aliases.full(identifier)}")),
             "",
             field(style, "alias", aliases.full(identifier)),
             field(style, "in columns", aliases.short(identifier)),
@@ -742,8 +901,7 @@ def seat_screen(
     state = credential.get("state")
     return _screen(
         [
-            MARGIN + style.strong(f"SEAT {aliases.full(seat)}"),
-            MARGIN + RULE,
+            *headline(style, style.strong(f"SEAT {aliases.full(seat)}")),
             "",
             field(style, "position", f"{label} (seq {position.seq})"),
             "",
@@ -771,7 +929,11 @@ def seat_screen(
             field(
                 style,
                 "state",
-                f"{state if state else 'no standing to read'}, as the fold reads it here",
+                style.paint(
+                    str(state) if state else "no standing to read",
+                    state_tint(str(state)) if state else NOT_EVALUABLE,
+                )
+                + ", as the fold reads it here",
                 indent=4,
             ),
             field(style, "may", str(credential.get("acts", "")), indent=4),
@@ -816,21 +978,24 @@ def registry_screen(
     no act behind it is a claim rather than a record.
     """
     lines = [
-        MARGIN + style.strong(f"REGISTRY {abbrev(registry, 16)}"),
-        MARGIN + RULE,
+        *headline(style, style.strong(f"REGISTRY {abbrev(registry, 16)}")),
         "",
         field(style, "position", f"{label} (seq {position.seq})"),
         field(style, "controller", aliases.full(controller)),
         "",
-        _row("credential", "at seq", "state here", "moved by"),
+        MARGIN
+        + style.label(f"{'credential':<{SLOT}}{'at seq':>6}   {'state here':<14}moved by"),
     ]
     for held in holdings:
+        state = str(held["state"])
         lines.append(
             _row(
                 abbrev(str(held["said"]), 12),
                 f"{held['issued']}",
-                str(held["state"]),
+                state,
                 "" if not held.get("moved") else abbrev(str(held["moved"]), 12),
+                style=style,
+                tint=state_tint(state),
             )
         )
     lines.extend(
@@ -882,8 +1047,7 @@ def disturbance_screen(
     is a display name and the identifier is what was committed.
     """
     lines = [
-        MARGIN + style.strong(f"DISTURBANCE {abbrev(amendment)}"),
-        MARGIN + RULE,
+        *headline(style, style.strong(f"DISTURBANCE {abbrev(amendment)}")),
         "",
         field(style, "position", f"{label} (seq {position.seq})"),
         field(style, "declared", f"{len(claimed)} of the {len(computed)} it disturbs"),
@@ -894,9 +1058,18 @@ def disturbance_screen(
     for said in sorted(set(claimed) | set(computed)):
         declared_mark = "yes" if said in claimed else "-"
         computed_mark = "yes" if said in computed else "-"
+        # A row the amendment declared and the fold agrees with is ordinary; a row the
+        # fold computed and the amendment did not declare is the falsehood this screen
+        # exists to show, so that pair takes CONVICTED — the same color as the
+        # SELF-CONVICTED banner the previous beat ended on. Two beats, one claim, one
+        # color. The identifier column is last and stays unpainted (this.i @pumwsfto),
+        # which is also what keeps the two padded marks safe to paint.
+        tint = CONVICTED if declared_mark != computed_mark else None
+        marks = f"{declared_mark:<10}{computed_mark:<10}"
         lines.append(
             f"{MARGIN}{abbrev(names.get(said, said), QUESTION - 3):<{QUESTION}}"
-            f"{declared_mark:<10}{computed_mark:<10}{abbrev(said)}"
+            + (marks if tint is None else style.paint(marks, tint))
+            + abbrev(said)
         )
     lines.extend(
         [
@@ -925,6 +1098,19 @@ def verdict_word(outcome: Finding | Refusal) -> str:
     if isinstance(outcome, Refusal):
         return "REFUSED"
     return outcome.verdict.value.upper()
+
+
+def verdict_tint(outcome: Finding | Refusal) -> str:
+    """What to paint an outcome in, refusal included and kept distinct.
+
+    The companion to :func:`verdict_word`, and it keeps a refusal out of
+    ``VERDICT_COLOR`` for the reason that mapping has no entry for one: a refusal is not
+    a member of the codomain, and a table that gave it one would be the first step
+    towards a fifth verdict (this.i @clrfsl).
+    """
+    if isinstance(outcome, Refusal):
+        return REFUSAL_COLOR
+    return VERDICT_COLOR[outcome.verdict]
 
 
 def enact_screen(
@@ -956,10 +1142,16 @@ def enact_screen(
     subject = abbrev(str(block.get(SUBJECT_FIELD)))
     verb = "endorses" if disposition == ENDORSE else "declines"
     lines = [
-        MARGIN
-        + style.banner(f"{'ENACTED':<10}", GREEN)
-        + f"  {aliases.full(issuer)} {verb} {subject}",
-        MARGIN + RULE,
+        # ENACTED is a commit receipt rather than a verdict — the record took the act,
+        # which says nothing yet about whether the act is lawful. It is REACHED because
+        # the evidence arrived, and the block at the foot of this screen is where the
+        # judgment is, in the two verdict words this now paints.
+        *headline(
+            style,
+            style.banner(f"{'ENACTED':<10}", REACHED)
+            + f"  {aliases.full(issuer)} {verb} {subject}",
+            REACHED,
+        ),
         "",
         MARGIN + style.strong("committed event"),
         field(style, "coordinate", f"seq {event.position.seq}", indent=4),
@@ -1016,8 +1208,21 @@ def enact_screen(
         ),
         "",
         MARGIN + style.strong("what the record says about the subject"),
-        field(style, "before", verdict_word(before.outcome), indent=4),
-        field(style, "after", verdict_word(after.outcome), indent=4),
+        # The same words that head an eval screen, so they take the same colors. This is
+        # the pair the block exists for, and "pending -> affirmed" should read in one
+        # glance rather than being spelled out twice in prose.
+        field(
+            style,
+            "before",
+            style.paint(verdict_word(before.outcome), verdict_tint(before.outcome)),
+            indent=4,
+        ),
+        field(
+            style,
+            "after",
+            style.paint(verdict_word(after.outcome), verdict_tint(after.outcome)),
+            indent=4,
+        ),
         "",
     ]
     return _screen(lines) + eval_screen(after, aliases, style)

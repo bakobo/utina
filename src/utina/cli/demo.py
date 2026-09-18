@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 
 from utina.acme import LABEL_UNKNOWN
 from utina.cli.render import MARGIN, RULE, WRAP
+from utina.cli.style import SCAFFOLD, Style
 from utina.substrate import FACADE
 
 if TYPE_CHECKING:  # pragma: no cover - the import exists only for the annotation
@@ -158,7 +159,7 @@ def walk(
     status = 0
     for index, one in enumerate(sequence):
         argv = one.argv + _backend_argv(substrate, store)
-        for line in _announce(one, argv):
+        for line in _announce(one, argv, console.style):
             console.out.write(line + "\n")
         status = max(status, run(argv, console))
         if pause and index < len(sequence) - 1:
@@ -172,16 +173,23 @@ def _backend_argv(substrate: str, store: Path | None) -> tuple[str, ...]:
     return argv if store is None else (*argv, "--store", str(store))
 
 
-def _announce(beat: Beat, argv: tuple[str, ...]) -> list[str]:
-    """The card that introduces a beat, and the command as though it were typed."""
+def _announce(beat: Beat, argv: tuple[str, ...], style: Style) -> list[str]:
+    """The card that introduces a beat, and the command as though it were typed.
+
+    The card is chrome and the beat is content, so the rule is scaffolding, the ``BEAT``
+    tag is bold, the narration is prose, and the echoed command is bold behind a
+    scaffolding prompt — a room scanning for "where does the next command start" finds
+    the one bright line on the card. Nothing here carries a governance meaning, so
+    nothing here takes a semantic color.
+    """
     return [
         "",
-        MARGIN + RULE,
-        f"{MARGIN}BEAT {beat.id.upper():<6}{beat.title}",
+        MARGIN + style.paint(RULE, SCAFFOLD),
+        f"{MARGIN}{style.strong(f'BEAT {beat.id.upper():<6}')}{beat.title}",
         *textwrap.wrap(
             beat.narration, width=WRAP, initial_indent=MARGIN, subsequent_indent=MARGIN
         ),
         "",
-        f"{MARGIN}$ utina {' '.join(argv)}",
+        f"{MARGIN}{style.paint('$', SCAFFOLD)} {style.strong('utina ' + ' '.join(argv))}",
         "",
     ]
