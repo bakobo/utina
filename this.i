@@ -871,6 +871,39 @@ Make Custos's replayable governance useful to a real organization = goal:
         light terminal amber 220 is 1.4:1 and the sums row is unreadable. The previous SGR scheme
         assumed dark too; this only makes the assumption legible enough to be argued with.
 
+    Demo 2's transcripts and cue card are tracked, generated, and pinned = decision:
+      id: gizauc3r
+      why: >
+        The three transcripts and the lectern cue card were first written to `.ignored/`, on the
+        reasoning that a demo artifact is a working file with the lifespan of one demo. Daniel
+        rejected that and he is right: the repo already had this arrangement for one screen —
+        `docs/render-candidates.md` holds rendered output, `tests/test_cli.py` pins it, and
+        @4tcsbw72 names re-rendering it as a consequence of moving the record — so a transcript in
+        `docs/` is an established, tested pattern here rather than an invention. Chose to extend it
+        from one screen to the whole of demo 2: `tools/render-demo-2.py` renders the three parts
+        through `utina.cli.run`, so a tracked transcript cannot be a screen the command could not
+        produce, and builds the cue card from the driver's own OPENER, KERNELS, LEAVE_BEHIND and
+        CUT_ORDER, so the card cannot name a beat the driver does not have. A test re-renders all
+        four and asserts the files match, with `--check` for a maintainer and for CI.
+        What tracking buys, and it is the argument rather than tidiness: a transcript in the tree
+        turns "did that render change?" from a question somebody has to think to ask into a diff in
+        a pull request. This session paid the price of not having it — proving the colour work left
+        plain output unchanged took building a throwaway worktree at the previous commit, which a
+        tracked transcript would have made a one-command check, permanently.
+        Two costs accepted rather than hidden. The opener runs under keripy, so its prefixes are
+        pinned to a keripy version and repinning keripy (tick 4z5c) will move every one of them;
+        the test says so in its failure message, because a pinned artifact whose churn is
+        unexplained is worse than none. And every render change now shows as a diff in four files,
+        which is the informative churn being paid for rather than a side effect.
+        The width on the card is measured from the transcripts rather than chosen, and that caught
+        two things on the test's first run. The card claimed 88 — `render.WRAP` — while beat 14's
+        echoed command was 89, because a command line cannot be wrapped and the prose width
+        therefore does not bound the screen. And the error renderer wrapped nothing at all, so the
+        same beat's refusal detail was a single 529-column line: `render_error` now wraps to the
+        margin every other paragraph uses. Left alone deliberately: the SELF-CONVICTED banner
+        overflows its ten-column field and pushes that one headline to 92, and widening the field
+        would move the headline on every eval screen to fix one.
+
     An identifier is never painted = constraint:
       id: pumwsfto
       why: >
