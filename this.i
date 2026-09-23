@@ -1026,6 +1026,12 @@ Make Custos's replayable governance useful to a real organization = goal:
 
         Acme's demo identifiers carry COIA flag 9 = decision:
           id: clflg9
+          amended_by: 67t6q43c
+          note: >
+            The reasoning holds and the digit does not. This node was written against COIA 1.x,
+            where flag 9 meant a test environment; the cutover to 2.0 (@67t6q43c) makes 9 mean
+            COMPROMISED and moves test to 6. Everything below about WHY Acme carries a test flag,
+            and why neither 0 nor the unflagged form would do, survives unchanged.
           why: >
             COIA's flag 9 means the aliased identifier belongs to an experimental, test or demo
             environment with no real-world consequences to reputation, governance or cost, and must not
@@ -1579,6 +1585,41 @@ Make Custos's replayable governance useful to a real organization = goal:
         subject act convicts the act, and Acme tables every ordinary act itself. Verified before
         the cut, not after. The disturbance screen survives with its declared column removed,
         which turns it from an accusation into a report of what an amendment ended.
+
+    COIA is vendored from upstream at 2.0, not reimplemented = decision:
+      id: 67t6q43c
+      why: >
+        utina carried its own 493-line COIA 1.x implementation with a 463-line hand-written test
+        of it. Daniel ruled the cutover on 2026-09-23. Chose to VENDOR the upstream reference
+        implementation byte for byte — coia.py and its tables.json from the spec repo, plus that
+        repo's normative vector file — rather than port our own forward. The vectors are the
+        argument: their own header says they were authored from the specification's prose and not
+        from any implementation's output, six implementations in six languages are held to them,
+        and a local variant would be the seventh that nobody checks. A test asserts byte-identity
+        with the upstream checkout and skips where that checkout is absent, so a contributor
+        without it still runs the 139 vectors that travel with this repo.
+        THE BUG THIS FOUND, and no test of ours could have: every alias on every screen carried
+        flag 9. Under 1.x that meant a test environment. Under 2.0 it means "compromised —
+        positive evidence that the wrong party controls it", so the demo was announcing that
+        every party in it had been captured. Our tests agreed with our implementation and both
+        were wrong together. CHANGES.md names this as the one flag that inverts across the
+        boundary rather than merely being lost. The test flag in 2.0 is 6.
+        Three consequences taken with it, because the aliases had to be reminted anyway.
+        The SEAT is Nina's — the alias moves from acme-as-board-seat-3 to nina-board-seat-3-acme
+        — on the reading that "the organ's AID" at custos-4.2.md:2145 means an AID its holder owns
+        in that capacity, which is Provenant's own role-dedicated-AID model. No spec amendment is
+        needed and the record finally names an accountable human: duplicity at that AID is Nina's
+        rather than an abstraction's. QUINN becomes Acme's CFO, because beat 14 refuses him and a
+        refusal only teaches where the refused party had a plausible claim — a stranger turned
+        away surprises nobody, a CFO who cannot approve the budget makes a room ask why, and the
+        answer is that he prepares it and the board approves it. And Nina's separate personal AID
+        is DELETED: it committed nothing, it existed only because the seat used to be Acme's, and
+        the facets of her life this record has no business with are not this record's to model.
+        Costs accepted. The vendored module is exempt from mypy's strict mode and from two ruff
+        rules, because correcting somebody else's reference implementation is the failure being
+        avoided; the typed boundary is crossed at one wrapper. It is omitted from the coverage
+        gate for the same reason — its oracle is the vector file, not this repo's branch counter.
+        The slot column widens from 18 to 20, since nina-board-seat-3,6 is nineteen.
 
     Authority comes from a revocable credential, never from the delegation relationship = decision:
       id: cglayqvw
