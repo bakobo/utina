@@ -1506,6 +1506,13 @@ Make Custos's replayable governance useful to a real organization = goal:
 
     An amendment that declares nothing has declared the empty set = decision:
       id: bvzzaquc
+      superseded_by: ow6dzro4
+      note: >
+        Withdrawn entire on 2026-09-23. The declaration duty this node works out the details of
+        is removed by @ow6dzro4, so the two choices below — silence as an empty claim, and
+        conviction at the carrying coordinate — decide the shape of a mechanism that no longer
+        exists. Kept because it records what was built and why, and because the second choice's
+        reasoning about effectuation survives in @xhtvuxnc, which the removal does not touch.
       why: >
         Issue 82's determination 5 makes an amending enactment declare the pending questions
         its change disturbs, has the fold compute the true set from the same committed bytes,
@@ -1535,6 +1542,43 @@ Make Custos's replayable governance useful to a real organization = goal:
         declaration's ORDER would make one falsehood two different proofs. The pair field is
         left empty: the two contradicting commitments are in one event, so there are not two
         identifiers to name, and the ruled payload is the package alone anyway (1659-1660).
+
+    An amendment declares nothing, because the declaration changed no outcome = decision:
+      id: ow6dzro4
+      why: >
+        Daniel ruled this on 2026-09-23, and the ruling is one sentence: an obligation that
+        changes no outcome is not one governance should impose. The `disturbs` field, the
+        mismatch check, and the self-conviction it produced are all removed. What stays is the
+        substantive rule — a clause change ends the acts pending under that clause, and the fold
+        computes which — which never depended on the declaration and is keyed on the discharge
+        species instead (@f3pmxu3x).
+        Three things grounded the ruling, and the first is the one that decided it. The declared
+        set was read in exactly two places: the mismatch check, and the screen that drew it. It
+        gated nothing. The law changed identically whether the field was accurate, wrong or
+        absent, so the field existed for no purpose except to create something that could be
+        false. The argument for it — the computation is the check and the declaration is the
+        claim — is an argument for manufacturing a catchable lie, and that is not a governance
+        requirement.
+        SECOND, the analogy it rested on does not hold. KERI duplicity is one signer contradicting
+        themselves, both halves inside their own knowledge and control. Here the fold computes the
+        true set at EFFECTUATION (@xhtvuxnc) while the amender declares at commitment, and any
+        party may table an act in the window between. Demonstrated on a built record rather than
+        argued: two runs whose only difference is a bare act tabled by somebody else, nobody
+        endorsing it, with the amender's own committed events byte-identical across both —
+        affirmed in one, self-convicted in the other. An honest amender cannot always discharge
+        the duty, which is disqualifying for a duty whose breach was a conviction.
+        THIRD, none of it is ratified. "Disturb" appears nowhere in custos-4.2.md; the mechanism
+        comes from issue 82's determination 5 and from docs/custos-proposals.md R3, and the demo
+        presented it as conformance. Rejected keeping it behind narration that called it a
+        proposal, because the beat's whole force was that a stranger can compute the lie, and a
+        stranger computing it against an unratified rule proves nothing about Custos.
+        Consequences taken knowingly. Beat 22 was the only beat of the thirteen that produced a
+        self-convicted verdict, so the demo loses one of the four values unless it is shown
+        another way — and it can be, on the ratified route (:1527, :1659, and the affirmed to
+        self-convicted edge at :1672): a duplicity observed at the party who COMMITTED the
+        subject act convicts the act, and Acme tables every ordinary act itself. Verified before
+        the cut, not after. The disturbance screen survives with its declared column removed,
+        which turns it from an accusation into a report of what an amendment ended.
 
     Authority comes from a revocable credential, never from the delegation relationship = decision:
       id: cglayqvw
