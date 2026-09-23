@@ -79,10 +79,10 @@ identifiers
 parties
   Screens name a party by a COIA alias -- marta-founder,6 -- and never by a
   piece of its identifier, because a prefix is not a safe way to decide that two
-  identifiers are the same. The trailing ,6 is COIA's test flag: throwaway, demo,
-  no real-world consequence. Inside these
-  screens the scope is always Acme, so the columns drop it. To see the identifier
-  behind an alias, ask for it: utina whois marta-founder,6.
+  identifiers are the same. The trailing ,6 is COIA's test flag: throwaway,
+  demo, no real-world consequence. Inside these screens the scope is always
+  Acme, so the columns drop it. To see the identifier behind an alias, ask for
+  it: utina whois marta-founder.
 
 color
   On when the output is a terminal, and decided per stream, so a redirected stderr
