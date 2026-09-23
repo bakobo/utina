@@ -1549,6 +1549,47 @@ Make Custos's replayable governance useful to a real organization = goal:
         left empty: the two contradicting commitments are in one event, so there are not two
         identifiers to name, and the ruled payload is the package alone anyway (1659-1660).
 
+    A decision is consequential when it is certified, not when its votes are cast = decision:
+      id: 2e2dncfe
+      why: >
+        Daniel's, 2026-09-23, and the argument is an analogy that holds all the way down: an
+        election is not consequential when votes are cast, nor when a pollster guesses at them,
+        but when they are officially tabulated and certified. The fold was treating the existence
+        of endorsement ACDCs as the result. It was reading the polls.
+        WHAT THIS MILESTONE BUILDS is the fold's half only: where a law requires a certification
+        and none has been admitted for a subject whose threshold is met, the finding is pending
+        with a requirement element of kind `certification`, and the act is authorized when the
+        domain admits one. The element names the party that committed the subject, because
+        admitting a tally is the domain's act and nobody else's — a sponsor may assemble a
+        certification and cannot make it consequential.
+        A DOMAIN SAYS WHETHER IT WANTS ONE, by naming the schema its certifications must satisfy,
+        exactly as a slot names the endorsement schema its evidence must satisfy (1946-1951). A
+        law naming none requires none. Chose that over making certification unconditional, and
+        the reason is not migration convenience: whether decisions in a domain need certifying is
+        a governance question, and Custos already delegates this kind of committed form to the
+        domain — :1924 does it for expiry semantics. It also lets Acme keep working while the
+        rest of the mechanism lands, and lets a later beat show a domain that has adopted it
+        beside one that has not.
+        NOTHING IS COINED. The dossier specification already has this machinery: joint issuance
+        defines a finalization event, an `fi` field naming the AID whose KEL carries it, and a
+        finalizer who "observes the threshold to be met" and anchors the threshold-satisfying
+        proofs where a verifier can find them (dossier-spec-body.md:377-379). There it is
+        advisory — an aid to verifiers who would rather not walk the edge graph. The change is to
+        make it constitutive, which is a smaller and better-founded amendment than a new concept.
+        WHAT IS DEFERRED, and named so it is not mistaken for settled. Whether a certification's
+        edges actually support its claim, and what the domain must check before admitting one,
+        are M3 and M4. The certifier is not merely asserting — the dossier carries an edge per
+        counted disposition, so a verifier recomputes the threshold and a certification claiming
+        more than its edges support contradicts itself on bytes its own signer committed — but
+        none of that is enforced yet. Also open (Q-YHJA): whether the fold checks a certification
+        against its cited edges alone or against the whole GEL. Edges prove presence and never
+        absence, so a certifier citing around an admitted declination is invisible to the first
+        and caught by the second.
+        A COST TAKEN KNOWINGLY: the first certification of a subject wins, not the last. A
+        coordinate that moved when a later event arrived would make the moment of authorization a
+        function of when the question was asked, which is the property this whole change exists
+        to fix.
+
     An amendment declares nothing, because the declaration changed no outcome = decision:
       id: ow6dzro4
       why: >
