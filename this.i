@@ -1564,7 +1564,19 @@ Make Custos's replayable governance useful to a real organization = goal:
         certification and cannot make it consequential.
         A DOMAIN SAYS WHETHER IT WANTS ONE, by naming the schema its certifications must satisfy,
         exactly as a slot names the endorsement schema its evidence must satisfy (1946-1951). A
-        law naming none requires none. Chose that over making certification unconditional, and
+        law naming none requires none. THE CLAUSE DECIDES AND THE LAW IS THE DEFAULT — Daniel's
+        refinement the same day: how much ceremony a decision needs is a fact about the KIND of
+        decision, and minuting a board resolution and approving a routine purchase are not the
+        same act wearing different clothes. A clause may be silent and inherit, pin its own
+        schema, or commit `false` and say its acts stand on their arithmetic. What it says is in
+        its canonical bytes, for the reason the slot schema is: a head that could not tell an
+        exempt clause from a silent one would let an amendment exempt the acts it cared about
+        without moving the law head. The absent case emits nothing, so no existing head moves.
+        Two fail-closed readings fall out. An unreadable certification field INHERITS rather than
+        exempts, because a malformed field must not be a way out of a requirement. And loosening
+        is safe despite being the obvious abuse — a clause exempting the most consequential acts
+        cannot be smuggled in, since an enactment is judged under the law it replaces, so
+        committing that exemption is itself an act the predecessor governs and certifies. Chose that over making certification unconditional, and
         the reason is not migration convenience: whether decisions in a domain need certifying is
         a governance question, and Custos already delegates this kind of committed form to the
         domain — :1924 does it for expiry semantics. It also lets Acme keep working while the
