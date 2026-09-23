@@ -867,3 +867,130 @@ def test_a_qualification_missing_either_term_is_refused(term):
         Qualification(**terms)
 
     assert caught.value.code == "e.input.missing.qualification-term.f"
+
+
+# --- a slot that seats an OFFICE, and the record says who fills it -------------
+#
+# The law creates a seat; a credential fills it (this.i @ftjpdph5). So a slot may
+# commit no AID at all: appointing a director is an issuance, removing one is a
+# revocation, and neither is an amendment. These are the cases that distinguish a
+# vacancy from a fault, and both from an ambiguity the fold will not adjudicate.
+
+OFFICE = "board-seat-3-device"
+"""The office the shared ``grant`` builder above happens to seat, so these cases
+reuse it rather than introducing a second credential shape."""
+
+
+def seated_office() -> Group:
+    """The board, with seat 3 seating an office rather than naming a party."""
+    return Group(
+        "MxN",
+        (
+            Slot(MARTA, HALF, SCHEMA),
+            Slot(DEV, HALF, SCHEMA),
+            Slot("", HALF, SCHEMA, SEATED, office=OFFICE),
+        ),
+    )
+
+
+def test_an_office_slot_is_filled_by_whoever_holds_its_credential():
+    """The law never names Nina, and her endorsement fills the seat anyway."""
+    events = [seating(), signed("EAct1", NINA)]
+
+    assert slots.dispositions(seated_office(), events, SUBJECT)[NINA] is (
+        Disposition.ENDORSED
+    )
+
+
+def test_a_vacant_office_is_pending_under_its_own_name():
+    """Nobody holds it, which is ordinary rather than a fault.
+
+    The row is named for the office, because "board-seat-3-device, pending" tells a
+    reader what to go and do and an empty string does not.
+    """
+    held = slots.dispositions(seated_office(), [signed("EAct1", NINA)], SUBJECT)
+
+    assert held[OFFICE] is Disposition.PENDING
+    assert NINA not in held, "an endorsement from an unseated party fills nothing"
+
+
+def test_revoking_the_seating_empties_the_office_without_touching_the_law():
+    """The whole point of the separation: personnel is not constitutional law."""
+    before = [seating(), signed("EAct1", NINA)]
+    after = [*before, revoked("ERevoke", "ESeat-credential", registry="EAcmeRegistry")]
+
+    assert slots.dispositions(seated_office(), before, SUBJECT)[NINA] is (
+        Disposition.ENDORSED
+    )
+    assert slots.dispositions(seated_office(), after, SUBJECT)[OFFICE] is (
+        Disposition.PENDING
+    )
+
+
+def test_two_standing_seatings_of_one_office_are_reported_as_ambiguous():
+    """One office, one holder. Two is a defect the fold refuses over.
+
+    Not resolved here: nothing committed says which seating supersedes, so choosing
+    would be legislating. An office held by many BY DESIGN is the dossier's MxQ
+    operator and a different question (tick 5psg).
+    """
+    events = [seating(), grant("ESeat2", issuer=DOMAIN, issuee=DEV)]
+
+    assert slots.seating_is_ambiguous(seated_office(), events) == OFFICE
+
+
+def test_one_seating_is_not_ambiguous_and_neither_is_none():
+    assert slots.seating_is_ambiguous(seated_office(), [seating()]) is None
+    assert slots.seating_is_ambiguous(seated_office(), []) is None
+
+
+def test_a_revoked_seating_does_not_count_towards_ambiguity():
+    """Two credentials, one standing: that is a succession, not a contested seat."""
+    events = [
+        seating(),
+        revoked("ERevoke", "ESeat-credential", registry="EAcmeRegistry"),
+        grant("ESeat2", issuer=DOMAIN, issuee=DEV),
+    ]
+
+    assert slots.seating_is_ambiguous(seated_office(), events) is None
+
+    # And the office is Dev's now, which is what a succession looks like: the seat
+    # never moved in the law, only who is standing in it.
+    held = slots.dispositions(seated_office(), events, SUBJECT)
+    assert DEV in held and OFFICE not in held
+
+
+def test_a_slot_naming_a_party_is_unaffected_by_any_of_this():
+    """The founders are slotted as themselves and nothing about them moves."""
+    assert slots.seating_is_ambiguous(board(), [seating()]) is None
+
+
+def test_a_grant_whose_attributes_carry_no_facet_seats_nobody():
+    """The office lives in the facet, so a grant without one names no office.
+
+    Read fail-closed rather than treated as a wildcard: a credential that says
+    nothing about which seat it confers confers none.
+    """
+    plain = grant("EPlain", issuer=DOMAIN, issuee=NINA, registry="EAcmeRegistry")
+    del plain.body["acdc"]["a"]["facet"]
+
+    assert slots.holders_of(
+        [plain], schema=slots.GCD_SCHEMA, issuer=DOMAIN, office=OFFICE
+    ) == ()
+
+
+def test_a_grant_naming_the_same_holder_twice_counts_them_once():
+    """Two credentials, one person: the office has one holder, not two.
+
+    Otherwise reissuing a seating to the same director would read as a contested
+    seat and refuse the very clause it was meant to keep working.
+    """
+    events = [
+        seating(),
+        grant("ESeat2", issuer=DOMAIN, issuee=NINA, registry="EAcmeRegistry"),
+    ]
+
+    assert slots.holders_of(
+        events, schema=slots.GCD_SCHEMA, issuer=DOMAIN, office=OFFICE
+    ) == (NINA,)
+    assert slots.seating_is_ambiguous(seated_office(), events) is None

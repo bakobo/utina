@@ -211,6 +211,21 @@ class Slot:
     schema: SAID
     qualification: Qualification | None = None
 
+    office: str | None = None
+    """The office this slot seats, where it seats one rather than naming a party.
+
+    **The law creates a seat and a credential fills it** (this.i @ftjpdph5). A slot
+    naming an office commits no AID: who fills it is read off the record, as whoever
+    holds a standing credential of the slot's qualification seating them here. So
+    appointing a director is an issuance, removing one is a revocation, and neither
+    is an amendment — which is what keeps personnel out of constitutional law.
+
+    ``endorser`` is empty on such a slot and the office name stands in for it
+    wherever a party would be named: in the arithmetic table's row, and in a pending
+    finding's requirement. An office nobody holds is a real and ordinary state, and
+    naming it is more use to a reader than naming nobody.
+    """
+
     def __post_init__(self) -> None:
         if not isinstance(self.schema, str) or not self.schema:
             raise SLOT_SCHEMA_MISSING(endorser=self.endorser)

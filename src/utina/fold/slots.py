@@ -52,7 +52,7 @@ enforced here as attribution over evidence the substrate has already vouched for
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Protocol
 
 from utina.fold import acts
@@ -348,6 +348,14 @@ def _classify_slot(
     retracted: Mapping[SAID, set[AID]],
     subject: SAID,
 ) -> SlotDisposition:
+    # An office-slot names no party, so who fills it is read off the record here
+    # rather than off the law. An office nobody holds is pending under its own
+    # name: "board-seat-3, nobody" tells a reader more than an empty string would,
+    # and it is the honest answer — the seat exists and is vacant.
+    holder = _holder(slot, committed)
+    if holder is None:
+        return SlotDisposition(slot.office or slot.endorser, Disposition.PENDING)
+    slot = slot if not slot.office else replace(slot, endorser=holder)
     standing = [
         event
         for index, event in enumerate(committed)
@@ -360,6 +368,52 @@ def _classify_slot(
             if attributes(event).get(DISPOSITION_FIELD) == wanted:
                 return SlotDisposition(slot.endorser, disposition, event.said)
     return SlotDisposition(slot.endorser, Disposition.PENDING)
+
+
+def _holder(slot: Slot, asof: Sequence[CommittedEvent]) -> AID | None:
+    """Who fills this slot, or ``None`` where its office is vacant.
+
+    A slot that names a party is its own answer. A slot that seats an office is
+    answered by the record, and a vacant office is an ordinary state rather than a
+    fault — beat 17's whole content is a seat nobody holds after a revocation.
+
+    Ambiguity is not resolved here. Where two parties hold one office the fold
+    refuses, and that decision belongs to the evaluator rather than to the row: this
+    function reports the first, and :func:`seating_is_ambiguous` is what the caller
+    asks before trusting any of it.
+    """
+    if slot.office is None:
+        return slot.endorser
+    wanted = slot.qualification
+    if wanted is None:  # pragma: no cover - refused when the law is read
+        return None
+    seated = holders_of(
+        asof, schema=wanted.schema, issuer=wanted.issuer, office=slot.office
+    )
+    return seated[0] if seated else None
+
+
+def seating_is_ambiguous(group: Group, asof: Sequence[CommittedEvent]) -> str | None:
+    """The office two parties hold at once, if any, which the fold refuses over.
+
+    One office, one holder, and where the record says otherwise the honest answer is
+    that the question cannot be decided rather than that one of them wins. Picking
+    would be legislating: nothing in the law says which seating supersedes, and a
+    fold that chose would be inventing the rule it was supposed to apply.
+
+    This is the MxN case, where the operator commits "exactly N slots, one per
+    candidate endorser" and two holders of one slot break that structurally. An
+    open-ended body — many holders by design, a count that moves — is the dossier's
+    MxQ operator and is a different question this does not reach (tick 5psg).
+    """
+    for slot in group.slots:
+        wanted = slot.qualification
+        if slot.office is None or wanted is None:
+            continue
+        if len(holders_of(asof, schema=wanted.schema, issuer=wanted.issuer,
+                          office=slot.office)) > 1:
+            return slot.office
+    return None
 
 
 def _qualified(event: CommittedEvent, asof: tuple[CommittedEvent, ...]) -> bool:
@@ -484,6 +538,57 @@ def _acts_for(actor: AID, endorser: AID, asof: Sequence[CommittedEvent]) -> bool
     return actor == endorser or _standing_grant(
         asof, schema=GCD_SCHEMA, issuer=endorser, issuee=actor
     )
+
+
+FACET_FIELD = "facet"
+"""The attributes sub-block a GCD carries its role and exercise terms in."""
+
+ROLE_FIELD = "role"
+"""Where a seat credential names the office it seats its issuee in, inside the facet."""
+
+
+def _role_of(block: Mapping[str, object]) -> str | None:
+    """The office a grant's attributes seat their issuee in, if they name one."""
+    facet = block.get(FACET_FIELD)
+    if not isinstance(facet, Mapping):
+        return None
+    named = facet.get(ROLE_FIELD)
+    return named if isinstance(named, str) and named else None
+
+
+def holders_of(
+    asof: Sequence[CommittedEvent], *, schema: SAID, issuer: AID, office: str
+) -> tuple[AID, ...]:
+    """Every party holding a standing credential seating them in ``office``.
+
+    **The law creates a seat; a credential fills it** (this.i @ftjpdph5). So a slot
+    naming an office does not name an AID at all, and who fills it is read off the
+    record at the coordinate the question is asked from. Creating the seat is an
+    amendment, filling it is an issuance, and vacating it is a revocation — only the
+    first touches the law, which is what stops a change of director from being a
+    constitutional matter.
+
+    A tuple rather than one answer, because the count is the caller's to judge. None
+    is an office nobody holds, which is an ordinary state and not an error. More than
+    one is a defect the fold refuses rather than adjudicates, and it is the caller
+    that has the standing to say so.
+    """
+    seated = []
+    for event in asof:
+        acdc = credential(event)
+        block = attributes(event)
+        if (
+            event.kind == ISSUANCE_KIND
+            and acdc.get(SCHEMA_FIELD) == schema
+            and acdc.get(ISSUER_FIELD) == issuer
+            and _role_of(block) == office
+            and _permits_endorsing(block.get(CONSTRAINTS_FIELD))
+            and stood_at(asof, str(acdc.get("d")))
+        ):
+            issuee = block.get(ATTRIBUTE_ISSUEE_FIELD)
+            if isinstance(issuee, str) and issuee and issuee not in seated:
+                seated.append(issuee)
+    return tuple(seated)
 
 
 def _standing_grant(

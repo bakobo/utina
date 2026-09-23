@@ -42,7 +42,7 @@ from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal
 from utina.fold.semantics import DOSSIER, DOSSIER_KEY, SEMANTICS_FIELD
 from utina.fold.triple import Position
-from utina.substrate import ENDORSEMENT_SCHEMA
+from utina.substrate import ENDORSEMENT_SCHEMA, GCD_SCHEMA
 
 MARTA, DEV, NINA = "acme:marta", "acme:dev", "acme:nina"
 #: Every synthetic law here pins the semantics its clauses are expressed in,
@@ -118,6 +118,29 @@ class Log:
 
     def act(self, name: str, kind: str) -> str:
         return self._add(name, "act", {"t": "act", "i": GAID, "act": kind})
+
+    def seat(self, name: str, *, issuee: str, office: str) -> str:
+        """The domain's credential seating ``issuee`` in ``office``."""
+        return self._add(
+            name,
+            "issuance",
+            {
+                "t": "iss",
+                "i": GAID,
+                "ri": "ERegistry",
+                "acdc": {
+                    "d": f"{name}-credential",
+                    "i": GAID,
+                    "ri": "ERegistry",
+                    "s": GCD_SCHEMA,
+                    "a": {
+                        "i": issuee,
+                        "facet": {"role": office},
+                        "constraints": {"acts": ["create commitment"]},
+                    },
+                },
+            },
+        )
 
     def certify(self, name: str, subject: str) -> str:
         """The domain admitting a tally: the act becomes consequential here."""
@@ -1005,6 +1028,53 @@ def test_a_clause_that_says_nothing_commits_the_bytes_it_always_did():
     silent = Clause.from_committed(FOUNDERS_LAW[0])
 
     assert b"certification" not in silent.sub_block()
+
+
+# --- an office two people hold at once (this.i @ftjpdph5) -----------------------
+
+OFFICE = "board-seat-3"
+SEATED_SLOT: dict[str, object] = {
+    "office": OFFICE,
+    "weight": "1/2",
+    "schema": "Eendorsement-schema",
+    "qualification": {"schema": GCD_SCHEMA, "issuer": GAID},
+}
+
+
+def board_with_a_seat() -> list[dict[str, object]]:
+    """A clause whose third slot seats an office rather than naming a party."""
+    first = FOUNDERS_LAW[0]
+    group = dict(first["group"])  # type: ignore[arg-type]
+    group["slots"] = [*group["slots"], SEATED_SLOT]  # type: ignore[index,list-item]
+    return [{**first, "group": group}, *FOUNDERS_LAW[1:]]
+
+
+def test_an_office_two_parties_hold_at_once_is_refused():
+    """One office, one holder. Nothing says which seating supersedes, so choosing
+    between them would be legislating rather than folding."""
+    log = Log()
+    log.law("inception", "inception", board_with_a_seat())
+    log.seat("seat-nina", issuee="acme:nina", office=OFFICE)
+    log.seat("seat-rival", issuee="acme:rival", office=OFFICE)
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+
+    outcome = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(outcome, Refusal)
+    assert OFFICE in outcome.missing
+    assert "Revoke one" in outcome.detail
+
+
+def test_one_holder_of_that_office_evaluates_normally():
+    """The refusal is about the contested case and nothing else."""
+    log = Log()
+    log.law("inception", "inception", board_with_a_seat())
+    log.seat("seat-nina", issuee="acme:nina", office=OFFICE)
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Pending)
 
 
 # --- Q26: what a prospective question binds to ----------------------------------

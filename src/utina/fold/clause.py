@@ -142,12 +142,7 @@ class Clause:
         block = _as_mapping(body, "clause")
         composition = _as_mapping(block.get("group"), "group")
         slots = tuple(
-            Slot(
-                endorser=_as_str(slot.get("endorser"), "endorser"),
-                weight=_as_weight(slot.get("weight"), "weight"),
-                schema=_as_str(slot.get("schema"), "schema"),
-                qualification=_as_qualification(slot.get("qualification")),
-            )
+            _slot_from_committed(slot)
             for slot in (
                 _as_mapping(raw, "slot")
                 for raw in _as_sequence(composition.get("slots"), "slots")
@@ -222,6 +217,37 @@ class Clause:
         return hashlib.sha256(self.sub_block()).hexdigest()
 
 
+def _slot_from_committed(slot: Mapping[str, object]) -> Slot:
+    """One committed slot: a named party, or an office a credential fills.
+
+    Exactly one of the two, and the refusal where neither is present is the point
+    rather than defensiveness: a slot that named no party and seated no office would
+    be a share of authority nobody could ever exercise, and guessing which was meant
+    is precisely what the fold does not do.
+    """
+    office = slot.get("office")
+    named = slot.get("endorser")
+    if isinstance(office, str) and office:
+        if isinstance(named, str) and named:
+            raise MALFORMED_LAW(
+                field="slot",
+                expected="either an endorser or an office, never both — a slot that "
+                "named a party AND seated an office would say who fills a seat that "
+                "a credential is supposed to fill",
+            )
+        endorser = ""
+    else:
+        office = None
+        endorser = _as_str(named, "endorser")
+    return Slot(
+        endorser=endorser,
+        weight=_as_weight(slot.get("weight"), "weight"),
+        schema=_as_str(slot.get("schema"), "schema"),
+        qualification=_as_qualification(slot.get("qualification")),
+        office=office,
+    )
+
+
 def _as_certification(value: object) -> str | None:
     """The schema a clause pins for its certifications, or ``None`` to inherit.
 
@@ -249,12 +275,18 @@ def _slot_bytes(slot: Slot) -> bytes:
     "requires nothing" and "requires something" never digest alike.
     """
     qualification = slot.qualification
-    return _PART.join(
-        (
-            slot.endorser.encode("utf-8"),
-            f"{slot.weight.numerator}/{slot.weight.denominator}".encode(),
-            slot.schema.encode("utf-8"),
-            b"" if qualification is None else qualification.schema.encode("utf-8"),
-            b"" if qualification is None else qualification.issuer.encode("utf-8"),
-        )
-    )
+    parts = [
+        slot.endorser.encode("utf-8"),
+        f"{slot.weight.numerator}/{slot.weight.denominator}".encode(),
+        slot.schema.encode("utf-8"),
+        b"" if qualification is None else qualification.schema.encode("utf-8"),
+        b"" if qualification is None else qualification.issuer.encode("utf-8"),
+    ]
+    # The office, where the slot seats one, for the same reason as everything above:
+    # a slot that seated a different office would be a different slot, and a head
+    # that could not tell them apart would let an amendment move authority from one
+    # seat to another in silence. Appended only where there is one, so a slot naming
+    # a party commits the bytes it always did and no existing law head moves.
+    if slot.office is not None:
+        parts.extend((b"office", slot.office.encode("utf-8")))
+    return _PART.join(parts)

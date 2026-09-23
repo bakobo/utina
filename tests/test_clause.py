@@ -198,3 +198,53 @@ def test_a_malformed_clause_refuses_rather_than_guesses(overrides, named):
         Clause.from_committed(malformed(**overrides))
     assert raised.value.code == "e.input.malformed.law.f"
     assert named in str(raised.value)
+
+
+# --- a slot that seats an office rather than naming a party --------------------
+#
+# The law creates a seat; a credential fills it. So a slot may commit an office and
+# no AID at all, and appointing somebody to it is an issuance rather than an
+# amendment (this.i @ftjpdph5).
+
+QUALIFIED = {"schema": "E" + "q" * 43, "issuer": "acme:gaid"}
+
+
+def office_slot(**overrides):
+    """A slot seating board seat 3, which any holder of its credential fills."""
+    block = {
+        "office": "board-seat-3",
+        "weight": "1/2",
+        "schema": SCHEMA,
+        "qualification": QUALIFIED,
+    }
+    block.update(overrides)
+    return {**A1, "group": {"operator": "MxN", "slots": [block]}}
+
+
+def test_a_slot_may_seat_an_office_and_name_no_party():
+    clause = Clause.from_committed(office_slot())
+
+    slot = clause.group.slots[0]
+    assert slot.office == "board-seat-3"
+    assert slot.endorser == "", "the law names no AID; the record says who holds it"
+
+
+def test_a_slot_naming_both_a_party_and_an_office_is_refused():
+    """Guessing which was meant is exactly what the fold does not do."""
+    with pytest.raises(BakoboError) as raised:
+        Clause.from_committed(office_slot(endorser="acme:nina"))
+
+    assert "e.input.malformed.law" in str(raised.value.code)
+
+
+def test_the_office_is_in_the_clauses_committed_bytes():
+    """Otherwise an amendment could move authority between seats in silence."""
+    three = Clause.from_committed(office_slot())
+    four = Clause.from_committed(office_slot(office="board-seat-4"))
+
+    assert three.said() != four.said()
+
+
+def test_a_slot_naming_a_party_commits_the_bytes_it_always_did():
+    """The office parts are appended only where there is one, so no head moves."""
+    assert b"office" not in Clause.from_committed(A1).sub_block()

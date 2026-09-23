@@ -63,7 +63,13 @@ from utina.fold.finding import (
 from utina.fold.group import AID, Disposition
 from utina.fold.question import Committed, Proposal, Question
 from utina.fold.refusal import Refusal
-from utina.fold.slots import SlotDisposition, classify, declinations, endorsements
+from utina.fold.slots import (
+    SlotDisposition,
+    classify,
+    declinations,
+    endorsements,
+    seating_is_ambiguous,
+)
 from utina.fold.triple import SAID, AppraisalTriple, EvidenceBundle, Position
 
 __all__ = [
@@ -162,6 +168,9 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
         return _ungoverned(subject.act)
 
     evidence = EvidenceBundle(corpus.upto(at))
+    contested = seating_is_ambiguous(clause.group, evidence.events)
+    if contested is not None:
+        return _doubly_seated(contested)
     classified = classify(clause.group, evidence.events, subject.said)
     closed = _cure_path_closed(corpus, subject, clause, at)
 
@@ -298,6 +307,32 @@ def _ungoverned(act: str) -> Refusal:
             "legislating the missing rule, so this is not a pending finding: "
             "nothing anyone endorses would discharge it, because there is no rule "
             "for an endorsement to satisfy. Commit a clause that governs the class."
+        ),
+    )
+
+
+def _doubly_seated(office: str) -> Refusal:
+    """One office, two holders: the fold refuses rather than choosing between them.
+
+    A slot that seats an office is one candidate endorser, which is what ``MxN``
+    commits — "exactly N slots, one per candidate endorser". Two standing seatings
+    break that structurally, and nothing in the law says which supersedes, so a fold
+    that picked one would be inventing the rule it exists to apply. Refusing names
+    the defect where it can be fixed: in the registry, by revoking one.
+
+    An office held by many BY DESIGN, whose count moves as people come and go, is a
+    different operator rather than this defect — the dossier's ``MxQ``, an open-ended
+    set of qualified endorsers, which utina does not implement yet (tick 5psg).
+    """
+    return Refusal(
+        missing=f"exactly one standing seating of the office {office}",
+        detail=(
+            f"Two parties hold {office} at once, and this clause gives that office a "
+            "single share of authority. Nothing committed says which seating "
+            "supersedes the other, so choosing between them would be legislating "
+            "rather than folding. This is not a pending finding: no endorsement "
+            "discharges it, because the defect is in who holds the seat rather than "
+            f"in who has acted. Revoke one of the two seatings of {office}."
         ),
     )
 
