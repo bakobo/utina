@@ -131,11 +131,7 @@ class Constructor:
         return event
 
     def enact_amendment(
-        self,
-        law: Mapping[str, object],
-        *,
-        act: str | None = None,
-        disturbs: Sequence[SAID] = (),
+        self, law: Mapping[str, object], *, act: str | None = None
     ) -> Event:
         """Commit a successor law, anchored in an establishment event.
 
@@ -153,21 +149,17 @@ class Constructor:
         none commits none, and the fold then refuses to appraise the enactment,
         which is the honest answer rather than a guessed one.
 
-        ``disturbs`` is the amender's declaration of which pending questions this
-        change disturbs (issue #82, determination 5). It is always committed,
-        including when it is empty, because an omitted declaration is read as
-        claiming that nothing is disturbed — the fail-closed reading, and the
-        only one under which the mechanism works at all: if silence were no
-        claim, an amender could evade conviction by saying nothing, which is
-        precisely what the declaration exists to make impossible.
+        **An amendment declares nothing about what it ends** (this.i @ow6dzro4).
+        It used to commit a ``disturbs`` field naming the pending questions its
+        change would kill, and the fold convicted it where that list differed
+        from the one it computed. The field gated nothing — the law changed the
+        same way whether it was right, wrong or absent — so it existed only to
+        create something that could be false. The fold still computes what an
+        amendment ended, and the ``disturbance`` screen still prints it; nobody
+        is charged with getting it wrong.
         """
         self._require_founded()
-        body: dict[str, object] = {
-            "t": "enact",
-            "i": self.gaid,
-            "law": law,
-            "disturbs": tuple(disturbs),
-        }
+        body: dict[str, object] = {"t": "enact", "i": self.gaid, "law": law}
         if act is not None:
             body["act"] = act
         event = self._emit("enactment", body, self.gaid)

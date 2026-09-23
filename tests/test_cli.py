@@ -226,7 +226,12 @@ def test_a_committed_question_is_judged_under_the_law_it_replaces():
 
 
 def test_a_said_may_be_given_as_a_prefix_of_the_identifier():
-    out = screen("eval", "--said", "Ey2g0YlgPNWX", "--at", "d4")
+    # Taken from the record rather than written here: a literal prefix pins this
+    # test to one set of committed bytes, and it broke the first time an event
+    # body changed shape for reasons that had nothing to do with prefixes.
+    with world() as record:
+        prefix = record.said("seat-the-board")[:12]
+    out = screen("eval", "--said", prefix, "--at", "d4")
     assert "AFFIRMED" in out and "A2" in out
 
 
@@ -673,6 +678,28 @@ def test_a_self_convicted_finding_renders_the_contradicting_pair():
         Style(False),
     )
     assert any("Eone" in line and "Etwo" in line for line in lines)
+
+
+def test_the_brief_screen_grounds_a_self_convicted_finding_on_its_proof():
+    """The brief form of the ground, for the one verdict no beat now produces.
+
+    Beat 22 used to reach this branch and no longer does: the declaration whose
+    mismatch convicted it is gone (``this.i`` @ow6dzro4). The branch stays
+    reachable through the bearing route — a duplicity at the party who committed
+    the subject act — so it is tested directly rather than through a beat, which
+    is where it belonged anyway. A renderer arm that only a fixture exercises is
+    one a change to the fixture can silently delete.
+    """
+    from utina.cli.aliases import aliases_over
+    from utina.cli.render import _brief_ground
+    from utina.fold.finding import Proof, SelfConvicted
+
+    line = _brief_ground(
+        SelfConvicted(proof=Proof(package="Eproofpackage0123456789")), aliases_over({})
+    )
+
+    assert "self-convicted on its own bytes" in line
+    assert "Eproofpackage012" in line
 
 
 def test_a_defeat_with_no_declination_still_carries_its_ground():
@@ -1306,32 +1333,44 @@ def test_a_brief_screen_is_ascii_and_fits_the_projector():
 # --- utina disturbance (tick 27x5) --------------------------------------------
 
 
-def test_the_disturbance_screen_shows_both_sets_side_by_side():
-    """Beat 23. The gap is read off the rows rather than asserted underneath them."""
+def test_the_disturbance_screen_lists_the_acts_the_amendment_ended():
+    """Beat 23. One row per act that was in flight and can no longer finish."""
     out = screen("disturbance", "lower-the-bar", "--at", "b23")
 
-    assert "declared" in out and "computed" in out
-    assert "approve-q3-budget" in out, "the one the amendment named"
-    assert "approve-capital" in out, "and one it did not"
+    assert "approve-q3-budget" in out
+    assert "approve-capital" in out
+    assert "approve-budget-retabled" in out
     rows = [line for line in out.splitlines() if line.strip().startswith("approve-")]
     assert len(rows) == 3
 
 
-def test_the_disturbance_screen_counts_what_was_declared_against_what_was_true():
+def test_the_disturbance_screen_counts_what_the_amendment_ended():
     out = screen("disturbance", "lower-the-bar", "--at", "b23")
 
-    assert "1 of the 3 it disturbs" in out
+    assert "3 acts that were in flight" in out
+
+
+def test_the_disturbance_screen_makes_no_accusation():
+    """this.i @ow6dzro4: the amender declares nothing, so there is nothing to convict.
+
+    Pinned because the screen it replaces was built around a mismatch, and a
+    reader who remembers that one would expect a second column here.
+    """
+    out = screen("disturbance", "lower-the-bar", "--at", "b23")
+
+    assert "declared" not in out
+    assert "computed" not in out
 
 
 def test_the_disturbance_screen_computes_with_the_evaluators_own_function():
     """A screen that reimplemented the computation could disagree with the finding
     printed beside it, and the whole beat is that one record yields one answer."""
-    from utina.fold.evaluate import _disturbed_by
+    from utina.fold.evaluate import disturbed_by
 
     out = screen("disturbance", "lower-the-bar", "--at", "b23")
     with world() as record:
         amendment = record.corpus.event(record.said("lower-the-bar"))
-        computed = _disturbed_by(record.corpus, amendment, record.at("b23"))
+        computed = disturbed_by(record.corpus, amendment, record.at("b23"))
 
     for said in computed:
         assert said[:12] in out
@@ -1342,17 +1381,20 @@ def test_a_disturbance_of_an_uncommitted_token_shows_an_empty_record_not_an_erro
     is the one showing that the record has nothing to say."""
     out = screen("disturbance", "E" + "z" * 43, "--at", "b23")
 
-    assert "0 of the 0 it disturbs" in out
+    assert "0 acts that were in flight" in out
 
 
-def test_an_honest_amendment_shows_two_matching_columns():
-    """The first amendment declared the hire and disturbed exactly the hire. The
-    screen has to be able to show a true declaration, or a room learns nothing
-    from being shown a false one."""
+def test_an_amendment_that_ended_one_act_shows_that_one_act():
+    """The board-seating amendment ended exactly the hire, and nothing else.
+
+    The specificity half: the equity release was also in flight and survives it,
+    because clause A3 was carried across byte-identical.
+    """
     out = screen("disturbance", "seat-the-board", "--at", "board-seated")
 
-    assert "1 of the 1 it disturbs" in out
+    assert "1 act that was in flight" in out
     assert "hire-vp-sales" in out
+    assert "release-escrowed-equity" not in out
 
 
 # --- utina demo2 (tick 77uk) ---------------------------------------------------

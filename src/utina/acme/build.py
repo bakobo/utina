@@ -125,13 +125,14 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
 
     # D4 — the amendment that seats the board, judged under the law it replaces
     # and anchored in an establishment event (custos-4.2.md:2085-2087).
-    # The amendment declares what it disturbs, truthfully: the hire is the one
-    # act in flight whose clause it replaces, and the equity release is not,
-    # because A3 is carried across byte-identical. A declaration that omitted the
-    # hire would convict this amendment on its own bytes (this.i @<disturbance>).
+    # It ends one act in flight, the hire, whose clause it replaces. The equity
+    # release survives it, because A3 is carried across byte-identical — which is
+    # the specificity that keeps an amendment from being a way to kill anything
+    # inconvenient. The amendment says nothing about either; the fold computes it
+    # (this.i @ow6dzro4).
     seat = name(
         "seat-the-board",
-        constructor.enact_amendment(board_law(aids), act=AMEND, disturbs=[hire]),
+        constructor.enact_amendment(board_law(aids), act=AMEND),
     )
     constructor.endorse(marta, seat)
     seated = constructor.endorse(dev, seat)
@@ -250,13 +251,15 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     mark("reseated", reseating)
     reissued = str(reseating.body["acdc"]["d"])
 
-    # Beats 22 and 23 — the amendment that lies. It lowers the ordinary-acts bar,
-    # which closes the cure path of EVERY question in flight under B1, and it
-    # declares only the Q3 budget. The capital plan is disturbed too and is not
-    # named. Beat 22 is the amender's claim; beat 23 is the fold's answer, and
-    # both are asked at the coordinate the amendment carries (this.i @bvzzaquc).
+    # Beats 22 and 23 — the amendment that ends three live matters. Lowering the
+    # ordinary-acts bar closes the cure path of EVERY question in flight under
+    # B1: the retabled budget, the capital plan and the Q3 budget. Nobody voted
+    # any of them down and none of them can ever finish. The board passes it
+    # unanimously and it is perfectly lawful, which is the point — the cost is
+    # not that somebody cheated, it is that changing a rule has casualties a
+    # reader is owed sight of (this.i @ow6dzro4).
     lowered = name("lower-the-bar", constructor.enact_amendment(
-        lowered_law(aids), act=AMEND, disturbs=[q3]
+        lowered_law(aids), act=AMEND
     ))
     constructor.endorse(marta, lowered)
     constructor.endorse(dev, lowered)

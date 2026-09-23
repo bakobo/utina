@@ -17,15 +17,15 @@
 
   $ utina eval --said seat-the-board --at d4 --brief
 
-  AFFIRMED    was the committed act Ey2g0YlgPNWXnm7xXbHrtPtRe6PN-qy2mPsMFvehxLNQ lawful?
+  AFFIRMED    was the committed act E0ZJZEbvQWPGLsSDqf62V_2fxGzPtQ9X4tEd6aBONELk lawful?
   ------------------------------------------------------------------------------------
   d4 (seq 13), clause A2 (MxN), unity 1, law head f3bd6baa1af2...
 
-  9-marta-as-founder   1/2   endorsed      EZpAipEPRsXi...
-  9-dev-as-founder     1/2   endorsed      Eb8K1JtYH7ka...
+  9-marta-as-founder   1/2   endorsed      Ev3kRMyw-gz_...
+  9-dev-as-founder     1/2   endorsed      ED8_-jFInAYj...
   endorsed 1 of 1, unity reached; reachable 1, still reachable
 
-  ground      clause A2, reached by EZpAipEPRsXi..., Eb8K1JtYH7ka...
+  ground      clause A2, reached by ED8_-jFInAYj..., Ev3kRMyw-gz_...
 
 
 
@@ -301,56 +301,57 @@ ERROR  e.proof.edge-unvalidated.f
 
 
   ------------------------------------------------------------------------------------
-  KERNEL  The amendment that lies
-  expects: law is a document
-  happens: a document cannot be convicted of lying about itself; this one is, on its own
-    bytes
+  KERNEL  What a rule change costs
+  expects: changing a rule is free, or at worst controversial
+  happens: it ends live matters nobody voted down, and the record says which
 
 
 
   ------------------------------------------------------------------------------------
   BEAT 22    The second amendment: lower the ordinary-acts bar
-  The board passes it unanimously, all three slots, unity reached — and the fold has
-  already convicted it. The verdict says self-convicted and does not say why. The next
-  beat is why.
+  The board passes it unanimously, all three slots, unity reached. It is entirely lawful
+  and nobody cheated. Hold that, because the next beat is what it cost.
 
   $ utina eval --said lower-the-bar --at b22 --brief
 
-  SELF-CONVICTED  was the committed act E1SJbJcfICQgp3XyaCAgGEEX_QWuoTfA5ttxe1--4rks lawful?
+  PENDING     was the committed act EsAGjN9HgbtrbN1dr1G8JuRu0dUFwLsXfY2StMeVb4CA lawful?
   ------------------------------------------------------------------------------------
   b22 (seq 42), clause B2 (MxN), unity 1, law head 8191a249fc6b...
 
-  9-marta-as-founder   1/3   endorsed      EvPGyg5CIRrj...
-  9-dev-as-founder     1/3   endorsed      EpdfKevBb4Au...
-  9-acme-as-board-se...   1/3   endorsed      EBWx7WrWIp-5...
+  9-marta-as-founder   1/3   endorsed      Ea6noK5ACeV-...
+  9-dev-as-founder     1/3   endorsed      EiZpGHKcCrsE...
+  9-acme-as-board-se...   1/3   endorsed      EJRph_V1KF1B...
   endorsed 1 of 1, unity reached; reachable 1, still reachable
 
-  ground      self-convicted on its own bytes, proof 6653f1c18c19f812...
+  ground      9-acme-as-board-seat-3-at-acme - endorsement under clause B2,
+              unresolved-conflict
 
 
 
   ------------------------------------------------------------------------------------
-  BEAT 23    What it declared it disturbs, against what it did
-  The amendment declared one pending question and closed the cure path of three. Nobody
-  has to be trusted about that: the fold computes the true set from the same bytes the
-  amendment signed, and any stranger holding the log gets these two columns. A document
-  cannot lie about itself in a way a reader can compute. This one can be shown to have.
+  BEAT 23    The three decisions that can now never finish
+  Lowering the bar replaced the clause three acts were gathering endorsements under, so
+  the endorsements they were waiting for can no longer discharge them. Nobody voted them
+  down; they simply cannot complete. Any stranger holding the log computes this same
+  list from the same committed bytes — and an act whose own clause the amendment left
+  alone is untouched, which is what stops this being a way to kill anything
+  inconvenient.
 
   $ utina disturbance lower-the-bar --at b23
 
-  DISTURBANCE E1SJbJcfICQg...
+  DISTURBANCE EsAGjN9Hgbtr...
   ------------------------------------------------------------------------------------
 
   position    b23 (seq 42)
-  declared    1 of the 3 it disturbs
+  ended       3 acts that were in flight
 
-  question                  declared  computed  identifier
-  approve-budget-retabled   -         yes       E3CkC7KlYyV8...
-  approve-capital-plan      -         yes       E3VUf10ojy8G...
-  approve-q3-budget         yes       yes       EC9k5Z-Ag8Tz...
+  act                       identifier
+  approve-budget-retabled   E3CkC7KlYyV8...
+  approve-capital-plan      E3VUf10ojy8G...
+  approve-q3-budget         EC9k5Z-Ag8Tz...
 
-  A declaration is a claim, and a claim is what can be false. The fold computes the true
-  set from the same committed bytes the amendment signed, so a mismatch is not an
-  accusation anybody has to be trusted about: it is arithmetic, and the proof package
-  names both sets in canonical order so two readers holding one record compute one
-  identifier for one falsehood.
+  Each act above was still in flight when this amendment took force, and its cure path
+  is shut after it: the clause it was gathering endorsements under is gone, so the
+  endorsements it was waiting for can no longer discharge it. An act whose own clause
+  the amendment left alone is untouched, which is what keeps this from being a way to
+  kill an inconvenient matter by amending something irrelevant.

@@ -55,9 +55,8 @@ from utina.cli.render import (
 from utina.cli.style import SPENT, Style
 from utina.cli.world import RealValues, world
 from utina.enact import Constructor
-from utina.fold import disturbance
 from utina.fold.constitution import Constitution
-from utina.fold.evaluate import _disturbed_by as disturbed_by
+from utina.fold.evaluate import disturbed_by
 from utina.fold.question import Committed
 from utina.fold.triple import Position
 from utina.substrate import FACADE, NAMES
@@ -271,7 +270,7 @@ def build_parser(console: Console) -> _Parser:
 
     disturbance_parser = commands.add_parser(
         "disturbance", out=console.out, parents=[backend],
-        help="an amendment's declared disturbance set against the computed one",
+        help="which acts in flight an amendment ended",
     )
     disturbance_parser.add_argument("amendment", metavar="TOKEN")
     disturbance_parser.add_argument("--at", metavar="POSITION")
@@ -440,7 +439,7 @@ def registry_command(args: argparse.Namespace, console: Console) -> int:
 
 
 def disturbance_command(args: argparse.Namespace, console: Console) -> int:
-    """Beat 23: an amendment's declared disturbance set against the computed one.
+    """Beat 23: which acts that were in flight this amendment ended.
 
     The computed side is asked of the evaluator's own function rather than
     recomputed here, because a screen that reimplemented it could disagree with
@@ -456,7 +455,6 @@ def disturbance_command(args: argparse.Namespace, console: Console) -> int:
         label, position = _position(record, args.at)
         said = resolve_subject(record.saids, record.events, args.amendment)
         amendment = record.corpus.event(said)
-        claimed = () if amendment is None else disturbance.declared(amendment)
         computed = (
             () if amendment is None else disturbed_by(record.corpus, amendment, position)
         )
@@ -465,7 +463,6 @@ def disturbance_command(args: argparse.Namespace, console: Console) -> int:
                 said,
                 label,
                 position,
-                claimed,
                 computed,
                 {value: key for key, value in record.saids.items()},
                 console.style,

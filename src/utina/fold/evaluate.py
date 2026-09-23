@@ -43,7 +43,7 @@ from dataclasses import dataclass
 
 from utina.fold import bearing, disturbance, semantics
 from utina.fold.clause import Clause
-from utina.fold.constitution import ACT_CLASS_FIELD, ENACTMENT_KIND, Constitution
+from utina.fold.constitution import ACT_CLASS_FIELD, Constitution
 from utina.fold.corpus import Corpus, Event
 from utina.fold.finding import (
     Affirmed,
@@ -69,6 +69,7 @@ from utina.fold.triple import SAID, AppraisalTriple, EvidenceBundle, Position
 __all__ = [
     "UNREACHABLE_YIELDS",
     "appraisal_triple",
+    "disturbed_by",
     "evaluate",
 ]
 
@@ -163,10 +164,6 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
     evidence = EvidenceBundle(corpus.upto(at))
     classified = classify(clause.group, evidence.events, subject.said)
     closed = _cure_path_closed(corpus, subject, clause, at)
-
-    convicted = _convicted_by_its_own_declaration(corpus, subject, at)
-    if convicted is not None:
-        return convicted
 
     # The complete requirement space, built before any verdict is chosen. Both
     # halves are computed unconditionally: step 2 forbids returning while an
@@ -300,55 +297,27 @@ def _ungoverned(act: str) -> Refusal:
 # --- step 2: the requirement space ---------------------------------------------
 
 
-def _convicted_by_its_own_declaration(
-    corpus: Corpus, subject: _Subject, at: Position
-) -> SelfConvicted | None:
-    """A self-conviction where an enactment's declaration contradicts its effect.
-
-    Issue #82's fifth determination. An amending enactment declares which pending
-    questions its change disturbs; the fold computes the true set from the same
-    committed bytes; a mismatch means the amender "has testified falsely about
-    its own amendment, in committed bytes". The pinned reading of what that
-    returns is **self-convicted** rather than defeated (``docs/demo-2-script.md``
-    "Open readings", and the question owed to Custos at tick ``7xe6``): the
-    enactment commits two things that cannot both be true of one set of bytes,
-    which is ``:1499-1530``'s "two voices where its constitution demands one".
-
-    The conviction appears only once the amendment has taken force and something
-    has been disturbed, which is why beat 22 can be affirmed at its own
-    coordinate and beat 23 convicted afterwards. That is a permitted transition
-    and not a contradiction: affirmed to self-convicted, "a contradictory pair
-    bearing on the question enters the bundle" (``:1675``).
-
-    ``None`` for everything else — an act that is not an enactment, an enactment
-    that declares nothing and disturbs nothing, and an enactment whose
-    declaration is true. A declaration this fold cannot read is read as
-    declaring nothing, and then only an actual disturbance convicts it.
-    """
-    enactment = corpus.event(subject.said)
-    if enactment is None or enactment.kind != ENACTMENT_KIND:
-        return None
-    claimed = disturbance.declared(enactment)
-    true = _disturbed_by(corpus, enactment, at)
-    if claimed == true:
-        return None
-    return SelfConvicted(proof=Proof(package=disturbance.package(claimed, true)))
-
-
-def _disturbed_by(corpus: Corpus, enactment: Event, at: Position) -> tuple[SAID, ...]:
-    """The questions this enactment actually disturbed, at or before ``at``.
+def disturbed_by(corpus: Corpus, enactment: Event, at: Position) -> tuple[SAID, ...]:
+    """The questions this enactment actually ended, at or before ``at``.
 
     An act is disturbed when it was in flight before the enactment took force and
     its cure path is closed after — both halves, because an act that had settled
     is disturbed by nothing and an act whose own clause the amendment left alone
     is the specificity this requirement turns on.
 
+    **Reporting, not judgment.** This computes what an amendment did; nothing is
+    convicted of anything on the strength of it. The amender used to declare the
+    same set and be convicted where the two differed, and that duty is gone
+    (this.i @ow6dzro4) — an obligation that changed no outcome, whose only
+    function was to create something that could be false. What remains is worth
+    printing on its own: an amendment ends live matters, and a reader is owed
+    which.
+
     **In flight means the cure path was still OPEN**, and not merely that the act
     was pending. An act a previous amendment already closed is not in flight, and
     a fold that counted it would have every later amendment inherit every earlier
-    one's disturbances — so an amender could be convicted for failing to declare
-    a question somebody else's amendment had already killed, and the declared set
-    would grow without bound down the chain. Acme's own record shows it: the hire
+    one's — the set would grow without bound down the chain. Acme's own record
+    shows it: the hire
     has been expired/abandoned since the board-seating amendment, and the second
     amendment disturbs it not at all.
 

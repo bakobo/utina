@@ -46,10 +46,10 @@ from utina.cli.appraisal import held_by, registry_holdings
 from utina.cli.render import law_screen, registry_screen, seat_screen
 from utina.cli.style import Style
 from utina.enact import Constructor
-from utina.fold import Constitution, bearing, disturbance, evaluate, semantics, standing
+from utina.fold import Constitution, bearing, evaluate, semantics, standing
 from utina.fold import slots as slot_predicate
-from utina.fold.evaluate import _disturbed_by
-from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies, SelfConvicted
+from utina.fold.evaluate import disturbed_by
+from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies
 from utina.fold.group import Disposition
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal
@@ -229,8 +229,7 @@ def test_b06_a_dividend_is_refused_rather_than_answered(acme):
 
 def test_b07_seating_the_board_is_affirmed_under_the_law_it_replaces(acme):
     """Row 7: judged under A2, plus the delegating seal's coordinate in Acme's
-    KEL, the dip in seat 3's KEL, the seat credential's issuance event, and the
-    declared disturbance set.
+    KEL, the dip in seat 3's KEL, and the seat credential's issuance event.
 
     **The finding's ground is A2 and the two endorsements, and NOT the
     delegation coordinates**, which is a reading this row takes deliberately.
@@ -250,8 +249,10 @@ def test_b07_seating_the_board_is_affirmed_under_the_law_it_replaces(acme):
     assert finding.clauses == ("A2",), "judged under the law it replaces, not the one it makes"
     assert len(finding.endorsements) == 2, "Marta and Dev, and nothing else"
 
-    # The declared disturbance set: the hire, which this amendment does kill.
-    assert disturbance.declared(acme.corpus.event(amendment)) == (acme.said(HIRE),)
+    # What it ends: the hire, computed rather than declared (``this.i`` @ow6dzro4).
+    assert disturbed_by(acme.corpus, acme.corpus.event(amendment), acme.at(AT[7])) == (
+        acme.said(HIRE),
+    )
 
     # KERI's two halves, answerable at the substrate because key events are not
     # in the corpus the fold folds (``this.i`` @jdie6v).
@@ -708,20 +709,18 @@ def test_b21_a_second_question_is_pending_under_b1(acme):
     assert isinstance(q3, Pending), "and beat 17's is still pending beside it"
 
 
-def test_b22_the_second_amendment_declares_a_disturbance_set_that_under_declares(acme):
-    """Row 22: the enactment's declared set names only the Q3 budget, and not the
-    capital plan.
+def test_b22_the_second_amendment_reaches_unity_under_the_retained_bar(acme):
+    """Row 22: three slots endorsed, unity reached under B2's retained bar.
 
-    "Declared affirmed" in the script is the AMENDER's claim and not the fold's
-    answer (``this.i`` @bvzzaquc). What this row asserts is the claim: three
-    slots endorsed, unity reached under B2's retained bar, and a declaration
-    naming exactly one of the questions in flight. Row 23 is where the fold
-    speaks.
+    The amendment declares nothing about what it ends (``this.i`` @ow6dzro4), so
+    there is no claim here to set against the fold's answer — row 23 simply
+    reports what the amendment did. What this row asserts is that the board
+    genuinely passed it: the cost in row 23 is the cost of a lawful, unanimous
+    amendment, which is the whole reason it is worth showing.
     """
     amendment = acme.corpus.event(acme.said(SECOND_AMENDMENT))
-
     assert amendment.kind == "enactment"
-    assert disturbance.declared(amendment) == (acme.said(Q3_BUDGET),)
+    assert "disturbs" not in amendment.body, "an amendment declares nothing (@ow6dzro4)"
 
     slots = slot_predicate.dispositions(
         Constitution.at(acme.corpus, acme.at(AT[22])).clause("B2").group,
@@ -731,25 +730,20 @@ def test_b22_the_second_amendment_declares_a_disturbance_set_that_under_declares
     assert set(slots.values()) == {Disposition.ENDORSED}, "Marta, Dev and seat 3 all endorsed"
 
 
-def test_b23_the_under_declaring_amendment_is_convicted_on_its_own_bytes(acme):
-    """Row 23: declared set against computed set, side by side; the computed set
-    contains both B1 questions, and the mismatch is the proof.
+def test_b23_the_amendment_ends_three_acts_that_were_in_flight(acme):
+    """Row 23: what the amendment actually ended, computed from committed bytes.
 
-    It contains a third as well — demo 1's own retabled budget, pending under B1
-    since D6 — which makes the lie larger than the script anticipated rather
-    than different in kind. What the amendment does NOT disturb is the hire,
-    which the first amendment already closed: an act whose cure path was shut
-    before this enactment was not in flight, so it is not this amendment's to
-    declare.
+    Three acts, all pending under B1 when the bar moved: the Q3 budget, the
+    capital plan, and demo 1's own retabled budget, which has been pending since
+    D6. None of them was voted down and none of them can now finish.
+
+    What the amendment does NOT end is the hire, which the first amendment
+    already closed. An act whose cure path was shut before this enactment was not
+    in flight, so it is not this amendment's casualty — the specificity that
+    keeps every later amendment from inheriting every earlier one's.
     """
-    finding = evaluate(
-        acme.corpus, Committed(acme.said(SECOND_AMENDMENT)), at=acme.at(AT[23])
-    )
-    assert isinstance(finding, SelfConvicted)
-
     amendment = acme.corpus.event(acme.said(SECOND_AMENDMENT))
-    claimed = disturbance.declared(amendment)
-    computed = _disturbed_by(acme.corpus, amendment, acme.at(AT[23]))
+    computed = disturbed_by(acme.corpus, amendment, acme.at(AT[23]))
 
     assert set(computed) == {
         acme.said(Q3_BUDGET),
@@ -757,8 +751,6 @@ def test_b23_the_under_declaring_amendment_is_convicted_on_its_own_bytes(acme):
         acme.said("approve-budget-retabled"),
     }
     assert acme.said(HIRE) not in computed, "already closed by the first amendment"
-    assert set(claimed) < set(computed), "the amender named a proper subset of the truth"
-    assert finding.proof.package == disturbance.package(claimed, computed)
 
 
 # --- Coda ---------------------------------------------------------------------

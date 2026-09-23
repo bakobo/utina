@@ -37,7 +37,6 @@ from utina.cli.aliases import Aliases
 from utina.cli.appraisal import Appraisal
 from utina.cli.style import (
     AWAITING,
-    CONVICTED,
     DISPOSITION_COLOR,
     NOT_EVALUABLE,
     REACHED,
@@ -103,9 +102,9 @@ FIELD = 12
 #: short form is the one the columns use (this.i @clscop).
 SLOT = 18
 
-#: The question column on the disturbance screen, wide enough for the record's
-#: own names in full. A truncated name is unreadable from the back of a room, and
-#: this screen has four columns rather than the slot table's five, so the width
+#: The act column on the disturbance screen, wide enough for the record's own
+#: names in full. A truncated name is unreadable from the back of a room, and
+#: that screen has two columns rather than the slot table's five, so the width
 #: is there to spend.
 QUESTION = 26
 
@@ -1024,24 +1023,28 @@ def disturbance_screen(
     amendment: SAID,
     label: str,
     position: Position,
-    claimed: Sequence[SAID],
     computed: Sequence[SAID],
     names: Mapping[SAID, str],
     style: Style,
 ) -> str:
-    """What an amendment declared it disturbs, what it actually did, side by side.
+    """Which acts that were in flight this amendment ended.
 
     **Draft register — Daniel's to overwrite.**
 
-    The two columns are the beat. A document cannot lie about itself in a way a
-    stranger can compute, and this is the screen where it does: the amender said
-    one set, the fold computed another from the same bytes the amender signed,
-    and anybody holding the log gets the same two columns with no judge, no vote
-    and no appeal to anything outside the record.
+    This screen used to carry two columns, declared against computed, and the
+    beat was that a document had been caught lying about itself. The declaration
+    is gone (this.i @ow6dzro4): it gated nothing, so it existed only to create
+    something that could be false, and an obligation that changes no outcome is
+    not one governance should impose.
 
-    Rows are the union of both sets in canonical order, with a mark in each
-    column, so the gap is read off the rows rather than asserted underneath them.
-    Naming them by the record's own labels where it has one, because
+    What is left is the half that was always doing the work. Changing a rule can
+    end matters that are still in flight — nobody votes them down, they simply
+    can never be completed — and a reader is owed which ones. Any stranger
+    holding the log computes this same list from the same committed bytes, with
+    no judge and no appeal to anything outside the record. That claim survives
+    the removal intact, because it was never the declaration that made it true.
+
+    Named by the record's own labels where it has one, because
     ``approve-capital-plan`` is the thing a room can hold and a 44-character
     identifier is not — the identifier is there too, abbreviated, since the label
     is a display name and the identifier is what was committed.
@@ -1050,37 +1053,32 @@ def disturbance_screen(
         *headline(style, style.strong(f"DISTURBANCE {abbrev(amendment)}")),
         "",
         field(style, "position", f"{label} (seq {position.seq})"),
-        field(style, "declared", f"{len(claimed)} of the {len(computed)} it disturbs"),
+        field(
+            style,
+            "ended",
+            f"{len(computed)} act{'' if len(computed) == 1 else 's'} that "
+            + ("was" if len(computed) == 1 else "were")
+            + " in flight",
+        ),
         "",
-        MARGIN
-        + style.label(f"{'question':<{QUESTION}}{'declared':<10}{'computed':<10}identifier"),
+        MARGIN + style.label(f"{'act':<{QUESTION}}identifier"),
     ]
-    for said in sorted(set(claimed) | set(computed)):
-        declared_mark = "yes" if said in claimed else "-"
-        computed_mark = "yes" if said in computed else "-"
-        # A row the amendment declared and the fold agrees with is ordinary; a row the
-        # fold computed and the amendment did not declare is the falsehood this screen
-        # exists to show, so that pair takes CONVICTED — the same color as the
-        # SELF-CONVICTED banner the previous beat ended on. Two beats, one claim, one
-        # color. The identifier column is last and stays unpainted (this.i @pumwsfto),
-        # which is also what keeps the two padded marks safe to paint.
-        tint = CONVICTED if declared_mark != computed_mark else None
-        marks = f"{declared_mark:<10}{computed_mark:<10}"
+    for said in sorted(computed):
         lines.append(
-            f"{MARGIN}{abbrev(names.get(said, said), QUESTION - 3):<{QUESTION}}"
-            + (marks if tint is None else style.paint(marks, tint))
+            f"{MARGIN}"
+            + style.paint(f"{abbrev(names.get(said, said), QUESTION - 3):<{QUESTION}}", SPENT)
             + abbrev(said)
         )
     lines.extend(
         [
             "",
             *textwrap.wrap(
-                "A declaration is a claim, and a claim is what can be false. The fold "
-                "computes the true set from the same committed bytes the amendment "
-                "signed, so a mismatch is not an accusation anybody has to be trusted "
-                "about: it is arithmetic, and the proof package names both sets in "
-                "canonical order so two readers holding one record compute one "
-                "identifier for one falsehood.",
+                "Each act above was still in flight when this amendment took force, and its "
+                "cure path is shut after it: the clause it was gathering endorsements under "
+                "is gone, so the endorsements it was waiting for can no longer discharge it. "
+                "An act whose own clause the amendment left alone is untouched, which is what "
+                "keeps this from being a way to kill an inconvenient matter by amending "
+                "something irrelevant.",
                 width=WRAP,
                 initial_indent=MARGIN,
                 subsequent_indent=MARGIN,

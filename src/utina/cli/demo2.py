@@ -276,27 +276,28 @@ KERNELS = (
         ),
     ),
     Kernel(
-        "The amendment that lies",
-        "law is a document",
-        "a document cannot be convicted of lying about itself; this one is, on its "
-        "own bytes",
+        "What a rule change costs",
+        "changing a rule is free, or at worst controversial",
+        "it ends live matters nobody voted down, and the record says which",
         (
             Beat(
                 "22",
                 "The second amendment: lower the ordinary-acts bar",
-                "The board passes it unanimously, all three slots, unity reached — and "
-                "the fold has already convicted it. The verdict says self-convicted "
-                "and does not say why. The next beat is why.",
+                "The board passes it unanimously, all three slots, unity reached. It is "
+                "entirely lawful and nobody cheated. Hold that, because the next beat is "
+                "what it cost.",
                 ("eval", "--said", "lower-the-bar", "--at", "b22", "--brief"),
             ),
             Beat(
                 "23",
-                "What it declared it disturbs, against what it did",
-                "The amendment declared one pending question and closed the cure path "
-                "of three. Nobody has to be trusted about that: the fold computes the "
-                "true set from the same bytes the amendment signed, and any stranger "
-                "holding the log gets these two columns. A document cannot lie about "
-                "itself in a way a reader can compute. This one can be shown to have.",
+                "The three decisions that can now never finish",
+                "Lowering the bar replaced the clause three acts were gathering "
+                "endorsements under, so the endorsements they were waiting for can no "
+                "longer discharge them. Nobody voted them down; they simply cannot "
+                "complete. Any stranger holding the log computes this same list from "
+                "the same committed bytes — and an act whose own clause the amendment "
+                "left alone is untouched, which is what stops this being a way to kill "
+                "anything inconvenient.",
                 ("disturbance", "lower-the-bar", "--at", "b23"),
             ),
         ),
