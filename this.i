@@ -1549,6 +1549,42 @@ Make Custos's replayable governance useful to a real organization = goal:
         left empty: the two contradicting commitments are in one event, so there are not two
         identifiers to name, and the ruled payload is the package alone anyway (1659-1660).
 
+    The law creates a seat; a credential fills it = decision:
+      id: ftjpdph5
+      why: >
+        Daniel, 2026-09-23: "We have to change the law to create a board seat. We don't change
+        the law to fill the seat." A slot may therefore commit an OFFICE and no AID at all, and
+        the fold resolves who fills it by asking the record for a standing credential of the
+        slot's qualification seating somebody there. Creating the seat is an amendment, filling
+        it is an issuance, vacating it is a revocation, and only the first touches the law —
+        which is what stops a change of director from being a constitutional matter.
+        This is smaller than it sounds because `Qualification` was already most of the way
+        there: its own docstring said a slot carrying one "names an office, whose holder acts
+        because a credential says so". What it did NOT do was let the law stop naming the
+        office's AID, so personnel and law were still welded together. The office label itself
+        already existed too, as `SEAT_OFFICE` in Acme's law, described there as "a label for a
+        reader; nothing computes over it". Now it does.
+        THE OFFICE IS IN THE CLAUSE'S CANONICAL BYTES, for the reason the slot schema is: a slot
+        that seated a different office is a different slot, and a head that could not tell them
+        apart would let an amendment move authority from one seat to another in silence. The
+        parts are appended only where a slot seats one, so every existing law head is unchanged.
+        A SLOT NAMING BOTH A PARTY AND AN OFFICE IS REFUSED rather than reconciled. It would be
+        saying who fills a seat that a credential is supposed to fill, and guessing which half
+        was meant is exactly what the fold does not do.
+        TWO HOLDERS OF ONE OFFICE IS A REFUSAL, not an adjudication. MxN commits "exactly N
+        slots, one per candidate endorser", so two standing seatings break the operator
+        structurally; nothing committed says which supersedes, and a fold that picked one would
+        invent the rule it exists to apply. The refusal names where the defect is fixable — in
+        the registry, by revoking one. Daniel corrected an earlier and over-general version of
+        this rule that would have applied to every office: a body whose membership is open-ended
+        and whose count moves is not this defect, it is the dossier's MxQ operator, which utina
+        does not implement (tick 5psg). Two credentials naming the SAME holder are one holder,
+        so reissuing a seating to a sitting director is not a contested seat.
+        A VACANT OFFICE IS PENDING UNDER ITS OWN NAME. "board-seat-3, pending" tells a reader
+        what to go and do; an empty endorser column does not. Beat 17's screen has been claiming
+        exactly this since the revocation landed, and now it is true by construction rather than
+        by an AID whose qualification happens to be gone.
+
     A decision is consequential when it is certified, not when its votes are cast = decision:
       id: 2e2dncfe
       why: >
