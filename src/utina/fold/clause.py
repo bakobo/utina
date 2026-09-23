@@ -120,6 +120,22 @@ class Clause:
     governs: tuple[str, ...]
     group: Group  # ~66mh
 
+    certification: str | None = None
+    """The schema acts under this clause must be certified against, overriding
+    whatever the law names. ``None`` means the clause says nothing and inherits."""
+
+    exempt_from_certification: bool = False
+    """Whether acts under this clause need no certification at all, whatever the law
+    requires. Distinct from ``certification`` being ``None``, which inherits: a clause
+    may be silent, may pin its own schema, or may say that decisions of this kind are
+    ordinary enough to stand on their arithmetic (this.i @2e2dncfe).
+
+    Loosening is safe here in a way it would not be under a weaker succession rule. A
+    clause that exempted the most consequential acts is the obvious abuse, and it
+    cannot be smuggled in: an enactment is judged under the law it replaces, so
+    committing that exemption is itself an act the predecessor law governs — and
+    certifies, where the predecessor asked for certification."""
+
     @classmethod
     def from_committed(cls, body: object) -> Clause:
         """Read one clause from its committed sub-block, or refuse the bytes."""
@@ -146,6 +162,8 @@ class Clause:
                 operator=_as_str(composition.get("operator"), "operator"),
                 slots=slots,
             ),
+            certification=_as_certification(block.get("certification")),
+            exempt_from_certification=block.get("certification") is False,
         )
 
     @classmethod
@@ -178,12 +196,41 @@ class Clause:
                         for slot in self.group.slots
                     )
                 ),
+                *self._certification_bytes(),
             ]
         )
+
+    def _certification_bytes(self) -> list[bytes]:
+        """What this clause says about certifying, in the bytes, or nothing.
+
+        In the bytes for the reason the slot schema is (see :func:`_slot_bytes`): a
+        clause that needed a different kind of proof before its acts took effect is a
+        different clause, and a head that could not tell them apart would let an
+        amendment exempt the acts it cared about without moving the law head.
+
+        Emitted only where the clause says something, so a clause that inherits
+        commits the bytes it always did and no existing law head moves.
+        """
+        if self.exempt_from_certification:
+            return [b"certification", b"none"]
+        if self.certification is not None:
+            return [b"certification", self.certification.encode("utf-8")]
+        return []
 
     def said(self) -> str:
         """This clause's self-addressing identifier: a digest of its own bytes."""
         return hashlib.sha256(self.sub_block()).hexdigest()
+
+
+def _as_certification(value: object) -> str | None:
+    """The schema a clause pins for its certifications, or ``None`` to inherit.
+
+    ``False`` is the committed form of an exemption and is read as pinning no schema;
+    the exemption itself is carried separately. Anything else unreadable inherits
+    rather than exempts, which is the fail-closed direction: a malformed field must
+    not be a way out of a requirement the law imposes.
+    """
+    return value if isinstance(value, str) and value else None
 
 
 def _slot_bytes(slot: Slot) -> bytes:

@@ -356,6 +356,20 @@ def disturbed_by(corpus: Corpus, enactment: Event, at: Position) -> tuple[SAID, 
     return tuple(sorted(disturbed))
 
 
+def _certification_schema(law: Constitution, clause: Clause) -> SAID | None:
+    """What acts under ``clause`` must be certified against, or ``None`` for nothing.
+
+    The clause decides and the law is the default, because how much ceremony a
+    decision needs is a fact about the KIND of decision: minuting a board resolution
+    and approving a routine purchase are not the same act wearing different clothes.
+    A clause may be silent and inherit, may pin its own schema, or may say its acts
+    stand on their arithmetic (this.i @2e2dncfe).
+    """
+    if clause.exempt_from_certification:
+        return None
+    return clause.certification if clause.certification is not None else law.certification
+
+
 def _uncertified(
     corpus: Corpus,
     law: Constitution,
@@ -376,7 +390,7 @@ def _uncertified(
     requirement the finding can name. Where no committed act underlies the question
     there is nothing to certify and nothing outstanding.
     """
-    schema = law.certification
+    schema = _certification_schema(law, clause)
     if schema is None:
         return None
     if certification.certifying(corpus, subject.said, at) is not None:

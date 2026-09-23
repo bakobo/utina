@@ -807,6 +807,12 @@ def test_a_settled_act_is_not_ended_by_a_later_amendment(founded):
 # other test in this file.
 
 CERT_SCHEMA = "Ecertification-schema-said"
+OTHER_SCHEMA = "Eanother-certification-schema"
+
+
+def with_certification(block: dict[str, object], value: object) -> dict[str, object]:
+    """A clause block that says something about certifying: a schema, or False."""
+    return {**block, "certification": value}
 
 
 def certifying_domain() -> Log:
@@ -911,6 +917,94 @@ def test_the_certification_is_asked_of_the_coordinate_the_question_is_asked_from
 
     assert isinstance(evaluate(log.corpus, Committed(tabled), at=before), Pending)
     assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)
+
+
+def test_a_clause_may_exempt_its_acts_from_a_certification_the_law_requires():
+    """How much ceremony a decision needs is a fact about the kind of decision.
+
+    Minuting a board resolution and approving a routine purchase are not the same
+    act wearing different clothes, so the clause decides and the law is only the
+    default.
+    """
+    log = Log()
+    log.law(
+        "inception",
+        "inception",
+        [with_certification(FOUNDERS_LAW[0], False), *FOUNDERS_LAW[1:]],
+        certification=CERT_SCHEMA,
+    )
+    tabled = unanimous(log)
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)
+
+
+def test_a_clause_may_pin_its_own_certification_schema():
+    log = Log()
+    log.law(
+        "inception",
+        "inception",
+        [with_certification(FOUNDERS_LAW[0], OTHER_SCHEMA), *FOUNDERS_LAW[1:]],
+        certification=CERT_SCHEMA,
+    )
+    tabled = unanimous(log)
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, Pending)
+    assert finding.requirement[0].schema == OTHER_SCHEMA, "the clause's, not the law's"
+
+
+def test_a_clause_may_require_certification_where_the_law_requires_none():
+    log = Log()
+    log.law(
+        "inception",
+        "inception",
+        [with_certification(FOUNDERS_LAW[0], CERT_SCHEMA), *FOUNDERS_LAW[1:]],
+    )
+    tabled = unanimous(log)
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Pending)
+
+
+def test_an_unreadable_certification_field_inherits_rather_than_exempts():
+    """Fail closed: a malformed field must not be a way out of the law's requirement."""
+    log = Log()
+    log.law(
+        "inception",
+        "inception",
+        [with_certification(FOUNDERS_LAW[0], 17), *FOUNDERS_LAW[1:]],
+        certification=CERT_SCHEMA,
+    )
+    tabled = unanimous(log)
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, Pending)
+    assert finding.requirement[0].schema == CERT_SCHEMA
+
+
+def test_what_a_clause_says_about_certifying_is_in_its_committed_bytes():
+    """Otherwise an amendment could exempt the acts it cared about invisibly.
+
+    The law head ranges over clause sub-blocks, so a setting outside the bytes would
+    let the rule change while the head that identifies the law stood still.
+    """
+    from utina.fold.clause import Clause
+
+    silent = Clause.from_committed(FOUNDERS_LAW[0])
+    exempt = Clause.from_committed(with_certification(FOUNDERS_LAW[0], False))
+    pinned = Clause.from_committed(with_certification(FOUNDERS_LAW[0], CERT_SCHEMA))
+
+    assert len({silent.said(), exempt.said(), pinned.said()}) == 3
+
+
+def test_a_clause_that_says_nothing_commits_the_bytes_it_always_did():
+    """The absent case emits nothing, so no existing law head moves."""
+    from utina.fold.clause import Clause
+
+    silent = Clause.from_committed(FOUNDERS_LAW[0])
+
+    assert b"certification" not in silent.sub_block()
 
 
 # --- Q26: what a prospective question binds to ----------------------------------
