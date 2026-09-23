@@ -230,15 +230,6 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     plan = name(CAPITAL_PLAN, constructor.propose(BUDGET))
     mark("b21", constructor.endorse(marta, plan))
 
-    # Beat 20 — a witness observes board seat 3 signing two contradictory key
-    # events, and Acme commits what was observed. Acme does not CONVICT: a
-    # governance-tier conviction needs a frame that committed the violated
-    # predicate and Acme's law commits none, so the conviction is key-tier and
-    # the fold reads that it happened (this.i @f3pmxu3x). Placed after beat 21 so
-    # that every question asked earlier is untouched — which is the whole
-    # difference between this and a revocation.
-    mark("b20", constructor.observe_duplicity(seat3, [f"{seat3}-kel-2a", f"{seat3}-kel-2b"]))
-
     # The seat is re-seated before Act IV can run at all. Beat 16 revoked its
     # credential, and since tick 652c that empties its slot — so the board cannot
     # amend, because B2 needs all three. This is an extra beat the script does not
@@ -266,6 +257,21 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     carried = constructor.endorse(seat3, lowered, qualification=reissued)
     mark("b22", carried)
     mark("b23", carried)
+
+    # Beat 20 — a witness observes board seat 3 signing two contradictory key
+    # events, and Acme commits what was observed. Acme does not CONVICT: a
+    # governance-tier conviction needs a frame that committed the violated
+    # predicate and Acme's law commits none, so the conviction is key-tier and
+    # the fold reads that it happened (this.i @f3pmxu3x).
+    #
+    # **Last, and that placement is load-bearing twice over.** Every question
+    # asked earlier is untouched, which is the whole difference between this and
+    # a revocation. And it keeps the taint off seat 3's endorsement of the
+    # amendment above: while the observation preceded it, the amendment came
+    # back pending with species unresolved-conflict — the same screen beat 20
+    # itself shows — so the demo made the same point twice and the beat that
+    # was supposed to say "lawful and unanimous" said the opposite.
+    mark("b20", constructor.observe_duplicity(seat3, [f"{seat3}-kel-2a", f"{seat3}-kel-2b"]))
 
     events = constructor.emitted
     return Acme(
