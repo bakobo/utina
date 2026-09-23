@@ -28,6 +28,8 @@ named by a COIA alias in all three, the unscoped form in columns and the scoped 
 in prose and in the ground. Nothing else about the three renderings moved, so the
 comparison below is still between the same three shapes.
 
+**The aliases moved to COIA 2.0 after these were drawn, and only candidate A was re-rendered.** B and C below still carry the 1.x forms — `9-marta-as-founder-at-acme` rather than `marta-founder-acme,6` — along with a leading `9` that meant "test environment" then and means "compromised" now. They are left that way for the same reason their subject was: they record a layout decision already taken, and re-rendering an unchosen alternate by hand would produce a screen nothing verifies. Read them for their shape, not their strings.
+
 **Candidate A ships as the default.** The reasoning is at the end.
 
 ---
@@ -47,21 +49,21 @@ utina eval sign-office-lease --at d3
   law head    f3bd6baa1af2...          clause A1 (MxN), unity 1
   subject     EijCMIuLxgp_fVyn7QswUxykLRJBUsD3vDVjS6K-LbM8
 
-  slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      EMD5n3lW7eG5...
-  9-dev-as-founder     1/2   declined      EboFtM84Xdhk...
-                    ------
-  endorsed             1/2   of 1          unity not reached
-  reachable            1/2   of 1          unity unreachable: a declined slot is spent
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      EMD5n3lW7eG5...
+  dev-founder,6          1/2   declined      EboFtM84Xdhk...
+                      ------
+  endorsed               1/2   of 1          unity not reached
+  reachable              1/2   of 1          unity unreachable: a declined slot is spent
 
   ground
     clause      A1
     defeater    authority (the actor lacked the invoked power)
-    subcode     9-dev-as-founder-at-acme
-    citation    the declination EboFtM84Xdhk... committed by 9-dev-as-founder-at-acme
-    reason      Unity is unreachable under clause A1: 9-dev-as-founder-at-acme committed
-                a signed declination, which spends that slot's weight, and the weight
-                that can still arrive no longer reaches unity.
+    subcode     dev-founder-acme,6
+    citation    the declination EboFtM84Xdhk... committed by dev-founder-acme,6
+    reason      Unity is unreachable under clause A1: dev-founder-acme,6 committed a
+                signed declination, which spends that slot's weight, and the weight that
+                can still arrive no longer reaches unity.
 ```
 
 Good at: the verdict is unmissable and the two sum rows sit directly under the slots

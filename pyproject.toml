@@ -58,6 +58,12 @@ addopts = "--cov=utina --cov-branch --cov-report=term-missing --cov-fail-under=1
 [tool.coverage.run]
 branch = true
 source = ["utina"]
+# The COIA reference implementation is vendored byte for byte from the spec repo, and
+# its oracle is that repo's own normative vectors, which tests/test_coia.py runs in
+# full. Holding somebody else's code to this repo's coverage gate would mean either
+# editing it — making this the seventh implementation nobody checks — or writing tests
+# for branches the specification already pins.
+omit = ["*/utina/coia.py"]
 
 [tool.ruff]
 line-length = 96
@@ -66,10 +72,26 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
 
+# The COIA reference implementation is vendored byte for byte from the spec repo and
+# pinned to it by a test, so it is exempted rather than corrected. SIM115 is a bare
+# open() in its table loader; RUF001 is the fullwidth comma it MUST accept as a flag
+# delimiter, which is the rule rather than a typo.
+[tool.ruff.lint.per-file-ignores]
+"src/utina/coia.py" = ["SIM115", "RUF001"]
+
 [tool.mypy]
 python_version = "3.14"
 strict = true
 files = ["src/utina"]
+
+# utina.coia is the COIA 2.0 reference implementation, vendored byte for byte from
+# the spec repo and pinned to it by tests/test_coia.py. Annotating it would make this
+# the seventh implementation nobody checks, so it is exempted rather than edited. The
+# one call site that crosses the boundary carries a narrow ignore instead.
+[[tool.mypy.overrides]]
+module = "utina.coia"
+ignore_errors = true
+disallow_untyped_defs = false
 
 [tool.uv.sources]
 bakobo-errors = { git = "https://github.com/bakobo/errors" }

@@ -111,7 +111,7 @@ def test_law_at_inception_shows_every_founding_clause_with_slots_and_weights():
     assert "LAW IN FORCE AT inception" in out
     assert "clause A1" in out and "clause A2" in out and "clause A3" in out
     assert "release-escrowed-equity" in out
-    assert "9-marta-as-founder 1/2, 9-dev-as-founder 1/2" in out
+    assert "marta-founder,6 1/2, dev-founder,6 1/2" in out
     assert "open-bank-account, hire-vp-sales, sign-office-lease, approve-budget" in out
     assert "unity 1" in out
 
@@ -129,8 +129,8 @@ def test_law_after_the_amendment_shows_the_board_clauses_and_the_retained_bar():
     assert "clause B1" in out and "clause B2" in out
     # A3 is re-committed unchanged, so the edition that seats the board carries it.
     assert "clause A3" in out
-    assert "9-marta-as-founder 1/2, 9-dev-as-founder 1/2, 9-acme-as-board-seat-3 1/2" in out
-    assert "9-marta-as-founder 1/3, 9-dev-as-founder 1/3, 9-acme-as-board-seat-3 1/3" in out
+    assert "marta-founder,6 1/2, dev-founder,6 1/2, nina-board-seat-3,6 1/2" in out
+    assert "marta-founder,6 1/3, dev-founder,6 1/3, nina-board-seat-3,6 1/3" in out
     # B1's slots oversum, so unity does not need everyone; B2's do not.
     assert "sum to 3/2" in out
     assert "every slot is required" in out
@@ -167,7 +167,7 @@ def test_an_affirmed_screen_carries_its_clause_endorsements_and_bundle():
 def test_a_pending_screen_names_the_slot_that_would_discharge_it_and_the_cure():
     out = screen("eval", "hire-vp-sales", "--at", "d2")
     assert "PENDING" in out
-    assert "9-dev-as-founder-at-acme" in out
+    assert "dev-founder-acme,6" in out
     assert "endorsement under clause A1" in out
     assert "absent" in out
     assert "cured by the arrival of the missing evidence" in out
@@ -178,7 +178,7 @@ def test_a_defeated_screen_carries_the_clause_class_subcode_and_declination():
     out = screen("eval", "sign-office-lease", "--at", "d3")
     assert "DEFEATED" in out
     assert "authority (the actor lacked the invoked power)" in out
-    assert "subcode" in out and "9-dev-as-founder-at-acme" in out
+    assert "subcode" in out and "dev-founder-acme,6" in out
     assert "EboFtM84Xdhk" in out
     assert "unity unreachable" in out
 
@@ -189,8 +189,8 @@ def test_the_centerpiece_contrast_differs_only_on_the_reachable_row():
     six = screen("eval", "approve-budget", "--at", "d6")
     assert "unity unreachable" in three
     assert "unity still reachable" in six
-    assert "endorsed             1/2   of 1" in three
-    assert "endorsed             1/2   of 1" in six
+    assert "endorsed               1/2   of 1" in three
+    assert "endorsed               1/2   of 1" in six
 
 
 def test_a_class_with_nothing_tabled_is_pending_over_the_whole_requirement_space():
@@ -199,7 +199,7 @@ def test_a_class_with_nothing_tabled_is_pending_over_the_whole_requirement_space
     assert "PENDING" in out
     assert "nothing of this class has been tabled at this position" in out
     assert out.count("cured by the arrival of the missing evidence") == 2
-    assert "endorsed               0   of 1" in out
+    assert "endorsed                 0   of 1" in out
 
 
 def test_a_refusal_looks_different_in_kind_from_a_finding():
@@ -482,7 +482,7 @@ SCREENS = [
     ("seat", "acme:seat3", "--at", "b8"),
     ("log", "--at", "d3"),
     ("replay", "--at", "board-seated"),
-    ("whois", "9-marta-as-founder"),
+    ("whois", "marta-founder,6"),
 ]
 
 
@@ -642,7 +642,7 @@ def test_a_full_identifier_is_never_painted():
     )
     assert subject.count("\x1b[") == 2, "only the label is painted on the subject line"
 
-    _, whois, _ = shell("whois", "9-marta-as-founder", color=True)
+    _, whois, _ = shell("whois", "marta-founder,6", color=True)
     identifier = next(
         line for line in whois.splitlines() if line.strip().startswith("\x1b[")
         and "identifier" in ANSI.sub("", line)
@@ -746,8 +746,8 @@ def test_log_glosses_each_kind_of_committed_event():
     assert "the founding law of the domain" in out
     assert "an act of the class open-bank-account" in out
     assert "a successor law, enacted as amend-operating-agreement" in out
-    assert "9-marta-as-founder endorses" in out
-    assert "9-dev-as-founder declines" in out
+    assert "marta-founder,6 endorses" in out
+    assert "dev-founder,6 declines" in out
 
 
 # --- utina replay -------------------------------------------------------------
@@ -780,10 +780,10 @@ def test_replay_names_a_disagreement_rather_than_hiding_it():
 @pytest.mark.parametrize("backend", NAMES)
 def test_whois_prints_the_alias_the_full_identifier_and_the_substrate(backend: str):
     """this.i @clwhoi: the one place a party's identifier appears, and it appears whole."""
-    out = screen("whois", "9-marta-as-founder", "--substrate", backend)
+    out = screen("whois", "marta-founder,6", "--substrate", backend)
     with world(backend) as record:
         marta = record.aid("acme:marta")
-    assert "9-marta-as-founder-at-acme" in out
+    assert "marta-founder-acme,6" in out
     assert marta in out
     assert f"{marta}..." not in out
     assert backend in out
@@ -794,15 +794,15 @@ def test_whois_prints_the_alias_the_full_identifier_and_the_substrate(backend: s
 @pytest.mark.parametrize(
     "typed",
     [
-        "9-marta-as-founder",
-        "9-marta-as-founder-at-acme",
-        "Marta as Founder at Acme",
-        "9 MARTA AS FOUNDER",
+        "marta-founder,6",
+        "marta-founder-acme,6",
+        "Marta Founder Acme",
+        "MARTA FOUNDER",
     ],
     ids=["short", "scoped", "natural", "shouted"],
 )
 def test_whois_accepts_every_form_a_narrator_might_type(typed: str):
-    assert "9-marta-as-founder-at-acme" in screen("whois", typed)
+    assert "marta-founder-acme,6" in screen("whois", typed)
 
 
 def test_whois_accepts_an_identifier_prefix_because_typing_one_is_still_fine():
@@ -856,7 +856,7 @@ def test_no_screen_anywhere_shows_a_truncated_party_identifier(backend: str):
         ["eval", "open-bank-account", "--at", "inception"],
         ["log"],
         ["replay", "--at", "board-seated"],
-        ["whois", "9-nina-as-director"],
+        ["whois", "nina-board-seat-3,6"],
         ["enact", "endorse", "--as", "acme:seat3", "--on", "approve-budget-retabled"],
         ["demo", "--no-pause"],
     ):
@@ -870,8 +870,8 @@ def test_no_screen_anywhere_shows_a_truncated_party_identifier(backend: str):
 def test_the_slot_column_is_the_same_on_both_substrates(backend: str):
     """The demo's claim, made visible: the screen does not say which engine is under it."""
     out = screen("eval", "sign-office-lease", "--at", "d3", "--substrate", backend)
-    assert "  9-marta-as-founder   1/2   endorsed" in out
-    assert "  9-dev-as-founder     1/2   declined" in out
+    assert "  marta-founder,6        1/2   endorsed" in out
+    assert "  dev-founder,6          1/2   declined" in out
 
 
 # --- utina enact ---------------------------------------------------------------
@@ -886,7 +886,7 @@ def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
         "enact", "endorse", "--as", "acme:nina-device", "--on", "approve-budget-retabled"
     )
     assert "ENACTED" in out
-    assert "9-acme-as-board-seat-3-device-at-acme endorses" in out
+    assert "nina-board-seat-3-device-acme,6 endorses" in out
     # The signature is printed whole and therefore wraps, so the sentence beside it is
     # matched against the screen with its line breaks flattened.
     assert "the substrate verified it before recording" in " ".join(out.split())
@@ -945,7 +945,7 @@ def test_enact_can_cite_a_qualification_and_the_toolchain_checks_it():
         "--citing", "seat-credential",
     )
     assert "ENACTED" in out
-    assert "9-acme-as-board-seat-3-device" in out
+    assert "nina-board-seat-3-device-acme,6" in out
     assert "AFFIRMED" in out, "the device's yes carries the forecast to unity"
 
 
@@ -974,7 +974,7 @@ def test_enact_can_commit_a_declination_that_defeats():
     out = screen(
         "enact", "decline", "--as", "acme:nina-device", "--on", "approve-budget-retabled"
     )
-    assert "9-acme-as-board-seat-3-device-at-acme declines" in out
+    assert "nina-board-seat-3-device-acme,6 declines" in out
     assert "DEFEATED" in out
 
 
@@ -990,7 +990,7 @@ def test_a_live_act_by_a_party_whose_voice_is_poisoned_shows_the_taint():
 
 def test_enact_against_an_ungoverned_act_is_refused_by_the_fold_not_by_the_verb():
     """The verb commits; the judgment is the fold's, and here the fold refuses."""
-    out = screen("enact", "endorse", "--as", "acme:nina", "--on", "declare-dividend")
+    out = screen("enact", "endorse", "--as", "acme:seat3", "--on", "declare-dividend")
     assert "ENACTED" in out
     assert "REFUSED" in out
 
@@ -1002,7 +1002,7 @@ def test_enact_by_a_party_with_no_key_state_is_refused():
 
 
 def test_enact_against_nothing_committed_is_refused():
-    status, _, err = shell("enact", "endorse", "--as", "acme:nina", "--on", "Znothing")
+    status, _, err = shell("enact", "endorse", "--as", "acme:seat3", "--on", "Znothing")
     assert status == 2
     assert "e.state.subject-unknown.f" in err
 
@@ -1121,12 +1121,12 @@ def test_the_keripy_substrate_writes_the_law_under_identifiers_nobody_could_pred
     real prefixes are still underneath, reachable by asking.
     """
     out = screen("law", "--at", "inception", "--substrate", "keripy")
-    assert "9-marta-as-founder 1/2, 9-dev-as-founder 1/2" in out
+    assert "marta-founder,6 1/2, dev-founder,6 1/2" in out
     assert not re.search(r"E[A-Za-z0-9_-]{11}\.\.\. 1/2", out)
 
-    marta = _whois_identifier("9-marta-as-founder")
+    marta = _whois_identifier("marta-founder,6")
     assert len(marta) == 44 and marta.startswith("E")
-    assert marta != _whois_identifier("9-dev-as-founder")
+    assert marta != _whois_identifier("dev-founder,6")
 
 
 def _whois_identifier(alias: str) -> str:

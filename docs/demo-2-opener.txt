@@ -15,27 +15,26 @@
   semantics   08fd67445b6f1a96...   the dossier specification, pinned
   head        51d03abbfb85...          over 3 clauses, ordered by clause SAID
   bytes       801 canonical bytes, digested SHA-256
-  parties     9-acme-as-board-seat-3-at-acme, 9-acme-as-board-seat-3-device-at-acme,
-              9-acme-as-governed-domain-at-acme, 9-dev-as-founder-at-acme,
-              9-marta-as-founder-at-acme, 9-nina-as-director-at-acme,
-              9-quinn-as-outsider-at-acme
+  parties     acme-governed-domain,6, dev-founder-acme,6, marta-founder-acme,6,
+              nina-board-seat-3-acme,6, nina-board-seat-3-device-acme,6,
+              quinn-cfo-acme,6
   aliases     Display names, not identifiers, and local to Acme. The slot lists below
               drop the shared 'at acme'. Run utina whois <alias> for the identifier
               behind one.
 
   clause A1   MxN, unity 1                          d5a7c7eefcc7...
     governs   open-bank-account, hire-vp-sales, sign-office-lease, approve-budget
-    slots     9-marta-as-founder 1/2, 9-dev-as-founder 1/2
+    slots     marta-founder,6 1/2, dev-founder,6 1/2
     weights   the slots sum to 1, so every slot is required
 
   clause A2   MxN, unity 1                          370fdb27c704...
     governs   amend-operating-agreement
-    slots     9-marta-as-founder 1/2, 9-dev-as-founder 1/2
+    slots     marta-founder,6 1/2, dev-founder,6 1/2
     weights   the slots sum to 1, so every slot is required
 
   clause A3   MxN, unity 1                          edc9c67e719d...
     governs   release-escrowed-equity
-    slots     9-marta-as-founder 1/2, 9-dev-as-founder 1/2
+    slots     marta-founder,6 1/2, dev-founder,6 1/2
     weights   the slots sum to 1, so every slot is required
 
 
@@ -54,12 +53,12 @@
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
   subject     ECYuJOxTVvzHhYiaiPVZjBSLjq6mc21FltYQsGugAKs2
 
-  slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      EL5LXWAM9Y2k...
-  9-dev-as-founder     1/2   endorsed      ENAI9K4JQLDp...
-                    ------
-  endorsed               1   of 1          unity reached
-  reachable              1   of 1          unity still reachable
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      EL5LXWAM9Y2k...
+  dev-founder,6          1/2   endorsed      ENAI9K4JQLDp...
+                      ------
+  endorsed                 1   of 1          unity reached
+  reachable                1   of 1          unity still reachable
 
   ground
     clauses     A1
@@ -82,16 +81,16 @@
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
   subject     EBloouPzyh0EOtIeuo6SkW4dG1rQl2c2E7PQ8hPxt51X
 
-  slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      EMdNssZFX8Cy...
-  9-dev-as-founder     1/2   pending       -
-                    ------
-  endorsed             1/2   of 1          unity not reached
-  reachable              1   of 1          unity still reachable
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      EMdNssZFX8Cy...
+  dev-founder,6          1/2   pending       -
+                      ------
+  endorsed               1/2   of 1          unity not reached
+  reachable                1   of 1          unity still reachable
 
   ground - what would discharge this
-    9-dev-as-founder-at-acme endorsement under clause A1, absent
-                             cured by the arrival of the missing evidence
+    dev-founder-acme,6 endorsement under clause A1, absent
+                       cured by the arrival of the missing evidence
 
 
 
@@ -109,21 +108,21 @@
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
   subject     EPnmUK39AMUCzGv4pqG2HNAoLQxtVBIypKD1YDMAuXuv
 
-  slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      EL9LHhrRFq0s...
-  9-dev-as-founder     1/2   declined      EKh0ViYSqK5U...
-                    ------
-  endorsed             1/2   of 1          unity not reached
-  reachable            1/2   of 1          unity unreachable: a declined slot is spent
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      EL9LHhrRFq0s...
+  dev-founder,6          1/2   declined      EKh0ViYSqK5U...
+                      ------
+  endorsed               1/2   of 1          unity not reached
+  reachable              1/2   of 1          unity unreachable: a declined slot is spent
 
   ground
     clause      A1
     defeater    authority (the actor lacked the invoked power)
-    subcode     9-dev-as-founder-at-acme
-    citation    the declination EKh0ViYSqK5U... committed by 9-dev-as-founder-at-acme
-    reason      Unity is unreachable under clause A1: 9-dev-as-founder-at-acme committed
-                a signed declination, which spends that slot's weight, and the weight
-                that can still arrive no longer reaches unity.
+    subcode     dev-founder-acme,6
+    citation    the declination EKh0ViYSqK5U... committed by dev-founder-acme,6
+    reason      Unity is unreachable under clause A1: dev-founder-acme,6 committed a
+                signed declination, which spends that slot's weight, and the weight that
+                can still arrive no longer reaches unity.
 
 
 
@@ -141,16 +140,16 @@
   law head    51d03abbfb85...          clause A3 (MxN), unity 1
   subject     EPf5NL50o3ttI6JF5kWbp4MSm_ng7uKOW3SzTnFf9VSP
 
-  slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      EEFvHaNau-rp...
-  9-dev-as-founder     1/2   pending       -
-                    ------
-  endorsed             1/2   of 1          unity not reached
-  reachable              1   of 1          unity still reachable
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      EEFvHaNau-rp...
+  dev-founder,6          1/2   pending       -
+                      ------
+  endorsed               1/2   of 1          unity not reached
+  reachable                1   of 1          unity still reachable
 
   ground - what would discharge this
-    9-dev-as-founder-at-acme endorsement under clause A3, absent
-                             cured by the arrival of the missing evidence
+    dev-founder-acme,6 endorsement under clause A3, absent
+                       cured by the arrival of the missing evidence
 
 
 

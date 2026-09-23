@@ -31,28 +31,32 @@ from utina.substrate import ENDORSEMENT_SCHEMA, GCD_SCHEMA
 #: coincidence that made the seam look thinner than it was.
 GAID = "acme:gaid"
 
-#: Marta Reyes and Dev Patel, founders. Nina Adeyemi, outside director, seated
-#: by the amendment at beat D4.
+#: Marta Reyes and Dev Patel, founders.
 MARTA = "acme:marta"
 DEV = "acme:dev"
-NINA = "acme:nina"
 
-#: Board seat 3: the *office*, a delegated identifier of the domain rather than
-#: a person. Nina holds its keys; the seat is what the law slots and what the
-#: seat credential is issued to, so a director leaving is a rotation on the seat
-#: and not a reissued credential (custos-4.2.md:2139-2148, this.i @2a25xudi).
+#: Board seat 3, held by Nina Adeyemi, the outside director the amendment seats at
+#: beat D4. **The AID is hers**, dedicated to that capacity and to nothing else —
+#: custos-4.2.md:2145 requires the seat credential to name "the organ's AID as
+#: issuee", and the organ's AID is one its holder owns in that role. Nina has other
+#: AIDs for the other facets of her life and none of them is this record's business.
+#: Under the previous reading the seat was Acme's own, which left no accountable human
+#: anywhere in the log and attached duplicity to an abstraction.
 SEAT = "acme:seat3"
 
-#: Quinn Okafor, an outsider. Incepted and aliased and committing no act, exactly
-#: as Nina does — he exists so that beat 14 has a real party to refuse rather than
-#: a hypothetical one. He holds no seat, and the endorsement he offers citing the
-#: seat credential is refused by edge validation before any fold runs.
+#: Quinn Okafor, Acme's chief financial officer. Senior on purpose: beat 14 refuses
+#: his endorsement of a budget act, and a refusal only teaches something when the
+#: refused party had a plausible claim. A stranger being turned away surprises nobody;
+#: a CFO who cannot approve the budget makes a room ask why, and the answer — he
+#: prepares it, the board approves it — is the distinction the beat exists to draw.
+#: He holds no seat, so the endorsement he offers citing the seat credential is
+#: refused by edge validation before any fold runs.
 QUINN = "acme:quinn"
 
-#: The device Nina signs from, delegated from the *seat* rather than from Nina or
-#: from the domain. It fills seat 3's slot because the seat granted it authority
-#: to, in a GCD the seat issued and can revoke — never because the delegation
-#: exists, which proves a relationship and confers nothing (this.i @cglayqvw).
+#: The device Nina signs from, delegated from her seat AID. It fills seat 3's slot
+#: because the seat granted it authority to, in a GCD the seat issued and can revoke
+#: — never because the delegation exists, which proves a relationship and confers
+#: nothing (this.i @cglayqvw).
 DEVICE = "acme:nina-device"
 
 #: What the seat's grant to its device calls the relationship. Descriptive: the
@@ -325,7 +329,7 @@ def lowered_law(aids: Mapping[str, str]) -> Mapping[str, object]:
 
 #: Every party under the substrate whose identifier *is* its alias. The facade's
 #: reading of the law above, and what the law constants below are built over.
-ALIASES: Mapping[str, str] = {name: name for name in (GAID, MARTA, DEV, NINA, SEAT)}
+ALIASES: Mapping[str, str] = {name: name for name in (GAID, MARTA, DEV, SEAT)}
 
 #: State 1 as the facade sees it, kept as a constant because the demo script and
 #: the unit tests address Acme's founding clauses without building a domain.

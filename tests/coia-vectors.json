@@ -1,0 +1,1021 @@
+{
+ "_comment": "Authored from README.md prose, NOT from implementation output. Each vector cites the rule it tests. Normative.",
+ "normalize": [
+  [
+   "§5.2 casefold: final sigma folds to sigma",
+   "ΟΔΟΣ",
+   "οδοσ"
+  ],
+  [
+   "§5.2 casefold: lowercase final sigma converges",
+   "οδος",
+   "οδοσ"
+  ],
+  [
+   "§5.2 casefold: sharp s expands",
+   "Straße",
+   "strasse"
+  ],
+  [
+   "§5.2 casefold: Turkish I is not tailored",
+   "ISTANBUL",
+   "istanbul"
+  ],
+  [
+   "§5.3 SPLIT: ASCII space",
+   "Beta Corp",
+   "beta-corp"
+  ],
+  [
+   "§5.3 SPLIT: tab is whitespace, not control",
+   "Beta\tCorp",
+   "beta-corp"
+  ],
+  [
+   "§5.3 SPLIT: newline",
+   "Beta\nCorp",
+   "beta-corp"
+  ],
+  [
+   "§5.3 SPLIT: NBSP",
+   "Beta Corp",
+   "beta-corp"
+  ],
+  [
+   "§5.3 SPLIT: ogham space mark",
+   "Beta Corp",
+   "beta-corp"
+  ],
+  [
+   "§5.3 SPLIT: line separator",
+   "Beta Corp",
+   "beta-corp"
+  ],
+  [
+   "§5.3 SPLIT: ideographic comma",
+   "東京、大阪",
+   "東京-大阪"
+  ],
+  [
+   "§5.3 SPLIT: ideographic period",
+   "東京。大阪",
+   "東京-大阪"
+  ],
+  [
+   "§5.3 SPLIT: devanagari danda",
+   "अ।ब",
+   "अ-ब"
+  ],
+  [
+   "§5.3 SPLIT: fraction slash separates digits",
+   "Version ½",
+   "version-1-2"
+  ],
+  [
+   "§5.3 SPLIT: vulgar two thirds",
+   "⅔",
+   "2-3"
+  ],
+  [
+   "§5.3 SPLIT: minus sign",
+   "a−b",
+   "a-b"
+  ],
+  [
+   "§5.3 SPLIT: em dash",
+   "a—b",
+   "a-b"
+  ],
+  [
+   "§5.3 SPLIT: hebrew maqaf",
+   "א־ב",
+   "א-ב"
+  ],
+  [
+   "§5.3 elide: currency symbol",
+   "a$b",
+   "ab"
+  ],
+  [
+   "§5.3 elide: emoji",
+   "🙂 Bob",
+   "bob"
+  ],
+  [
+   "§5.3 elide: surrogate-adjacent private use",
+   "ab",
+   "ab"
+  ],
+  [
+   "§5.3 elide: tatweel",
+   "مـــرحبا",
+   "مرحبا"
+  ],
+  [
+   "§5.3 keep Lm: katakana prolonged sound",
+   "サプライチェーン",
+   "サプライチェーン"
+  ],
+  [
+   "§5.3 keep Lm: ideographic iteration",
+   "人々",
+   "人々"
+  ],
+  [
+   "§5.3 keep Lm: hiragana iteration",
+   "こゝろ",
+   "こゝろ"
+  ],
+  [
+   "§5.3 keep Lm: okina",
+   "Hawaiʻi",
+   "hawaiʻi"
+  ],
+  [
+   "§5.3 keep marks: Yoruba tone",
+   "Ọbáfẹ́mi",
+   "ọbáfẹ́mi"
+  ],
+  [
+   "§5.3 keep marks: Khmer",
+   "ព្រះរាជាណាចក្រកម្ពុជា",
+   "ព្រះរាជាណាចក្រកម្ពុជា"
+  ],
+  [
+   "§5.3 keep marks: Dhivehi",
+   "ބިޒްނަސް",
+   "ބިޒްނަސް"
+  ],
+  [
+   "§5.3 orphan mark dropped",
+   "Acme´",
+   "acme"
+  ],
+  [
+   "§5.3 orphan mark at start dropped",
+   "́abc",
+   "abc"
+  ],
+  [
+   "§5.4 empty parts discarded",
+   "  a   b  ",
+   "a-b"
+  ],
+  [
+   "§5.4 no leading hyphen",
+   "🙂 Bob",
+   "bob"
+  ],
+  [
+   "§5.4 no trailing hyphen",
+   "Bob 🙂",
+   "bob"
+  ],
+  [
+   "§5.4 no doubled hyphen",
+   "a -- b",
+   "a-b"
+  ],
+  [
+   "§5 idempotent on its own output",
+   "🙂 Bob 🙂",
+   "bob"
+  ],
+  [
+   "§5.1 ZWJ after virama kept",
+   "ශ්‍රී",
+   "ශ්‍රී"
+  ],
+  [
+   "§5.1 ZWJ between Latin dropped",
+   "bo‍b",
+   "bob"
+  ],
+  [
+   "§5.1 ZWNJ between Arabic kept",
+   "می‌روم",
+   "می‌روم"
+  ],
+  [
+   "§5.1 ZWNJ between Latin dropped",
+   "bo‌b",
+   "bob"
+  ],
+  [
+   "§5.1 ZWJ emoji sequence dropped",
+   "👨‍👩",
+   ""
+  ],
+  [
+   "§5 B.4 fold U+02BC to okina",
+   "Oʼzbekiston",
+   "oʻzbekiston"
+  ],
+  [
+   "§5 decomposition accepted, both spellings converge",
+   "สำนักงาน",
+   "สํานักงาน"
+  ],
+  [
+   "§6.1 comma is never content after normalization",
+   "Jones, Smith",
+   "jones-smith"
+  ],
+  [
+   "§5.3 keep marks: Devanagari conjunct",
+   "क्ष",
+   "क्ष"
+  ],
+  [
+   "§5.3 keep marks: Tamil",
+   "தமிழ்",
+   "தமிழ்"
+  ],
+  [
+   "§5.3 keep marks: Hebrew with niqqud",
+   "שָׁלוֹם",
+   "שָׁלוֹם"
+  ],
+  [
+   "§5.3 keep Lm: N'Ko tone",
+   "ߒߞߏߴ",
+   "ߒߞߏߴ"
+  ],
+  [
+   "§5.3 keep Lm: Lisu tone",
+   "ꓡꓲꓸ",
+   "ꓡꓲꓸ"
+  ],
+  [
+   "§5.2 NFKC: fullwidth Latin folds",
+   "Ｂｏｂ",
+   "bob"
+  ],
+  [
+   "§5.2 NFKC: circled letter folds",
+   "Ⓑob",
+   "bob"
+  ],
+  [
+   "§5.2 NFKC: ligature expands",
+   "ﬁle",
+   "file"
+  ],
+  [
+   "§5.2 NFKC: superscript digit folds",
+   "x²",
+   "x2"
+  ],
+  [
+   "§5.2 NFKC: Roman numeral folds to letters",
+   "Ⅻ",
+   "xii"
+  ],
+  [
+   "§5.2 NFKC: halfwidth katakana composes",
+   "ｱｲｳ",
+   "アイウ"
+  ],
+  [
+   "§5.3 elide: combining enclosing keycap",
+   "1⃣",
+   "1"
+  ],
+  [
+   "§5.3 elide: variation selector",
+   "▲︎",
+   ""
+  ],
+  [
+   "§5.3 elide: soft hyphen",
+   "co­op",
+   "coop"
+  ],
+  [
+   "§5.3 elide: RLO override",
+   "bo‮b",
+   "bob"
+  ],
+  [
+   "§5.3 elide: zero width space is whitespace? no, Cf",
+   "bo​b",
+   "bob"
+  ],
+  [
+   "§5.3 SPLIT: mongolian vowel separator",
+   "a᠎b",
+   "ab"
+  ],
+  [
+   "§5.4 many separators collapse to one",
+   "a...,,,---b",
+   "a-b"
+  ],
+  [
+   "§5 empty input",
+   "",
+   ""
+  ],
+  [
+   "§5 input that is entirely elided",
+   "$$$",
+   ""
+  ],
+  [
+   "§5 input that is entirely separators",
+   "---",
+   ""
+  ],
+  [
+   "§5.3 digits are kept",
+   "7-Eleven",
+   "7-eleven"
+  ],
+  [
+   "§5.3 Arabic-Indic digits are kept as themselves",
+   "٢٣",
+   "٢٣"
+  ],
+  [
+   "§5.1 ZWNJ after virama kept (Devanagari)",
+   "क्‌ष",
+   "क्‌ष"
+  ],
+  [
+   "§5.1 ZWJ not after virama dropped (Arabic)",
+   "م‍ر",
+   "مر"
+  ]
+ ],
+ "generate": [
+  [
+   "§4.2 en",
+   [
+    "en",
+    "Cecilia",
+    "CEO",
+    "Acme",
+    "",
+    ""
+   ],
+   "cecilia-ceo-acme"
+  ],
+  [
+   "§4.1 reflexive en",
+   [
+    "en",
+    null,
+    "CEO",
+    "Acme",
+    "",
+    ""
+   ],
+   "me-ceo-acme"
+  ],
+  [
+   "§4.2 empty scope omits the phrase",
+   [
+    "en",
+    "Beta Corp",
+    "domain owner",
+    "",
+    "",
+    ""
+   ],
+   "beta-corp-domain-owner"
+  ],
+  [
+   "§4.2 substitution is literal: braces",
+   [
+    "en",
+    "{role}",
+    "CEO",
+    "Acme",
+    "",
+    ""
+   ],
+   "role-ceo-acme"
+  ],
+  [
+   "§4.2 substitution is literal: dollar-amp",
+   [
+    "en",
+    "A$&B",
+    "CEO",
+    "Acme",
+    "",
+    ""
+   ],
+   "a-b-ceo-acme"
+  ],
+  [
+   "§4.2 substitution is literal: dollar-quote",
+   [
+    "en",
+    "A$'B",
+    "CEO",
+    "Acme",
+    "",
+    ""
+   ],
+   "a-b-ceo-acme"
+  ],
+  [
+   "§6.1 single flag",
+   [
+    "en",
+    "Cecilia",
+    "CEO",
+    "Acme",
+    "0",
+    ""
+   ],
+   "cecilia-ceo-acme,0"
+  ],
+  [
+   "§6.1 descending sort",
+   [
+    "en",
+    "Bob",
+    "payee",
+    "Bitcoin",
+    "69",
+    ""
+   ],
+   "bob-payee-bitcoin,96"
+  ],
+  [
+   "§6.1 duplicates collapse",
+   [
+    "en",
+    "Bob",
+    "ceo",
+    "",
+    "000",
+    ""
+   ],
+   "bob-ceo,0"
+  ],
+  [
+   "§6.1 private group",
+   [
+    "en",
+    "Bob",
+    "ceo",
+    "",
+    "9",
+    "37"
+   ],
+   "bob-ceo,9,73"
+  ],
+  [
+   "§6.1 private only",
+   [
+    "en",
+    "Bob",
+    "ceo",
+    "",
+    "",
+    "7"
+   ],
+   "bob-ceo,,7"
+  ],
+  [
+   "§6.2 Arabic-Indic digit folds",
+   [
+    "en",
+    "Bob",
+    "ceo",
+    "",
+    "٩",
+    ""
+   ],
+   "bob-ceo,9"
+  ],
+  [
+   "§6.1 numeric name is unambiguous",
+   [
+    "en",
+    "Plan 9",
+    "vendor",
+    "",
+    "9",
+    ""
+   ],
+   "plan-9-vendor,9"
+  ],
+  [
+   "§6.1 numeric name unflagged",
+   [
+    "en",
+    "Plan 9",
+    "vendor",
+    "",
+    "",
+    ""
+   ],
+   "plan-9-vendor"
+  ],
+  [
+   "A.1 de no connector",
+   [
+    "de",
+    "Hans",
+    "Direktor",
+    "Deutsche Bank",
+    "",
+    ""
+   ],
+   "hans-direktor-deutsche-bank"
+  ],
+  [
+   "A.1 ru no connector",
+   [
+    "ru",
+    "Иван",
+    "директор",
+    "Газпром",
+    "",
+    ""
+   ],
+   "иван-директор-газпром"
+  ],
+  [
+   "A.1 it reflexive pronoun io",
+   [
+    "it",
+    null,
+    "amministratore",
+    "Acme",
+    "",
+    ""
+   ],
+   "io-amministratore-acme"
+  ],
+  [
+   "A.1 ar reflexive",
+   [
+    "ar",
+    null,
+    "محاسب",
+    "",
+    "",
+    ""
+   ],
+   "أنا-محاسب"
+  ],
+  [
+   "A.1 ko universal order (was scope-first)",
+   [
+    "ko",
+    "김철수",
+    "사장",
+    "삼성",
+    "",
+    ""
+   ],
+   "김철수-사장-삼성"
+  ],
+  [
+   "A.1 ko empty scope",
+   [
+    "ko",
+    "김철수",
+    "의사",
+    "",
+    "",
+    ""
+   ],
+   "김철수-의사"
+  ],
+  [
+   "A.1 ja universal order (was scope-role-who)",
+   [
+    "ja",
+    "田中太郎",
+    "経理担当者",
+    "三菱銀行",
+    "",
+    ""
+   ],
+   "田中太郎-経理担当者-三菱銀行"
+  ],
+  [
+   "A.1 ja empty scope",
+   [
+    "ja",
+    "トヨタ",
+    "購買者",
+    "",
+    "",
+    ""
+   ],
+   "トヨタ-購買者"
+  ],
+  [
+   "A.1 ja reflexive pronoun 私",
+   [
+    "ja",
+    null,
+    "購買者",
+    "サプライチェーン",
+    "",
+    ""
+   ],
+   "私-購買者-サプライチェーン"
+  ],
+  [
+   "A.1 ar no connector",
+   [
+    "ar",
+    "علي",
+    "شريك",
+    "أرامكو",
+    "",
+    ""
+   ],
+   "علي-شريك-أرامكو"
+  ],
+  [
+   "A.1 he no connector",
+   [
+    "he",
+    "אלי כהן",
+    "מנהל כספים",
+    "בנק הפועלים",
+    "",
+    ""
+   ],
+   "אלי-כהן-מנהל-כספים-בנק-הפועלים"
+  ],
+  [
+   "A.1 es no connector",
+   [
+    "es",
+    "Ana García",
+    "gerente",
+    "BBVA",
+    "",
+    ""
+   ],
+   "ana-garcía-gerente-bbva"
+  ]
+ ],
+ "reject": [
+  [
+   "§4.3 role empty after normalization",
+   [
+    "en",
+    "Bob",
+    ".",
+    "",
+    "",
+    ""
+   ]
+  ],
+  [
+   "§4.3 role empty",
+   [
+    "en",
+    "Bob",
+    "",
+    "",
+    "",
+    ""
+   ]
+  ],
+  [
+   "§4.3 role is only whitespace",
+   [
+    "en",
+    "Bob",
+    " ",
+    "",
+    "",
+    ""
+   ]
+  ],
+  [
+   "§4.3 role is only an emoji",
+   [
+    "en",
+    "Bob",
+    "🙂",
+    "",
+    "",
+    ""
+   ]
+  ],
+  [
+   "§4.3 who empty and not reflexive",
+   [
+    "en",
+    "",
+    "ceo",
+    "",
+    "",
+    ""
+   ]
+  ],
+  [
+   "§4.2 unsupported language",
+   [
+    "xx",
+    "Bob",
+    "ceo",
+    "",
+    "",
+    ""
+   ]
+  ],
+  [
+   "§6.3 reserved digit 2",
+   [
+    "en",
+    "Bob",
+    "ceo",
+    "",
+    "2",
+    ""
+   ]
+  ],
+  [
+   "§6.3 reserved digit 3",
+   [
+    "en",
+    "Bob",
+    "ceo",
+    "",
+    "3",
+    ""
+   ]
+  ],
+  [
+   "§6.3 reflexive must not carry 0",
+   [
+    "en",
+    null,
+    "ceo",
+    "",
+    "0",
+    ""
+   ]
+  ],
+  [
+   "§6.1 non-digit flag",
+   [
+    "en",
+    "Bob",
+    "ceo",
+    "",
+    "a",
+    ""
+   ]
+  ]
+ ],
+ "parse": [
+  [
+   "§6.1 no flags",
+   "bob-as-ceo",
+   [
+    "bob-as-ceo",
+    "",
+    ""
+   ]
+  ],
+  [
+   "§6.1 one group",
+   "bob-as-ceo,96",
+   [
+    "bob-as-ceo",
+    "96",
+    ""
+   ]
+  ],
+  [
+   "§6.1 two groups",
+   "bob-as-ceo,96,73",
+   [
+    "bob-as-ceo",
+    "96",
+    "73"
+   ]
+  ],
+  [
+   "§6.1 empty group 1",
+   "bob-as-ceo,,7",
+   [
+    "bob-as-ceo",
+    "",
+    "7"
+   ]
+  ],
+  [
+   "§6.1 trailing empty groups are not canonical",
+   "bob-as-ceo,,",
+   [
+    "bob-as-ceo",
+    "",
+    ""
+   ]
+  ],
+  [
+   "§6.2 accepts Arabic comma",
+   "bob-as-ceo،9",
+   [
+    "bob-as-ceo",
+    "9",
+    ""
+   ]
+  ],
+  [
+   "§6.2 accepts ideographic comma",
+   "bob-as-ceo、9",
+   [
+    "bob-as-ceo",
+    "9",
+    ""
+   ]
+  ],
+  [
+   "§6.2 accepts fullwidth comma",
+   "bob-as-ceo，9",
+   [
+    "bob-as-ceo",
+    "9",
+    ""
+   ]
+  ],
+  [
+   "§6.2 body normalized after stripping",
+   "Bob As CEO,9",
+   [
+    "bob-as-ceo",
+    "9",
+    ""
+   ]
+  ],
+  [
+   "§6.2 reader accepts ascending input, canonicalizes",
+   "bob-as-ceo,69",
+   [
+    "bob-as-ceo",
+    "96",
+    ""
+   ]
+  ],
+  [
+   "§6.2 reader accepts non-ASCII digits",
+   "bob-as-ceo,٩",
+   [
+    "bob-as-ceo",
+    "9",
+    ""
+   ]
+  ]
+ ],
+ "match": [
+  [
+   "§7 exact",
+   "cecilia-as-ceo-at-acme,0",
+   "cecilia as ceo at acme",
+   true
+  ],
+  [
+   "§7 subject only",
+   "cecilia-as-ceo-at-acme,0",
+   "Cecilia",
+   true
+  ],
+  [
+   "§7 scope only",
+   "cecilia-as-ceo-at-acme,0",
+   "Acme",
+   true
+  ],
+  [
+   "§7 order does not matter",
+   "cecilia-as-ceo-at-acme,0",
+   "Acme CEO",
+   true
+  ],
+  [
+   "§7 partial word",
+   "cecilia-as-ceo-at-acme,0",
+   "ceci",
+   true
+  ],
+  [
+   "§7 flags ignored in alias",
+   "cecilia-as-ceo-at-acme,0",
+   "cecilia",
+   true
+  ],
+  [
+   "§7 flags ignored in query",
+   "cecilia-as-ceo-at-acme,0",
+   "cecilia,0",
+   true
+  ],
+  [
+   "§7 query flag order irrelevant",
+   "cecilia-as-ceo-at-acme,96",
+   "cecilia,69",
+   true
+  ],
+  [
+   "§7 negative control",
+   "cecilia-as-ceo-at-acme,0",
+   "Bob",
+   false
+  ],
+  [
+   "§7 empty query does not match",
+   "cecilia-as-ceo-at-acme,0",
+   "",
+   false
+  ],
+  [
+   "§7 substring across a segment boundary fails",
+   "cecilia-as-ceo-at-acme,0",
+   "ceoat",
+   false
+  ],
+  [
+   "§7 scriptio continua: word inside single segment",
+   "トヨタの購買者として",
+   "トヨタ",
+   true
+  ],
+  [
+   "§7 query normalized before comparison",
+   "cecilia-as-ceo-at-acme,0",
+   "CECILIA",
+   true
+  ],
+  [
+   "§7 fullwidth query normalizes",
+   "cecilia-as-ceo-at-acme,0",
+   "ＣＥＣＩＬＩＡ",
+   true
+  ],
+  [
+   "§7 mark-sensitive: Yoruba tone distinguishes",
+   "ọkọ́-as-vehicle",
+   "ọkọ̀",
+   false
+  ],
+  [
+   "§7 accent-insensitive matching is NOT provided",
+   "josé-as-ceo",
+   "jose",
+   false
+  ],
+  [
+   "§7 case-insensitive via casefold",
+   "straße-as-vendor",
+   "STRASSE",
+   true
+  ]
+ ],
+ "search": [
+  [
+   "§7 order: whole segment, then position, then coverage",
+   [
+    "cecilia-as-ceo-at-acme",
+    "acme-as-vendor",
+    "carol-as-notary-at-acmeville",
+    "dmitri-as-cfo-at-acme",
+    "acme"
+   ],
+   "acme",
+   [
+    "acme",
+    "acme-as-vendor",
+    "dmitri-as-cfo-at-acme",
+    "cecilia-as-ceo-at-acme",
+    "carol-as-notary-at-acmeville"
+   ]
+  ],
+  [
+   "§7 multi-term narrows",
+   [
+    "cecilia-as-ceo-at-acme",
+    "cecilia-as-patient-at-mercy-clinic",
+    "alice-as-auditor-at-acme"
+   ],
+   "cecilia acme",
+   [
+    "cecilia-as-ceo-at-acme"
+   ]
+  ],
+  [
+   "§7 no match returns empty",
+   [
+    "cecilia-as-ceo-at-acme"
+   ],
+   "zzz",
+   []
+  ]
+ ]
+}

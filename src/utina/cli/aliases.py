@@ -31,7 +31,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from utina import coia
-from utina.acme import DEV, DEVICE, GAID, MARTA, NINA, QUINN, SEAT
+from utina.acme import DEV, DEVICE, GAID, MARTA, QUINN, SEAT
 from utina.cli.errors import ALIAS_PREFIX_AMBIGUOUS
 
 __all__ = ["PARTIES", "SCOPE", "Aliases", "Party", "aliases_over"]
@@ -41,11 +41,22 @@ __all__ = ["PARTIES", "SCOPE", "Aliases", "Party", "aliases_over"]
 #: column rather than an abbreviation of something longer (this.i @clscop).
 SCOPE = "Acme"
 
-#: The flag every alias here carries. COIA's 9 means an experimental, test or demo
-#: environment with no real-world consequence to reputation, governance or cost, and
-#: that is a literal description of Acme: the log is rebuilt from committed bytes on
-#: every invocation and no decision on any screen binds anybody (this.i @clflg9).
-FLAGS = coia.FLAG_TEST
+#: The language every alias here is minted in. COIA requires a generator to reject a
+#: language it does not support rather than falling back to another, so this is passed
+#: rather than defaulted.
+LANG = "en"
+
+#: The flag every alias here carries. COIA 2.0's 6 is "throwaway, test, demo; no
+#: real-world consequence", which is a literal description of Acme: the log is rebuilt
+#: from committed bytes on every invocation and no decision on any screen binds
+#: anybody (this.i @clflg9).
+#:
+#: **It used to be 9, and that was wrong after the 2.0 cutover.** Under COIA 1.x, 9
+#: meant a test environment; under 2.0 it means "compromised — positive evidence that
+#: the wrong party controls it". So every party on every screen was flagged as
+#: captured by an attacker. CHANGES.md warns about this one inversion by name: flags
+#: are lost across the version boundary but never inverted, except here.
+FLAGS = "6"
 
 
 @dataclass(frozen=True)
@@ -61,20 +72,40 @@ class Party:
     who: str
     role: str
 
+    #: The scope this party's alias carries, defaulting to the one they all share.
+    #: The domain itself overrides it to empty: "acme governed domain at Acme" is
+    #: circular, and COIA 4.1 says scope MAY be empty where the context is
+    #: unconstrained — which is exactly the case for the identifier that IS the
+    #: context.
+    scope: str | None = None
 
-#: Acme's cast, keyed by the alias constants ``utina.acme`` names them by. Marta and
-#: Dev are the founders; Nina is the outside director the amendment seats at D4; the
-#: domain itself is aliased too, so ``utina whois`` can answer for it. The device is
-#: named for the seat rather than for Nina, because what a reader needs to see on a
-#: line is whose authority the act was made under.
+
+#: Acme's cast, keyed by the alias constants ``utina.acme`` names them by.
+#:
+#: **The seat is Nina's, not Acme's**, and that is the substance rather than a naming
+#: preference. ``custos-4.2.md:2145`` requires the seat credential to name "the organ's
+#: AID as issuee"; the organ's AID is one Nina owns, dedicated to her capacity as that
+#: seat, which is the role-dedicated-AID model of Provenant's own alias convention.
+#: Under the previous reading the seat and its device were Acme's, so the record named
+#: no accountable human anywhere and duplicity attached to an abstraction. Now it
+#: attaches to her.
+#:
+#: **Quinn is Acme's CFO**, and being senior is the point of him. Beat 14 refuses his
+#: endorsement of a budget act, and a refusal only teaches something when the refused
+#: party had a plausible claim: a stranger being turned away surprises nobody, while a
+#: chief financial officer who cannot approve the budget makes the room ask why. The
+#: answer — that he prepares it and the board approves it — is the distinction the
+#: beat exists to draw. Authority is not seniority.
+#:
+#: Nina has no separate personal AID here. She has many in life, and none of them is
+#: any of this record's business; the only facet this narrative touches is the seat.
 PARTIES: Mapping[str, Party] = {
-    GAID: Party("Acme", "governed domain"),
+    GAID: Party("Acme", "governed domain", scope=""),
     MARTA: Party("Marta", "founder"),
     DEV: Party("Dev", "founder"),
-    NINA: Party("Nina", "director"),
-    SEAT: Party("Acme", "board seat 3"),
-    DEVICE: Party("Acme", "board seat 3 device"),
-    QUINN: Party("Quinn", "outsider"),
+    SEAT: Party("Nina", "board seat 3"),
+    DEVICE: Party("Nina", "board seat 3 device"),
+    QUINN: Party("Quinn", "CFO"),
 }
 
 
@@ -92,10 +123,9 @@ class Aliases:
     _full: Mapping[str, str]
     _short: Mapping[str, str]
     _by_query: Mapping[str, str]
-    _unflagged: Mapping[str, str]
 
     def full(self, identifier: str) -> str:
-        """The scoped alias, for a line with room for it: ``9-marta-as-founder-at-acme``.
+        """The scoped alias, for a line with room for it: ``marta-founder-acme,6``.
 
         An identifier this table does not know renders as *itself, in full*. Not
         truncated, because a truncated identifier is the thing this module exists to
@@ -105,7 +135,7 @@ class Aliases:
         return self._full.get(identifier, identifier)
 
     def short(self, identifier: str) -> str:
-        """The unscoped alias, for a column: ``9-marta-as-founder``.
+        """The unscoped alias, for a column: ``marta-founder,6``.
 
         Legitimate rather than abbreviated. Within these screens the scope is constant,
         so COIA's empty-scope form is an alias in its own right, and dropping a scope
@@ -144,18 +174,28 @@ class Aliases:
 
         The flags are part of the alias and are never dropped from what is *displayed*.
         On input they are optional, so ``Marta as Founder at Acme`` finds the party
-        whose alias is ``9-marta-as-founder-at-acme``. That is tolerance on the query
+        whose alias is ``marta-founder-acme,6``. That is tolerance on the query
         only, in the same spirit as the spec's permissive hyphen regex, which likewise
         accepts on input a form it would not emit.
 
         Returns ``None`` rather than raising on a miss, so the caller decides whether
         an unmatched query is an error or merely an answer of no.
         """
-        normalized = coia.normalize_query(query)
+        # COIA 6.2: a reader MUST split flag groups off BEFORE normalizing the body,
+        # because the reverse order destroys the comma that delimits them. Keying on
+        # the normalized body alone is also what lets an unflagged query resolve while
+        # an unflagged alias is never displayed — the flag is display, the body is
+        # identity.
+        try:
+            body, _, _ = coia.parse_alias(query.strip())  # type: ignore[no-untyped-call]
+        except ValueError:
+            # A malformed flag group is a query that matches nothing, never an error:
+            # this resolves what a person typed, and the caller decides whether a miss
+            # is a refusal. ``parse_alias`` already normalizes the body it returns.
+            return None
+        normalized = body
         if normalized in self._by_query:
             return self._by_query[normalized]
-        if normalized in self._unflagged:
-            return self._unflagged[normalized]
         if not query:
             return None
         matches = sorted(one for one in self._full if one.startswith(query))
@@ -164,6 +204,17 @@ class Aliases:
         if len(matches) > 1:
             raise ALIAS_PREFIX_AMBIGUOUS(prefix=query, matches=self.known())
         return None
+
+
+def _alias(who: str, role: str, scope: str = "", flags: str = "") -> str:
+    """One COIA alias, and the only place the vendored implementation is called.
+
+    The reference implementation is unannotated and stays that way — it is pinned
+    byte-identical to upstream — so the typed/untyped boundary is crossed here once
+    rather than at every call site.
+    """
+    minted: str = coia.create_alias(LANG, who, role, scope, flags)  # type: ignore[no-untyped-call]
+    return minted
 
 
 def aliases_over(aids: Mapping[str, str]) -> Aliases:
@@ -178,20 +229,19 @@ def aliases_over(aids: Mapping[str, str]) -> Aliases:
     full: dict[str, str] = {}
     short: dict[str, str] = {}
     by_query: dict[str, str] = {}
-    unflagged: dict[str, str] = {}
     for name, party in PARTIES.items():
         identifier = aids.get(name)
         if identifier is None:
             continue
-        full[identifier] = coia.create_alias(party.who, party.role, SCOPE, FLAGS)
-        short[identifier] = coia.create_alias(party.who, party.role, flags=FLAGS)
-        by_query[full[identifier]] = identifier
-        by_query[short[identifier]] = identifier
-        # The same two aliases with no flag, for the query path only. Never displayed:
-        # an unflagged alias is what COIA reserves for a verified, public, production
+        scope = SCOPE if party.scope is None else party.scope
+        full[identifier] = _alias(party.who, party.role, scope, FLAGS)
+        short[identifier] = _alias(party.who, party.role, flags=FLAGS)
+        # Keyed on the body with its flag group stripped, so a query resolves whether
+        # or not it was typed with the flag. The flagged form is the only one ever
+        # DISPLAYED: an unflagged alias is what COIA reserves for a verified public
         # identifier, which is the one thing these must never appear to claim.
-        unflagged[coia.create_alias(party.who, party.role, SCOPE)] = identifier
-        unflagged[coia.create_alias(party.who, party.role)] = identifier
+        by_query[_alias(party.who, party.role, scope)] = identifier
+        by_query[_alias(party.who, party.role)] = identifier
     return Aliases(
-        scope=SCOPE, _full=full, _short=short, _by_query=by_query, _unflagged=unflagged
+        scope=SCOPE, _full=full, _short=short, _by_query=by_query
     )

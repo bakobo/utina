@@ -21,8 +21,8 @@
   ------------------------------------------------------------------------------------
   d4 (seq 13), clause A2 (MxN), unity 1, law head f3bd6baa1af2...
 
-  9-marta-as-founder   1/2   endorsed      Ev3kRMyw-gz_...
-  9-dev-as-founder     1/2   endorsed      ED8_-jFInAYj...
+  marta-founder,6        1/2   endorsed      Ev3kRMyw-gz_...
+  dev-founder,6          1/2   endorsed      ED8_-jFInAYj...
   endorsed 1 of 1, unity reached; reachable 1, still reachable
 
   ground      clause A2, reached by ED8_-jFInAYj..., Ev3kRMyw-gz_...
@@ -49,13 +49,13 @@
   ------------------------------------------------------------------------------------
   board-seated (seq 13), clause B1 (MxN), unity 1, law head 8191a249fc6b...
 
-  9-marta-as-founder   1/2   endorsed      ENzStORRBBmE...
-  9-dev-as-founder     1/2   pending       -
-  9-acme-as-board-se...   1/2   pending       -
+  marta-founder,6        1/2   endorsed      ENzStORRBBmE...
+  dev-founder,6          1/2   pending       -
+  nina-board-seat-3,6    1/2   pending       -
   endorsed 1/2 of 1, not reached; reachable 3/2, still reachable
 
-  ground      9-dev-as-founder-at-acme, 9-acme-as-board-seat-3-at-acme - endorsement
-              under clause B1, absent
+  ground      dev-founder-acme,6, nina-board-seat-3-acme,6 - endorsement under clause
+              B1, absent
 
 
 
@@ -72,11 +72,11 @@
   ------------------------------------------------------------------------------------
   board-seated (seq 13), clause A3 (MxN), unity 1, law head 8191a249fc6b...
 
-  9-marta-as-founder   1/2   endorsed      EgPbNtk_ST_c...
-  9-dev-as-founder     1/2   pending       -
+  marta-founder,6        1/2   endorsed      EgPbNtk_ST_c...
+  dev-founder,6          1/2   pending       -
   endorsed 1/2 of 1, not reached; reachable 1, still reachable
 
-  ground      9-dev-as-founder-at-acme - endorsement under clause A3, absent
+  ground      dev-founder-acme,6 - endorsement under clause A3, absent
 
 
 
@@ -100,12 +100,12 @@
   ------------------------------------------------------------------------------------
   b13 (seq 29), clause B1 (MxN), unity 1, law head 8191a249fc6b...
 
-  9-marta-as-founder   1/2   endorsed      EjXUr3ahWnmd...
-  9-dev-as-founder     1/2   declined      ES5LId2ZmlTC...
-  9-acme-as-board-se...   1/2   pending       -
+  marta-founder,6        1/2   endorsed      EjXUr3ahWnmd...
+  dev-founder,6          1/2   declined      ES5LId2ZmlTC...
+  nina-board-seat-3,6    1/2   pending       -
   endorsed 1/2 of 1, not reached; reachable 1, still reachable
 
-  ground      9-acme-as-board-seat-3-at-acme - endorsement under clause B1, absent
+  ground      nina-board-seat-3-acme,6 - endorsement under clause B1, absent
 
 
 
@@ -126,21 +126,21 @@
 
   $ utina seat acme:seat3 --at b8
 
-  SEAT 9-acme-as-board-seat-3-at-acme
+  SEAT nina-board-seat-3-acme,6
   ------------------------------------------------------------------------------------
 
   position    b8 (seq 14)
 
   KERI — a relationship, dual-anchored
     identifier  acme:seat3
-    delegator   9-acme-as-governed-domain-at-acme, named in the dip's di
+    delegator   acme-governed-domain,6, named in the dip's di
     seal        E9JwXIWzuR6ic8AZ...   the delegator's own approving event
 
   ACDC — the credential that confers the authority
     credential  E1eY46Jhp41JZWFS...
     schema      EAqOeo_YMHDEMZ-d...
-    issuer      9-acme-as-governed-domain-at-acme
-    issuee      9-acme-as-board-seat-3-at-acme
+    issuer      acme-governed-domain,6
+    issuee      nina-board-seat-3-acme,6
     registry    E-czbRJteLSJXjEH...
     state       issued, as the fold reads it here
     may         create commitment
@@ -166,9 +166,9 @@
   ------------------------------------------------------------------------------------
   d5 (seq 18), clause B1 (MxN), unity 1, law head 8191a249fc6b...
 
-  9-marta-as-founder   1/2   endorsed      EqDH_-4f2rNl...
-  9-dev-as-founder     1/2   pending       -
-  9-acme-as-board-se...   1/2   endorsed      EGwcp9EgsuwT...
+  marta-founder,6        1/2   endorsed      EqDH_-4f2rNl...
+  dev-founder,6          1/2   pending       -
+  nina-board-seat-3,6    1/2   endorsed      EGwcp9EgsuwT...
   endorsed 1 of 1, unity reached; reachable 3/2, still reachable
 
   ground      clause B1, reached by EGwcp9EgsuwT..., EqDH_-4f2rNl...
@@ -219,10 +219,10 @@ ERROR  e.proof.edge-unvalidated.f
   ------------------------------------------------------------------------------------
 
   position    b16 (seq 32)
-  controller  9-acme-as-governed-domain-at-acme
+  controller  acme-governed-domain,6
 
-  credential        at seq   state here    moved by
-  E1eY46Jhp41J...       14   revoked       EDF4FOERyYjn...
+  credential          at seq   state here    moved by
+  E1eY46Jhp41J...         14   revoked       EDF4FOERyYjn...
 
   Registry state is evidence, and standing is judgment. A revocation moves what this
   registry says about a credential and moves nothing else: the office's key log is
@@ -244,13 +244,13 @@ ERROR  e.proof.edge-unvalidated.f
   ------------------------------------------------------------------------------------
   b17 (seq 34), clause B1 (MxN), unity 1, law head 8191a249fc6b...
 
-  9-marta-as-founder   1/2   endorsed      E8e6pNo1h2ky...
-  9-dev-as-founder     1/2   pending       -
-  9-acme-as-board-se...   1/2   pending       -
+  marta-founder,6        1/2   endorsed      E8e6pNo1h2ky...
+  dev-founder,6          1/2   pending       -
+  nina-board-seat-3,6    1/2   pending       -
   endorsed 1/2 of 1, not reached; reachable 3/2, still reachable
 
-  ground      9-dev-as-founder-at-acme, 9-acme-as-board-seat-3-at-acme - endorsement
-              under clause B1, absent
+  ground      dev-founder-acme,6, nina-board-seat-3-acme,6 - endorsement under clause
+              B1, absent
 
 
 
@@ -266,9 +266,9 @@ ERROR  e.proof.edge-unvalidated.f
   ------------------------------------------------------------------------------------
   b17 (seq 34), clause B1 (MxN), unity 1, law head 8191a249fc6b...
 
-  9-marta-as-founder   1/2   endorsed      EqDH_-4f2rNl...
-  9-dev-as-founder     1/2   pending       -
-  9-acme-as-board-se...   1/2   endorsed      EGwcp9EgsuwT...
+  marta-founder,6        1/2   endorsed      EqDH_-4f2rNl...
+  dev-founder,6          1/2   pending       -
+  nina-board-seat-3,6    1/2   endorsed      EGwcp9EgsuwT...
   endorsed 1 of 1, unity reached; reachable 3/2, still reachable
 
   ground      clause B1, reached by EGwcp9EgsuwT..., EqDH_-4f2rNl...
@@ -290,12 +290,12 @@ ERROR  e.proof.edge-unvalidated.f
   ------------------------------------------------------------------------------------
   b20 (seq 42), clause B1 (MxN), unity 1, law head 8191a249fc6b...
 
-  9-marta-as-founder   1/2   endorsed      EqDH_-4f2rNl...
-  9-dev-as-founder     1/2   pending       -
-  9-acme-as-board-se...   1/2   endorsed      EGwcp9EgsuwT...
+  marta-founder,6        1/2   endorsed      EqDH_-4f2rNl...
+  dev-founder,6          1/2   pending       -
+  nina-board-seat-3,6    1/2   endorsed      EGwcp9EgsuwT...
   endorsed 1 of 1, unity reached; reachable 3/2, still reachable
 
-  ground      9-acme-as-board-seat-3-at-acme - endorsement under clause B1,
+  ground      nina-board-seat-3-acme,6 - endorsement under clause B1,
               unresolved-conflict
 
 
@@ -318,9 +318,9 @@ ERROR  e.proof.edge-unvalidated.f
   ------------------------------------------------------------------------------------
   b22 (seq 41), clause B2 (MxN), unity 1, law head 8191a249fc6b...
 
-  9-marta-as-founder   1/3   endorsed      EOnL2sQLEczi...
-  9-dev-as-founder     1/3   endorsed      EbsAc5CZk9Ex...
-  9-acme-as-board-se...   1/3   endorsed      E0_tXFOA1Ho4...
+  marta-founder,6        1/3   endorsed      EOnL2sQLEczi...
+  dev-founder,6          1/3   endorsed      EbsAc5CZk9Ex...
+  nina-board-seat-3,6    1/3   endorsed      E0_tXFOA1Ho4...
   endorsed 1 of 1, unity reached; reachable 1, still reachable
 
   ground      clause B2, reached by E0_tXFOA1Ho4..., EOnL2sQLEczi..., EbsAc5CZk9Ex...

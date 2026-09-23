@@ -26,7 +26,6 @@ from .law import (
     GAID,
     GOVERNANCE_REGISTRY,
     MARTA,
-    NINA,
     ORDINARY_ACTS,
     Q2_FORECAST,
     Q3_BUDGET,
@@ -59,7 +58,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     here, and never varied.
     """
     substrate = FacadeSubstrate() if substrate is None else substrate
-    aids = {alias: substrate.incept(alias) for alias in (GAID, MARTA, DEV, NINA)}
+    aids = {alias: substrate.incept(alias) for alias in (GAID, MARTA, DEV)}
     marta, dev = aids[MARTA], aids[DEV]
     # Nina is incepted and aliased and commits no act. She holds board seat 3's
     # keys in the story; in the record the seat signs, because the law slots the

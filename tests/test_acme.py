@@ -29,7 +29,6 @@ from utina.acme import (
     FOUNDING_LAW,
     GAID,
     MARTA,
-    NINA,
     ORDINARY_ACTS,
     SEAT,
     SEAT_OFFICE,
@@ -102,16 +101,20 @@ def test_state_two_distributes_ordinary_authority_but_not_amendment_authority():
     assert weights(BOARD_LAW, "B2") == dict.fromkeys((MARTA, DEV, SEAT), Fraction(1, 3))
 
 
-def test_the_amendment_seats_the_office_and_not_the_officer():
-    """@z373ew7j: the law slots board seat 3, and Nina is nowhere in it.
+def test_the_amendment_seats_the_office_and_not_the_person():
+    """@z373ew7j: the law slots board seat 3, which is a capacity and not a person.
 
-    A law that slotted the director would attach a governance power to a person.
-    Under the office, a director leaving is a rotation on the seat and the
-    committed law does not move at all.
+    The AID it slots is Nina's, dedicated to that seat — ``custos-4.2.md:2145``
+    requires the seat credential to name "the organ's AID as issuee", and the organ's
+    AID is one its holder owns in that role. So the law does attach to an accountable
+    human, which is the point; what it does NOT attach to is Nina in any other
+    capacity. She has other AIDs for the other facets of her life and none of them
+    appears here, which is what keeps a governance power scoped to the office she
+    holds rather than following her around.
     """
     assert BOARD_LAW["seats"] == (SEAT,)
-    assert NINA not in weights(BOARD_LAW, "B1")
-    assert NINA not in weights(BOARD_LAW, "B2")
+    assert SEAT in weights(BOARD_LAW, "B1")
+    assert SEAT in weights(BOARD_LAW, "B2")
 
 
 def test_every_slot_names_the_schema_its_evidence_must_satisfy():

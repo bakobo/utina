@@ -14,12 +14,12 @@
   law head    8191a249fc6b...          clause A3 (MxN), unity 1
   subject     EdVmO4oxF6j8Zkb_OpbpRyYhxL3VhHMKLWgJQoAFxSso
 
-  slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      EgPbNtk_ST_c...
-  9-dev-as-founder     1/2   endorsed      E0-aE1sSVC0R...
-                    ------
-  endorsed               1   of 1          unity reached
-  reachable              1   of 1          unity still reachable
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      EgPbNtk_ST_c...
+  dev-founder,6          1/2   endorsed      E0-aE1sSVC0R...
+                      ------
+  endorsed                 1   of 1          unity reached
+  reachable                1   of 1          unity still reachable
 
   ground
     clauses     A3
@@ -43,13 +43,13 @@
   law head    8191a249fc6b...          clause B1 (MxN), unity 1
   subject     EIha84VWIvyD3kE4M8EI-z5h9lkspXHjbzhKBywImozI
 
-  slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      EjXUr3ahWnmd...
-  9-dev-as-founder     1/2   declined      ES5LId2ZmlTC...
-  9-acme-as-board-se...   1/2   endorsed      ErqN_GR5WqTj...
-                    ------
-  endorsed               1   of 1          unity reached
-  reachable              1   of 1          unity still reachable
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      EjXUr3ahWnmd...
+  dev-founder,6          1/2   declined      ES5LId2ZmlTC...
+  nina-board-seat-3,6    1/2   endorsed      ErqN_GR5WqTj...
+                      ------
+  endorsed                 1   of 1          unity reached
+  reachable                1   of 1          unity still reachable
 
   ground
     clauses     B1
@@ -72,13 +72,13 @@
   law head    8191a249fc6b...          clause B1 (MxN), unity 1
   subject     Ebnz13phAfQySQoQ-qxY26rhgItCJgtyZIaouyhvFqQg
 
-  slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      EqDH_-4f2rNl...
-  9-dev-as-founder     1/2   pending       -
-  9-acme-as-board-se...   1/2   endorsed      EGwcp9EgsuwT...
-                    ------
-  endorsed               1   of 1          unity reached
-  reachable            3/2   of 1          unity still reachable
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      EqDH_-4f2rNl...
+  dev-founder,6          1/2   pending       -
+  nina-board-seat-3,6    1/2   endorsed      EGwcp9EgsuwT...
+                      ------
+  endorsed                 1   of 1          unity reached
+  reachable              3/2   of 1          unity still reachable
 
   ground
     clauses     B1
@@ -101,19 +101,19 @@
   law head    8191a249fc6b...          clause B1 (MxN), unity 1
   subject     E3VUf10ojy8GZc_5wS-5NGKSomFjoFy87mYiigrhKE3A
 
-  slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      E6sWX4faOVhx...
-  9-dev-as-founder     1/2   pending       -
-  9-acme-as-board-se...   1/2   pending       -
-                    ------
-  endorsed             1/2   of 1          unity not reached
-  reachable            3/2   of 1          unity still reachable
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      E6sWX4faOVhx...
+  dev-founder,6          1/2   pending       -
+  nina-board-seat-3,6    1/2   pending       -
+                      ------
+  endorsed               1/2   of 1          unity not reached
+  reachable              3/2   of 1          unity still reachable
 
   ground - what would discharge this
-    9-dev-as-founder-at-acme endorsement under clause B1, absent
+    dev-founder-acme,6 endorsement under clause B1, absent
+                       cured by the arrival of the missing evidence
+    nina-board-seat-3-acme,6 endorsement under clause B1, absent
                              cured by the arrival of the missing evidence
-    9-acme-as-board-seat-3-at-acme endorsement under clause B1, absent
-                                   cured by the arrival of the missing evidence
 
 
 
@@ -131,12 +131,12 @@
   law head    f3bd6baa1af2...          clause A1 (MxN), unity 1
   subject     E9LNkisX-EfNzavJsJmBUx8IyDX_7jmCpAIL6cSvt5kY
 
-  slot              weight   disposition   committed act
-  9-marta-as-founder   1/2   endorsed      ETFRV_i1XbrD...
-  9-dev-as-founder     1/2   endorsed      E7rZDgjVNGiJ...
-                    ------
-  endorsed               1   of 1          unity reached
-  reachable              1   of 1          unity still reachable
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      ETFRV_i1XbrD...
+  dev-founder,6          1/2   endorsed      E7rZDgjVNGiJ...
+                      ------
+  endorsed                 1   of 1          unity reached
+  reachable                1   of 1          unity still reachable
 
   ground
     clauses     A1

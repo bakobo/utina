@@ -18,23 +18,24 @@ import pytest
 from bakobo.errors import BakoboError  # type: ignore[import-untyped]
 
 from utina import coia
-from utina.acme import DEV, DEVICE, GAID, MARTA, NINA, QUINN, SEAT
+from utina.acme import DEV, DEVICE, GAID, MARTA, QUINN, SEAT
 from utina.cli.aliases import PARTIES, SCOPE, Aliases, aliases_over
+from utina.cli.render import SLOT
 from utina.cli.world import world
 
 #: What the demo's three people must be called on screen, in both forms. Written out
 #: rather than computed, because a test that built its expectation the way the code
 #: does would pass against any self-consistent mistake.
 FULL = {
-    MARTA: "9-marta-as-founder-at-acme",
-    DEV: "9-dev-as-founder-at-acme",
-    NINA: "9-nina-as-director-at-acme",
+    MARTA: "marta-founder-acme,6",
+    DEV: "dev-founder-acme,6",
+    SEAT: "nina-board-seat-3-acme,6",
 }
 
 SHORT = {
-    MARTA: "9-marta-as-founder",
-    DEV: "9-dev-as-founder",
-    NINA: "9-nina-as-director",
+    MARTA: "marta-founder,6",
+    DEV: "dev-founder,6",
+    SEAT: "nina-board-seat-3,6",
 }
 
 
@@ -69,13 +70,16 @@ def test_a_party_carries_the_alias_the_commission_specified(
 def test_the_short_form_is_the_full_form_with_the_scope_dropped() -> None:
     """Not a truncation of the alias: COIA's empty-scope form is an alias in itself."""
     for party, full in FULL.items():
-        assert full == f"{SHORT[party]}-at-{SCOPE.lower()}"
+        # COIA 2.0 puts the flag group last, so the scope is inserted before it
+        # rather than appended: marta-founder,6 becomes marta-founder-acme,6.
+        body, _, flags = SHORT[party].partition(",")
+        assert full == f"{body}-{SCOPE.lower()},{flags}"
         assert "..." not in full and "..." not in SHORT[party]
 
 
 def test_the_short_form_fits_the_slot_column() -> None:
     """@clscop: eighteen characters is the column budget the table already had."""
-    assert max(len(short) for short in SHORT.values()) <= 18
+    assert max(len(short) for short in SHORT.values()) <= SLOT
 
 
 def test_both_substrates_render_the_same_aliases(
@@ -90,22 +94,24 @@ def test_both_substrates_render_the_same_aliases(
 
 def test_every_alias_is_a_well_formed_coia_alias(table: Aliases) -> None:
     for alias in table.every_alias():
-        assert coia.matches_alias(alias), alias
+        # Well-formed means it survives a parse/normalize round trip unchanged.
+        body, flags, _ = coia.parse_alias(alias)
+        assert coia.normalize(body) == body and flags == "6", alias
 
 
 def test_every_alias_carries_the_demo_flag(table: Aliases) -> None:
     """@clflg9: flag 9 is deliberate, and a missing one would claim production use."""
     for alias in table.every_alias():
-        assert alias.startswith(f"{coia.FLAG_TEST}-"), alias
+        assert alias.endswith(",6"), alias
 
 
 def test_the_party_table_covers_exactly_what_acme_incepts(facade_aids: dict[str, str]) -> None:
     """A party with no entry would render as a raw identifier, which is a gap."""
-    assert set(PARTIES) == set(facade_aids) == {GAID, MARTA, DEV, NINA, SEAT, DEVICE, QUINN}
+    assert set(PARTIES) == set(facade_aids) == {GAID, MARTA, DEV, SEAT, DEVICE, QUINN}
 
 
 def test_the_domain_itself_is_aliased_too(table: Aliases, facade_aids: dict[str, str]) -> None:
-    assert table.full(facade_aids[GAID]).startswith("9-acme-as-")
+    assert table.full(facade_aids[GAID]) == "acme-governed-domain,6"
 
 
 # --- the fallback, which must never truncate ----------------------------------
@@ -140,15 +146,15 @@ def test_both_forms_of_an_alias_resolve_to_the_same_party(
 @pytest.mark.parametrize(
     "typed",
     [
-        "9-marta-as-founder-at-acme",
-        "9 Marta as Founder at Acme",
-        "  9-MARTA-AS-FOUNDER-AT-ACME  ",
-        "9, marta. as founder at acme",
+        "marta-founder-acme,6",
+        "Marta Founder Acme",
+        "  MARTA-FOUNDER-ACME,6  ",
+        "marta. founder  acme",
         # En dashes on purpose: the spec's permissive regex tolerates them because a
         # keyboard or an autocorrect will produce one where a hyphen was meant.
-        "9–marta–as–founder–at–acme",  # noqa: RUF001
-        "Marta as Founder at Acme",
-        "marta-as-founder",
+        "marta–founder–acme",  # noqa: RUF001
+        "marta-founder-acme",
+        "marta-founder",
     ],
     ids=[
         "canonical",
@@ -192,14 +198,14 @@ def test_an_unflagged_alias_is_accepted_on_input_but_never_displayed(
     An unflagged alias is what COIA reserves for a verified, public, production
     identifier, which is the one thing Acme's must never appear to claim (@clflg9).
     """
-    assert table.resolve("marta-as-founder-at-acme") == facade_aids[MARTA]
-    assert all(alias.startswith("9-") for alias in table.every_alias())
-    assert "marta-as-founder-at-acme" not in table.every_alias()
+    assert table.resolve("marta-founder-acme") == facade_aids[MARTA]
+    assert all(alias.endswith(",6") for alias in table.every_alias())
+    assert "marta-founder-acme" not in table.every_alias()
 
 
 def test_a_query_naming_nothing_resolves_to_nothing(table: Aliases) -> None:
     """None rather than an exception: the caller decides what a miss means."""
-    assert table.resolve("9-nobody-as-nothing") is None
+    assert table.resolve("nobody-nothing,6") is None
     assert table.resolve("") is None
 
 
@@ -217,3 +223,19 @@ def test_the_table_is_built_from_identifiers_and_carries_no_record(
     rebuilt: Any = aliases_over(dict(facade_aids))
     assert rebuilt.every_alias() == table.every_alias()
     assert rebuilt.scope == SCOPE
+
+
+def test_a_query_with_a_malformed_flag_group_resolves_to_nothing(table: Aliases) -> None:
+    """A miss, never an error. The caller decides whether an unmatched query refuses.
+
+    COIA's reader raises on a flag group that is not decimal digits, and a person
+    typing at a prompt produces those by accident — a trailing comma, a stray word
+    after one. Letting that escape would turn a typo into a traceback.
+    """
+    assert table.resolve("marta-founder-acme,nonsense") is None
+    assert table.resolve("marta-founder-acme,9x") is None
+
+    # A trailing comma is an EMPTY flag group, which is well formed, so it resolves.
+    # The distinction matters: one is a typo and the other is a person declining to
+    # type a flag they were never required to type.
+    assert table.resolve("marta-founder-acme,") is not None

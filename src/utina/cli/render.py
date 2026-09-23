@@ -98,9 +98,11 @@ RULE = "-" * 84
 FIELD = 12
 
 #: The width of the slot column in the arithmetic table. Also the budget an unscoped
-#: alias has to fit: ``9-nina-as-director`` is exactly this long, which is why the
-#: short form is the one the columns use (this.i @clscop).
-SLOT = 18
+#: alias has to fit, which is why the short form is the one the columns use (this.i
+#: @clscop). ``nina-board-seat-3,6`` is nineteen and the longest Acme has; the extra
+#: column is headroom, and ``tests/test_aliases.py`` fails rather than truncating if a
+#: later party outgrows it.
+SLOT = 20
 
 #: The act column on the disturbance screen, wide enough for the record's own
 #: names in full. A truncated name is unreadable from the back of a room, and
@@ -190,7 +192,7 @@ def wrapped(
     """One labelled line whose value is prose, hanging under its own label.
 
     Never broken at a hyphen. Every alias on these screens is one hyphenated token, and
-    a wrap that split ``9-marta-as-founder-at-acme`` across two lines would leave a
+    a wrap that split ``marta-founder-acme,6`` across two lines would leave a
     fragment on each of them that reads like a shorter alias — which is a smaller
     version of the confusion this whole commission exists to remove.
 

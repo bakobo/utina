@@ -77,11 +77,12 @@ identifiers
   any unambiguous prefix of an identifier, or the whole thing.
 
 parties
-  Screens name a party by a COIA alias -- 9-marta-as-founder -- and never by a
+  Screens name a party by a COIA alias -- marta-founder,6 -- and never by a
   piece of its identifier, because a prefix is not a safe way to decide that two
-  identifiers are the same. The 9 flag marks a demo environment. Inside these
+  identifiers are the same. The trailing ,6 is COIA's test flag: throwaway, demo,
+  no real-world consequence. Inside these
   screens the scope is always Acme, so the columns drop it. To see the identifier
-  behind an alias, ask for it: utina whois 9-marta-as-founder.
+  behind an alias, ask for it: utina whois marta-founder,6.
 
 color
   On when the output is a terminal, and decided per stream, so a redirected stderr
@@ -95,7 +96,7 @@ examples
   utina eval sign-office-lease --at d3
   utina eval --said seat-the-board --at d4
   utina replay --at board-seated
-  utina whois 9-marta-as-founder
+  utina whois marta-founder,6
   utina enact endorse --as acme:seat3 --on approve-budget-retabled
 """
 
