@@ -41,7 +41,7 @@ import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from utina.fold import bearing, disturbance, semantics
+from utina.fold import bearing, certification, disturbance, semantics
 from utina.fold.clause import Clause
 from utina.fold.constitution import ACT_CLASS_FIELD, Constitution
 from utina.fold.corpus import Corpus, Event
@@ -181,11 +181,19 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
     )
     held = {one.endorser: one.disposition for one in classified}
 
+    uncertified = _uncertified(corpus, law, subject, clause, at)
+
     tainted = _tainted(corpus, subject, clause, classified, at)
     if tainted is not None:
         return tainted
 
     if clause.group.satisfied(held):
+        # The threshold is met and that is not the same as the act being
+        # authorized. Where the law requires a certification, what is outstanding
+        # here is the domain's own act of recording that the threshold WAS met —
+        # votes cast are not a result until they are tabulated (this.i @2e2dncfe).
+        if uncertified is not None:
+            return Pending(requirement=(uncertified,))
         return Affirmed(
             clauses=(clause.id,),
             endorsements=endorsements(classified),
@@ -346,6 +354,42 @@ def disturbed_by(corpus: Corpus, enactment: Event, at: Position) -> tuple[SAID, 
         ):
             disturbed.append(act.said)
     return tuple(sorted(disturbed))
+
+
+def _uncertified(
+    corpus: Corpus,
+    law: Constitution,
+    subject: _Subject,
+    clause: Clause,
+    at: Position,
+) -> RequirementElement | None:
+    """What is outstanding when a law wants a certification and has not got one yet.
+
+    ``None`` where the law requires none — a domain that names no certification
+    schema authorizes its acts by their arithmetic alone — and ``None`` where one has
+    already been admitted.
+
+    The element names the party who committed the subject, because that is the domain
+    whose log this is and admitting the sponsor's tally is its act rather than
+    anybody else's. A sponsor may assemble a certification and cannot make it
+    consequential; only the domain can do that, so only the domain's absence is a
+    requirement the finding can name. Where no committed act underlies the question
+    there is nothing to certify and nothing outstanding.
+    """
+    schema = law.certification
+    if schema is None:
+        return None
+    if certification.certifying(corpus, subject.said, at) is not None:
+        return None
+    committer = _committer(corpus, subject)
+    if not committer:  # pragma: no cover - a satisfied threshold implies a subject
+        return None
+    return RequirementElement(
+        endorser=committer,
+        clause=clause.id,
+        schema=schema,
+        kind=certification.CERTIFICATION_KIND,
+    )
 
 
 def _tainted(

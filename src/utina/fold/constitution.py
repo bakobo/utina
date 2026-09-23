@@ -54,7 +54,7 @@ from dataclasses import dataclass
 
 from bakobo.errors import ErrorCode  # type: ignore[import-untyped]
 
-from utina.fold import semantics
+from utina.fold import certification, semantics
 from utina.fold.clause import MALFORMED_LAW, Clause
 from utina.fold.corpus import Corpus, Event
 from utina.fold.slots import dispositions
@@ -216,20 +216,26 @@ def _governing(clauses: tuple[Clause, ...], act: str) -> Clause | None:
     return None
 
 
-def _edition_committed_by(event: Event) -> tuple[tuple[Clause, ...], str | None]:
-    """The clause set a law event commits, and the semantics it pins them in.
+def _edition_committed_by(
+    event: Event,
+) -> tuple[tuple[Clause, ...], str | None, str | None]:
+    """The clause set a law event commits, the semantics it pins, and what it certifies by.
 
-    Both come out of one envelope because they are one commitment: a clause set
-    and the lens it is to be read through are not separable claims, and an
-    edition that carried one without the other would be law nobody can apply
-    (``fold/semantics.py``, axiom 4).
+    All three come out of one envelope because they are one commitment: a clause
+    set, the lens it is to be read through, and whether a decision under it needs
+    certifying are not separable claims, and an edition that carried some without
+    the others would be law nobody can apply (``fold/semantics.py``, axiom 4).
     """
     law = event.body.get(LAW_FIELD)
     if not isinstance(law, Mapping):
         raise MALFORMED_LAW(
             field=LAW_FIELD, expected="a mapping carrying the clauses this event commits"
         )
-    return Clause.edition_from_committed(law.get(CLAUSES_FIELD)), semantics.declared(law)
+    return (
+        Clause.edition_from_committed(law.get(CLAUSES_FIELD)),
+        semantics.declared(law),
+        certification.required_by(law),
+    )
 
 
 def _refuse_a_contradictory_edition(clauses: tuple[Clause, ...]) -> None:
@@ -259,6 +265,13 @@ class Constitution:
     Constitution is the law in force, and whether this engine can apply it is the
     evaluator's question (``fold/semantics.py``, axiom 4, tick 2uhi)."""
 
+    certification: SAID | None = None
+    """The schema this domain's certifications must satisfy, or ``None`` where the
+    edition requires none and an act is authorized by its arithmetic alone. Named by
+    the law for the same reason a slot names its endorsement schema
+    (``custos-4.2.md:1946-1951``): a requirement that could not say which evidence it
+    wanted would be satisfiable by the wrong one. See ``fold/certification.py``."""
+
     source: SAID = ""
     """The identifier of the law event whose edition this is — the inception, or
     the enactment that took force. Carried because a finding that says a cure
@@ -283,14 +296,19 @@ class Constitution:
         edition: tuple[Clause, ...] = ()
         source = ""
         pinned: str | None = None
+        certifies_by: str | None = None
         for event in corpus.upto(position):  # ~5edf
             if _takes_force(corpus, event, position):
-                edition, pinned = _edition_committed_by(event)
+                edition, pinned, certifies_by = _edition_committed_by(event)
                 source = event.said
         _refuse_a_contradictory_edition(edition)
         head = hashlib.sha256(_canonical_bytes(edition)).hexdigest()
         return cls(
-            law_head=LawHead(said=head), clauses=edition, source=source, semantics=pinned
+            law_head=LawHead(said=head),
+            clauses=edition,
+            source=source,
+            semantics=pinned,
+            certification=certifies_by,
         )
 
     def clause(self, id: str) -> Clause:

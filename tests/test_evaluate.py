@@ -101,15 +101,29 @@ class Log:
         self.saids[name] = said
         return said
 
-    def law(self, name: str, kind: str, clauses: list[dict[str, object]]) -> str:
-        return self._add(
-            name,
-            kind,
-            {"t": kind, "i": GAID, "law": {"clauses": clauses, **PINNED}},
-        )
+    def law(
+        self,
+        name: str,
+        kind: str,
+        clauses: list[dict[str, object]],
+        certification: str = "",
+    ) -> str:
+        """A law event. ``certification`` names the schema this domain's tallies
+        must satisfy; empty means the domain requires none and its acts are
+        authorized by their arithmetic alone."""
+        body: dict[str, object] = {"clauses": clauses, **PINNED}
+        if certification:
+            body["certification"] = certification
+        return self._add(name, kind, {"t": kind, "i": GAID, "law": body})
 
     def act(self, name: str, kind: str) -> str:
         return self._add(name, "act", {"t": "act", "i": GAID, "act": kind})
+
+    def certify(self, name: str, subject: str) -> str:
+        """The domain admitting a tally: the act becomes consequential here."""
+        return self._add(
+            name, "certification", {"t": "cert", "i": GAID, "certifies": subject}
+        )
 
     def amend(self, name: str, clauses, act: str = "amend") -> str:
         body: dict[str, object] = {
@@ -782,6 +796,121 @@ def test_a_settled_act_is_not_ended_by_a_later_amendment(founded):
 
     assert isinstance(evaluate(founded.corpus, Committed(amendment), at=founded.now), Affirmed)
     assert disturbed_by(founded.corpus, founded.corpus.event(amendment), founded.now) == ()
+
+
+# --- certification: votes cast are not a result (this.i @2e2dncfe) ----------------
+#
+# A decision is consequential when the domain records that its threshold was met,
+# not at the moment the last endorsement happens to exist somewhere. A domain says
+# whether it wants that by naming the schema its certifications must satisfy; one
+# that names none authorizes its acts by their arithmetic alone, which is every
+# other test in this file.
+
+CERT_SCHEMA = "Ecertification-schema-said"
+
+
+def certifying_domain() -> Log:
+    """A domain whose law requires its tallies to be certified."""
+    log = Log()
+    log.law("inception", "inception", FOUNDERS_LAW, certification=CERT_SCHEMA)
+    return log
+
+
+def unanimous(log: Log) -> str:
+    """An act both founders have endorsed: the threshold is met."""
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.endorse(DEV, tabled)
+    return tabled
+
+
+def test_a_threshold_met_but_uncertified_act_is_pending():
+    """The milestone's criterion, and the whole of the change.
+
+    Both founders endorsed and the arithmetic reaches unity. The act is still not
+    authorized, because nobody has recorded that it did — which is the difference
+    between counting votes and certifying an election.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, Pending)
+    assert [one.kind for one in finding.requirement] == ["certification"]
+    assert finding.requirement[0].schema == CERT_SCHEMA
+
+
+def test_the_same_act_is_affirmed_once_the_domain_certifies_it():
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert", tabled)
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, Affirmed)
+    assert finding.clauses == ("A1",)
+
+
+def test_a_domain_that_requires_no_certification_affirms_on_the_arithmetic():
+    """A law naming no schema requires none, which is the unchanged behaviour."""
+    log = Log()
+    log.law("inception", "inception", FOUNDERS_LAW)
+    tabled = unanimous(log)
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)
+
+
+def test_a_certification_of_some_other_act_does_not_authorize_this_one():
+    """The subject is named, so a tally cannot be spent on a decision it never counted."""
+    log = certifying_domain()
+    tabled = unanimous(log)
+    other = log.act("other", "hire")
+    log.certify("cert-other", other)
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Pending)
+
+
+def test_certification_is_not_what_is_outstanding_while_the_threshold_is_unmet():
+    """An act still gathering endorsements is short of votes, not short of a tally.
+
+    Naming the certification here would tell a reader the wrong thing to go and do.
+    """
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, Pending)
+    assert [one.kind for one in finding.requirement] == ["endorsement"]
+    assert [one.endorser for one in finding.requirement] == [DEV]
+
+
+def test_a_certification_does_not_rescue_an_act_whose_threshold_is_unreachable():
+    """Certifying is recording that a threshold was met, never deciding that it was."""
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.decline(DEV, tabled)
+    log.certify("cert", tabled)
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Defeated)
+
+
+def test_the_certification_is_asked_of_the_coordinate_the_question_is_asked_from():
+    """Before the tally is admitted the act is pending; after it, affirmed.
+
+    The same question at two coordinates, which is what makes certification a
+    moment rather than a property.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+    before = log.now
+    log.certify("cert", tabled)
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=before), Pending)
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)
 
 
 # --- Q26: what a prospective question binds to ----------------------------------
