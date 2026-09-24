@@ -37,6 +37,14 @@ under the Community Specification License 1.0. utina implements it. No part of
 the specification text is redistributed here; citations in comments and
 documentation identify spans by line for the reader's benefit.
 
-The KERI, ACDC and CESR specifications, and the dossier specification
-(https://github.com/trustoverip/kswg-dossier-specification), are likewise
-implemented or referenced rather than redistributed.
+The KERI, ACDC and CESR specifications are likewise implemented or referenced
+rather than redistributed.
+
+The dossier specification (https://github.com/trustoverip/kswg-dossier-specification)
+is the exception. schemas/dossier-spec-body.md is a verbatim copy of that
+repository's spec/dossier-spec-body.md at commit
+5906e8cf570099761b57761fac6cbec50325b3c1, redistributed unmodified because
+utina's law pins its semantics by the SHA-256 of exactly those bytes and the
+test suite recomputes the digest. The specification is subject to the OWF
+Contributor License Agreement 1.0 - Copyright, as its own copyright notice
+states; that license, not this repository's, governs the file.
