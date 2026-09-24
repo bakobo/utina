@@ -1241,6 +1241,43 @@ def test_a_convicted_subject_is_convicted_while_its_slots_are_still_open():
     assert finding.proof.package == mark
 
 
+def test_a_convicted_subject_is_convicted_even_where_a_cited_taint_came_first():
+    """Q38 again, against the taint arm: a pending naming a taint's cure would
+    promise that the tainted party's owned act rescues a question whose subject
+    has already contradicted itself. The walk must not stop at the first
+    observation it meets."""
+    log = Log()
+    act = affirmed_hire(log)
+    observed(log, DEV, "dup-dev")
+    mark = observed(log, GAID, "dup-gaid")
+
+    finding = evaluate(log.corpus, Committed(act), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == mark
+
+
+def test_every_tainted_cited_party_is_named_in_the_pending():
+    """No finding is terminal while any enumerated check is unexamined
+    (``:1753-1762``), and each taint is its own check with its own cure: a
+    pending that named one of two would tell a reader one act suffices."""
+    log = Log()
+    act = affirmed_hire(log)
+    first = observed(log, DEV, "dup-dev")
+    second = observed(log, MARTA, "dup-marta")
+
+    finding = evaluate(log.corpus, Committed(act), at=log.now)
+
+    assert isinstance(finding, Pending)
+    assert {(one.endorser, one.ground) for one in finding.requirement} == {
+        (DEV, first),
+        (MARTA, second),
+    }
+    assert all(
+        one.species is PendingSpecies.UNRESOLVED_CONFLICT for one in finding.requirement
+    )
+
+
 def test_a_taint_reaches_forward_and_never_backward():
     """"What was affirmed above stands at its coordinate forever" (``:1805``)."""
     log = Log()

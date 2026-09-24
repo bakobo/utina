@@ -466,6 +466,9 @@ def _tainted(
     committer = _committer(corpus, subject)
     ground = [one.said for one in classified if one.said is not None]
     acts = _attributions(corpus, at)
+    # The whole walk, not the first hit: a subject conviction anywhere beats every
+    # taint, and every taint is its own check (this.i @zmlvpkhl, Q38).
+    taints: list[RequirementElement] = []
     for event in corpus.upto(at):
         party = bearing.convicted(event)
         if party is None:
@@ -474,17 +477,17 @@ def _tainted(
         if which is bearing.Role.SUBJECT:
             return SelfConvicted(proof=Proof(package=event.said, pair=bearing.pair_of(event)))
         if which is bearing.Role.CITED:
-            return Pending(
-                requirement=(
-                    RequirementElement(
-                        endorser=party,
-                        clause=clause.id,
-                        schema=clause.group.slots[0].schema,
-                        species=PendingSpecies.UNRESOLVED_CONFLICT,
-                        ground=bearing.taint_ground(event),
-                    ),
+            taints.append(
+                RequirementElement(
+                    endorser=party,
+                    clause=clause.id,
+                    schema=clause.group.slots[0].schema,
+                    species=PendingSpecies.UNRESOLVED_CONFLICT,
+                    ground=bearing.taint_ground(event),
                 )
             )
+    if taints:
+        return Pending(requirement=canonical_requirement_set(taints))
     return None
 
 
