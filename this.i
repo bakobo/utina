@@ -1732,6 +1732,40 @@ Make Custos's replayable governance useful to a real organization = goal:
         the constitution's effectuation walk and two render paths all consume the mapping form.
         Filed as tick-worthy rather than done here.
 
+    An office slot counts who held the seat when they acted, never who holds it now = decision:
+      id: djyj2bc2
+      why: >
+        The second defect the office-slot model produced, found the same way as @qjjlkrxt —
+        by putting an office slot into Acme's real law and watching Act III die. Revoking a
+        seating retroactively UN-COUNTED every endorsement that seat had ever made.
+        `_classify_slot` resolved an office through `_holder`, which asks who holds it at the
+        QUESTION's position, and when nobody did it returned pending at once without ever
+        looking at whether the seat's committed endorsement had stood when it was made.
+        Measured on Acme before the fix: at d5 the office resolves to the seat and the budget's
+        seat slot is endorsed; at b16 and b17, with the credential revoked, the same slot reads
+        pending and the endorsement is gone.
+        THAT IS THE ONE THING CUSTOS FORBIDS BY NAME. "What was affirmed above stands at its
+        coordinate forever" (`:1805`), and "the reversal is a new fact, not a rewrite"
+        (`:1741`). It also destroys the demo's answer to the 4.1 KERI panel's sharpest
+        objection: beats 18 and 19 exist to show that a prospective revocation falsifies
+        nothing, because the credential DID stand at the position it was cited from, and under
+        the broken reading the revocation reached backwards and unmade the finding.
+        THE RULE is the one issue #82's rule 4 already states for a cited credential, applied
+        one level out to the seat itself: an office slot counts an endorsement whose issuer held
+        the office at the ENDORSEMENT's own coordinate. So the walk resolves the holder per
+        candidate event against the bundle up to that event, rather than once against the whole
+        bundle. This is the same shape as `_qualified`, which is the point — "did it stand when
+        it was cited" is one question the fold should not answer twice differently.
+        WHO-HOLDS-IT-NOW SURVIVES, in the one place it is right. Where no committed act counts,
+        the slot reports whoever holds the office at the question's position, or the office's own
+        name where nobody does — which is beat 17 exactly: a NEW question over a bundle the
+        revocation is already in, pending under the seat's own name. So the revocation still
+        bites forward and no longer bites backward, which is the whole distinction between a
+        revocation and a duplicity taint that the bearing machinery keeps separate elsewhere.
+        NOT WIDENED: `seating_is_ambiguous` still asks at the question's position, so an office
+        contested only in the past is not caught and `_holder` takes the first of two. That gap
+        predates this and is left where it was rather than half-closed here.
+
     The law creates a seat; a credential fills it = decision:
       id: ftjpdph5
       why: >
