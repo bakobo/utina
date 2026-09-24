@@ -200,7 +200,5 @@ def test_a_record_past_its_bounds_is_refused_before_it_is_replayed(
     acme, record, monkeypatch, bound, value
 ):
     """Size, then shape, then meaning (bakobo dev/standards/input-handling.md)."""
-    import utina.replay as replay_module
-
-    monkeypatch.setattr(replay_module, bound, value)
+    monkeypatch.setattr(f"utina.replay.{bound}", value)
     refused(acme, record, "e.input.record-malformed.f")

@@ -396,10 +396,11 @@ def _set(index: int, **fields: object):
         _set(0, t="dip", di="acme:nobody"),
         _set(1, note="an ignored field"),
         _set(0, t="dip", di=["acme:gaid"]),
+        _set(1, t=["ixn"]),
     ],
     ids=["events-not-list", "no-events", "event-not-map", "sn", "second-inception",
          "no-inception", "seal-no-d", "seals-not-list", "said", "keys", "unknown-delegator",
-         "extra-field", "delegator-not-text"],
+         "extra-field", "delegator-not-text", "ilk-not-text"],
 )
 def test_a_facade_replay_refuses_every_edit_it_can_detect(edit):
     aid, log = _exported()

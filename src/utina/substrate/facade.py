@@ -252,6 +252,8 @@ class FacadeSubstrate:
             if event.get("s") != format(sn, "x"):
                 raise refuse(f"event {sn} carries sequence number {event.get('s')!r}")
             ilk = event.get("t")
+            if not isinstance(ilk, str):
+                raise refuse(f"event {sn} names its ilk as {ilk!r}")
             if (sn == 0) != (ilk in ("icp", "dip")) or ilk not in _KEY_EVENT_FIELDS:
                 raise refuse(f"event {sn} is a {ilk!r} where the log does not allow one")
             if set(event) != _KEY_EVENT_FIELDS[str(ilk)]:

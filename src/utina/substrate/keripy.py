@@ -318,7 +318,7 @@ class KeripySubstrate:
             raise KEL_UNVERIFIABLE(
                 aid=aid, problem=f"it is longer than {MAX_KEL_TEXT} characters"
             )
-        held = set(self._hby.kevers)
+        held = self._key_states(exclude=aid)
         try:
             messages = json.loads(exported)
             if not isinstance(messages, list) or not messages:
@@ -332,7 +332,11 @@ class KeripySubstrate:
                 kevery.processEscrows()
         except Exception:
             raise KEL_UNVERIFIABLE(aid=aid, problem="it is not an exported key log") from None
-        smuggled = sorted(set(self._hby.kevers) - held - {aid})
+        smuggled = sorted(
+            pre
+            for pre, state in self._key_states(exclude=aid).items()
+            if held.get(pre) != state
+        )
         if smuggled:
             raise KEL_UNVERIFIABLE(
                 aid=aid, problem=f"it also carries the key state of {', '.join(smuggled)}"
@@ -579,6 +583,19 @@ class KeripySubstrate:
         return bool(verified)
 
     # -- internals ------------------------------------------------------------
+
+    def _key_states(self, *, exclude: AID) -> dict[str, tuple[int, str]]:
+        """Every held identifier but ``exclude``, with its latest event's number and SAID.
+
+        Compared before and after a replay, so that a log presented as one
+        identifier's cannot move any other's key state — whether it adds an
+        identifier or extends one this substrate already held.
+        """
+        return {
+            pre: (kever.sn, kever.serder.said)
+            for pre, kever in self._hby.kevers.items()
+            if pre != exclude
+        }
 
     def _require_kever(self, aid: AID) -> None:
         if aid not in self._hby.kevers:
