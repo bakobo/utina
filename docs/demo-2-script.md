@@ -99,6 +99,8 @@ Every amending enactment carries a declared **disturbance set**: the pending que
 
 E = Endorsed, P = Pending, D = Declined. "Ground it must carry" is asserted by the oracle, not just the verdict — a finding that reaches the right value without its ground fails the row (`this.i` @cl1grd, @ppnadi).
 
+**Every beat coordinate below is a certification's, not an endorsement's.** Acme's law names a certification schema from inception, so an act at unity is *pending* until the domain admits a tally for it (`this.i` @2e2dncfe). The beat labels therefore mark the moment each decision became consequential rather than the moment its last vote was cast — which is what the beats were always about, and is now what the record says.
+
 ### Act I — law is computed, not asserted
 
 **All six beats are the recorded opener.** Full screen density, `--substrate keripy`, and it closes on `tools/read-keri-log.py`.
@@ -106,7 +108,7 @@ E = Endorsed, P = Pending, D = Declined. "Ground it must carry" is asserted by t
 | # | Question | Clause | Slots | Sum | Expected | Ground it must carry | demo-1 |
 |---|---|---|---|---|---|---|---|
 | 1 | `law --at inception` | — | — | — | **the Constitution** | three clauses with their SAIDs, their operators, their slots and weights; the pinned dossier-semantics digest | prologue |
-| 2 | Open a bank account | A1 | Marta E, Dev E | 1.0 | **affirmed** | clause A1 + both endorsement SAIDs | D1 |
+| 2 | Open a bank account | A1 | Marta E, Dev E | 1.0 | **affirmed** | clause A1 + both endorsement SAIDs, and the domain's certification admitting the tally — the coordinate D1 names is the certification's, not Dev's endorsement | D1 |
 | 3 | Hire a VP of Sales | A1 | Marta E, Dev P | 0.5 | **pending** | typed requirement naming Dev's slot: required schema, expected issuer, citing clause. Species `absent` | D2 |
 | 4 | Sign the office lease | A1 | Marta E, Dev **D** | 0.5 | **defeated** | Dev's declination SAID + clause A1; unity unreachable | D3 |
 | 5 | Release escrowed founder equity | A3 | Marta E, Dev P | 0.5 | **pending** | typed requirement naming Dev's slot under A3. Species `absent` | new |
@@ -120,15 +122,15 @@ Beats 3 and 5 are deliberately left pending. They are Act II's material.
 
 | # | Question | Clause | Slots | Sum | Expected | Ground it must carry |
 |---|---|---|---|---|---|---|
-| 7 | Seat the board (the amendment itself) | **A2** | Marta E, Dev E | 1.0 | **affirmed** | judged under the law it replaces; the delegating seal's coordinate in Acme's KEL; the `dip` in seat 3's KEL; the seat credential's issuance event in Acme's registry; the declared disturbance set `{hire-vp-sales}` |
+| 7 | Seat the board (the amendment itself) | **A2** | Marta E, Dev E | 1.0 | **affirmed** | judged under the law it replaces; the certification that admitted its tally, which is also where the board law TAKES FORCE (`this.i` @pv7a6dhc); the delegating seal's coordinate in Acme's KEL; the `dip` in seat 3's KEL; the seat credential's issuance event in Acme's registry; the declared disturbance set `{hire-vp-sales}` |
 | 8 | `seat nina-board-seat-3,6` | — | — | — | **two bindings** | KERI: Acme's delegating seal + seat 3's `dip` naming Acme in `di`. ACDC: the seat credential, issuee = seat 3, issued under Acme's registry, registry state `issued` |
 | 9 | Hire a VP of Sales, re-asked after the amendment | A1 **repealed** | — | — | **pending** | species `expired/abandoned`; ground is **the amending enactment's SAID**; cure is re-presentation |
 | 10 | Release escrowed founder equity, re-asked after the amendment | A3 | Marta E, Dev P | 0.5 | **pending** | species `absent`, same requirement as beat 5; the three-part stability check shown: same clause SAID, same requirement space, same pinned lens |
-| 11 | Release escrowed founder equity, after Dev endorses it | A3 | Marta E, Dev E | 1.0 | **affirmed** | clause A3 + both endorsement SAIDs — cured across an amendment, under the clause that never moved |
-| 12 | Approve the annual budget | B1 | Marta E, seat 3 E, Dev P | 1.0 | **affirmed** | unity reached though one party never acted; seat 3's endorsement carries its DI2I edge to the seat credential |
+| 11 | Release escrowed founder equity, after Dev endorses it | A3 | Marta E, Dev E | 1.0 | **affirmed** | clause A3 + both endorsement SAIDs and the certification — cured across an amendment, under the clause that never moved |
+| 12 | Approve the annual budget | B1 | Marta E, seat 3 E, Dev P | 1.0 | **affirmed** | unity reached though one party never acted, and certified; seat 3's endorsement carries its DI2I edge to the seat credential |
 | 13 | Approve the Q2 forecast, after Dev declines | B1 | Marta E, Dev **D**, seat 3 P | 0.5 | **pending** | seat 3's slot still reachable |
 | 14 | Quinn endorses the Q2 forecast without a seat | B1 | — | — | **credential verification fails** | the DI2I edge names a seat credential whose issuee Quinn is not; rejected by edge validation *before any fold runs*. The fold's answer to beat 13's question is then recomputed and is unchanged |
-| 15 | Nina endorses from her delegated device | B1 | Marta E, Dev **D**, seat 3 **E** via device | 1.0 | **affirmed** | DI2I validates: the issuer is a delegated AID of the issuee. Same slot, different key, no law change |
+| 15 | Nina endorses from her delegated device | B1 | Marta E, Dev **D**, seat 3 **E** via device | 1.0 | **affirmed** | DI2I validates: the issuer is a delegated AID of the issuee. Same slot, different key, no law change. Certified at the coordinate it carried |
 
 ### Act III — revocation, and what it cannot do
 
@@ -137,7 +139,7 @@ Beats 3 and 5 are deliberately left pending. They are Act II's material.
 | # | Question | Clause | Slots | Sum | Expected | Ground it must carry |
 |---|---|---|---|---|---|---|
 | 16 | `registry --at revocation` | — | — | — | **registry state** | a `rev` event in Acme's governance registry against the seat credential; seat 3's KEL untouched and its keys still valid |
-| 17 | Approve the Q3 budget (a new question, after the revocation) | B1 | Marta E, seat 3 **unfilled**, Dev P | 0.5 | **pending** | typed requirement naming seat 3's slot: required schema, expected issuer, citing clause |
+| 17 | Approve the Q3 budget (a new question, after the revocation) | B1 | Marta E, seat 3 **unfilled**, Dev P | 0.5 | **pending** | typed requirement naming the OFFICE `board-seat-3` rather than any identifier, since the law slots a seat and a credential fills it (`this.i` @ftjpdph5): required schema, expected issuer, citing clause |
 | 18 | Re-ask beat 12's question at beat 12's position | B1 | as beat 12 | 1.0 | **affirmed** | byte-identical to beat 12's finding, ground included |
 | 19 | Re-ask beat 12's question at a position **after** the revocation | B1 | as beat 12 | 1.0 | **affirmed** | the credential stood at that position; prospective revocation falsifies no cited ground |
 | 20 | Re-ask beat 12's question over a bundle containing duplicity at seat 3's signing position | B1 | — | — | **pending**, species `unresolved-conflict` | the observation that poisoned the voice, and the cure only an owned act of seat 3's discharges. Ruled 2026-09-15 (`this.i` @f3pmxu3x): the convict's role dispatches the edge (`:1689-1694`), and seat 3 is a **cited third party** here — the subject is the budget act, committed by the gAID — so the taint succession fires rather than self-conviction |
@@ -149,7 +151,7 @@ Beats 3 and 5 are deliberately left pending. They are Act II's material.
 | # | Question | Clause | Slots | Sum | Expected | Ground it must carry |
 |---|---|---|---|---|---|---|
 | 21 | Approve the capital plan | B1 | Marta E, Dev P, seat 3 P | 0.5 | **pending** | a second question pending under B1, alongside beat 17's |
-| 22 | Lower the ordinary-acts bar (the second amendment) | B2 | Marta E, Dev E, seat 3 E | 1.0 | **affirmed** | unanimous and entirely lawful, which is the setup: the cost in beat 23 is the cost of a *good* amendment, not of anyone cheating |
+| 22 | Lower the ordinary-acts bar (the second amendment) | B2 | Marta E, Dev E, seat 3 E | 1.0 | **affirmed** | unanimous, certified, and entirely lawful, which is the setup: the cost in beat 23 is the cost of a *good* amendment, not of anyone cheating |
 | 23 | `disturbance <the second amendment>` | — | — | — | *(a report, not a verdict)* | the three acts in flight the amendment ended: the retabled budget, the capital plan, the Q3 budget. Nobody voted them down and none can now finish. Any stranger holding the log computes the same list |
 
 ### Coda
