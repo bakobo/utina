@@ -347,7 +347,7 @@ the answer; that inference is ours, not the document's.
 
 ---
 
-## Q9 — The refusal record has no committed form *(convergent; deliberately open)*
+## Q9 — The refusal record has no committed form *(convergent decision; DIVERGENT record)*
 
 *Was QC5 in the codomain commission's register.*
 
