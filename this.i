@@ -2111,3 +2111,35 @@ Make Custos's replayable governance useful to a real organization = goal:
         facade an identifier is its alias rather than a digest of its inception, so there
         "inside the bytes the identity digests" is simulated. The facade says so; keripy makes it
         true.
+
+    An enactment claims a predecessor, and the earliest lawful claimant is the succession = decision:
+      id: fougolzt
+      why: >
+        custos-4.2.md:3043-3050: "Eligibility is latest-unsuperseded: an enactment is a lawful
+        succession only under the Constitution in force at its own coordinate, and a
+        ratification whose cited predecessor was already superseded at that coordinate confers
+        nothing, however well signed. Where two enactments claim the same predecessor, the GEL's
+        committed order rules: the earlier lawful enactment is the succession, and the later
+        travels as evidence." utina's enactments cited nothing, so the law fold resolved a fork
+        to the last edition in canonical order, which it confessed was an artifact (tick 5edf).
+        Chose three rules. An enactment may cite its predecessor in "prior", the identifier of
+        the law event whose edition it amends; the constructor commits one when the domain
+        supplies it, and Acme's amendments do. An enactment that cites a predecessor which is
+        not the edition in force at its own coordinate confers nothing. An enactment that cites
+        none claims the edition in force at its own coordinate, because §18 never obliges the
+        field (Q33) and a rule that refused every uncited enactment would be a reading the text
+        does not make. Then the law in force at a position is a chain from the founding law:
+        from each edition, the succession is the earliest enactment in GEL order that claims it,
+        is eligible, and has taken force by that position.
+        The consequence worth stating, because it is where affirmation-keyed force (Q33,
+        @xhtvuxnc) meets the fork rule: if two enactments claim one predecessor and the later
+        is affirmed first, the later is in force until the earlier is affirmed, and from then
+        the earlier is. Each position is computed from its own bundle and nothing earlier is
+        rewritten — the reversal is a new fact (1741-1742) — but the law does move twice. The
+        alternative, holding the later enactment out of force while an earlier claimant might
+        still be affirmed, makes a position's law depend on events that have not happened.
+        Rejected sealing a predecessor lens into the anchoring rotation, which another engine
+        does: the enactment's own SAID already digests its "prior", and the rotation seals that
+        SAID, so a second seal would commit the same fact twice. The succession record 3040-3042
+        asks for — predecessor, ratifying enactment, effectuation coordinate — is offered as
+        Constitution.succession, derived from the GEL alone.
