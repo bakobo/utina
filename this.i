@@ -1645,15 +1645,24 @@ Make Custos's replayable governance useful to a real organization = goal:
         defeated citations: two verifiers holding the same bundle emit the same finding down to
         the byte. Where there is no omitted declination the contradiction is internal and the
         package alone names it, which is the shape `Proof.pair` was already built to allow.
-        TAINT IS CHECKED FIRST and this is the reading a maintainer may flip. A bearing
-        conviction is key-tier, decided by KERI's superseding-recovery calculus rather than by
-        anything Acme committed (@yrkrqj's consequence, argued at the duplicity node), and a
-        party convicted of speaking with two voices poisons every artifact they touched including
-        a certification. Naming the duplicity pair is then the more informative proof. The
-        rebuttal is real: the CITED arm of taint returns pending with a cure path, and offering a
-        cure path for a record that convicts itself tells the reader the wrong thing to go and
-        do. It is not exercised today because the fixture carries no beat with both, and if one
-        is ever built this order is the thing to re-argue.
+        THE ORDER AGAINST TAINT SPLITS THE TWO ARMS, and the split is the answer rather than a
+        compromise. Taint's SUBJECT arm goes first: a bearing conviction is key-tier, decided by
+        KERI's superseding-recovery calculus rather than by anything Acme committed (@yrkrqj's
+        consequence, argued at the duplicity node), and a party convicted of speaking with two
+        voices poisons every artifact they touched including a certification, so naming the
+        duplicity pair is the more informative proof. The false certification goes second.
+        Taint's CITED arm goes LAST, because what it returns is pending with a cure — an act
+        owned by the party whose conflict it is — and no act by anybody cures a record that
+        contradicts itself. Offering that cure path would tell the reader the wrong thing to go
+        and do.
+        This reverses the first draft of this node, which put all of taint first and recorded
+        the cure-path objection as an unexercised rebuttal. The session in bakobo:10 read that
+        rebuttal and pointed out it was not a rebuttal but the argument — by Q38's own reasoning,
+        a conviction outranks a pending whatever tier it came from, and the SUBJECT/CITED split
+        is what lets both claims hold at once. Their own fix landed alongside it: `_tainted`
+        returned on the FIRST convicted party it met, so an earlier cited taint hid a later
+        subject conviction (@zmlvpkhl). Recorded here because the first draft is on the record
+        and a reader of it should know it was argued down rather than drifted from.
         WHAT THIS DOES NOT BUILD. `enact` still refuses to construct an unsupported
         certification, so a false one enters only from a hand-built log or a foreign corpus. The
         fixture beat that shows one (M10) needs a deliberate escape hatch in the constructor, and

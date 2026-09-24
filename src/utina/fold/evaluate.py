@@ -200,8 +200,14 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
 
     uncertified = _uncertified(corpus, law, subject, clause, at)
 
+    # The two convictions, and one pending, in the order their grounds outrank each
+    # other. A bearing conviction of the SUBJECT is key-tier and decided by KERI's own
+    # superseding-recovery calculus, so it goes first. A false certification goes next.
+    # The taint's PENDING arm goes last, because it names a cure — an act owned by the
+    # party whose conflict it is — and a cure path cannot rescue a question whose own
+    # record convicts it (this.i @7shpbven, revised after bakobo:10's argument).
     tainted = _tainted(corpus, subject, clause, classified, at)
-    if tainted is not None:
+    if isinstance(tainted, SelfConvicted):
         return tainted
 
     # Before the threshold dispatch, and that placement is the whole point. A
@@ -211,6 +217,9 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
     falsified = _falsified(corpus, law, subject, clause, at)
     if falsified is not None:
         return falsified
+
+    if tainted is not None:
+        return tainted
 
     if clause.group.satisfied(held):
         # The threshold is met and that is not the same as the act being

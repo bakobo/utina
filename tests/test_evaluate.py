@@ -1152,6 +1152,27 @@ def test_the_record_is_read_at_the_certifications_coordinate_not_the_questions()
     assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), SelfConvicted)
 
 
+def test_a_false_certification_convicts_over_a_cited_partys_taint():
+    """The precedence Q38's own argument settles, applied across the two machineries.
+
+    A taint at a cited third party returns pending naming a cure — an act owned by
+    the party whose conflict it is. That cure cannot rescue a question whose record
+    contradicts itself, so the conviction outranks it. Taint's own SUBJECT arm still
+    goes first, because a bearing conviction is key-tier and says more about what went
+    wrong (``this.i`` @7shpbven, revised after bakobo:10's argument).
+    """
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+    observed(log, DEV)
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == log.said("cert")
+
+
 def test_a_domain_requiring_no_certification_is_not_convicted_by_a_stray_one():
     """Where a clause stands on its arithmetic, a tally is not load-bearing.
 
