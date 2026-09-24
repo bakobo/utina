@@ -418,20 +418,6 @@ def disturbed_by(corpus: Corpus, enactment: Event, at: Position) -> tuple[SAID, 
     return tuple(sorted(disturbed))
 
 
-def _certification_schema(law: Constitution, clause: Clause) -> SAID | None:
-    """What acts under ``clause`` must be certified against, or ``None`` for nothing.
-
-    The clause decides and the law is the default, because how much ceremony a
-    decision needs is a fact about the KIND of decision: minuting a board resolution
-    and approving a routine purchase are not the same act wearing different clothes.
-    A clause may be silent and inherit, may pin its own schema, or may say its acts
-    stand on their arithmetic (this.i @2e2dncfe).
-    """
-    if clause.exempt_from_certification:
-        return None
-    return clause.certification if clause.certification is not None else law.certification
-
-
 def _falsified(
     corpus: Corpus,
     law: Constitution,
@@ -450,7 +436,7 @@ def _falsified(
 
     **Gated on the law wanting one at all.** Where a clause stands on its arithmetic, a
     certification is not load-bearing and an unsupported one is an irrelevant event
-    rather than a contradiction of anything. The gate is ``_certification_schema``'s,
+    rather than a contradiction of anything. The gate is ``certification.schema_for``'s,
     the same one that decides whether an absent certification is outstanding, so the
     two halves of certification cannot disagree about whether this domain has any.
 
@@ -458,7 +444,7 @@ def _falsified(
     where it does not, which is the distinction ``Proof.pair`` was built for: a reader
     holding the finding sees what contradicted what without fetching the package.
     """
-    if _certification_schema(law, clause) is None:
+    if certification.schema_for(clause, law.certification) is None:
         return None
     found = certification.contradicting(corpus, clause.group, subject.said, at)
     if found is None:
@@ -488,7 +474,7 @@ def _uncertified(
     requirement the finding can name. Where no committed act underlies the question
     there is nothing to certify and nothing outstanding.
     """
-    schema = _certification_schema(law, clause)
+    schema = certification.schema_for(clause, law.certification)
     if schema is None:
         return None
     if certification.certifying(corpus, subject.said, at) is not None:

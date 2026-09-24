@@ -39,6 +39,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
 
+from utina.fold.clause import Clause
 from utina.fold.corpus import Corpus, Event
 from utina.fold.group import AID, Disposition, Group
 from utina.fold.slots import SlotDisposition, classify, credential, declinations
@@ -53,6 +54,7 @@ __all__ = [
     "counted_by",
     "reached_by",
     "required_by",
+    "schema_for",
 ]
 
 CERTIFICATION_KIND = "certification"
@@ -74,6 +76,26 @@ def required_by(law: Mapping[str, object]) -> SAID | None:
     """
     named = law.get(REQUIRES_FIELD)
     return named if isinstance(named, str) and named else None
+
+
+def schema_for(clause: Clause, default: SAID | None) -> SAID | None:
+    """What acts under ``clause`` must be certified against, or ``None`` for nothing.
+
+    The clause decides and the law is the default, because how much ceremony a decision
+    needs is a fact about the KIND of decision: minuting a board resolution and
+    approving a routine purchase are not the same act wearing different clothes. A
+    clause may be silent and inherit, may pin its own schema, or may say its acts stand
+    on their arithmetic (``this.i`` @2e2dncfe).
+
+    Here rather than in the evaluator because the law fold asks it too — an edition
+    takes force where its enactment was certified (``this.i`` @pv7a6dhc) — and two
+    readings of "does this domain certify at all" would drift. It takes the law's
+    default rather than a ``Constitution`` because ``constitution`` imports this module
+    and the reverse would be a cycle.
+    """
+    if clause.exempt_from_certification:
+        return None
+    return clause.certification if clause.certification is not None else default
 
 
 def certifying(corpus: Corpus, said: SAID, upto: Position) -> Event | None:
