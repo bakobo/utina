@@ -281,6 +281,29 @@ Make Custos's replayable governance useful to a real organization = goal:
         `authority` is wrong for three of the four defeat kinds; the field is documented at the
         point of default and the pin is logged as a divergence.
 
+    A requirement set is one element per deduplication key, ordered by that key = decision:
+      id: fdhqffc3
+      why: >
+        The element grew two fields past the four the order is ruled over — schema (Q17) and the
+        ground that closed a cure path (@waihlx27) — and the dedup key sees all six, because
+        custos-4.2.md:1652-1656 says it "sees every field the element carries". Two elements
+        differing only in schema or ground therefore survive deduplication as two, and share one
+        four-field sort key. Until this decision the two halves disagreed about them: the builder
+        kept both and sorted by the four-field key, so their relative order was whatever order
+        they arrived in, and Pending then rejected them as duplicates because its uniqueness
+        check ran over the four-field key. Found by an outside review of the codomain on
+        2026-09-24; unreachable today, because a clause slots each endorser once under one schema.
+        Chose to order by the full dedup key and to check uniqueness over it, so the six-field
+        key breaks ties the four-field order leaves open. The four-field order is a prefix of it,
+        so every set whose sort keys are already distinct — every set utina produces today — is
+        byte-identical before and after. Rejected refusing two elements with one sort key,
+        because the text says they are different elements and a refusal would make a pending
+        finding unconstructible on a record that is merely unusual. Rejected dropping schema and
+        ground from the dedup key, back to four fields, because that would merge two elements that
+        tell a party different things. Tradeoff accepted: the tie-break is utina's reading,
+        not the text's, since :1650-1651 rules the order over exactly four fields. Logged as an
+        amendment to Q17.
+
     Derive the canonical order from the coordinate and the identifier alone = decision:
       id: qv7m3d
       why: >
