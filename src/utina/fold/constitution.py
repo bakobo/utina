@@ -336,11 +336,9 @@ class Constitution:
         coordinate its own judgment reached unity, because it is judged — under
         the law in force at its own coordinate, which is the law it replaces.
 
-        Where more than one edition is in force the last in canonical order wins,
-        as it always has. That resolves a succession fork, and it is an artifact
-        of the walk rather than a reading: §17 rules the fork by the predecessor
-        each enactment cites (3047-3050) and utina's enactments cite none, so the
-        case is left undecided and every record utina builds succeeds linearly.
+        Which enactment succeeds an edition is §17's rule rather than the walk's:
+        the earliest eligible claimant in GEL order that has taken force
+        (3043-3050, :func:`_chain`, this.i @fougolzt).
         """
         edition: tuple[Clause, ...] = ()
         source = ""

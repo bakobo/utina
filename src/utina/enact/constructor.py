@@ -38,6 +38,7 @@ from .errors import (
     DOMAIN_INCEPTED,
     DOMAIN_UNINCEPTED,
     EDGE_UNVALIDATED,
+    PREDECESSOR_UNKNOWN,
     RECORD_UNRESUMABLE,
     REGISTRY_UNOPENED,
     SIGNATURE_UNVERIFIABLE,
@@ -231,7 +232,11 @@ class Constructor:
         return event
 
     def enact_amendment(
-        self, law: Mapping[str, object], *, act: str | None = None
+        self,
+        law: Mapping[str, object],
+        *,
+        act: str | None = None,
+        prior: SAID | None = None,
     ) -> Event:
         """Commit a successor law, anchored in an establishment event.
 
@@ -249,6 +254,14 @@ class Constructor:
         none commits none, and the fold then refuses to appraise the enactment,
         which is the honest answer rather than a guessed one.
 
+        ``prior`` is the law event whose edition this amends, cited so that the
+        fold can apply the succession rule of ``custos-4.2.md:3043-3050`` — an
+        enactment citing an edition that is not the one in force at its own
+        coordinate confers nothing, and of two claiming one predecessor the
+        earlier lawful one is the succession (this.i @fougolzt). Which edition is
+        in force is the fold's question, so the domain supplies the citation; a
+        citation the record does not carry is refused here rather than committed.
+
         **An amendment declares nothing about what it ends** (this.i @ow6dzro4).
         It used to commit a ``disturbs`` field naming the pending questions its
         change would kill, and the fold convicted it where that list differed
@@ -262,6 +275,10 @@ class Constructor:
         body: dict[str, object] = {"t": "enact", "i": self.gaid, "law": law}
         if act is not None:
             body["act"] = act
+        if prior is not None:
+            if prior not in self._saids:
+                raise PREDECESSOR_UNKNOWN(gaid=self.gaid, prior=prior)
+            body["prior"] = prior
         return self._emit("enactment", body, self.gaid, establishment=True)
 
     def open_registry(self, alias: str, *, controller: AID | None = None) -> SAID:

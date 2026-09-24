@@ -835,3 +835,21 @@ def test_an_event_the_key_log_refused_is_not_recorded(substrate, values):
     assert [event.kind for event in constructor.emitted] == ["inception"]
     refusing.refuse = False
     assert constructor.propose("open-bank-account").position.seq == 1
+
+
+def test_an_amendment_commits_the_predecessor_it_cites(founded):
+    """3036-3038: a successor is ratified "citing these bytes as predecessor"."""
+    inception = founded.emitted[0]
+    enactment = founded.enact_amendment(LAW, act="amend", prior=inception.said)
+    assert enactment.body["prior"] == inception.said
+
+
+def test_an_amendment_citing_nothing_commits_no_predecessor(founded):
+    assert "prior" not in founded.enact_amendment(LAW, act="amend").body
+
+
+def test_an_amendment_citing_a_predecessor_the_record_lacks_is_refused(founded):
+    with pytest.raises(BakoboError) as caught:
+        founded.enact_amendment(LAW, act="amend", prior="E" + "z" * 43)
+    assert caught.value.is_exactly("e.state.predecessor-unknown.f")
+    assert [event.kind for event in founded.emitted] == ["inception"]
