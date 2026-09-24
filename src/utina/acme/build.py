@@ -216,6 +216,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     budget = name(BUDGET, constructor.propose(BUDGET))
     marta_budget = constructor.endorse(marta, budget)
     seat_budget = constructor.endorse(seat3, budget, qualification=seat_credential)
+    name("seat-endorses-budget", seat_budget)
     tallied = certify(f"{BUDGET}-certified", budget, (marta_budget, HALF), (seat_budget, HALF))
     mark("d5", tallied)
 
@@ -265,6 +266,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # is what DI2I resolves against. Revoke either and the device stops filling
     # the slot at the next coordinate.
     signed = constructor.endorse(device, forecast, qualification=seat_credential)
+    name("device-endorses-forecast", signed)
     counted = certify(
         f"{Q2_FORECAST}-certified", forecast, (marta_forecast, HALF), (signed, HALF)
     )

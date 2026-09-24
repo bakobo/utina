@@ -24,7 +24,7 @@ pytest.importorskip(
     reason="the fold has no evaluate() yet — see docs/demo-script.md for what it owes",
 )
 
-from utina.acme import DEV, MARTA, SEAT
+from utina.acme import DEV, MARTA, SEAT, SEAT_OFFICE
 from utina.fold import Constitution, evaluate
 from utina.fold.finding import Affirmed, Defeated, Pending
 from utina.fold.question import Committed, Proposal
@@ -105,7 +105,7 @@ def test_d6_the_same_declination_under_three_slots_is_only_pending(acme):
     """The centerpiece, second half. Same signed no, opposite verdict."""
     finding = evaluate(acme.corpus, Proposal("approve-budget"), at=acme.at("d6"))
     assert isinstance(finding, Pending)
-    assert [element.endorser for element in finding.requirement] == [acme.aid(SEAT)]
+    assert [element.endorser for element in finding.requirement] == [SEAT_OFFICE]
 
 
 def test_d7_the_retained_amendment_bar_bites(acme):

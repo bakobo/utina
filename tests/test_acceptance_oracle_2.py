@@ -40,6 +40,7 @@ from utina.acme import (
     Q3_BUDGET,
     QUINN,
     SEAT,
+    SEAT_OFFICE,
 )
 from utina.cli.aliases import aliases_over
 from utina.cli.appraisal import held_by, registry_holdings
@@ -362,7 +363,7 @@ def test_b12_the_budget_carries_on_two_slots_of_three(acme):
     assert finding.clauses == ("B1",)
     assert len(finding.endorsements) == 2, "two of three slots, and no act of Dev's"
 
-    seats = acme.events[acme.at(AT[12]).seq]
+    seats = acme.corpus.event(acme.said("seat-endorses-budget"))
     assert seats.body["i"] == acme.aid(SEAT)
     assert seats.body["acdc"]["e"]["qp"]["o"] == DI2I
 
@@ -377,7 +378,7 @@ def test_b13_the_same_signed_no_is_only_pending_under_three_slots(acme):
     """
     finding = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[13]))
     assert isinstance(finding, Pending)
-    assert [element.endorser for element in finding.requirement] == [acme.aid(SEAT)]
+    assert [element.endorser for element in finding.requirement] == [SEAT_OFFICE]
     assert [element.clause for element in finding.requirement] == ["B1"]
     assert [element.species for element in finding.requirement] == [PendingSpecies.ABSENT]
 
@@ -418,7 +419,7 @@ def test_b14_an_unseated_endorser_fails_credential_verification_before_any_fold(
     # never heard about it.
     finding = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[13]))
     assert isinstance(finding, Pending)
-    assert [element.endorser for element in finding.requirement] == [acme.aid(SEAT)]
+    assert [element.endorser for element in finding.requirement] == [SEAT_OFFICE]
 
 
 def test_b15_the_delegated_device_fills_the_seats_slot(acme):
@@ -439,7 +440,7 @@ def test_b15_the_delegated_device_fills_the_seats_slot(acme):
     assert isinstance(finding, Affirmed)
     assert finding.clauses == ("B1",)
 
-    acting = acme.events[acme.at(AT[15]).seq]
+    acting = acme.corpus.event(acme.said("device-endorses-forecast"))
     assert acting.body["i"] == acme.aid(DEVICE), "the device signed, not the seat"
     assert acting.body["acdc"]["e"]["qp"]["o"] == DI2I
     seating = acme.events[acme.at("b8").seq]
@@ -575,7 +576,7 @@ def test_b17_a_new_question_after_the_revocation_is_pending(acme):
     finding = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[17]))
     assert isinstance(finding, Pending)
 
-    seat = next(one for one in finding.requirement if one.endorser == acme.aid(SEAT))
+    seat = next(one for one in finding.requirement if one.endorser == SEAT_OFFICE)
     assert seat.clause == "B1"
     assert seat.schema == ENDORSEMENT_SCHEMA
     assert seat.species is PendingSpecies.ABSENT
@@ -642,6 +643,9 @@ def test_b20_duplicity_at_a_cited_third_party_taints_the_voice(acme):
     assert [one.species for one in finding.requirement] == [
         PendingSpecies.UNRESOLVED_CONFLICT
     ]
+    # The PARTY, not the seat. A taint's cure is an act owned by whoever the conflict
+    # belongs to, and that is an identifier with keys rather than an office — which is
+    # the one place a requirement element names the holder and not the slot it filled.
     assert [one.endorser for one in finding.requirement] == [acme.aid(SEAT)]
     assert finding.requirement[0].ground == acme.events[acme.at(AT[20]).seq].said
 
@@ -703,7 +707,7 @@ def test_b21_a_second_question_is_pending_under_b1(acme):
     finding = evaluate(acme.corpus, Committed(acme.said(CAPITAL_PLAN)), at=acme.at(AT[21]))
     assert isinstance(finding, Pending)
     assert {one.clause for one in finding.requirement} == {"B1"}
-    assert {one.endorser for one in finding.requirement} == {acme.aid(DEV), acme.aid(SEAT)}
+    assert {one.endorser for one in finding.requirement} == {acme.aid(DEV), SEAT_OFFICE}
 
     q3 = evaluate(acme.corpus, Committed(acme.said(Q3_BUDGET)), at=acme.at(AT[21]))
     assert isinstance(q3, Pending), "and beat 17's is still pending beside it"
