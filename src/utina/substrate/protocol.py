@@ -400,6 +400,18 @@ class FoldValues(Protocol):
         """One committed event."""
         ...
 
-    def corpus(self, events: Sequence[Event]) -> Corpus:
-        """Committed evidence, which the fold will put in canonical order."""
+    def corpus(
+        self,
+        events: Sequence[Event],
+        *,
+        kel: Sequence[Mapping[str, object]] | None = None,
+        gaid: AID | None = None,
+    ) -> Corpus:
+        """Committed evidence, which the fold will put in canonical order.
+
+        Given the gAID's key log, the order and membership are derived from the
+        seals in it and checked (this.i @wsxwkwgv); without one, the events are
+        taken at the positions they carry, which is the door hand-built fold
+        fixtures use.
+        """
         ...

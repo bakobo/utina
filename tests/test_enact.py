@@ -63,7 +63,8 @@ def founded(constructor):
 def test_incepting_the_domain_commits_its_founding_law(constructor):
     event = constructor.incept_domain(LAW)
     assert event.kind == "inception"
-    assert event.body["law"] == LAW
+    assert {k: v for k, v in event.body["law"].items() if k not in ("gel", "d")} == LAW
+    assert event.body["law"]["gel"] == constructor.gel
     assert event.body["i"] == GAID
     assert event.position.seq == 0
 
@@ -183,6 +184,9 @@ def test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it(f
     verbs = {name for name in dir(founded) if not name.startswith("_")}
     assert verbs == {
         "anchoring_event",
+        "found",
+        "gel",
+        "key_events",
         "certify",
         "confer",
         "decline",
@@ -552,9 +556,19 @@ def test_the_anchor_the_constructor_reports_is_the_substrate_s_own(founded):
     )
 
 
-def test_an_unanchored_said_has_no_anchoring_event(founded):
+def test_every_gel_event_is_sealed_into_the_gaids_key_log(founded):
+    """1114-1120: each GEL event is sealed by the TEL discipline — an event seal
+    naming the GEL, the event's sequence number and its identifier — in an
+    interaction, since only an enactment moves the keys (this.i @wsxwkwgv)."""
     act = founded.propose("open-bank-account")
-    assert founded.anchoring_event(act.said) is None
+    last = founded.key_events[-1]
+    assert last["t"] == "ixn"
+    assert list(last["a"]) == [{"i": founded.gel, "s": "1", "d": act.said}]
+    assert founded.anchoring_event(act.said) == last["d"]
+
+
+def test_a_said_nothing_sealed_has_no_anchoring_event(founded):
+    assert founded.anchoring_event("E" + "z" * 43) is None
 
 
 # --- Fail closed on the substrate itself -------------------------------------

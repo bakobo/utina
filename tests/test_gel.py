@@ -16,9 +16,12 @@ from __future__ import annotations
 import pytest
 from bakobo.errors import BakoboError
 
+from utina.cli.world import RealValues
+from utina.enact import Constructor
 from utina.fold.corpus import Corpus, Event
 from utina.fold.gel import Genesis, anchored
 from utina.fold.triple import Position
+from utina.substrate.select import NAMES, substrate_named
 
 GAID = "Egaid" + "a" * 39
 GEL = "Egel" + "g" * 40
@@ -241,3 +244,66 @@ def test_two_different_events_under_one_identifier_are_still_refused():
 def test_a_hand_positioned_corpus_has_no_genesis_grade():
     """Corpus.load is the door fold unit tests use; it claims no anchoring."""
     assert Corpus.load([event(0)]).genesis is None
+
+
+# --- what the constructor writes, the fold admits -------------------------------
+
+LAW_BODY: dict[str, object] = {"clauses": []}
+
+
+@pytest.fixture(params=NAMES)
+def backend(request):
+    with substrate_named(request.param) as substrate:
+        yield substrate
+
+
+def admitted(constructor: Constructor) -> Corpus:
+    return anchored(constructor.emitted, constructor.key_events, gaid=constructor.gaid)
+
+
+def test_a_founded_domain_is_born_governed(backend):
+    """1079-1082: the gAID's inception seals the founding law's identifier."""
+    constructor = Constructor.found(backend, "acme:gaid", LAW_BODY, values=RealValues())
+    constructor.propose("hire")
+    inception = constructor.key_events[0]
+    law = constructor.emitted[0].body["law"]
+    assert {"d": law["d"]} in list(inception["a"])
+    assert law["gel"] == constructor.gel
+    corpus = admitted(constructor)
+    assert corpus.genesis is Genesis.BORN
+    assert [e.said for e in corpus.upto(Position(1))] == [e.said for e in constructor.emitted]
+
+
+def test_a_domain_incepted_bare_is_adopted(backend):
+    constructor = Constructor(backend, backend.incept("acme:gaid"), values=RealValues())
+    constructor.incept_domain(LAW_BODY)
+    assert admitted(constructor).genesis is Genesis.ADOPTED
+
+
+def test_an_enactment_the_constructor_writes_rides_a_rotation(backend):
+    constructor = Constructor.found(backend, "acme:gaid", LAW_BODY, values=RealValues())
+    enactment = constructor.enact_amendment(LAW_BODY, act="amend")
+    assert constructor.key_events[-1]["t"] == "rot"
+    assert constructor.anchoring_event(enactment.said) == constructor.key_events[-1]["d"]
+    assert len(admitted(constructor).upto(Position(1))) == 2
+
+
+def test_withholding_one_event_the_constructor_wrote_is_refused(backend):
+    constructor = Constructor.found(backend, "acme:gaid", LAW_BODY, values=RealValues())
+    constructor.propose("hire")
+    constructor.propose("lease")
+    events = list(constructor.emitted)
+    del events[1]
+    refused_by = pytest.raises(BakoboError)
+    with refused_by as raised:
+        anchored(events, constructor.key_events, gaid=constructor.gaid)
+    assert raised.value.is_exactly("e.state.gel-membership.f")
+
+
+def test_acme_folds_as_a_born_governed_domain_on_every_substrate(acme):
+    """The record the demo shows is admitted through the anchored door, and a
+    permuted arrival order is admitted to the same order (3099-3101)."""
+    assert acme.corpus.genesis is Genesis.BORN
+    permuted = acme.permuted_corpus(seed=7)
+    last = acme.values.position(len(acme.events) - 1)
+    assert [e.said for e in permuted.upto(last)] == [e.said for e in acme.corpus.upto(last)]
