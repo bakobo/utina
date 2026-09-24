@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from utina.fold.refusal import Refusal
+from utina.fold.refusal import Refusal, SealKind
 
 __all__ = [
     "DOSSIER",
@@ -92,6 +92,7 @@ def refusal_for(pinned: str | None) -> Refusal | None:
     """
     if pinned is None:
         return Refusal(
+            seal_kind=SealKind.DIGEST,
             missing="a semantics declaration naming the dossier specification by digest",
             detail=(
                 "This law's composition rule is expressed in an external semantics and the "
@@ -102,6 +103,7 @@ def refusal_for(pinned: str | None) -> Refusal | None:
         )
     if pinned not in RECOGNIZED:
         return Refusal(
+            seal_kind=SealKind.DIGEST,
             missing=f"an implementation of the semantics this law pins, {pinned[:16]}...",
             detail=(
                 "The law pins a revision of the dossier specification this engine does not "

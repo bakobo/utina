@@ -16,7 +16,7 @@ from __future__ import annotations
 import pytest
 
 from utina.fold import semantics
-from utina.fold.refusal import Refusal
+from utina.fold.refusal import Refusal, SealKind
 
 
 def test_a_law_that_pins_the_dossier_declares_its_digest():
@@ -54,6 +54,7 @@ def test_an_unpinned_semantics_is_refused_and_says_so():
     refusal = semantics.refusal_for(None)
 
     assert isinstance(refusal, Refusal)
+    assert refusal.seal_kind is SealKind.DIGEST  # @kr7j7d7l
     assert "semantics declaration" in refusal.missing
     assert "digest" in refusal.missing
 
@@ -64,6 +65,7 @@ def test_an_unrecognized_semantics_is_refused_and_names_what_it_pinned():
     refusal = semantics.refusal_for("e" * 64)
 
     assert isinstance(refusal, Refusal)
+    assert refusal.seal_kind is SealKind.DIGEST  # @kr7j7d7l
     assert "an implementation of the semantics this law pins" in refusal.missing
     assert "eeeeeeeeeeeeeeee" in refusal.missing, "and which one, so a reader can go and look"
 

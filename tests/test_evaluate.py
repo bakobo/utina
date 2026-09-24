@@ -39,7 +39,7 @@ from utina.fold.finding import (
     SelfConvicted,
 )
 from utina.fold.question import Committed, Proposal
-from utina.fold.refusal import Refusal
+from utina.fold.refusal import Refusal, SealKind
 from utina.fold.semantics import DOSSIER, DOSSIER_KEY, SEMANTICS_FIELD
 from utina.fold.triple import Position
 from utina.substrate import ENDORSEMENT_SCHEMA, GCD_SCHEMA
@@ -221,6 +221,7 @@ def test_an_act_no_clause_governs_is_refused(founded):
     outcome = evaluate(founded.corpus, Proposal("declare-dividend"), at=founded.now)
 
     assert isinstance(outcome, Refusal)
+    assert outcome.seal_kind is SealKind.COVENANT  # @kr7j7d7l
     assert "declare-dividend" in outcome.missing
     assert outcome.detail != ""
 
@@ -236,6 +237,7 @@ def test_a_question_about_bytes_nobody_committed_is_refused(founded):
     outcome = evaluate(founded.corpus, Committed("E-never-committed"), at=founded.now)
 
     assert isinstance(outcome, Refusal)
+    assert outcome.seal_kind is SealKind.EVENT  # @kr7j7d7l
     assert "E-never-committed" in outcome.missing
 
 
@@ -246,6 +248,7 @@ def test_a_question_about_an_act_committed_later_than_the_position_is_refused(fo
     outcome = evaluate(founded.corpus, Committed(founded.said("hire")), at=Position(0))
 
     assert isinstance(outcome, Refusal)
+    assert outcome.seal_kind is SealKind.EVENT  # @kr7j7d7l
 
 
 def test_a_question_about_bytes_that_claim_no_act_class_is_refused(founded):
@@ -261,6 +264,7 @@ def test_a_question_about_bytes_that_claim_no_act_class_is_refused(founded):
     outcome = evaluate(founded.corpus, Committed(endorsement), at=founded.now)
 
     assert isinstance(outcome, Refusal)
+    assert outcome.seal_kind is SealKind.COVENANT  # @kr7j7d7l
     assert "act class" in outcome.missing
 
 
@@ -1062,6 +1066,7 @@ def test_an_office_two_parties_hold_at_once_is_refused():
     outcome = evaluate(log.corpus, Committed(tabled), at=log.now)
 
     assert isinstance(outcome, Refusal)
+    assert outcome.seal_kind is SealKind.COVENANT  # @kr7j7d7l
     assert OFFICE in outcome.missing
     assert "Revoke one" in outcome.detail
 
