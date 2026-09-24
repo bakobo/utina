@@ -2111,3 +2111,73 @@ Make Custos's replayable governance useful to a real organization = goal:
         facade an identifier is its alias rather than a digest of its inception, so there
         "inside the bytes the identity digests" is simulated. The facade says so; keripy makes it
         true.
+
+    An enactment claims a predecessor, and the earliest lawful claimant is the succession = decision:
+      id: fougolzt
+      why: >
+        custos-4.2.md:3043-3050: "Eligibility is latest-unsuperseded: an enactment is a lawful
+        succession only under the Constitution in force at its own coordinate, and a
+        ratification whose cited predecessor was already superseded at that coordinate confers
+        nothing, however well signed. Where two enactments claim the same predecessor, the GEL's
+        committed order rules: the earlier lawful enactment is the succession, and the later
+        travels as evidence." utina's enactments cited nothing, so the law fold resolved a fork
+        to the last edition in canonical order, which it confessed was an artifact (tick 5edf).
+        Chose three rules. An enactment may cite its predecessor in "prior", the identifier of
+        the law event whose edition it amends; the constructor commits one when the domain
+        supplies it, and Acme's amendments do. An enactment that cites a predecessor which is
+        not the edition in force at its own coordinate confers nothing. An enactment that cites
+        none claims the edition in force at its own coordinate, because §18 never obliges the
+        field (Q33) and a rule that refused every uncited enactment would be a reading the text
+        does not make. Then the law in force at a position is a chain from the founding law:
+        from each edition, the succession is the earliest enactment in GEL order that claims it,
+        is eligible, and has taken force by that position.
+        The consequence worth stating, because it is where affirmation-keyed force (Q33,
+        @xhtvuxnc) meets the fork rule: if two enactments claim one predecessor and the later
+        is affirmed first, the later is in force until the earlier is affirmed, and from then
+        the earlier is. Each position is computed from its own bundle and nothing earlier is
+        rewritten — the reversal is a new fact (1741-1742) — but the law does move twice. The
+        alternative, holding the later enactment out of force while an earlier claimant might
+        still be affirmed, makes a position's law depend on events that have not happened.
+        Rejected sealing a predecessor lens into the anchoring rotation, which another engine
+        does: the enactment's own SAID already digests its "prior", and the rotation seals that
+        SAID, so a second seal would commit the same fact twice. The succession record 3040-3042
+        asks for — predecessor, ratifying enactment, effectuation coordinate — is offered as
+        Constitution.succession, derived from the GEL alone.
+
+    A record utina did not write is rebuilt, never trusted = decision:
+      id: k6agmgtn
+      why: >
+        utina could fold only what its own constructor wrote, in the same process, so it could
+        not serve as an oracle against any other engine's output — the largest limit an outside
+        comparison found (tick 6ofh). Custos's replay promise is that "any stranger holding the
+        logs" recomputes the same findings (29-34), and the stranger is the case utina could not
+        be.
+        Chose a serialized record — the gAID, the key logs of every party who signs, and the GEL
+        events with their signatures — and an ingestion path that admits it only by rebuilding
+        it in a fresh substrate. Each key log is replayed through the substrate's own verifier,
+        so key state is computed rather than read; each GEL event's identifier is re-derived from
+        its bytes; each event's signature, and each embedded credential's, is verified against
+        the key state its signer's replayed log establishes; and only then does fold/gel.py
+        derive order and membership from the gAID's replayed log. Any failure refuses the
+        record. The ingesting substrate never signs, incepts or rotates anything of its own.
+        Rejected folding the serialized events directly, which is what Corpus.load would do:
+        it trusts every identifier and signature it is handed, which is the posture this
+        decision exists to end for foreign records. Rejected a reader that imports keripy
+        outside the substrate, because tests/test_purity.py forbids it and the substrate is
+        where key state already lives. Tradeoff accepted: under the facade "replaying a key
+        log" means re-deriving every event's identifier and its key names from the fixed
+        seed, which catches tampering and nothing about custody; under keripy it is real.
+
+    A record that presents anything the fold does not examine is refused = decision:
+      id: gnviwwjc
+      why: >
+        Axiom 4's membership face turned inward (tick 4jcx): a fold that silently skips what it
+        does not understand has answered "I folded what I understood" to a caller who asked
+        "what does this record say". The ingestion path therefore refuses a record carrying a
+        field it does not read, an event of a kind no fold module reads, or a key log belonging
+        to nobody who signs, delegates or founds. Chose refusal over a warning, because a
+        warning is a proper subset of the record folded without a refusal, which 3178-3181
+        names a must-reject for membership and which is the same failure one level up.
+        Scoped to the ingestion door: the hand-positioned door fold unit tests use, and the
+        anchored door the constructor's own records take, admit only what the constructor
+        writes, and the kinds it writes are exactly the kinds the fold reads.

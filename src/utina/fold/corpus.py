@@ -83,6 +83,13 @@ class Corpus:
         """How the domain was founded, where the order was derived from its key
         log (``fold/gel.py``), and ``None`` for a corpus positioned by hand, which
         claims no anchoring at all."""
+        self.memo: dict[object, object] = {}
+        """Values computed from this corpus, keyed by whoever computed them.
+
+        A corpus never changes after construction, so anything a pure function
+        derives from it and a position can be kept here rather than derived again.
+        The law fold needs it: asking which law judged each enactment recurs, and
+        without a memo a long history of amendments costs exponential time."""
 
     @classmethod
     def load(cls, events: Iterable[Event], *, genesis: object | None = None) -> Corpus:

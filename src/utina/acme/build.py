@@ -135,7 +135,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # (this.i @ow6dzro4).
     seat = name(
         "seat-the-board",
-        constructor.enact_amendment(board_law(aids), act=AMEND),
+        constructor.enact_amendment(board_law(aids), act=AMEND, prior=saids["inception"]),
     )
     constructor.endorse(marta, seat)
     seated = constructor.endorse(dev, seat)
@@ -253,7 +253,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # not that somebody cheated, it is that changing a rule has casualties a
     # reader is owed sight of (this.i @ow6dzro4).
     lowered = name("lower-the-bar", constructor.enact_amendment(
-        lowered_law(aids), act=AMEND
+        lowered_law(aids), act=AMEND, prior=saids["seat-the-board"]
     ))
     constructor.endorse(marta, lowered)
     constructor.endorse(dev, lowered)

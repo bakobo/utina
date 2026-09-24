@@ -10,6 +10,7 @@ refusing to produce authority from anything unverifiable.
 
 from __future__ import annotations
 
+import json
 from fractions import Fraction
 
 import pytest
@@ -355,3 +356,69 @@ def test_a_malformed_seal_is_refused_before_anything_moves(seal, establishment):
         substrate.seal("acme:marta", (seal,), establishment=establishment)
     assert caught.value.is_exactly("e.input.seal-malformed.f")
     assert (substrate.key_events("acme:marta"), substrate._key_index["acme:marta"]) == before
+
+
+# --- the facade's replay re-derives every field it checks (@k6agmgtn) -----------
+
+
+def _exported() -> tuple[str, dict]:
+    writer = FacadeSubstrate()
+    writer.incept("acme:gaid")
+    writer.seal("acme:gaid", ({"i": "Egel", "s": "0", "d": "E" + "a" * 43},))
+    writer.rotate("acme:gaid", "E" + "b" * 43)
+    return "acme:gaid", json.loads(writer.export_kel("acme:gaid"))
+
+
+def _resaid(event: dict) -> dict:
+    return {**event, "d": FacadeSubstrate().said(event)}
+
+
+def _set(index: int, **fields: object):
+    def edit(log: dict) -> None:
+        log["events"][index] = _resaid({**log["events"][index], **fields})
+
+    return edit
+
+
+@pytest.mark.parametrize(
+    "edit",
+    [
+        lambda log: log.update(events="nope"),
+        lambda log: log.update(events=[]),
+        lambda log: log["events"].__setitem__(1, "nope"),
+        _set(1, s="7"),
+        _set(1, t="icp"),
+        _set(0, t="ixn"),
+        _set(1, a=[{}]),
+        _set(1, a="x"),
+        lambda log: log["events"].__setitem__(1, {**log["events"][1], "a": []}),
+        _set(2, k=["Ex"]),
+        _set(0, t="dip", di="acme:nobody"),
+        _set(1, note="an ignored field"),
+        _set(0, t="dip", di=["acme:gaid"]),
+        _set(1, t=["ixn"]),
+    ],
+    ids=["events-not-list", "no-events", "event-not-map", "sn", "second-inception",
+         "no-inception", "seal-no-d", "seals-not-list", "said", "keys", "unknown-delegator",
+         "extra-field", "delegator-not-text", "ilk-not-text"],
+)
+def test_a_facade_replay_refuses_every_edit_it_can_detect(edit):
+    aid, log = _exported()
+    edit(log)
+    with pytest.raises(BakoboError) as caught:
+        FacadeSubstrate().ingest_kel(aid, json.dumps(log))
+    assert caught.value.is_exactly("e.proof.kel-unverifiable.f")
+
+
+def test_a_facade_replay_refuses_a_delegation_its_delegator_never_sealed():
+    """A dip names its delegator; the delegator's replayed log has to agree."""
+    writer = FacadeSubstrate()
+    writer.incept("acme:gaid")
+    writer.incept("acme:seat3")
+    forged = writer.key_events("acme:seat3")[0]
+    forged = _resaid({**forged, "t": "dip", "di": "acme:gaid"})
+    reader = FacadeSubstrate()
+    reader.ingest_kel("acme:gaid", writer.export_kel("acme:gaid"))
+    with pytest.raises(BakoboError) as caught:
+        reader.ingest_kel("acme:seat3", json.dumps({"events": [forged]}))
+    assert caught.value.is_exactly("e.proof.kel-unverifiable.f")

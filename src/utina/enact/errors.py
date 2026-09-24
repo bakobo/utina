@@ -133,3 +133,15 @@ CERTIFICATION_UNSUPPORTED = ErrorCode(
         "cannot make a decision consequential that its own evidence does not carry."
     ),
 )
+
+PREDECESSOR_UNKNOWN = ErrorCode(
+    code="e.state.predecessor-unknown.f",
+    title="This record carries no law event by that identifier.",
+    detail=(
+        "An amendment of {gaid}'s law cited {prior} as the edition it amends, and no event "
+        "committed to this record bears that identifier. A predecessor a stranger cannot "
+        "resolve from the record is not a citation the succession rule can apply."
+    ),
+    args=("gaid", "prior"),
+    hint="Cite the identifier of the inception or enactment whose law this amends.",
+)

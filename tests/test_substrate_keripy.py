@@ -226,3 +226,44 @@ def test_a_credential_whose_signature_will_not_verify_is_never_returned(keripy, 
     with pytest.raises(BakoboError) as caught:
         endorsement_acdc(keripy, marta)
     assert caught.value.code == "e.proof.acdc-sig.f"
+
+
+def test_a_key_log_that_smuggles_in_another_identifier_is_refused():
+    """One message carrying two identifiers' inceptions would leave key state for
+    the second behind, verified against nothing the record presented as its log."""
+    import json
+
+    from bakobo.errors import BakoboError
+
+    from utina.substrate.keripy import KeripySubstrate
+
+    with KeripySubstrate() as writer, KeripySubstrate() as reader:
+        gaid = writer.incept("acme:gaid")
+        other = writer.incept("acme:other")
+        (own,) = json.loads(writer.export_kel(gaid))
+        (smuggled,) = json.loads(writer.export_kel(other))
+        with pytest.raises(BakoboError) as raised:
+            reader.ingest_kel(gaid, json.dumps([own + smuggled]))
+        assert raised.value.is_exactly("e.proof.kel-unverifiable.f")
+
+
+def test_a_key_log_that_extends_an_identifier_already_held_is_refused():
+    """Smuggling is not only adding an identifier: a message may carry an event for
+    one this substrate already replayed, and that would move its key state too."""
+    import json
+
+    from bakobo.errors import BakoboError
+
+    from utina.substrate.keripy import KeripySubstrate
+
+    with KeripySubstrate() as writer, KeripySubstrate() as reader:
+        other = writer.incept("acme:other")
+        other_log = json.loads(writer.export_kel(other))
+        reader.ingest_kel(other, json.dumps(other_log))
+        writer.seal(other, ({"i": "Egel", "s": "0", "d": "E" + "a" * 43},))
+        extension = json.loads(writer.export_kel(other))[1]
+        gaid = writer.incept("acme:gaid")
+        (own,) = json.loads(writer.export_kel(gaid))
+        with pytest.raises(BakoboError) as raised:
+            reader.ingest_kel(gaid, json.dumps([own + extension]))
+        assert raised.value.is_exactly("e.proof.kel-unverifiable.f")

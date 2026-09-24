@@ -177,6 +177,33 @@ class Substrate(Protocol):
         """
         ...
 
+    def verify_acdc(self, sad: Mapping[str, object], signature: str) -> bool:
+        """Whether ``signature`` is the credential's issuer's over the credential.
+
+        The signature :meth:`issue_acdc` returned beside a credential. Total and
+        fail-closed, as :meth:`verify` is: an unknown issuer, a malformed
+        signature or an edited credential is ``False``.
+        """
+        ...
+
+    def export_kel(self, aid: AID) -> str:
+        """``aid``'s key log, with whatever this backend needs to verify it, as text.
+
+        Opaque above the seam, and meant for :meth:`ingest_kel` on another
+        instance of the same backend (this.i @k6agmgtn).
+        """
+        ...
+
+    def ingest_kel(self, aid: AID, exported: str) -> None:
+        """Replay a key log another instance exported, verifying every event.
+
+        Afterwards this substrate holds ``aid``'s key state as the log computes
+        it, so :meth:`verify` and :meth:`key_events` answer for it. Refused
+        unless every event verifies and is accepted: a partly accepted log is a
+        proper subset of the key state it claims.
+        """
+        ...
+
     def key_events(self, aid: AID) -> tuple[Mapping[str, object], ...]:
         """``aid``'s key log in order, each event as the mapping it commits.
 

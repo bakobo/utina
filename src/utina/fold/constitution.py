@@ -147,34 +147,83 @@ def _canonical_bytes(clauses: tuple[Clause, ...]) -> bytes:
     return _BLOCK.join(clause.sub_block() for clause in sorted(clauses, key=lambda c: c.said()))
 
 
-def _takes_force(corpus: Corpus, event: Event, position: Position) -> bool:
-    """Whether this event's law is in force at ``position``.
+#: Where an enactment cites the law event whose edition it amends (this.i @fougolzt).
+PRIOR_FIELD = "prior"
 
-    The asymmetry is the succession rule. Genesis is "constructed rather than
-    judged" (2272-2274), so the founding law binds at its own coordinate: there
-    is no predecessor to judge it under, and a domain ungoverned at its own
-    inception could never enact anything. Every later enactment is judged, so it
-    binds strictly after its own coordinate — "law never applies to itself at a
-    coordinate, only to its successor at the next" (2270-2272) — and only from
-    where that judgment reached unity, which is :func:`_effectuation`.
 
-    The coordinate test comes before the judgment, and it is load-bearing twice
-    over. Succession is never retroactive, so an enactment can never be in force
-    at or before its own coordinate whatever its endorsements say; and asking for
-    the law at an enactment's own coordinate is how :func:`_effectuation` finds
-    the law that judges it, so a rule that consulted the judgment first would
-    recur without descending.
+@dataclass(frozen=True)
+class Succession:
+    """One link of the succession record ``custos-4.2.md:3039-3042`` asks for:
+    the predecessor, the ratifying enactment, and the effectuation coordinate."""
+
+    predecessor: str
+    enactment: str
+    effectuation: Position
+
+
+def _chain(corpus: Corpus, position: Position) -> tuple[Event, tuple[Succession, ...]] | None:
+    """The law event in force at ``position``, and the succession that led to it.
+
+    Genesis is "constructed rather than judged" (2272-2274), so the founding law
+    binds at its own coordinate and is the chain's root. From each edition the
+    succession is the earliest enactment in GEL order that claims it, is eligible
+    under it, and has taken force by ``position`` — "the GEL's committed order
+    rules: the earlier lawful enactment is the succession, and the later travels
+    as evidence" (3047-3050, this.i @fougolzt). ``None`` before any founding law.
     """
-    if event.kind == INCEPTION_KIND:
-        return True
-    if event.kind != ENACTMENT_KIND:
-        return False
-    if not event.position < position:
-        return False
-    return _effectuation(corpus, event, position) is not None
+    committed = corpus.upto(position)
+    current = next((event for event in committed if event.kind == INCEPTION_KIND), None)
+    if current is None:
+        return None
+    links: list[Succession] = []
+    while True:
+        found = _successor(corpus, committed, current, position)
+        if found is None:
+            return current, tuple(links)
+        successor, effectuation = found
+        links.append(Succession(current.said, successor.said, effectuation))
+        current = successor
 
 
-def _effectuation(corpus: Corpus, enactment: Event, position: Position) -> Position | None:
+def _successor(
+    corpus: Corpus, committed: tuple[Event, ...], current: Event, position: Position
+) -> tuple[Event, Position] | None:
+    for event in committed:
+        # Strictly between: an enactment never binds at its own coordinate (2270-2272),
+        # and asking for the law there is how its judging law is found, so an
+        # enactment at ``position`` itself would recur without descending.
+        if event.kind != ENACTMENT_KIND or not current.position < event.position < position:
+            continue
+        cited = event.body.get(PRIOR_FIELD)
+        if cited is not None and cited != current.said:
+            continue
+        judging = Constitution.at(corpus, event.position)
+        if not _claims(event, current.said, judging):
+            continue
+        effectuation = _effectuation(corpus, event, position, judging)
+        if effectuation is not None:
+            return event, effectuation
+    return None
+
+
+def _claims(enactment: Event, predecessor: str, judging: Constitution) -> bool:
+    """Whether ``enactment`` is an eligible claimant of ``predecessor``'s edition.
+
+    Eligibility is latest-unsuperseded (3043-3047): the edition in force at the
+    enactment's own coordinate must be the one it claims. An enactment citing
+    none claims the edition in force at its coordinate, since §18 never obliges
+    the citation (Q33); one citing a different edition was already passed over
+    by :func:`_successor`, before its judging law was computed.
+    """
+    return judging.source == predecessor
+
+
+def _effectuation(
+    corpus: Corpus,
+    enactment: Event,
+    position: Position,
+    judging: Constitution,
+) -> Position | None:
     """The coordinate at which ``enactment`` reached unity, or ``None`` by ``position``.
 
     The first crossing, and the first is the only one that counts: a finding
@@ -195,7 +244,7 @@ def _effectuation(corpus: Corpus, enactment: Event, position: Position) -> Posit
     act = enactment.body.get(ACT_CLASS_FIELD)
     if not isinstance(act, str) or not act:
         return None
-    clause = _governing(Constitution.at(corpus, enactment.position).clauses, act)
+    clause = _governing(judging.clauses, act)
     if clause is None:
         return None
     committed = corpus.upto(position)
@@ -287,29 +336,45 @@ class Constitution:
         coordinate its own judgment reached unity, because it is judged — under
         the law in force at its own coordinate, which is the law it replaces.
 
-        Where more than one edition is in force the last in canonical order wins,
-        as it always has. That resolves a succession fork, and it is an artifact
-        of the walk rather than a reading: §17 rules the fork by the predecessor
-        each enactment cites (3047-3050) and utina's enactments cite none, so the
-        case is left undecided and every record utina builds succeeds linearly.
+        Which enactment succeeds an edition is §17's rule rather than the walk's:
+        the earliest eligible claimant in GEL order that has taken force
+        (3043-3050, :func:`_chain`, this.i @fougolzt).
         """
+        key = (cls, position.seq)
+        known = corpus.memo.get(key)
+        if isinstance(known, Constitution):
+            return known
         edition: tuple[Clause, ...] = ()
         source = ""
         pinned: str | None = None
         certifies_by: str | None = None
-        for event in corpus.upto(position):  # ~5edf
-            if _takes_force(corpus, event, position):
-                edition, pinned, certifies_by = _edition_committed_by(event)
-                source = event.said
+        chain = _chain(corpus, position)
+        if chain is not None:
+            edition, pinned, certifies_by = _edition_committed_by(chain[0])
+            source = chain[0].said
         _refuse_a_contradictory_edition(edition)
         head = hashlib.sha256(_canonical_bytes(edition)).hexdigest()
-        return cls(
+        constitution = cls(
             law_head=LawHead(said=head),
             clauses=edition,
             source=source,
             semantics=pinned,
             certification=certifies_by,
         )
+        corpus.memo[key] = constitution
+        return constitution
+
+    @classmethod
+    def succession(cls, corpus: Corpus, position: Position) -> tuple[Succession, ...]:
+        """The succession record at ``position``, derived from the GEL alone.
+
+        ``custos-4.2.md:3039-3042``: "predecessor digest, ratifying enactment, and
+        effectuation coordinate — SHALL be derivable from the GEL as a detached
+        record". Empty before any founding law, and where the founding law is
+        still in force.
+        """
+        chain = _chain(corpus, position)
+        return () if chain is None else chain[1]
 
     def clause(self, id: str) -> Clause:
         """The clause bearing ``id``, or a refusal that it is not in force here."""

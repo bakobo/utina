@@ -664,6 +664,75 @@ def test_a_self_incepted_identifier_has_no_delegator(conformant, marta):
     assert conformant.delegator_of("E" + "z" * 43) is None
 
 
+# --- export_kel and ingest_kel: a key log another instance can replay (@k6agmgtn) --
+
+
+def _written(substrate):
+    """A gAID that sealed, rotated and delegated, and a signature made along the way."""
+    gaid = substrate.incept("acme:gaid", seals=(LOG,))
+    substrate.seal(gaid, (event_seal(0, "E" + "a" * 43),))
+    early = substrate.sign(gaid, BODY)
+    substrate.rotate(gaid, "E" + "c" * 43)
+    seat = substrate.delegate(gaid, "acme:seat3")
+    # A delegated log that goes on after its inception is the case that needs the
+    # replay to settle escrow message by message.
+    substrate.seal(seat, (event_seal(0, "E" + "d" * 43),))
+    return gaid, seat, early
+
+
+def test_a_replayed_key_log_computes_the_same_key_state(substrate_name):
+    with substrate_named(substrate_name) as writer, substrate_named(substrate_name) as reader:
+        gaid, seat, early = _written(writer)
+        late = writer.sign(gaid, BODY)
+        reader.ingest_kel(gaid, writer.export_kel(gaid))
+        reader.ingest_kel(seat, writer.export_kel(seat))
+        assert reader.key_events(gaid) == writer.key_events(gaid)
+        assert reader.verify(gaid, BODY, early)
+        assert reader.verify(gaid, BODY, late)
+        assert not reader.verify(gaid, {**BODY, "s": 5}, late)
+        assert reader.delegator_of(seat) == gaid
+
+
+def _alter(text: str) -> str:
+    """One character changed in the middle of the log."""
+    middle = len(text) // 2
+    return text[:middle] + ("B" if text[middle] != "B" else "C") + text[middle + 1 :]
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        lambda text: text[: len(text) // 2],
+        _alter,
+        lambda text: "not a key log",
+        lambda text: "",
+        lambda text: "[]",
+    ],
+    ids=["truncated", "altered", "garbage", "empty", "empty-json"],
+)
+def test_a_key_log_that_does_not_replay_is_refused(substrate_name, damage):
+    with substrate_named(substrate_name) as writer, substrate_named(substrate_name) as reader:
+        gaid, _, _ = _written(writer)
+        exported = writer.export_kel(gaid)
+        with pytest.raises(BakoboError) as raised:
+            reader.ingest_kel(gaid, damage(exported))
+        assert raised.value.is_exactly("e.proof.kel-unverifiable.f")
+
+
+def test_a_key_log_replayed_under_another_identifier_is_refused(substrate_name):
+    with substrate_named(substrate_name) as writer, substrate_named(substrate_name) as reader:
+        gaid, seat, _ = _written(writer)
+        with pytest.raises(BakoboError) as raised:
+            reader.ingest_kel(seat, writer.export_kel(gaid))
+        assert raised.value.is_exactly("e.proof.kel-unverifiable.f")
+
+
+def test_exporting_an_identifier_with_no_key_state_is_refused(conformant):
+    with pytest.raises(BakoboError) as raised:
+        conformant.export_kel("E" + "z" * 43)
+    assert raised.value.is_exactly("e.id.aid-unknown.f")
+
+
 def test_a_delegated_identifier_signs_and_verifies_as_itself(conformant):
     """The organ signs. Its authority is delegated; its key material is its own."""
     gaid = conformant.incept("acme:gaid")
@@ -901,3 +970,42 @@ def test_a_gcd_is_revocable_through_the_registry_that_issued_it(conformant):
     conformant.revoke_acdc(registry, sad["d"])
 
     assert conformant.registry_state(registry, sad["d"]) == REVOKED
+
+
+def test_a_key_log_already_held_is_not_replayed_over(substrate_name):
+    with substrate_named(substrate_name) as writer:
+        gaid, _, _ = _written(writer)
+        with pytest.raises(BakoboError) as raised:
+            writer.ingest_kel(gaid, writer.export_kel(gaid))
+        assert raised.value.is_exactly("e.proof.kel-unverifiable.f")
+
+
+def test_a_delegated_key_log_replays_only_after_its_delegator(substrate_name):
+    with substrate_named(substrate_name) as writer, substrate_named(substrate_name) as reader:
+        _, seat, _ = _written(writer)
+        with pytest.raises(BakoboError) as raised:
+            reader.ingest_kel(seat, writer.export_kel(seat))
+        assert raised.value.is_exactly("e.proof.kel-unverifiable.f")
+
+
+def test_a_credential_verifies_against_its_issuer(conformant, marta):
+    sad, signature = endorsement_acdc(conformant, marta)
+    assert conformant.verify_acdc(sad, signature)
+    assert not conformant.verify_acdc({**sad, "s": "E" + "x" * 43}, signature)
+    assert not conformant.verify_acdc({**sad, "i": "E" + "z" * 43}, signature)
+    assert not conformant.verify_acdc({k: v for k, v in sad.items() if k != "i"}, signature)
+    assert not conformant.verify_acdc(sad, "nonsense")
+
+
+def test_a_key_log_past_the_bound_is_refused_unread(substrate_name, monkeypatch):
+    import utina.substrate.facade as facade_module
+    import utina.substrate.keripy as keripy_module
+
+    with substrate_named(substrate_name) as writer, substrate_named(substrate_name) as reader:
+        gaid, _, _ = _written(writer)
+        exported = writer.export_kel(gaid)
+        monkeypatch.setattr(facade_module, "MAX_KEL_TEXT", len(exported) - 1)
+        monkeypatch.setattr(keripy_module, "MAX_KEL_TEXT", len(exported) - 1)
+        with pytest.raises(BakoboError) as raised:
+            reader.ingest_kel(gaid, exported)
+        assert raised.value.is_exactly("e.proof.kel-unverifiable.f")

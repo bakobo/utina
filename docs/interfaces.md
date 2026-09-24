@@ -189,6 +189,8 @@ class Constitution:
     source: SAID = ""                   # the event this edition came from
     @classmethod
     def at(cls, corpus: Corpus, position: Position) -> Constitution: ...
+    @classmethod
+    def succession(cls, corpus: Corpus, position: Position) -> tuple[Succession, ...]: ...
     def clause(self, id: str) -> Clause: ...
     def governing(self, act: str) -> Clause | None: ...   # None => refusal
     def canonical_bytes(self) -> bytes: ...
@@ -337,6 +339,8 @@ class Substrate(Protocol):
         self, aid: AID, seals: Sequence[Mapping[str, str]], *, establishment: bool = False
     ) -> SAID: ...
     def key_events(self, aid: AID) -> tuple[Mapping[str, object], ...]: ...
+    def export_kel(self, aid: AID) -> str: ...            # opaque; for ingest_kel elsewhere
+    def ingest_kel(self, aid: AID, exported: str) -> None: ...   # replay, verified, or refuse
     def rotate(self, aid: AID, anchor: SAID) -> SAID: ...
     def anchoring_event(self, said: SAID) -> SAID | None: ...
     def delegate(self, delegator: AID, alias: str) -> AID: ...
@@ -409,6 +413,20 @@ equal to the subject. Anything else — including anything unverifiable — is P
 reads `acdc_sig`: it rides for a stranger with KERI tooling, and the credential's anchor
 in the issuer's key log is answerable through `Substrate.anchoring_event`.
 
+## `utina.replay` — a record rebuilt by a stranger
+
+```python
+FORMAT = "utina-record/1"
+def export(events: Sequence[Event], gaid: AID, substrate: Substrate) -> dict[str, Any]: ...
+def ingest(record: object, substrate: Substrate) -> Corpus: ...
+```
+
+A record is `{"format", "gaid", "kels": [{"aid", "log"}], "events": [{"said", "kind",
+"body"}]}`. `ingest` replays every key log through a substrate that wrote none of it,
+re-derives every event's identifier, verifies every signature against the replayed key
+state, and admits the corpus through `fold.gel.anchored` (this.i @k6agmgtn). It refuses
+a field, an event kind or a key log the fold would not examine (@gnviwwjc).
+
 ## `utina.enact` — the constructor's verb
 
 ```python
@@ -429,7 +447,7 @@ class Constructor:
     @property
     def key_events(self) -> tuple[Mapping[str, object], ...]: ...
     def enact_amendment(
-        self, law: Mapping[str, object], *, act: str | None = None
+        self, law: Mapping[str, object], *, act: str | None = None, prior: SAID | None = None
     ) -> Event: ...
     def propose(self, act: str) -> Event: ...
     def endorse(

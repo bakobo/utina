@@ -494,3 +494,11 @@ def test_a_permuted_corpus_holds_the_same_committed_events(acme_double):
 def test_the_permutation_is_a_function_of_its_seed(acme_double):
     assert acme_double.permuted_events(seed=7) == acme_double.permuted_events(seed=7)
     assert acme_double.permuted_events(seed=7) != acme_double.permuted_events(seed=8)
+
+
+def test_each_acme_amendment_cites_the_edition_it_amends(acme_double):
+    """3036-3038 and this.i @fougolzt: the succession is cited, not inferred."""
+    seat = acme_double.corpus.event(acme_double.said("seat-the-board"))
+    lowered = acme_double.corpus.event(acme_double.said("lower-the-bar"))
+    assert seat.body["prior"] == acme_double.said("inception")
+    assert lowered.body["prior"] == acme_double.said("seat-the-board")
