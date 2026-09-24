@@ -16,6 +16,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import json
 from collections.abc import Mapping, Sequence
 from types import TracebackType
 
@@ -24,6 +25,7 @@ from .errors import (
     ACDC_UNVERIFIABLE,
     AID_UNKNOWN,
     ALIAS_TAKEN,
+    KEL_UNVERIFIABLE,
     NOT_ISSUED,
     REGISTRY_UNKNOWN,
     SEAL_MALFORMED,
@@ -128,12 +130,15 @@ class FacadeSubstrate:
         the identifier is the alias, and that property is simulated rather than
         held: the seal is on the record, and nothing digests it (this.i @4b2mmhbf).
         """
+        return self._incept(alias, seals)
+
+    def _incept(self, alias: str, seals: Sequence[object], delegator: AID = "") -> AID:
         if alias in self._key_index:
             raise ALIAS_TAKEN(alias=alias)
         checked = [_checked_seal(alias, {"d": said}) for said in seals]
         self._key_index[alias] = 0
         self._kels[alias] = []
-        self._append(alias, "icp", checked, keys=True)
+        self._append(alias, "dip" if delegator else "icp", checked, keys=True, di=delegator)
         return alias
 
     def delegate(self, delegator: AID, alias: str) -> AID:
@@ -147,7 +152,7 @@ class FacadeSubstrate:
         naming ``di`` and an event seal, this gets from the pair.
         """
         self._require_known(delegator)
-        delegated = self.incept(alias)
+        delegated = self._incept(alias, [], delegator)
         self._delegators[delegated] = delegator
         self._interact(delegator, delegated)
         return delegated
@@ -177,6 +182,67 @@ class FacadeSubstrate:
         """``aid``'s key log, in order, as the mappings its events commit."""
         self._require_known(aid)
         return tuple(dict(event) for event in self._kels[aid])
+
+    def export_kel(self, aid: AID) -> str:
+        """The key log as JSON: everything :meth:`ingest_kel` re-derives it from."""
+        self._require_known(aid)
+        return json.dumps({"events": self._kels[aid]}, sort_keys=True)
+
+    def ingest_kel(self, aid: AID, exported: str) -> None:
+        """Replay another facade's log for ``aid``, re-deriving everything it claims.
+
+        Each event's identifier is recomputed from its bytes, its sequence number
+        checked, and each establishment event's key name re-derived from the
+        fixed seed at the index the log implies. That catches any edit to the
+        log; it proves nothing about custody, because the facade has none to
+        prove (this.i @k6agmgtn, @h7l67i).
+        """
+        events = self._replayable(aid, exported)
+        self._key_index[aid] = sum(1 for event in events if event["t"] == "rot")
+        self._kels[aid] = events
+        if events[0]["t"] == "dip":
+            self._delegators[aid] = str(events[0]["di"])
+        for event in events:
+            seals = event["a"]
+            assert isinstance(seals, list)  # _replayable checked it
+            for seal in seals:
+                self._anchors.setdefault(seal["d"], str(event["d"]))
+
+    def _replayable(self, aid: AID, exported: str) -> list[dict[str, object]]:
+        def refuse(problem: str) -> Exception:
+            error: Exception = KEL_UNVERIFIABLE(aid=aid, problem=problem)
+            return error
+
+        if aid in self._key_index:
+            raise refuse("this substrate already holds key state for it")
+        try:
+            events = json.loads(exported)["events"]
+        except (ValueError, TypeError, KeyError):
+            raise refuse("it is not an exported key log") from None
+        if not isinstance(events, list) or not events:
+            raise refuse("it carries no events")
+        index = 0
+        for sn, event in enumerate(events):
+            if not isinstance(event, dict) or event.get("i") != aid:
+                raise refuse(f"event {sn} is not {aid}'s")
+            if event.get("s") != format(sn, "x"):
+                raise refuse(f"event {sn} carries sequence number {event.get('s')!r}")
+            ilk = event.get("t")
+            if (sn == 0) != (ilk in ("icp", "dip")) or ilk not in ("icp", "dip", "ixn", "rot"):
+                raise refuse(f"event {sn} is a {ilk!r} where the log does not allow one")
+            if ilk == "dip" and event.get("di") not in self._key_index:
+                raise refuse("its delegator's key log has not been replayed here")
+            seals = event.get("a")
+            if not isinstance(seals, list) or not all(
+                isinstance(seal, dict) and isinstance(seal.get("d"), str) for seal in seals
+            ):
+                raise refuse(f"event {sn} carries a malformed seal list")
+            if self.said(event) != event.get("d"):
+                raise refuse(f"event {sn}'s identifier does not match its bytes")
+            index += ilk == "rot"
+            if ilk != "ixn" and event.get("k") != [digest(self._key(aid, index))]:
+                raise refuse(f"event {sn} names keys the seed does not derive")
+        return events
 
     def anchoring_event(self, said: SAID) -> SAID | None:
         """The key event that sealed ``said``, if one did — rotation or interaction."""
@@ -327,7 +393,7 @@ class FacadeSubstrate:
         return self._append(aid, "ixn", [{"d": anchor}], keys=False)
 
     def _append(
-        self, aid: AID, ilk: str, seals: list[dict[str, str]], *, keys: bool
+        self, aid: AID, ilk: str, seals: list[dict[str, str]], *, keys: bool, di: AID = ""
     ) -> SAID:
         """Commit one key event to ``aid``'s log and index what it seals.
 
@@ -337,6 +403,8 @@ class FacadeSubstrate:
         """
         log = self._kels[aid]
         body: dict[str, object] = {"t": ilk, "i": aid, "s": format(len(log), "x")}
+        if di:
+            body["di"] = di
         if keys:
             body["k"] = [self._key_id(aid)]
         body["a"] = seals

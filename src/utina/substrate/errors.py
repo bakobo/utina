@@ -128,3 +128,15 @@ SEAL_MALFORMED = ErrorCode(
     args=("aid", "seal"),
     hint="Pass seals as mappings whose d field is the digest being sealed.",
 )
+
+KEL_UNVERIFIABLE = ErrorCode(
+    code="e.proof.kel-unverifiable.f",
+    title="A key log presented for replay does not verify.",
+    detail=(
+        "The key log presented for {aid} could not be replayed: {problem}. Key state is "
+        "computed from a log that verifies event by event, and a log that does not is "
+        "no evidence of anybody's keys."
+    ),
+    args=("aid", "problem"),
+    hint="Present the log exactly as its own controller's substrate exported it.",
+)

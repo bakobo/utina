@@ -36,6 +36,7 @@ resolves that event's keys out of the key log rather than today's (@zk27gz).
 
 from __future__ import annotations
 
+import json
 import shutil
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -43,7 +44,7 @@ from types import TracebackType
 from typing import Any
 
 from keri.app import habbing  # type: ignore[import-untyped]
-from keri.core import eventing  # type: ignore[import-untyped]
+from keri.core import eventing, parsing  # type: ignore[import-untyped]
 from keri.core.coring import (  # type: ignore[import-untyped]
     Diger,
     Number,
@@ -66,6 +67,7 @@ from .errors import (
     ACDC_UNVERIFIABLE,
     AID_UNKNOWN,
     ALIAS_TAKEN,
+    KEL_UNVERIFIABLE,
     NOT_ISSUED,
     REGISTRY_UNKNOWN,
     STORE_NOT_OURS,
@@ -284,9 +286,53 @@ class KeripySubstrate:
         return said
 
     def key_events(self, aid: AID) -> tuple[Mapping[str, object], ...]:
-        """``aid``'s key log in order, each event as the mapping it commits."""
-        self._hab(aid)
+        """``aid``'s key log in order, each event as the mapping it commits.
+
+        Answers for any identifier whose key state this substrate holds, its own
+        or one it replayed with :meth:`ingest_kel`.
+        """
+        self._require_kever(aid)
         return tuple(dict(serder.sad) for serder in self._hby.db.getEvtPreIter(pre=aid))
+
+    def export_kel(self, aid: AID) -> str:
+        """Each key event with its attached signatures, as KERI's own CESR messages."""
+        self._require_kever(aid)
+        return json.dumps(
+            [bytes(message).decode() for message in self._hby.db.clonePreIter(pre=aid)]
+        )
+
+    def ingest_kel(self, aid: AID, exported: str) -> None:
+        """Replay another substrate's log through keripy's own event processor.
+
+        keripy verifies every signature against the key state the log itself
+        establishes, and escrows or drops what does not verify, so acceptance is
+        the verification. What this adds is the count: a log of which keripy
+        accepted a prefix is a proper subset of the key state it claims, and is
+        refused whole (this.i @k6agmgtn).
+        """
+        if aid in self._hby.kevers:
+            raise KEL_UNVERIFIABLE(
+                aid=aid, problem="this substrate already holds key state for it"
+            )
+        try:
+            messages = json.loads(exported)
+            if not isinstance(messages, list) or not messages:
+                raise ValueError(exported)
+            kevery = eventing.Kevery(db=self._hby.db, lax=False, local=False)
+            for message in messages:
+                parsing.Parser(kvy=kevery).parse(ims=bytearray(str(message).encode()))
+                # After every message, not once at the end: a delegated inception
+                # waits in escrow for its delegator's seal, and the interactions
+                # behind it are out of order until it is accepted.
+                kevery.processEscrows()
+        except Exception:
+            raise KEL_UNVERIFIABLE(aid=aid, problem="it is not an exported key log") from None
+        accepted = len(list(self._hby.db.getEvtPreIter(pre=aid)))
+        if accepted != len(messages):
+            raise KEL_UNVERIFIABLE(
+                aid=aid,
+                problem=f"only {accepted} of its {len(messages)} events verified",
+            )
 
     def anchoring_event(self, said: SAID) -> SAID | None:
         """The establishment event that sealed ``said``, read out of the key log.
@@ -510,6 +556,10 @@ class KeripySubstrate:
             return False
 
     # -- internals ------------------------------------------------------------
+
+    def _require_kever(self, aid: AID) -> None:
+        if aid not in self._hby.kevers:
+            raise AID_UNKNOWN(aid=aid)
 
     def _hab(self, aid: AID) -> Any:
         hab = self._hby.habs.get(aid)
