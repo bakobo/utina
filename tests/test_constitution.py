@@ -118,16 +118,19 @@ AMEND = "amend-operating-agreement"
 ORDINARY = ["open-bank-account", "hire-vp-sales", "approve-budget"]
 
 
-def enactment(said, position, clauses, act=AMEND):
+def enactment(said, position, clauses, act=AMEND, prior=None):
     """A law event that commits ``clauses`` and performs the act class ``act``.
 
     ``act`` is the field the law fold now reads: an enactment is an act, judged
     like any other, so it names a class of act for a clause to govern. Passing
-    ``None`` omits the field, which is the fail-closed case.
+    ``None`` omits the field, which is the fail-closed case. ``prior`` is the law
+    event it cites as its predecessor, omitted by default (this.i @fougolzt).
     """
     body = {"i": GAID, "law": {"clauses": clauses}}
     if act is not None:
         body["act"] = act
+    if prior is not None:
+        body["prior"] = prior
     return Event(said=said, kind="enactment", position=position, body=body)
 
 
@@ -534,3 +537,113 @@ def test_a_law_event_carrying_no_law_at_all_refuses():
         Constitution.at(broken, INCEPTION)
     assert raised.value.code == "e.input.malformed.law.f"
     assert "law" in str(raised.value)
+
+
+# --- succession: which enactment a predecessor passes to (this.i @fougolzt) -----
+
+#: A third edition, distinguishable from the other two by its clause identifiers.
+STATE_THREE = [
+    clause("C1", ORDINARY, (MARTA, "1/2"), (DEV, "1/2")),
+    clause("C2", [AMEND], (MARTA, "1/2"), (DEV, "1/2")),
+]
+
+FOUNDING = Event(
+    said="E0-inception", kind="inception", position=INCEPTION,
+    body={"law": {"clauses": STATE_ONE}},
+)
+
+
+def sorted_ids(constitution):
+    return sorted(one.id for one in constitution.clauses)
+
+
+def affirm(subject, at):
+    """Both founders endorse ``subject``, at ``at`` and the coordinate after it."""
+    return [
+        endorsement(f"E{at}-marta-{subject}", Position(at), MARTA, subject),
+        endorsement(f"E{at + 1}-dev-{subject}", Position(at + 1), DEV, subject),
+    ]
+
+
+def test_an_enactment_citing_the_edition_in_force_takes_force():
+    events = [FOUNDING, enactment("E1-two", Position(1), STATE_TWO, prior="E0-inception"),
+              *affirm("E1-two", 2)]
+    assert sorted_ids(Constitution.at(Corpus.load(events), Position(3))) == ["B1", "B2"]
+
+
+def test_an_enactment_citing_something_other_than_the_edition_in_force_confers_nothing():
+    """3045-3047: a ratification whose cited predecessor is not the edition in force
+    at its own coordinate "confers nothing, however well signed"."""
+    events = [FOUNDING, enactment("E1-two", Position(1), STATE_TWO, prior="E9-elsewhere"),
+              *affirm("E1-two", 2)]
+    constitution = Constitution.at(Corpus.load(events), Position(3))
+    assert sorted_ids(constitution) == ["A1", "A2"]
+    assert constitution.source == "E0-inception"
+
+
+def test_an_enactment_citing_a_superseded_edition_confers_nothing():
+    events = [
+        FOUNDING,
+        enactment("E1-two", Position(1), STATE_TWO, prior="E0-inception"),
+        *affirm("E1-two", 2),
+        enactment("E4-three", Position(4), STATE_THREE, prior="E0-inception"),
+        endorsement("E5-marta", Position(5), MARTA, "E4-three"),
+        endorsement("E6-dev", Position(6), DEV, "E4-three"),
+        endorsement("E7-nina", Position(7), NINA, "E4-three"),
+    ]
+    assert sorted_ids(Constitution.at(Corpus.load(events), Position(7))) == ["B1", "B2"]
+
+
+def fork(later_first: bool):
+    """Two enactments claiming the founding law, affirmed in either order."""
+    first = enactment("E1-two", Position(1), STATE_TWO, prior="E0-inception")
+    second = enactment("E2-three", Position(2), STATE_THREE, prior="E0-inception")
+    order = ["E2-three", "E1-two"] if later_first else ["E1-two", "E2-three"]
+    return [FOUNDING, first, second, *affirm(order[0], 3), *affirm(order[1], 5)]
+
+
+def test_of_two_enactments_claiming_one_predecessor_the_earlier_is_the_succession():
+    """3047-3050: "the GEL's committed order rules: the earlier lawful enactment is
+    the succession". Under the old walk the last edition in force won."""
+    constitution = Constitution.at(Corpus.load(fork(later_first=False)), Position(6))
+    assert sorted_ids(constitution) == ["B1", "B2"]
+    assert constitution.source == "E1-two"
+
+
+def test_a_later_claimant_affirmed_first_is_in_force_until_the_earlier_is_affirmed():
+    """The law moves twice, and nothing earlier is rewritten (@fougolzt)."""
+    corpus = Corpus.load(fork(later_first=True))
+    assert sorted_ids(Constitution.at(corpus, Position(4))) == ["C1", "C2"]
+    assert sorted_ids(Constitution.at(corpus, Position(6))) == ["B1", "B2"]
+
+
+def test_an_uncited_enactment_claims_the_edition_in_force_at_its_own_coordinate():
+    """§18 never obliges the citation (Q33), so its absence is a claim, not a defect."""
+    events = [FOUNDING, enactment("E1-two", Position(1), STATE_TWO),
+              enactment("E2-three", Position(2), STATE_THREE), *affirm("E2-three", 3),
+              *affirm("E1-two", 5)]
+    corpus = Corpus.load(events)
+    assert sorted_ids(Constitution.at(corpus, Position(4))) == ["C1", "C2"]
+    assert sorted_ids(Constitution.at(corpus, Position(6))) == ["B1", "B2"]
+
+
+def test_the_succession_record_is_derivable_from_the_gel():
+    """3039-3042: predecessor, ratifying enactment and effectuation coordinate."""
+    events = [
+        FOUNDING,
+        enactment("E1-two", Position(1), STATE_TWO, prior="E0-inception"),
+        *affirm("E1-two", 2),
+        enactment("E4-three", Position(4), STATE_THREE, prior="E1-two"),
+        endorsement("E5-marta", Position(5), MARTA, "E4-three"),
+        endorsement("E6-dev", Position(6), DEV, "E4-three"),
+        endorsement("E7-nina", Position(7), NINA, "E4-three"),
+    ]
+    record = Constitution.succession(Corpus.load(events), Position(7))
+    assert [(one.predecessor, one.enactment, one.effectuation) for one in record] == [
+        ("E0-inception", "E1-two", Position(3)),
+        ("E1-two", "E4-three", Position(7)),
+    ]
+
+
+def test_there_is_no_succession_before_the_founding_law():
+    assert Constitution.succession(Corpus.load([]), Position(0)) == ()

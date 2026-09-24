@@ -369,7 +369,14 @@ def disturbed_by(corpus: Corpus, enactment: Event, at: Position) -> tuple[SAID, 
     has disturbed nothing yet, and one that never carries disturbs nothing ever
     (this.i @xhtvuxnc).
     """
-    effectuation = _effectuation(corpus, enactment, at)
+    effectuation = next(
+        (
+            link.effectuation
+            for link in Constitution.succession(corpus, at)
+            if link.enactment == enactment.said
+        ),
+        None,
+    )
     if effectuation is None:
         return ()
     earlier = disturbance.before(effectuation)
@@ -541,23 +548,6 @@ def _closed(finding: Pending) -> bool:
         element.species is PendingSpecies.EXPIRED_ABANDONED
         for element in finding.requirement
     )
-
-
-def _effectuation(corpus: Corpus, enactment: Event, at: Position) -> Position | None:
-    """The coordinate this enactment's edition took force at, if it has by ``at``.
-
-    Asked of the law fold rather than recomputed: the Constitution names the law
-    event its edition came from, so the first position whose Constitution names
-    this enactment is the coordinate it effectuated at. A walk, because the fold
-    exposes no index from a law event to its coordinate and inventing one here
-    would be a second answer to a question ``constitution.py`` already answers.
-    """
-    for event in corpus.upto(at):
-        if not enactment.position < event.position:
-            continue
-        if Constitution.at(corpus, event.position).source == enactment.said:
-            return event.position
-    return None
 
 
 def _cure_path_closed(
