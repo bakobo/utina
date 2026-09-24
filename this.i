@@ -1660,6 +1660,38 @@ Make Custos's replayable governance useful to a real organization = goal:
         it is not added here: a builder that can emit a false certification by accident is worse
         than one that cannot emit one at all.
 
+    An edition takes force where its enactment was certified, not where its votes reached unity = decision:
+      id: pv7a6dhc
+      why: >
+        Forced by @2e2dncfe meeting @xhtvuxnc, and found while scoping M6 rather than designed.
+        An enactment is an act — "a ratification is an enactment, an enactment is judged under
+        the Constitution it amends, and the judgment is a finding like any other" (`:214-215`) —
+        and an act in a domain whose law requires certification is PENDING until the domain
+        admits one. So an edition that took force on a threshold alone would bind the whole
+        domain on a judgment the fold itself reports as not yet authorized. The law fold and the
+        evaluator would be saying different things about the same event.
+        `constitution._effectuation` keyed on `clause.group.satisfied()` alone, which was correct
+        while no domain required certification and silently wrong the moment one did. It now
+        advances only at a candidate coordinate where the threshold is met AND a certification
+        of the enactment has been admitted at or before it.
+        A FALSE certification does not effectuate either, for the same reason and one step
+        further: a certification the record refutes convicts the enactment (@7shpbven), and an
+        edition binding on a self-convicted enactment would be worse than one binding on a
+        pending one. The check is the same predicate the evaluator runs, called from here rather
+        than reimplemented.
+        WHERE THE SCHEMA COMES FROM is the law in force at the enactment's OWN coordinate — the
+        law it amends, which is the law that judges it — and never the successor it commits. An
+        amendment that introduced a certification requirement would otherwise have to satisfy the
+        requirement it was itself introducing. The clause-over-law precedence is `schema_for`,
+        moved out of `evaluate` into `fold/certification.py` so that the law fold and the
+        evaluator cannot drift on the question of whether this domain certifies at all; it takes
+        the clause and the law's default rather than a Constitution, because `constitution`
+        imports `certification` and the reverse would be a cycle.
+        NO ARTIFACT MOVES TODAY. Acme's law requires no certification until M6 commits one, so
+        every existing effectuation coordinate is unchanged and this lands as a fold change with
+        synthetic coverage only. That is deliberate sequencing rather than luck: the rule has to
+        be in place before the fixture can carry a certified amendment at all.
+
     The law creates a seat; a credential fills it = decision:
       id: ftjpdph5
       why: >
