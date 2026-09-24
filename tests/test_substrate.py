@@ -283,7 +283,7 @@ def test_a_facade_credential_signature_is_the_facades_own_discipline(substrate):
 def test_anchoring_a_credential_advances_the_log_and_not_the_keys(substrate):
     sad, _ = facade_acdc(substrate)
     assert substrate._key_index["acme:marta"] == 0
-    assert substrate._kel_seq["acme:marta"] == 1
+    assert [event["t"] for event in substrate.key_events("acme:marta")] == ["icp", "ixn"]
     assert substrate.anchoring_event(sad["d"]) is not None
 
 

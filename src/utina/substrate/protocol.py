@@ -145,7 +145,7 @@ class Substrate(Protocol):
         """
         ...
 
-    def incept(self, alias: str) -> AID:
+    def incept(self, alias: str, *, seals: Sequence[SAID] = ()) -> AID:
         """Bring an identifier into being, and return the identifier to use.
 
         The alias is a name for the caller's convenience and the return value is
@@ -153,6 +153,37 @@ class Substrate(Protocol):
         under keripy, where a prefix is a digest of the inception event and
         cannot be known before this call returns; a caller that hardcodes the
         alias breaks there rather than here (this.i @crrtzf).
+
+        ``seals`` are digests the inception event carries as digest seals. A
+        born-governed domain's gAID seals its founding law here, which is the
+        genesis knot (``custos-4.2.md:1079-1082``, this.i @4b2mmhbf).
+        """
+        ...
+
+    def seal(
+        self,
+        aid: AID,
+        seals: Sequence[Mapping[str, str]],
+        *,
+        establishment: bool = False,
+    ) -> SAID:
+        """Commit one key event to ``aid``'s log carrying ``seals``, in that order.
+
+        A rotation where ``establishment`` is asked for and an interaction
+        otherwise; returns the key event's identifier. The seals are passed
+        through as given — an event seal ``{i, s, d}`` is how a GEL event is
+        anchored, the discipline KERI's registry layer uses for a TEL
+        (``custos-4.2.md:1114-1120``, this.i @wsxwkwgv).
+        """
+        ...
+
+    def key_events(self, aid: AID) -> tuple[Mapping[str, object], ...]:
+        """``aid``'s key log in order, each event as the mapping it commits.
+
+        Every event carries ``t`` (its ilk), ``i``, ``s`` (its sequence number
+        in hex), ``d`` and ``a`` (its seal list). The fold reads these as
+        evidence of where each GEL event was committed; it cannot verify them,
+        and trusts them as it trusts a signature the substrate checked.
         """
         ...
 

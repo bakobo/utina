@@ -134,7 +134,7 @@
   KERI — a relationship, dual-anchored
     identifier  acme:seat3
     delegator   acme-governed-domain,6, named in the dip's di
-    seal        E9JwXIWzuR6ic8AZ...   the delegator's own approving event
+    seal        Ee94cbF0SmX01TMZ...   the delegator's own approving event
 
   ACDC — the credential that confers the authority
     credential  E1eY46Jhp41JZWFS...

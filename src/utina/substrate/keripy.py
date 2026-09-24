@@ -37,7 +37,7 @@ resolves that event's keys out of the key log rather than today's (@zk27gz).
 from __future__ import annotations
 
 import shutil
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from types import TracebackType
 from typing import Any
@@ -201,11 +201,17 @@ class KeripySubstrate:
 
     # -- identity -------------------------------------------------------------
 
-    def incept(self, alias: str) -> AID:
-        """A prefix that is a digest of the inception event this just wrote."""
+    def incept(self, alias: str, *, seals: Sequence[SAID] = ()) -> AID:
+        """A prefix that is a digest of the inception event this just wrote.
+
+        ``seals`` are digest seals the inception carries, so what they seal lies
+        inside the bytes the prefix digests — the genesis knot's first cut
+        (``custos-4.2.md:1079-1082``, this.i @4b2mmhbf).
+        """
         if self._hby.habByName(alias) is not None:
             raise ALIAS_TAKEN(alias=alias)
-        prefix: str = self._hby.makeHab(name=alias, **_SINGLE_SIG).pre
+        data = [SealDigest(d=said)._asdict() for said in seals]
+        prefix: str = self._hby.makeHab(name=alias, data=data, **_SINGLE_SIG).pre
         return prefix
 
     def delegate(self, delegator: AID, alias: str) -> AID:
@@ -252,6 +258,33 @@ class KeripySubstrate:
         hab.rotate(data=[SealDigest(d=anchor)._asdict()])
         said: str = hab.kever.serder.said
         return said
+
+    def seal(
+        self,
+        aid: AID,
+        seals: Sequence[Mapping[str, str]],
+        *,
+        establishment: bool = False,
+    ) -> SAID:
+        """One key event carrying ``seals`` in the order given.
+
+        A rotation where ``establishment`` is asked for — new signing keys, the
+        next keys rolled forward — and otherwise an interaction, which moves the
+        log and leaves the keys where they are.
+        """
+        hab = self._hab(aid)
+        data = [dict(seal) for seal in seals]
+        if establishment:
+            hab.rotate(data=data)
+        else:
+            hab.interact(data=data)
+        said: str = hab.kever.serder.said
+        return said
+
+    def key_events(self, aid: AID) -> tuple[Mapping[str, object], ...]:
+        """``aid``'s key log in order, each event as the mapping it commits."""
+        self._hab(aid)
+        return tuple(dict(serder.sad) for serder in self._hby.db.getEvtPreIter(pre=aid))
 
     def anchoring_event(self, said: SAID) -> SAID | None:
         """The establishment event that sealed ``said``, read out of the key log.
