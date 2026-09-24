@@ -361,27 +361,40 @@ def _classify_slot(
     retracted: Mapping[SAID, set[AID]],
     subject: SAID,
 ) -> SlotDisposition:
-    # An office-slot names no party, so who fills it is read off the record here
-    # rather than off the law. An office nobody holds is pending under its own
-    # name: "board-seat-3, nobody" tells a reader more than an empty string would,
-    # and it is the honest answer — the seat exists and is vacant.
-    key = slot.key
-    holder = _holder(slot, committed)
-    if holder is None:
-        return SlotDisposition(slot.office or slot.endorser, Disposition.PENDING, key=key)
-    slot = slot if not slot.office else replace(slot, endorser=holder)
+    """What this slot holds over ``committed``, and who was in it when they acted.
+
+    **The occupant is resolved once per candidate act, not once per question**, and
+    that is the whole of ``this.i`` @djyj2bc2. An office slot counts an endorsement
+    whose issuer held the office at the ENDORSEMENT's own coordinate; resolving the
+    office once against the whole bundle let a revocation reach backwards and un-count
+    endorsements that had already stood, which is the one thing ``:1805`` forbids by
+    name — "what was affirmed above stands at its coordinate forever". It is the same
+    "did it stand when it was cited" discipline :func:`_qualified` applies to a cited
+    credential, applied one level out to the seat itself.
+
+    A slot the law entitles directly is unaffected: :func:`_holder` returns its own
+    endorser whatever the bundle, so the per-act resolution is a constant for it.
+    """
     standing = [
-        event
+        (event, who)
         for index, event in enumerate(committed)
-        if _fills(event, slot, subject, committed[: index + 1])
-        and slot.endorser not in retracted.get(event.said, ())
+        for who in (_holder(slot, committed[: index + 1]),)
+        if who is not None
+        and _fills(event, replace(slot, endorser=who), subject, committed[: index + 1])
+        and who not in retracted.get(event.said, ())
         and _qualified(event, committed[: index + 1])
     ]
     for wanted, disposition in _PRECEDENCE:
-        for event in standing:
+        for event, who in standing:
             if attributes(event).get(DISPOSITION_FIELD) == wanted:
-                return SlotDisposition(slot.endorser, disposition, event.said, key=key)
-    return SlotDisposition(slot.endorser, Disposition.PENDING, key=key)
+                return SlotDisposition(who, disposition, event.said, key=slot.key)
+    # Nothing counts, so the row falls back to who holds the seat *now* — which is the
+    # one place that question is the right one. An office nobody holds is pending under
+    # its own name: "board-seat-3, absent" tells a reader what to go and do, and it is
+    # the honest answer, because the seat exists and is vacant (beat 17's whole screen).
+    return SlotDisposition(
+        _holder(slot, committed) or slot.key, Disposition.PENDING, key=slot.key
+    )
 
 
 def _holder(slot: Slot, asof: Sequence[CommittedEvent]) -> AID | None:

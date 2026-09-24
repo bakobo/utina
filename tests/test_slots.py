@@ -941,17 +941,42 @@ def test_a_vacant_office_is_pending_under_its_own_name():
     assert NINA not in held, "an endorsement from an unseated party fills nothing"
 
 
-def test_revoking_the_seating_empties_the_office_without_touching_the_law():
-    """The whole point of the separation: personnel is not constitutional law."""
+def test_revoking_the_seating_empties_the_office_for_anything_asked_after_it():
+    """The whole point of the separation: personnel is not constitutional law.
+
+    The revocation bites the NEXT question and never a settled one. Nina's endorsement
+    was made while she held the seat, so it still counts afterwards; a question tabled
+    over a bundle the revocation is already in finds the office empty.
+    """
     before = [seating(), signed("EAct1", NINA)]
     after = [*before, revoked("ERevoke", "ESeat-credential", registry="EAcmeRegistry")]
 
     assert slots.dispositions(seated_office(), before, SUBJECT)[OFFICE] is (
         Disposition.ENDORSED
     )
-    assert slots.dispositions(seated_office(), after, SUBJECT)[OFFICE] is (
+    assert slots.dispositions(seated_office(), after, OTHER_SUBJECT)[OFFICE] is (
         Disposition.PENDING
     )
+
+
+def test_a_revocation_does_not_un_count_an_endorsement_that_already_stood():
+    """"What was affirmed above stands at its coordinate forever" (``:1805``).
+
+    The defect this replaced (``this.i`` @djyj2bc2) resolved the office once, against
+    the whole bundle, so a revocation reached backwards and deleted every endorsement
+    the seat had ever made. It is the same reversal ``:1741`` forbids — the revocation
+    is a new fact and never a rewrite — and it is the demo's answer to the sharpest
+    objection the 4.1 KERI panel raised.
+    """
+    events = [seating(), signed("EAct1", NINA)]
+    revoked_after = [*events, revoked("ERevoke", "ESeat-credential", registry="EAcmeRegistry")]
+
+    settled = slots.classify(seated_office(), revoked_after, SUBJECT)
+    seat = [one for one in settled if one.key == OFFICE]
+
+    assert [one.disposition for one in seat] == [Disposition.ENDORSED]
+    assert [one.endorser for one in seat] == [NINA], "the party who held the seat then"
+    assert [one.said for one in seat] == ["EAct1"]
 
 
 def test_two_standing_seatings_of_one_office_are_reported_as_ambiguous():
