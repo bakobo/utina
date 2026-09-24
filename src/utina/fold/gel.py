@@ -33,6 +33,7 @@ is left would be a proper subset.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from enum import Enum
 
@@ -57,6 +58,9 @@ ENACTMENT_KIND = "enactment"
 #: other is a must-reject (3232).
 ESTABLISHMENT = frozenset({"icp", "rot", "dip", "drt"})
 INCEPTION = frozenset({"icp", "dip"})
+
+#: The qb64 alphabet, as a regular-expression character class body.
+_QB64 = "A-Za-z0-9_-"
 
 KEY_LOG_FOREIGN = ErrorCode(
     code="e.state.gel-key-log.f",
@@ -313,9 +317,14 @@ def _genesis(kel: Sequence[Mapping[str, object]], law: Mapping[str, object]) -> 
 
 
 def _names(value: object, gaid: str) -> bool:
-    """Whether ``gaid`` appears anywhere in ``value``, transitively (1085)."""
+    """Whether ``gaid`` appears anywhere in ``value``, transitively (1085).
+
+    As a whole token rather than as any substring: an identifier embedded in a
+    longer string, such as a DID, still counts, but a short identifier that
+    happens to occur inside some digest's characters does not.
+    """
     if isinstance(value, str):
-        return gaid in value
+        return re.search(rf"(?<![{_QB64}]){re.escape(gaid)}(?![{_QB64}])", value) is not None
     if isinstance(value, Mapping):
         return any(_names(key, gaid) or _names(item, gaid) for key, item in value.items())
     if isinstance(value, list | tuple):

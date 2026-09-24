@@ -210,6 +210,28 @@ def test_a_born_governed_founding_law_naming_the_gaid_is_refused():
     refused([naming, events[1]], kel, "e.state.genesis-cycle.f")
 
 
+@pytest.mark.parametrize("mention", [f"did:keri:{GAID}", f"{GAID}"], ids=["embedded", "bare"])
+def test_the_gaid_counts_wherever_it_stands_as_a_whole_identifier(mention):
+    events, kel = born(event(1))
+    law = {**events[0].body["law"], "note": mention}
+    naming = Event(said=events[0].said, kind="inception", position=Position(0),
+                   body={**events[0].body, "law": law})
+    refused([naming, events[1]], kel, "e.state.genesis-cycle.f")
+
+
+def test_a_short_gaid_inside_some_digest_is_not_a_mention():
+    """Under the facade an identifier is its alias, and an alias like ``e`` occurs
+    inside every digest; that is a coincidence of characters, not a cycle."""
+    short = "Ekel"
+    events, kel = born(event(1))
+    kel = [{**entry, "i": short} for entry in kel]
+    law = {**events[0].body["law"], "digest": "EAAAAAEkelAAAA"}
+    founding_short = Event(said=events[0].said, kind="inception", position=Position(0),
+                           body={**events[0].body, "i": short, "law": law})
+    corpus = anchored([founding_short, events[1]], kel, gaid=short)
+    assert corpus.genesis is Genesis.BORN
+
+
 def test_an_adopted_founding_law_may_name_the_gaid():
     """The exclusion is a cut in the born-governed cycle; an adopted law has none."""
     events, kel = born(event(1))
