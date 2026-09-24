@@ -1614,6 +1614,52 @@ Make Custos's replayable governance useful to a real organization = goal:
         duplicity applied one tier up. Custos has the shape for that at `:2518-2530` and scopes
         it to key state; the governance-tier case has no committed form. Filed as Q36.
 
+    A false certification convicts the question it was supposed to authorize = decision:
+      id: 7shpbven
+      why: >
+        M4's fold half, following @qk3kcds6 and @epztz4wd. A certification is proof rather than
+        assertion, so one the record does not support has contradicted itself on bytes its own
+        sponsor signed and its own domain admitted — "two voices where its constitution demands
+        one" (`:1527-1533`). The finding is self-convicted, carrying a proof package any reader
+        recomputes from committed bytes alone.
+        TWO INDEPENDENT CONTRADICTIONS, checked in a fixed order because a certification can
+        carry both and two verifiers must name the same one. First the certification against
+        ITSELF: its cited edges sum to less than unity while it claims a met threshold. Second
+        the certification against THE RECORD: the clause's own arithmetic over every disposition
+        the domain admitted at or before the certification's coordinate does not reach unity.
+        The first is nearly redundant because `enact` refuses to emit one (@qk3kcds6) and is kept
+        because the fold may not assume its own constructor wrote the log it is reading — a
+        corpus arrives from a substrate, and `Corpus.load` trusts what it is handed (tick 6ofh).
+        The second is the one @epztz4wd ruled and the one the beat is worth showing.
+        THE CHECK CANNOT LIVE IN THE AFFIRMED ARM, which is the discovery this milestone turned
+        on rather than a detail of layout. The dispatch reached the certification path only under
+        `satisfied(held)`, so a certification of an act the record DEFEATS returned defeated and
+        never looked at the certification at all — and an act the record defeats is exactly the
+        case a sponsor citing around a declination produces, since a declination spends its slot.
+        The check therefore runs before the threshold dispatch, over every committed
+        certification of the subject, whatever the arithmetic says.
+        THE PROOF PAIR IS DERIVED, never chosen. Where the record carries a declination that the
+        certification did not cite — bearing on the subject, in a slot the governing clause
+        counts, committed at or before the certification — the pair is the certification and the
+        lexicographic minimum such declination, in the discipline `:1766-1770` applies to
+        defeated citations: two verifiers holding the same bundle emit the same finding down to
+        the byte. Where there is no omitted declination the contradiction is internal and the
+        package alone names it, which is the shape `Proof.pair` was already built to allow.
+        TAINT IS CHECKED FIRST and this is the reading a maintainer may flip. A bearing
+        conviction is key-tier, decided by KERI's superseding-recovery calculus rather than by
+        anything Acme committed (@yrkrqj's consequence, argued at the duplicity node), and a
+        party convicted of speaking with two voices poisons every artifact they touched including
+        a certification. Naming the duplicity pair is then the more informative proof. The
+        rebuttal is real: the CITED arm of taint returns pending with a cure path, and offering a
+        cure path for a record that convicts itself tells the reader the wrong thing to go and
+        do. It is not exercised today because the fixture carries no beat with both, and if one
+        is ever built this order is the thing to re-argue.
+        WHAT THIS DOES NOT BUILD. `enact` still refuses to construct an unsupported
+        certification, so a false one enters only from a hand-built log or a foreign corpus. The
+        fixture beat that shows one (M10) needs a deliberate escape hatch in the constructor, and
+        it is not added here: a builder that can emit a false certification by accident is worse
+        than one that cannot emit one at all.
+
     The law creates a seat; a credential fills it = decision:
       id: ftjpdph5
       why: >
