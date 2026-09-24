@@ -180,6 +180,14 @@ def test_a_founding_law_that_designates_no_gel_is_refused():
     refused([bare, events[1]], kel, "e.state.gel-undesignated.f")
 
 
+def test_a_founding_law_for_another_domain_is_refused():
+    """The key log is the gAID's; a founding event naming another domain is not its law."""
+    events, kel = born(event(1))
+    other = Event(said=events[0].said, kind="inception", position=Position(0),
+                  body={**events[0].body, "i": "Esomeone-else"})
+    refused([other, events[1]], kel, "e.state.gel-undesignated.f")
+
+
 def test_two_founding_laws_are_refused():
     events, kel = born(event(1, "inception"))
     refused(events, kel, "e.state.gel-undesignated.f")

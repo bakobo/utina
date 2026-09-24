@@ -166,6 +166,13 @@ def anchored(
     presented = {event.said: event for event in given}
     _require_own_log(kel, gaid)
     founding = _founding_event(presented.values())
+    if founding.body.get("i") != gaid:
+        raise GEL_UNDESIGNATED(
+            problem=(
+                f"The founding law {founding.said} founds {founding.body.get('i')!r}, "
+                f"not {gaid}."
+            )
+        )
     law = founding.body.get(LAW_FIELD)
     assert isinstance(law, Mapping)  # _founding_event checked it
     gel = law.get(GEL_FIELD)
