@@ -43,7 +43,7 @@ from utina.fold import FORBIDDEN_IMPORTS
 SRC = pathlib.Path(__file__).resolve().parent.parent / "src" / "utina"
 
 #: Every plane above the substrate. None of these may name a KERI package.
-QUARANTINED = ("fold", "enact", "acme", "cli")
+QUARANTINED = ("fold", "enact", "acme", "cli", "replay")
 
 #: The one place a KERI package may be imported: the substrate's own backend.
 EXEMPT = "keri"
