@@ -84,6 +84,13 @@ def _issuee(sad: Mapping[str, object]) -> AID | None:
     return issuee if isinstance(issuee, str) else None
 
 
+def _seals(event: Mapping[str, object]) -> list[Mapping[str, object]]:
+    """The seal mappings a key event carries, and nothing else."""
+    seals = event.get("a")
+    assert isinstance(seals, list)  # every log held here was built or replayed checked
+    return [seal for seal in seals if isinstance(seal, Mapping)]
+
+
 def _checked_seal(aid: AID, seal: object) -> dict[str, str]:
     """``seal`` as a mapping whose ``d`` is text, or a refusal before anything moves."""
     if not isinstance(seal, Mapping) or not isinstance(seal.get("d"), str):
@@ -232,6 +239,12 @@ class FacadeSubstrate:
                 raise refuse(f"event {sn} is a {ilk!r} where the log does not allow one")
             if ilk == "dip" and event.get("di") not in self._key_index:
                 raise refuse("its delegator's key log has not been replayed here")
+            if ilk == "dip" and not any(
+                seal.get("d") == aid
+                for sealing in self._kels[str(event["di"])]
+                for seal in _seals(sealing)
+            ):
+                raise refuse("its delegator's key log never sealed the delegation")
             seals = event.get("a")
             if not isinstance(seals, list) or not all(
                 isinstance(seal, dict) and isinstance(seal.get("d"), str) for seal in seals

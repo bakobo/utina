@@ -150,3 +150,23 @@ def test_an_event_that_cannot_be_checked_is_refused(acme, record, edit):
 def test_the_record_is_self_describing(record):
     assert record["format"] == FORMAT
     assert copy.deepcopy(record) == record
+
+
+def test_an_event_relabelled_as_another_kind_is_refused(acme, record):
+    """The kind label sits outside every signature, so it is checked against the
+    signed body's own ilk rather than believed: an endorsement relabelled as an
+    act would otherwise stop counting toward unity."""
+    endorsement = next(e for e in record["events"] if e["kind"] == "endorsement")
+    endorsement["kind"] = "act"
+    refused(acme, record, "e.proof.record-unverifiable.f")
+
+
+def test_a_signer_whose_key_log_the_record_does_not_carry_is_refused(acme, record):
+    """Key state the stranger already held is not evidence this record presented."""
+    marta = acme.aid("acme:marta")
+    record["kels"] = [entry for entry in record["kels"] if entry["aid"] != marta]
+    with stranger(acme) as substrate:
+        substrate.ingest_kel(marta, acme.substrate.export_kel(marta))
+        with pytest.raises(BakoboError) as raised:
+            ingest(record, substrate)
+    assert raised.value.is_exactly("e.input.record-malformed.f")

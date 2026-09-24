@@ -314,6 +314,7 @@ class KeripySubstrate:
             raise KEL_UNVERIFIABLE(
                 aid=aid, problem="this substrate already holds key state for it"
             )
+        held = set(self._hby.kevers)
         try:
             messages = json.loads(exported)
             if not isinstance(messages, list) or not messages:
@@ -327,6 +328,11 @@ class KeripySubstrate:
                 kevery.processEscrows()
         except Exception:
             raise KEL_UNVERIFIABLE(aid=aid, problem="it is not an exported key log") from None
+        smuggled = sorted(set(self._hby.kevers) - held - {aid})
+        if smuggled:
+            raise KEL_UNVERIFIABLE(
+                aid=aid, problem=f"it also carries the key state of {', '.join(smuggled)}"
+            )
         accepted = len(list(self._hby.db.getEvtPreIter(pre=aid)))
         if accepted != len(messages):
             raise KEL_UNVERIFIABLE(

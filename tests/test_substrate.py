@@ -404,3 +404,17 @@ def test_a_facade_replay_refuses_every_edit_it_can_detect(edit):
     with pytest.raises(BakoboError) as caught:
         FacadeSubstrate().ingest_kel(aid, json.dumps(log))
     assert caught.value.is_exactly("e.proof.kel-unverifiable.f")
+
+
+def test_a_facade_replay_refuses_a_delegation_its_delegator_never_sealed():
+    """A dip names its delegator; the delegator's replayed log has to agree."""
+    writer = FacadeSubstrate()
+    writer.incept("acme:gaid")
+    writer.incept("acme:seat3")
+    forged = writer.key_events("acme:seat3")[0]
+    forged = _resaid({**forged, "t": "dip", "di": "acme:gaid"})
+    reader = FacadeSubstrate()
+    reader.ingest_kel("acme:gaid", writer.export_kel("acme:gaid"))
+    with pytest.raises(BakoboError) as caught:
+        reader.ingest_kel("acme:seat3", json.dumps({"events": [forged]}))
+    assert caught.value.is_exactly("e.proof.kel-unverifiable.f")

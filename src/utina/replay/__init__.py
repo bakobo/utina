@@ -52,21 +52,22 @@ RECORD_FIELDS = frozenset({"format", "gaid", "kels", "events"})
 KEL_FIELDS = frozenset({"aid", "log"})
 EVENT_FIELDS = frozenset({"said", "kind", "body"})
 
-#: Every event kind some module of the fold reads. The constructor writes all of
-#: these but ``retraction``, which the slot walk reads and nothing yet writes.
-KINDS = frozenset(
-    {
-        "inception",
-        "enactment",
-        "act",
-        "endorsement",
-        "retraction",
-        "issuance",
-        "revocation",
-        "duplicity",
-        "certification",
-    }
-)
+#: Every event kind some module of the fold reads, by the ilk its signed body
+#: commits in ``t``. The kind label in a record sits outside every signature, so
+#: it is checked against the body rather than believed: an endorsement relabelled
+#: an act would otherwise stop counting toward unity. The constructor writes all
+#: of these but ``retraction``, which the slot walk reads and nothing yet writes.
+KINDS: Mapping[str, str] = {
+    "icp": "inception",
+    "enact": "enactment",
+    "act": "act",
+    "end": "endorsement",
+    "ret": "retraction",
+    "iss": "issuance",
+    "rev": "revocation",
+    "dup": "duplicity",
+    "cert": "certification",
+}
 
 RECORD_MALFORMED = ErrorCode(
     code="e.input.record-malformed.f",
@@ -120,7 +121,8 @@ def ingest(record: object, substrate: Substrate) -> Corpus:
 
     ``substrate`` must hold no key state of its own for any party in the record;
     it is the stranger. Every refusal is one of the two codes above, or one
-    ``fold/gel.py`` or the substrate raises for the same reason.
+    ``fold/gel.py`` or the substrate raises for the same reason. A substrate that
+    refused a record may hold part of it and is not to be used again.
     """
     fields = _fields(record, RECORD_FIELDS, "The record")
     if fields["format"] != FORMAT:
@@ -136,6 +138,15 @@ def ingest(record: object, substrate: Substrate) -> Corpus:
     if unexamined:
         raise RECORD_MALFORMED(
             problem=f"The key logs of {', '.join(unexamined)} are needed by nothing here."
+        )
+    absent = sorted(needed - set(replayed))
+    if absent:
+        raise RECORD_MALFORMED(
+            problem=(
+                f"The record needs the key logs of {', '.join(absent)} and does not carry "
+                "them; key state the stranger already held is not evidence this record "
+                "presented."
+            )
         )
     return anchored(events, substrate.key_events(gaid), gaid=gaid)
 
@@ -163,8 +174,12 @@ def _rebuilt(entry: object, substrate: Substrate) -> Event:
     said, kind, body = fields["said"], fields["kind"], fields["body"]
     if not isinstance(said, str) or not isinstance(body, Mapping):
         raise RECORD_MALFORMED(problem="An event entry's said or body has the wrong shape.")
-    if kind not in KINDS:
+    if kind not in KINDS.values():
         raise RECORD_MALFORMED(problem=f"The event {said} is a {kind!r}, which no fold reads.")
+    if KINDS.get(str(body.get("t"))) != kind:
+        raise RECORD_UNVERIFIABLE(
+            said=said, problem=f"is labelled {kind!r} and its signed ilk is {body.get('t')!r}"
+        )
     if body.get("d") != said or substrate.said(body) != said:
         raise RECORD_UNVERIFIABLE(
             said=said, problem="has an identifier its bytes do not derive"

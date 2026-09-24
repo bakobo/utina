@@ -226,3 +226,22 @@ def test_a_credential_whose_signature_will_not_verify_is_never_returned(keripy, 
     with pytest.raises(BakoboError) as caught:
         endorsement_acdc(keripy, marta)
     assert caught.value.code == "e.proof.acdc-sig.f"
+
+
+def test_a_key_log_that_smuggles_in_another_identifier_is_refused():
+    """One message carrying two identifiers' inceptions would leave key state for
+    the second behind, verified against nothing the record presented as its log."""
+    import json
+
+    from bakobo.errors import BakoboError
+
+    from utina.substrate.keripy import KeripySubstrate
+
+    with KeripySubstrate() as writer, KeripySubstrate() as reader:
+        gaid = writer.incept("acme:gaid")
+        other = writer.incept("acme:other")
+        (own,) = json.loads(writer.export_kel(gaid))
+        (smuggled,) = json.loads(writer.export_kel(other))
+        with pytest.raises(BakoboError) as raised:
+            reader.ingest_kel(gaid, json.dumps([own + smuggled]))
+        assert raised.value.is_exactly("e.proof.kel-unverifiable.f")
