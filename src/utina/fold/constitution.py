@@ -194,6 +194,9 @@ def _successor(
         # enactment at ``position`` itself would recur without descending.
         if event.kind != ENACTMENT_KIND or not current.position < event.position < position:
             continue
+        cited = event.body.get(PRIOR_FIELD)
+        if cited is not None and cited != current.said:
+            continue
         judging = Constitution.at(corpus, event.position)
         if not _claims(event, current.said, judging):
             continue
@@ -207,14 +210,11 @@ def _claims(enactment: Event, predecessor: str, judging: Constitution) -> bool:
     """Whether ``enactment`` is an eligible claimant of ``predecessor``'s edition.
 
     Eligibility is latest-unsuperseded (3043-3047): the edition in force at the
-    enactment's own coordinate must be the one it claims. A cited predecessor
-    that is anything else confers nothing, however well signed; an enactment
-    citing none claims the edition in force at its coordinate, since §18 never
-    obliges the citation (Q33).
+    enactment's own coordinate must be the one it claims. An enactment citing
+    none claims the edition in force at its coordinate, since §18 never obliges
+    the citation (Q33); one citing a different edition was already passed over
+    by :func:`_successor`, before its judging law was computed.
     """
-    cited = enactment.body.get(PRIOR_FIELD)
-    if cited is not None and cited != predecessor:
-        return False
     return judging.source == predecessor
 
 
@@ -340,6 +340,10 @@ class Constitution:
         the earliest eligible claimant in GEL order that has taken force
         (3043-3050, :func:`_chain`, this.i @fougolzt).
         """
+        key = (cls, position.seq)
+        known = corpus.memo.get(key)
+        if isinstance(known, Constitution):
+            return known
         edition: tuple[Clause, ...] = ()
         source = ""
         pinned: str | None = None
@@ -350,13 +354,15 @@ class Constitution:
             source = chain[0].said
         _refuse_a_contradictory_edition(edition)
         head = hashlib.sha256(_canonical_bytes(edition)).hexdigest()
-        return cls(
+        constitution = cls(
             law_head=LawHead(said=head),
             clauses=edition,
             source=source,
             semantics=pinned,
             certification=certifies_by,
         )
+        corpus.memo[key] = constitution
+        return constitution
 
     @classmethod
     def succession(cls, corpus: Corpus, position: Position) -> tuple[Succession, ...]:

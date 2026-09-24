@@ -647,3 +647,16 @@ def test_the_succession_record_is_derivable_from_the_gel():
 
 def test_there_is_no_succession_before_the_founding_law():
     assert Constitution.succession(Corpus.load([]), Position(0)) == ()
+
+
+def test_many_unratified_enactments_do_not_make_the_law_fold_explode():
+    """Each enactment's judging law is asked for once, not once per path to it: a
+    domain with a long history of failed amendments must still fold."""
+    import time
+
+    events = [FOUNDING, *(
+        enactment(f"E{n}-proposal", Position(n), STATE_TWO) for n in range(1, 40)
+    )]
+    started = time.monotonic()
+    assert sorted_ids(Constitution.at(Corpus.load(events), Position(39))) == ["A1", "A2"]
+    assert time.monotonic() - started < 5
