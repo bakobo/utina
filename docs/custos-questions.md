@@ -34,12 +34,12 @@ before the fold can still be followed. The per-commission files are gone.
 | Q1 | an unreachable group: defeated or pending | DIVERGENT | Q1 |
 | Q2 | threshold language: whose semantics | pinned | Q2 |
 | Q3 | is an amendment judged at its own coordinate | — | Q3 |
-| Q4 | what does affirmed carry | — | Q4 |
+| Q4 | what does affirmed carry | DIVERGENT | Q4 |
 | Q5 | how does species order in the canonical total order | DIVERGENT | QC1 |
 | Q6 | which defeater class does a declination produce | DIVERGENT | QC2 |
 | Q7 | an empty subcode is the minimum, yet orders last | DIVERGENT | QC3 |
 | Q8 | may a pending carry an empty requirement set | DIVERGENT | QC4 |
-| Q9 | the refusal record has no committed form | convergent | QC5 |
+| Q9 | the refusal record has no committed form | convergent decision, DIVERGENT record | QC5 |
 | Q10 | "citing-clause bytes" has no stated flattening | convergent here | QC6 |
 | Q11 | intra-anchor order with no seal index | DIVERGENT | QL1 |
 | Q12 | re-presenting one committed event | convergent | QL2 |
@@ -184,6 +184,14 @@ thesmo's `m1-alpha` reading found the same thing and pinned the payload; a 4.2
 seed repairs it. Recorded here because utina's `Affirmed` carries the evidence
 bundle identity and the clause set, and a reader comparing utina against the
 ratified enumeration will find a field the enumeration does not require.
+
+**Amended 2026-09-24: DIVERGENT.** The conformance predicate at `:3016-3028` is
+semantic full-payload equality, "grounds in canonical order" among its terms, so the
+affirmed payload is compared even though no clause rules it. A second lawful reading
+carries the evidence reference and the law applied — the pair the appraisal triple
+already names — where utina carries clause ids, endorsement identifiers and a bundle
+identifier. Two engines agreeing on every verdict are then unequal on every affirmed
+finding. **Ask Custos:** rule the affirmed payload, since §17 compares it.
 
 ---
 
@@ -363,6 +371,19 @@ inputs, and Custos owes byte-equality only for the *decision* to refuse
 (`:31-34`), not for the record. Logged because the reading is ours and a reader
 comparing utina to the document will find a type the document does not describe.
 See U3 in `../../thesmo-demo/audit-spec-requirements.md`.
+
+**Amended 2026-09-24: the convergence above holds for the decision and not for the
+record.** The conformance predicate at `:3016-3028` compares "refusal grounds with the
+seal kind named per the seal ladder's three-kind discipline wherever refusal fires",
+and `:2049-2056` makes that discipline the naming rule wherever the document requires
+a refusal to name its ground. utina's `Refusal` names its ground in prose (`missing`)
+and names no seal kind, and neither reading above carries one. So two engines refusing
+the same invocation are unequal under the predicate unless both name a seal kind, and
+the form the predicate compares is one §16 declines to give. Three conditions another
+engine might return as refusals are raised errors here instead: a SAID collision
+(`fold/corpus.py`), a contradictory edition (`fold/constitution.py`) and an unreadable
+law (`fold/clause.py`). **Ask Custos:** §17 compares a refusal record that §16 leaves
+formless; one of the two has to move.
 
 ---
 
