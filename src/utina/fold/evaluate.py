@@ -468,6 +468,13 @@ def _tainted(
     acts = _attributions(corpus, at)
     # The whole walk, not the first hit: a subject conviction anywhere beats every
     # taint, and every taint is its own check (this.i @zmlvpkhl, Q38).
+    # Each classified disposition sits at its slot's index, so a cited act leads
+    # back to the slot it filled and to the schema that slot commits.
+    filled: list[tuple[SAID, SAID]] = [
+        (one.said, slot.schema)
+        for slot, one in zip(clause.group.slots, classified, strict=True)
+        if one.said is not None
+    ]
     taints: list[RequirementElement] = []
     for event in corpus.upto(at):
         party = bearing.convicted(event)
@@ -477,14 +484,18 @@ def _tainted(
         if which is bearing.Role.SUBJECT:
             return SelfConvicted(proof=Proof(package=event.said, pair=bearing.pair_of(event)))
         if which is bearing.Role.CITED:
-            taints.append(
+            # One element per slot the party's cited acts filled: a holder of two
+            # offices is tainted in both, and each slot commits its own schema.
+            taints.extend(
                 RequirementElement(
                     endorser=party,
                     clause=clause.id,
-                    schema=clause.group.slots[0].schema,
+                    schema=schema,
                     species=PendingSpecies.UNRESOLVED_CONFLICT,
                     ground=bearing.taint_ground(event),
                 )
+                for cited, schema in filled
+                if acts.get(cited) == party
             )
     if taints:
         return Pending(requirement=canonical_requirement_set(taints))

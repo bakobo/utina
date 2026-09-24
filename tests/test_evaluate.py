@@ -1257,6 +1257,37 @@ def test_a_convicted_subject_is_convicted_even_where_a_cited_taint_came_first():
     assert finding.proof.package == mark
 
 
+def test_a_taint_names_the_schema_of_the_tainted_partys_own_slot():
+    """A requirement element names the schema its slot's evidence must satisfy
+    (``:1946-1951``), so a taint at the second slot names the second slot's."""
+    other = "Eanother-endorsement-schema"
+    law = [
+        {
+            "id": "H1",
+            "governs": ["hire"],
+            "group": {
+                "operator": "MxN",
+                "slots": [
+                    {"endorser": MARTA, "weight": "1/2", "schema": SCHEMA},
+                    {"endorser": DEV, "weight": "1/2", "schema": other},
+                ],
+            },
+        }
+    ]
+    log = Log()
+    log.law("founding", "inception", law)
+    act = log.act("hire", "hire")
+    log.endorse(MARTA, act)
+    log.endorse(DEV, act)
+    assert isinstance(evaluate(log.corpus, Committed(act), at=log.now), Affirmed)
+    observed(log, DEV)
+
+    finding = evaluate(log.corpus, Committed(act), at=log.now)
+
+    assert isinstance(finding, Pending)
+    assert [(one.endorser, one.schema) for one in finding.requirement] == [(DEV, other)]
+
+
 def test_every_tainted_cited_party_is_named_in_the_pending():
     """No finding is terminal while any enumerated check is unexamined
     (``:1753-1762``), and each taint is its own check with its own cure: a
