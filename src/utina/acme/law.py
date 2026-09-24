@@ -21,8 +21,15 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
 
+from utina.fold.certification import REQUIRES_FIELD
 from utina.fold.semantics import DOSSIER, DOSSIER_KEY, SEMANTICS_FIELD
-from utina.substrate import ENDORSEMENT_SCHEMA, GCD_SCHEMA
+from utina.substrate import CERTIFICATION_SCHEMA, ENDORSEMENT_SCHEMA, GCD_SCHEMA
+
+#: Where a law names the schema its certifications must satisfy. The fold's own
+#: field name, imported rather than spelled again here: a law that named the field
+#: differently would require no certification at all, and would look on the page
+#: exactly like one that did.
+CERTIFICATION_FIELD = REQUIRES_FIELD
 
 #: The governed domain. An *alias*, not an identifier: under keripy a prefix is
 #: a digest of its own inception event and cannot be named beforehand, so the law
@@ -64,9 +71,12 @@ DEVICE = "acme:nina-device"
 #: so this tells a reader what the grant is for and gates nothing.
 DEVICE_ROLE = "board-seat-3-device"
 
-#: The office the seat credential names, in Acme's own vocabulary. A label for a
-#: reader; nothing computes over it, because what the law slots is the seat's
-#: identifier.
+#: The office the seat credential names, in Acme's own vocabulary, and what the
+#: board law's third slot SEATS. The law creates the seat and a credential fills it
+#: (this.i @ftjpdph5), so this is no longer a label a reader interprets: it is in the
+#: clause's committed bytes, and the fold resolves it to whoever holds a standing
+#: seating credential for it. Appointing a director is therefore an issuance and
+#: removing one a revocation, and neither is an amendment.
 SEAT_OFFICE = "board-seat-3"
 
 #: Acme's own credential registry, through which a standing-conferring
@@ -89,10 +99,6 @@ SEAT_REGISTRY = "acme-seat3"
 SEAT_ACTS = ("create commitment",)
 
 FOUNDERS = (MARTA, DEV)
-
-#: Who the board law slots: the two founders and the *seat*, never the director
-#: who holds its keys (this.i @z373ew7j).
-BOARD = (MARTA, DEV, SEAT)
 
 #: What the ordinary-acts clause rules, in the order the record tables them.
 #: ``declare-dividend`` is deliberately absent from every clause: one beat needs
@@ -183,6 +189,31 @@ def slot(
     return committed
 
 
+def seat_slot(
+    office: str, weight: Fraction, qualification: Mapping[str, object]
+) -> Mapping[str, object]:
+    """One committed slot that seats an OFFICE rather than naming a party.
+
+    The difference from :func:`slot` is the whole of ``this.i`` @ftjpdph5, and it is
+    one field: there is no ``endorser``, so the law commits no AID for this seat at
+    all. Who fills it is read off the record — whoever holds a standing credential of
+    the ``qualification`` seating them in ``office`` — which is what makes appointing
+    a director an issuance rather than a constitutional amendment.
+
+    A qualification is mandatory here and optional on a party slot, and that
+    asymmetry is not an accident: a slot that named an office and required nothing to
+    be standing on would be seated by anybody willing to claim the title. The fold
+    refuses such a slot when it reads the law; committing one would be writing a
+    defect for the fold to catch rather than not writing it.
+    """
+    return {
+        "office": office,
+        "weight": f"{weight.numerator}/{weight.denominator}",
+        "schema": ENDORSEMENT_SCHEMA,
+        "qualification": qualification,
+    }
+
+
 def clause(
     identifier: str, governs: Sequence[str], slots: Sequence[Mapping[str, object]]
 ) -> Mapping[str, object]:
@@ -201,6 +232,20 @@ def _even(
     """Slots of equal weight, each with whatever its endorser must hold, if anything."""
     held = {} if qualifications is None else qualifications
     return tuple(slot(endorser, weight, held.get(endorser)) for endorser in endorsers)
+
+
+def _board_slots(aids: Mapping[str, str], weight: Fraction) -> tuple[Mapping[str, object], ...]:
+    """The board's three slots at ``weight`` apiece: two founders and one office.
+
+    The founders are slotted as themselves because the law entitles them directly;
+    board seat 3 is slotted as an OFFICE, filled by whoever holds Acme's own seating
+    credential for it. Built here rather than at each edition so that the two
+    editions cannot drift in the one place where a drift would be invisible — B1 and
+    B2 differ only in their weights, and a third slot that differed in anything else
+    would be two different seats wearing one name.
+    """
+    founders = _even([aids[alias] for alias in FOUNDERS], weight)
+    return (*founders, seat_slot(SEAT_OFFICE, weight, seated_by(aids[GAID])))
 
 
 def seated_by(domain: str) -> Mapping[str, object]:
@@ -258,6 +303,16 @@ def founding_law(aids: Mapping[str, str]) -> Mapping[str, object]:
     both founders. ``aids`` maps each alias above to the identifier inception
     returned for it; a slot names an identifier, because an endorsement names
     one and the fold matches the two.
+
+    **Acme certifies from inception**, in this edition and both successors. A
+    decision is consequential when the domain records that its threshold was met,
+    not when the last endorsement happens to exist (this.i @2e2dncfe), and whether a
+    domain works that way is a governance choice its law has to state. Committed in
+    every edition rather than inherited from the first, for the same reason A3 and
+    the semantics pin are: an amendment replaces the edition rather than adding to
+    it, so a term left out of a successor is a term that successor does not carry —
+    and a successor that silently dropped this one would quietly authorize every act
+    under it on arithmetic alone.
     """
     founders = [aids[alias] for alias in FOUNDERS]
     return {
@@ -266,6 +321,7 @@ def founding_law(aids: Mapping[str, str]) -> Mapping[str, object]:
             clause("A2", AMENDMENT_ACTS, _even(founders, Fraction(1, 2))),
             equity_clause(aids),
         ),
+        CERTIFICATION_FIELD: CERTIFICATION_SCHEMA,
         SEMANTICS_FIELD: semantics_block(),
     }
 
@@ -277,10 +333,13 @@ def board_law(aids: Mapping[str, str]) -> Mapping[str, object]:
     unity — and the authority to change the rules is not: three slots at a
     third, so all three are needed. That retained bar is the point of the demo.
 
-    The third slot is board seat 3, an office, and not Nina, who holds its keys.
-    A law that slotted the officer would say a governance power attaches to a
-    person; under the office, a director leaving is a rotation on the seat and
-    the law does not move at all (this.i @z373ew7j).
+    The third slot names the OFFICE of board seat 3 and no identifier at all — not
+    the seat's, and not Nina's, who holds its keys. The law creates the seat; a
+    credential fills it (this.i @ftjpdph5). Under the previous reading the slot named
+    the seat's AID, which still welded personnel to law one step removed: seating a
+    different director would have moved a clause, and with it the law head. Now
+    appointing one is an issuance and removing one is a revocation, and neither
+    touches the law (this.i @z373ew7j, @ftjpdph5).
 
     A3 is re-committed last and unchanged. An amendment replaces the edition
     rather than adding to it (this.i @wg3jr6), so a clause that does not change
@@ -288,15 +347,13 @@ def board_law(aids: Mapping[str, str]) -> Mapping[str, object]:
     what makes it the same clause afterwards rather than a new one that resembles
     it.
     """
-    board = [aids[alias] for alias in BOARD]
-    seats = {aids[SEAT]: seated_by(aids[GAID])}
     return {
         "clauses": (
-            clause("B1", ORDINARY_ACTS, _even(board, Fraction(1, 2), seats)),
-            clause("B2", AMENDMENT_ACTS, _even(board, Fraction(1, 3), seats)),
+            clause("B1", ORDINARY_ACTS, _board_slots(aids, Fraction(1, 2))),
+            clause("B2", AMENDMENT_ACTS, _board_slots(aids, Fraction(1, 3))),
             equity_clause(aids),
         ),
-        "seats": (aids[SEAT],),
+        CERTIFICATION_FIELD: CERTIFICATION_SCHEMA,
         SEMANTICS_FIELD: semantics_block(),
     }
 
@@ -314,15 +371,13 @@ def lowered_law(aids: Mapping[str, str]) -> Mapping[str, object]:
     path closed by it, which is what makes beat 23's computed disturbance set
     contain BOTH pending questions. The amendment declares only one of them.
     """
-    board = [aids[alias] for alias in BOARD]
-    seats = {aids[SEAT]: seated_by(aids[GAID])}
     return {
         "clauses": (
-            clause("B1", ORDINARY_ACTS, _even(board, Fraction(1, 1), seats)),
-            clause("B2", AMENDMENT_ACTS, _even(board, Fraction(1, 3), seats)),
+            clause("B1", ORDINARY_ACTS, _board_slots(aids, Fraction(1, 1))),
+            clause("B2", AMENDMENT_ACTS, _board_slots(aids, Fraction(1, 3))),
             equity_clause(aids),
         ),
-        "seats": (aids[SEAT],),
+        CERTIFICATION_FIELD: CERTIFICATION_SCHEMA,
         SEMANTICS_FIELD: semantics_block(),
     }
 
