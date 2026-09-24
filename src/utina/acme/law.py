@@ -154,9 +154,7 @@ RESEATING_NONCE = "0AB1dGluYS1yZXNlYXQtMDAx"
 UNGOVERNED_ACT = "declare-dividend"
 
 
-def slot(
-    endorser: str, weight: Fraction, qualification: Mapping[str, object] | None = None
-) -> Mapping[str, object]:
+def slot(endorser: str, weight: Fraction) -> Mapping[str, object]:
     """One committed slot: who may act, with how much weight, and with what evidence.
 
     The weight commits as an exact rational **string** — ``"1/2"`` — which is
@@ -173,20 +171,17 @@ def slot(
     second ACDC kind, and a requirement that could not say which of the two it
     wanted would be satisfiable by the wrong one.
 
-    A slot may also name the credential its endorser must HOLD, which is a
-    different statement from the schema above and is what seats an office. Acme's
-    founders carry none — the law entitles them directly — and board seat 3
-    carries one, so that revoking its credential empties its slot instead of
-    leaving the office seated by nothing but its own silence (this.i @cglayqvw).
+    Every slot this builds names a party the law entitles DIRECTLY, and so carries no
+    qualification: Acme's founders are slotted as themselves and nothing but the law
+    qualifies them. The one slot whose holder had to be standing on a credential was
+    board seat 3's, and it is an office slot now — :func:`seat_slot`, where the
+    qualification is mandatory rather than optional (this.i @ftjpdph5).
     """
-    committed: dict[str, object] = {
+    return {
         "endorser": endorser,
         "weight": f"{weight.numerator}/{weight.denominator}",
         "schema": ENDORSEMENT_SCHEMA,
     }
-    if qualification is not None:
-        committed["qualification"] = qualification
-    return committed
 
 
 def seat_slot(
@@ -224,14 +219,9 @@ def clause(
     }
 
 
-def _even(
-    endorsers: Sequence[str],
-    weight: Fraction,
-    qualifications: Mapping[str, Mapping[str, object]] | None = None,
-) -> tuple[Mapping[str, object], ...]:
-    """Slots of equal weight, each with whatever its endorser must hold, if anything."""
-    held = {} if qualifications is None else qualifications
-    return tuple(slot(endorser, weight, held.get(endorser)) for endorser in endorsers)
+def _even(endorsers: Sequence[str], weight: Fraction) -> tuple[Mapping[str, object], ...]:
+    """Slots of equal weight, one per endorser the law entitles directly."""
+    return tuple(slot(endorser, weight) for endorser in endorsers)
 
 
 def _board_slots(aids: Mapping[str, str], weight: Fraction) -> tuple[Mapping[str, object], ...]:

@@ -47,6 +47,7 @@ from utina.cli.style import (
     VERDICT_COLOR,
     Style,
 )
+from utina.fold import bearing, certification
 from utina.fold.clause import Clause
 from utina.fold.constitution import Constitution
 from utina.fold.corpus import Event
@@ -461,7 +462,7 @@ def _arithmetic(
         acted = "-" if disposition.said is None else abbrev(disposition.said)
         lines.append(
             _row(
-                abbrev(aliases.short(slot.endorser), SLOT),
+                abbrev(aliases.short(disposition.endorser), SLOT),
                 rational(slot.weight),
                 disposition.disposition.value,
                 acted,
@@ -692,7 +693,7 @@ def law_screen(
                     style,
                     "slots",
                     ", ".join(
-                        f"{aliases.short(slot.endorser)} {rational(slot.weight)}"
+                        f"{aliases.short(slot.key)} {rational(slot.weight)}"
                         for slot in clause.group.slots
                     ),
                 ),
@@ -756,7 +757,18 @@ def _gloss(event: Event, aliases: Aliases) -> str:
         return f"a successor law, enacted as {event.body.get(ACT_FIELD)}"
     if event.kind == "act":
         return f"an act of the class {event.body.get(ACT_FIELD)}"
+    if event.kind == certification.CERTIFICATION_KIND:
+        subject = str(event.body.get(certification.CERTIFIES_FIELD, ""))
+        return f"the domain certifies {abbrev(subject)}"
+    if event.kind == bearing.DUPLICITY_KIND:
+        return f"duplicity observed at {aliases.short(str(bearing.convicted(event)))}"
     block = attributes(event)
+    if not block:
+        # A kind whose body this gloss has no reading for. Saying so is the honest
+        # answer; the fall-through used to read every such event as a declination,
+        # which put "marta-founder,6 declines …" against a certification the domain
+        # committed and "None declines None" against a duplicity observation.
+        return "—"
     verb = "endorses" if block.get(DISPOSITION_FIELD) == ENDORSE else "declines"
     return (
         f"{aliases.short(str(credential(event).get(ISSUER_FIELD)))} {verb} "

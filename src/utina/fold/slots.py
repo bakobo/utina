@@ -219,6 +219,10 @@ class SlotDisposition:
     key: str = ""
 
     def __post_init__(self) -> None:
+        # Defaulting to the endorser keeps a two-argument construction meaning what it
+        # used to for a slot the law entitles directly, where the seat and its occupant
+        # are the same identifier. :func:`classify` always passes the key explicitly, so
+        # this is the shape an outside caller gets rather than a path the fold takes.
         if not self.key:
             object.__setattr__(self, "key", self.endorser)
 

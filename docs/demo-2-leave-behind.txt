@@ -10,21 +10,21 @@
   AFFIRMED    may Acme perform an act of the class release-escrowed-equity?
   ------------------------------------------------------------------------------------
 
-  position    b11 (seq 15)
-  law head    8191a249fc6b...          clause A3 (MxN), unity 1
-  subject     EdVmO4oxF6j8Zkb_OpbpRyYhxL3VhHMKLWgJQoAFxSso
+  position    b11 (seq 18)
+  law head    94ac5bb73b09...          clause A3 (MxN), unity 1
+  subject     Efx7xD35Qc6n1Y_BPH6UJvLR6D810Zo1Vr7FWZyDL32o
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EgPbNtk_ST_c...
-  dev-founder,6          1/2   endorsed      E0-aE1sSVC0R...
+  marta-founder,6        1/2   endorsed      ETg2KsO0yZ3R...
+  dev-founder,6          1/2   endorsed      EQfnCxJn58wc...
                       ------
   endorsed                 1   of 1          unity reached
   reachable                1   of 1          unity still reachable
 
   ground
     clauses     A3
-    reached by  E0-aE1sSVC0R..., EgPbNtk_ST_c...
-    evidence    a6158091a2045582...
+    reached by  EQfnCxJn58wc..., ETg2KsO0yZ3R...
+    evidence    6758580da98474fe...
 
 
 
@@ -39,22 +39,22 @@
   AFFIRMED    may Acme perform an act of the class approve-budget?
   ------------------------------------------------------------------------------------
 
-  position    b15 (seq 31)
-  law head    8191a249fc6b...          clause B1 (MxN), unity 1
-  subject     EIha84VWIvyD3kE4M8EI-z5h9lkspXHjbzhKBywImozI
+  position    b15 (seq 36)
+  law head    94ac5bb73b09...          clause B1 (MxN), unity 1
+  subject     E978XZbiieJiY6nB9Xq5UZqbiVUtn-9RdC0z1uUz3aG8
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EjXUr3ahWnmd...
-  dev-founder,6          1/2   declined      ES5LId2ZmlTC...
-  nina-board-seat-3,6    1/2   endorsed      ErqN_GR5WqTj...
+  marta-founder,6        1/2   endorsed      Eqrox0_SoNlQ...
+  dev-founder,6          1/2   declined      E3xAA9ue-EBq...
+  nina-board-seat-3,6    1/2   endorsed      EywNRbWKpq7C...
                       ------
   endorsed                 1   of 1          unity reached
   reachable                1   of 1          unity still reachable
 
   ground
     clauses     B1
-    reached by  EjXUr3ahWnmd..., ErqN_GR5WqTj...
-    evidence    00249b4d3e7e4013...
+    reached by  Eqrox0_SoNlQ..., EywNRbWKpq7C...
+    evidence    68a58903592d8acd...
 
 
 
@@ -65,25 +65,25 @@
 
   $ utina eval --said approve-budget --at d5
 
-  AFFIRMED    was the committed act Ebnz13phAfQySQoQ-qxY26rhgItCJgtyZIaouyhvFqQg lawful?
+  AFFIRMED    was the committed act E3CkC7KlYyV8iN1ECSn5YrwP_nTvhz3cQ4JwrEIqfrF0 lawful?
   ------------------------------------------------------------------------------------
 
-  position    d5 (seq 18)
-  law head    8191a249fc6b...          clause B1 (MxN), unity 1
-  subject     Ebnz13phAfQySQoQ-qxY26rhgItCJgtyZIaouyhvFqQg
+  position    d5 (seq 22)
+  law head    94ac5bb73b09...          clause B1 (MxN), unity 1
+  subject     E3CkC7KlYyV8iN1ECSn5YrwP_nTvhz3cQ4JwrEIqfrF0
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EqDH_-4f2rNl...
+  marta-founder,6        1/2   endorsed      EdWJdTA6J6Uk...
   dev-founder,6          1/2   pending       -
-  nina-board-seat-3,6    1/2   endorsed      EGwcp9EgsuwT...
+  nina-board-seat-3,6    1/2   endorsed      EMyOnRplLjSS...
                       ------
   endorsed                 1   of 1          unity reached
   reachable              3/2   of 1          unity still reachable
 
   ground
     clauses     B1
-    reached by  EGwcp9EgsuwT..., EqDH_-4f2rNl...
-    evidence    8011d624e19a65e2...
+    reached by  EMyOnRplLjSS..., EdWJdTA6J6Uk...
+    evidence    54467b6a07228fdc...
 
 
 
@@ -94,17 +94,17 @@
 
   $ utina eval --said approve-capital-plan --at b21
 
-  PENDING     was the committed act E3VUf10ojy8GZc_5wS-5NGKSomFjoFy87mYiigrhKE3A lawful?
+  PENDING     was the committed act E2G9oY2qa45hZm6Pt47dpz-Vk1DEtb-96qTB7O0gkVcQ lawful?
   ------------------------------------------------------------------------------------
 
-  position    b21 (seq 36)
-  law head    8191a249fc6b...          clause B1 (MxN), unity 1
-  subject     E3VUf10ojy8GZc_5wS-5NGKSomFjoFy87mYiigrhKE3A
+  position    b21 (seq 41)
+  law head    94ac5bb73b09...          clause B1 (MxN), unity 1
+  subject     E2G9oY2qa45hZm6Pt47dpz-Vk1DEtb-96qTB7O0gkVcQ
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      E6sWX4faOVhx...
+  marta-founder,6        1/2   endorsed      EefYnxLYlvDI...
   dev-founder,6          1/2   pending       -
-  nina-board-seat-3,6    1/2   pending       -
+  board-seat-3           1/2   pending       -
                       ------
   endorsed               1/2   of 1          unity not reached
   reachable              3/2   of 1          unity still reachable
@@ -112,8 +112,8 @@
   ground - what would discharge this
     dev-founder-acme,6 endorsement under clause B1, absent
                        cured by the arrival of the missing evidence
-    nina-board-seat-3-acme,6 endorsement under clause B1, absent
-                             cured by the arrival of the missing evidence
+    board-seat-3 endorsement under clause B1, absent
+                 cured by the arrival of the missing evidence
 
 
 
@@ -127,7 +127,7 @@
   AFFIRMED    was the committed act E9LNkisX-EfNzavJsJmBUx8IyDX_7jmCpAIL6cSvt5kY lawful?
   ------------------------------------------------------------------------------------
 
-  position    d9 (seq 26)
+  position    d9 (seq 30)
   law head    f3bd6baa1af2...          clause A1 (MxN), unity 1
   subject     E9LNkisX-EfNzavJsJmBUx8IyDX_7jmCpAIL6cSvt5kY
 
@@ -141,7 +141,7 @@
   ground
     clauses     A1
     reached by  E7rZDgjVNGiJ..., ETFRV_i1XbrD...
-    evidence    e854e201e5aa739f...
+    evidence    f76908871f89ea9c...
 
 
 
@@ -152,11 +152,11 @@
 
   $ utina replay --at board-seated
 
-  REPLAY AT board-seated (seq 13)
+  REPLAY AT board-seated (seq 15)
   ------------------------------------------------------------------------------------
 
-  canonical   8191a249fc6bd9f0...      over 821 canonical bytes, 3 clauses
-  permuted    8191a249fc6bd9f0...      the same events, presented in arrival order seed 7
+  canonical   94ac5bb73b097c4c...      over 841 canonical bytes, 3 clauses
+  permuted    94ac5bb73b097c4c...      the same events, presented in arrival order seed 7
   result      IDENTICAL
 
   custos-4.2.md:3101 binds this: a stream presented in permuted arrival order folds to a
@@ -165,6 +165,6 @@
   mean.
 
   clause sub-blocks, in the order the head ranges over them
-    13312f04e6ac4e1a... B2
-    5bad68ce389b9a3e... B1
+    1696a090421d4574... B2
     709b5b56f6843cbf... A3
+    aae2a74bb8bc8292... B1

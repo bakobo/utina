@@ -129,8 +129,10 @@ def test_law_after_the_amendment_shows_the_board_clauses_and_the_retained_bar():
     assert "clause B1" in out and "clause B2" in out
     # A3 is re-committed unchanged, so the edition that seats the board carries it.
     assert "clause A3" in out
-    assert "marta-founder,6 1/2, dev-founder,6 1/2, nina-board-seat-3,6 1/2" in out
-    assert "marta-founder,6 1/3, dev-founder,6 1/3, nina-board-seat-3,6 1/3" in out
+    # The law names the OFFICE and no identifier at all (this.i @ftjpdph5), so the
+    # slot list reads as the seat rather than as whoever is currently in it.
+    assert "marta-founder,6 1/2, dev-founder,6 1/2, board-seat-3 1/2" in out
+    assert "marta-founder,6 1/3, dev-founder,6 1/3, board-seat-3 1/3" in out
     # B1's slots oversum, so unity does not need everyone; B2's do not.
     assert "sum to 3/2" in out
     assert "every slot is required" in out
@@ -179,7 +181,7 @@ def test_a_defeated_screen_carries_the_clause_class_subcode_and_declination():
     assert "DEFEATED" in out
     assert "authority (the actor lacked the invoked power)" in out
     assert "subcode" in out and "dev-founder-acme,6" in out
-    assert "EboFtM84Xdhk" in out
+    assert "EHhTweOdi1Vt" in out
     assert "unity unreachable" in out
 
 
@@ -309,7 +311,7 @@ def test_the_rendered_arithmetic_implies_the_folds_verdict(
             record.corpus, _question(record, argv), at=record.at(label), label=label
         )
         assert appraisal.clause is not None
-        held = {one.endorser: one.disposition for one in appraisal.slots}
+        held = {one.key: one.disposition for one in appraisal.slots}
         satisfied = appraisal.clause.group.satisfied(held)
         reachable = appraisal.clause.group.reachable(held)
 
@@ -618,13 +620,16 @@ def test_a_wrapped_mark_never_splits_an_escape_sequence():
 
 
 def test_the_enact_screens_before_and_after_carry_verdict_colours():
+    """Both sides read PENDING once the domain certifies, so the colour is the same one
+    twice. What the act moved is the arithmetic, and ``unity reached`` carries the
+    colour that says so — the verdict waits on the domain (this.i @2e2dncfe)."""
     from utina.cli.style import AWAITING, REACHED
 
     _, painted, _ = shell(
         "enact", "endorse", "--as", "acme:dev", "--on", "hire-vp-sales", color=True
     )
     assert painted_with(painted, AWAITING, "PENDING")
-    assert painted_with(painted, REACHED, "AFFIRMED")
+    assert painted_with(painted, REACHED, "unity reached")
 
 
 def test_the_replay_result_is_painted_by_whether_the_folds_agree():
@@ -725,7 +730,7 @@ def test_a_defeat_with_no_declination_still_carries_its_ground():
 def test_log_shows_every_committed_event_in_canonical_order():
     out = screen("log")
     assert "COMMITTED LOG AT the end of the record" in out
-    assert "43 events" in out
+    assert "49 events" in out
     assert "Arrival order is not consulted" in out
     seqs = [
         int(line.split()[0])
@@ -737,7 +742,7 @@ def test_log_shows_every_committed_event_in_canonical_order():
 
 def test_log_at_a_position_shows_only_what_was_committed_by_then():
     out = screen("log", "--at", "d1")
-    assert "4 events" in out
+    assert "5 events" in out
     assert "declare-dividend" not in out
 
 
@@ -890,9 +895,14 @@ def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
     # The signature is printed whole and therefore wraps, so the sentence beside it is
     # matched against the screen with its line breaks flattened.
     assert "the substrate verified it before recording" in " ".join(out.split())
-    assert "said=E3CkC7KlYyV8..." in out
-    assert "before" in out and "PENDING" in out
-    assert "after" in out and "AFFIRMED" in out
+    # Unity is reached and the act is STILL not authorized, because Acme's law names a
+    # certification schema and only the domain can admit a tally (this.i @2e2dncfe).
+    # A live endorsement therefore moves what is OUTSTANDING rather than the verdict:
+    # the ground stops naming a missing endorsement and starts naming the certification.
+    assert "before" in out and "after" in out
+    assert "unity reached" in out
+    assert "certification under clause B1, absent" in out
+    assert "AFFIRMED" not in out, "no endorsement can authorize an act in a certifying domain"
     assert "nothing here is written to disk" in out
 
 

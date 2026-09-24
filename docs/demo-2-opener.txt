@@ -49,21 +49,21 @@
   AFFIRMED    may Acme perform an act of the class open-bank-account?
   ------------------------------------------------------------------------------------
 
-  position    d1 (seq 3)
+  position    d1 (seq 4)
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
-  subject     EEn0_r7PRKyOB5fKHQXo7oLzOvvKh8Mm2QzaHjX6RVEP
+  subject     EHuYkhcEsw6MUcc2Ja1cfA9hDTY79cdlI1RRMbtTswyB
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EG4Hru2dhIUh...
-  dev-founder,6          1/2   endorsed      EKI2tBjGUAnh...
+  marta-founder,6        1/2   endorsed      EA2o4R_E1_tV...
+  dev-founder,6          1/2   endorsed      EJ15CKJc7X_W...
                       ------
   endorsed                 1   of 1          unity reached
   reachable                1   of 1          unity still reachable
 
   ground
     clauses     A1
-    reached by  EG4Hru2dhIUh..., EKI2tBjGUAnh...
-    evidence    cabcf7e9bfba1d32...
+    reached by  EA2o4R_E1_tV..., EJ15CKJc7X_W...
+    evidence    7c93128eac3b4353...
 
 
 
@@ -77,12 +77,12 @@
   PENDING     may Acme perform an act of the class hire-vp-sales?
   ------------------------------------------------------------------------------------
 
-  position    d2 (seq 5)
+  position    d2 (seq 6)
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
-  subject     EHSH6VlPrCyWjPC4T5LEkC7Gsi8Ez_mF0CKpzl_siTwd
+  subject     EGaVz8hvVnPwNroRlDJszzkn6yy9YrqZqLIzvs8bwzeV
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EHRPJG6uwS_R...
+  marta-founder,6        1/2   endorsed      EEPv81qzvdOt...
   dev-founder,6          1/2   pending       -
                       ------
   endorsed               1/2   of 1          unity not reached
@@ -104,13 +104,13 @@
   DEFEATED    may Acme perform an act of the class sign-office-lease?
   ------------------------------------------------------------------------------------
 
-  position    d3 (seq 8)
+  position    d3 (seq 9)
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
-  subject     EGd8WATAtKUqqTiuIZDK6VsOYqm0Vd1ZXmwGJNhEdXv7
+  subject     EK5aEpOlK_78nQwOBFQqrmXpBcd1H6L9wKeoUj304oJv
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EJa5RFw4j6LO...
-  dev-founder,6          1/2   declined      EPaxSw5JlXfM...
+  marta-founder,6        1/2   endorsed      EH2so1QROlKe...
+  dev-founder,6          1/2   declined      EE58bTVOtBvs...
                       ------
   endorsed               1/2   of 1          unity not reached
   reachable              1/2   of 1          unity unreachable: a declined slot is spent
@@ -119,7 +119,7 @@
     clause      A1
     defeater    authority (the actor lacked the invoked power)
     subcode     dev-founder-acme,6
-    citation    the declination EPaxSw5JlXfM... committed by dev-founder-acme,6
+    citation    the declination EE58bTVOtBvs... committed by dev-founder-acme,6
     reason      Unity is unreachable under clause A1: dev-founder-acme,6 committed a
                 signed declination, which spends that slot's weight, and the weight that
                 can still arrive no longer reaches unity.
@@ -136,12 +136,12 @@
   PENDING     may Acme perform an act of the class release-escrowed-equity?
   ------------------------------------------------------------------------------------
 
-  position    b5 (seq 10)
+  position    b5 (seq 11)
   law head    51d03abbfb85...          clause A3 (MxN), unity 1
-  subject     ENnQWccbhulXwep9PLhwsE_2jfDSyK8qWDUqRiJZl72F
+  subject     EPpk67g6frrFSDDUjHKFkPrKq4ebCHqnQ1WXOm4CjKMw
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EJuwKUfTJurV...
+  marta-founder,6        1/2   endorsed      EHwuKQwsw2FG...
   dev-founder,6          1/2   pending       -
                       ------
   endorsed               1/2   of 1          unity not reached
@@ -167,8 +167,8 @@
   ill-posed question rather than legislating the missing rule.
 
   question    may Acme perform an act of the class declare-dividend?
-  position    d8 (seq 26)
-  law head    c729af3a8b7c...
+  position    d8 (seq 30)
+  law head    d8ed77c7c11a...
 
   missing     a committed clause governing acts of the class declare-dividend
   detail      The law in force at this position rules no clause over this class of act.

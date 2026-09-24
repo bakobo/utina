@@ -24,7 +24,7 @@ pytest.importorskip(
     reason="the fold has no evaluate() yet — see docs/demo-script.md for what it owes",
 )
 
-from utina.acme import DEV, MARTA, SEAT, SEAT_OFFICE
+from utina.acme import DEV, MARTA, SEAT_OFFICE
 from utina.fold import Constitution, evaluate
 from utina.fold.finding import Affirmed, Defeated, Pending
 from utina.fold.question import Committed, Proposal
@@ -48,12 +48,12 @@ def test_amendment_redistributes_ordinary_authority_but_not_amendment_authority(
     after = Constitution.at(acme.corpus, acme.at("board-seated"))
 
     assert len(after.clause("B1").group.slots) == 3
-    assert after.clause("B1").group.satisfied_by({acme.aid(MARTA), acme.aid(SEAT)})
+    assert after.clause("B1").group.satisfied_by({acme.aid(MARTA), SEAT_OFFICE})
 
     # Ordinary authority is now distributed; amendment authority is not.
-    assert not after.clause("B2").group.satisfied_by({acme.aid(MARTA), acme.aid(SEAT)})
+    assert not after.clause("B2").group.satisfied_by({acme.aid(MARTA), SEAT_OFFICE})
     assert after.clause("B2").group.satisfied_by(
-        {acme.aid(MARTA), acme.aid(DEV), acme.aid(SEAT)}
+        {acme.aid(MARTA), acme.aid(DEV), SEAT_OFFICE}
     )
     assert before.clause("A2").group.satisfied_by({acme.aid(MARTA), acme.aid(DEV)})
 

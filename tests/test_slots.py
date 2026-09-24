@@ -1049,3 +1049,17 @@ def test_a_grant_naming_the_same_holder_twice_counts_them_once():
         events, schema=slots.GCD_SCHEMA, issuer=DOMAIN, office=OFFICE
     ) == (NINA,)
     assert slots.seating_is_ambiguous(seated_office(), events) is None
+
+
+def test_a_slot_disposition_keys_itself_by_its_endorser_when_given_no_seat():
+    """The shape an outside caller gets, and why the default is the endorser.
+
+    ``classify`` always passes the key explicitly. For a slot the law entitles directly
+    the seat and its occupant are the same identifier, so a two-argument construction
+    still means what it did before the key existed (``this.i`` @qjjlkrxt).
+    """
+    direct = slots.SlotDisposition(MARTA, Disposition.ENDORSED, "EAct1")
+    seated = slots.SlotDisposition(NINA, Disposition.ENDORSED, "EAct1", key=OFFICE)
+
+    assert direct.key == MARTA
+    assert (seated.key, seated.endorser) == (OFFICE, NINA)
