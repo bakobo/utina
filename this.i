@@ -2181,3 +2181,27 @@ Make Custos's replayable governance useful to a real organization = goal:
         Scoped to the ingestion door: the hand-positioned door fold unit tests use, and the
         anchored door the constructor's own records take, admit only what the constructor
         writes, and the kinds it writes are exactly the kinds the fold reads.
+
+    A refusal names the seal kind its ground is missing under = decision:
+      id: kr7j7d7l
+      why: >
+        custos-4.2.md:3016-3028 makes cross-implementation equality semantic full-payload
+        equality, including "refusal grounds with the seal kind named per the seal ladder's
+        three-kind discipline wherever refusal fires", and 2049-2056 makes that discipline the
+        naming rule wherever the document requires a refusal to name its ground: "a digest
+        mismatch, a coordinate mismatch, and a clause violation are three different refusals".
+        utina's Refusal named its ground in prose and no kind, so two engines agreeing on every
+        refusal were unequal under the predicate (Q9, tick 6d5k).
+        Chose a required field naming one of the three kinds (1242-1250), assigned by what the
+        missing thing is a commitment to. Covenant, for the three refusals where the committed
+        law runs out: no clause governs the act class, the committed event names no act class a
+        clause could govern, and an office has two standing holders the clause gives one share.
+        Event, where the question names an event nothing committed at or before the position
+        bears — a coordinate that does not resolve. Digest, for both semantics refusals, since
+        axiom 4 pins an external semantics by digest and what is missing is either the digest or
+        an implementation of the bytes it names.
+        Rejected a default, because a refusal that forgot its kind would then carry a
+        plausible one. Rejected deriving the kind from the prose, which is the ambiguity the
+        field exists to remove. Tradeoff accepted: the assignment is utina's reading, and the
+        second of the covenant cases — an event whose kind carries no act class — could be read
+        as an event-seal mismatch instead; that is recorded in Q9.

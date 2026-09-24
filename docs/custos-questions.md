@@ -386,6 +386,16 @@ engine might return as refusals are raised errors here instead: a SAID collision
 law (`fold/clause.py`). **Ask Custos:** §17 compares a refusal record that §16 leaves
 formless; one of the two has to move.
 
+**Amended again 2026-09-24: utina now names the kind** (`this.i` @kr7j7d7l). `Refusal`
+carries a required `seal_kind` — digest, event or covenant (`:1242-1250`) — assigned by what
+the missing thing is a commitment to. Covenant covers the three refusals where the law runs
+out: an act class no clause governs, an event claiming no act class, and an office two
+parties hold. Event covers a question naming an identifier that nothing committed at or
+before the position bears. Digest covers both semantics refusals. The assignment is utina's
+reading, and one case is contestable: an event whose kind carries no act class could equally
+be read as an event-seal mismatch. The three raised errors named above still have no kind,
+because they are not `Refusal` values.
+
 ---
 
 ---

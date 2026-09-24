@@ -35,10 +35,30 @@ document is still holding open.
 """
 
 import dataclasses
+from enum import Enum
 
 from utina.fold.errors import GROUND_MISSING, MALFORMED_INPUT, require
 
-__all__ = ["Refusal"]
+__all__ = ["Refusal", "SealKind"]
+
+
+class SealKind(Enum):
+    """The seal ladder's three commitment kinds (``custos-4.2.md:1242-1250``).
+
+    A refusal names the one its ground is missing under, because "a digest
+    mismatch, a coordinate mismatch, and a clause violation are three different
+    refusals, and a record that blurs them is unauditable" (2049-2056), and the
+    conformance predicate compares the kind (3016-3028, this.i @kr7j7d7l).
+    """
+
+    DIGEST = "digest"
+    """A commitment to exact bytes."""
+
+    EVENT = "event"
+    """A commitment to an event at a log coordinate."""
+
+    COVENANT = "covenant"
+    """A commitment of a subject to the covenant set, checked by the fold."""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -51,10 +71,18 @@ class Refusal:
     it is not the ground.
     """
 
+    seal_kind: SealKind
     missing: str
     detail: str
 
     def __post_init__(self) -> None:
+        require(
+            isinstance(self.seal_kind, SealKind),
+            MALFORMED_INPUT,
+            field="a refusal's seal kind",
+            expected="one of the seal ladder's three kinds: digest, event or covenant",
+            found=repr(self.seal_kind),
+        )
         for value, field in ((self.missing, "missing"), (self.detail, "detail")):
             require(
                 isinstance(value, str),

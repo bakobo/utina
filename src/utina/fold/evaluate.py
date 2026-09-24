@@ -62,7 +62,7 @@ from utina.fold.finding import (
 )
 from utina.fold.group import AID, Disposition
 from utina.fold.question import Committed, Proposal, Question
-from utina.fold.refusal import Refusal
+from utina.fold.refusal import Refusal, SealKind
 from utina.fold.slots import (
     SlotDisposition,
     classify,
@@ -253,6 +253,7 @@ def _resolve(corpus: Corpus, question: Question, at: Position) -> _Subject | Ref
     event = corpus.event(question.said)
     if event is None or at < event.position:
         return Refusal(
+            seal_kind=SealKind.EVENT,
             missing=f"any committed event bearing the identifier {question.said}",
             detail=(
                 "A finding is a judgment over committed bytes, and nothing committed "
@@ -263,6 +264,7 @@ def _resolve(corpus: Corpus, question: Question, at: Position) -> _Subject | Ref
     act = event.body.get(ACT_CLASS_FIELD)
     if event.kind not in ACT_KINDS or not isinstance(act, str) or act == "":
         return Refusal(
+            seal_kind=SealKind.COVENANT,
             missing=f"an act class on the committed event {question.said}",
             detail=(
                 "The committed bytes name no class of act, so no clause can govern "
@@ -300,6 +302,7 @@ def _latest_act(corpus: Corpus, act: str, at: Position) -> Event | None:
 def _ungoverned(act: str) -> Refusal:
     """Axiom 3, ``:277-278``: the fold refuses rather than legislates, and names it."""
     return Refusal(
+        seal_kind=SealKind.COVENANT,
         missing=f"a committed clause governing acts of the class {act}",
         detail=(
             "The law in force at this position rules no clause over this class of "
@@ -325,6 +328,7 @@ def _doubly_seated(office: str) -> Refusal:
     set of qualified endorsers, which utina does not implement yet (tick 5psg).
     """
     return Refusal(
+        seal_kind=SealKind.COVENANT,
         missing=f"exactly one standing seating of the office {office}",
         detail=(
             f"Two parties hold {office} at once, and this clause gives that office a "

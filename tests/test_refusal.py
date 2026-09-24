@@ -18,13 +18,14 @@ import pytest
 from bakobo.errors import BakoboError
 
 from utina.fold.finding import Affirmed, Defeated, Finding, Pending, SelfConvicted
-from utina.fold.refusal import Refusal
+from utina.fold.refusal import Refusal, SealKind
 
 VALUES = [Affirmed, Defeated, Pending, SelfConvicted]
 
 
 def refusal() -> Refusal:
     return Refusal(
+        seal_kind=SealKind.COVENANT,
         missing="a committed clause governing declare-dividend",
         detail=(
             "Acme's law in force at this position assigns no composition rule to acts of "
@@ -59,7 +60,11 @@ def test_a_refusal_never_appears_inside_a_finding() -> None:
 
 def test_a_refusal_carries_no_verdict_because_it_is_not_in_the_codomain() -> None:
     assert not hasattr(refusal(), "verdict")
-    assert tuple(f.name for f in dataclasses.fields(Refusal)) == ("missing", "detail")
+    assert tuple(f.name for f in dataclasses.fields(Refusal)) == (
+        "seal_kind",
+        "missing",
+        "detail",
+    )
 
 
 def test_a_refusal_names_what_the_law_does_not_supply() -> None:
@@ -71,15 +76,19 @@ def test_a_refusal_names_what_the_law_does_not_supply() -> None:
 
 def test_a_refusal_that_names_nothing_missing_is_not_constructible() -> None:
     with pytest.raises(BakoboError) as raised:
-        Refusal(missing="", detail="the law is silent")
+        Refusal(seal_kind=SealKind.COVENANT, missing="", detail="the law is silent")
     assert raised.value.is_exactly("e.state.ground-missing.f")
     assert "what is missing" in str(raised.value)
 
 
 @pytest.mark.parametrize(
     "kwargs",
-    [{"missing": 7, "detail": "a"}, {"missing": "a", "detail": 7}],
-    ids=["missing-not-text", "detail-not-text"],
+    [
+        {"seal_kind": SealKind.COVENANT, "missing": 7, "detail": "a"},
+        {"seal_kind": SealKind.COVENANT, "missing": "a", "detail": 7},
+        {"seal_kind": "covenant", "missing": "a", "detail": "b"},
+    ],
+    ids=["missing-not-text", "detail-not-text", "kind-not-a-kind"],
 )
 def test_a_refusal_refuses_a_field_that_is_not_prose(kwargs: dict[str, object]) -> None:
     with pytest.raises(BakoboError) as raised:
@@ -89,7 +98,17 @@ def test_a_refusal_refuses_a_field_that_is_not_prose(kwargs: dict[str, object]) 
 
 def test_a_refusal_with_no_further_detail_is_still_a_refusal() -> None:
     """``missing`` is the ground; ``detail`` amplifies it and may be empty."""
-    assert Refusal(missing="a composition rule for this seam", detail="").detail == ""
+    assert (
+        Refusal(
+            seal_kind=SealKind.COVENANT, missing="a composition rule for this seam", detail=""
+        ).detail
+        == ""
+    )
+
+
+def test_the_seal_kinds_are_the_ladders_three():
+    """1242-1250: digest, event and covenant, and no fourth (this.i @kr7j7d7l)."""
+    assert {kind.value for kind in SealKind} == {"digest", "event", "covenant"}
 
 
 def test_a_refusal_is_a_value_that_is_returned_not_an_error_that_is_thrown() -> None:
