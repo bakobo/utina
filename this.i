@@ -1701,6 +1701,37 @@ Make Custos's replayable governance useful to a real organization = goal:
         synthetic coverage only. That is deliberate sequencing rather than luck: the rule has to
         be in place before the fixture can carry a certified amendment at all.
 
+    A slot is addressed by the seat it is, never by the party currently in it = decision:
+      id: qjjlkrxt
+      why: >
+        A REPAIR, and the defect is worth stating before the fix because it says what @ftjpdph5
+        left unfinished. A filled office slot contributed no weight. `Group._where` looked each
+        slot's disposition up under `slot.endorser`, which is the empty string on a slot that
+        seats an office, while `slots.classify` resolved the office to its holder and keyed the
+        mapping by the HOLDER's AID — so the lookup never matched and every office slot read
+        PENDING in `satisfied`, `reachable` and `outstanding` however the record actually stood.
+        The office machinery was arithmetically inert from the day it landed.
+        M2's criterion did not catch it, and that is the lesson rather than the bug. It tested
+        that a slot naming an office is FILLED by a qualifying endorsement and unfilled when none
+        does — a claim about `classify` — and never once asked what the group made of the
+        result. A criterion that stops at the predicate and never reaches the arithmetic can pass
+        over a feature that does nothing, which is exactly what happened; it took M6 putting an
+        office slot into Acme's real law for anything to notice.
+        THE FIX IS THAT A SLOT HAS AN IDENTITY DISTINCT FROM ITS OCCUPANT. `Slot.key` is the
+        office where it seats one and the endorser otherwise, and every disposition mapping is
+        keyed by it. `SlotDisposition` carries that key beside the `endorser` it reports, because
+        the two are genuinely different questions and collapsing them is what caused this: the
+        key is which seat this is, stable across a change of director, and the endorser is who is
+        in it right now, which is what a screen must show — a filled seat renders as
+        `nina-board-seat-3` and a vacant one under the office's own name.
+        Rejected keying the mapping by the office name and letting the display derive it,
+        because a vacant office and a filled one would then be indistinguishable to a caller
+        holding only the mapping, and `outstanding` would name a seat without saying it is empty.
+        Rejected passing the classified sequence to `satisfied` instead of a mapping: it is the
+        better shape and it is a wider change than a repair should make, since `satisfied_by`,
+        the constitution's effectuation walk and two render paths all consume the mapping form.
+        Filed as tick-worthy rather than done here.
+
     The law creates a seat; a credential fills it = decision:
       id: ftjpdph5
       why: >
