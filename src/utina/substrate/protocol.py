@@ -177,6 +177,15 @@ class Substrate(Protocol):
         """
         ...
 
+    def verify_acdc(self, sad: Mapping[str, object], signature: str) -> bool:
+        """Whether ``signature`` is the credential's issuer's over the credential.
+
+        The signature :meth:`issue_acdc` returned beside a credential. Total and
+        fail-closed, as :meth:`verify` is: an unknown issuer, a malformed
+        signature or an edited credential is ``False``.
+        """
+        ...
+
     def export_kel(self, aid: AID) -> str:
         """``aid``'s key log, with whatever this backend needs to verify it, as text.
 

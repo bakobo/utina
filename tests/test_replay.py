@@ -170,3 +170,37 @@ def test_a_signer_whose_key_log_the_record_does_not_carry_is_refused(acme, recor
         with pytest.raises(BakoboError) as raised:
             ingest(record, substrate)
     assert raised.value.is_exactly("e.input.record-malformed.f")
+
+
+def test_an_embedded_credential_its_issuer_did_not_sign_is_refused(acme, record):
+    """The event's own signature says nothing about whether the credential's
+    issuer signed the credential. Only the facade lets a stranger re-sign an
+    event, which is what makes the credential check the one left standing."""
+    if backend(acme) != "facade":
+        pytest.skip("only the facade lets a test re-sign an event it did not write")
+    from utina.substrate import FacadeSubstrate
+
+    entry = next(e for e in record["events"] if e["kind"] == "endorsement")
+    body = entry["body"]
+    forger = FacadeSubstrate()
+    forger.incept(body["i"])
+    body["acdc_sig"] = "0B0.not-the-issuers"
+    body.pop("sig")
+    body["d"] = forger.said(body)
+    body["sig"] = forger.sign(body["i"], body)
+    entry["said"] = body["d"]
+    refused(acme, record, "e.proof.record-unverifiable.f")
+
+
+@pytest.mark.parametrize(
+    ("bound", "value"),
+    [("MAX_EVENTS", 3), ("MAX_KELS", 1), ("MAX_EVENT_TEXT", 50), ("MAX_DEPTH", 1)],
+)
+def test_a_record_past_its_bounds_is_refused_before_it_is_replayed(
+    acme, record, monkeypatch, bound, value
+):
+    """Size, then shape, then meaning (bakobo dev/standards/input-handling.md)."""
+    import utina.replay as replay_module
+
+    monkeypatch.setattr(replay_module, bound, value)
+    refused(acme, record, "e.input.record-malformed.f")

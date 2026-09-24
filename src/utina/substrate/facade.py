@@ -84,6 +84,21 @@ def _issuee(sad: Mapping[str, object]) -> AID | None:
     return issuee if isinstance(issuee, str) else None
 
 
+#: The longest exported key log either backend will replay, in characters. Input
+#: is bounded before it is trusted (bakobo dev/standards/input-handling.md), and a
+#: key log longer than this is not one any record this engine writes carries.
+MAX_KEL_TEXT = 4_000_000
+
+#: The exact fields each ilk of a facade key event carries. A replayed event with
+#: any other field is refused: content nothing examines is not admitted.
+_KEY_EVENT_FIELDS = {
+    "icp": frozenset({"t", "i", "s", "k", "a", "d"}),
+    "dip": frozenset({"t", "i", "s", "k", "a", "d", "di"}),
+    "rot": frozenset({"t", "i", "s", "k", "a", "d"}),
+    "ixn": frozenset({"t", "i", "s", "a", "d"}),
+}
+
+
 def _seals(event: Mapping[str, object]) -> list[Mapping[str, object]]:
     """The seal mappings a key event carries, and nothing else."""
     seals = event.get("a")
@@ -222,6 +237,8 @@ class FacadeSubstrate:
 
         if aid in self._key_index:
             raise refuse("this substrate already holds key state for it")
+        if len(exported) > MAX_KEL_TEXT:
+            raise refuse(f"it is longer than {MAX_KEL_TEXT} characters")
         try:
             events = json.loads(exported)["events"]
         except (ValueError, TypeError, KeyError):
@@ -235,8 +252,12 @@ class FacadeSubstrate:
             if event.get("s") != format(sn, "x"):
                 raise refuse(f"event {sn} carries sequence number {event.get('s')!r}")
             ilk = event.get("t")
-            if (sn == 0) != (ilk in ("icp", "dip")) or ilk not in ("icp", "dip", "ixn", "rot"):
+            if (sn == 0) != (ilk in ("icp", "dip")) or ilk not in _KEY_EVENT_FIELDS:
                 raise refuse(f"event {sn} is a {ilk!r} where the log does not allow one")
+            if set(event) != _KEY_EVENT_FIELDS[str(ilk)]:
+                raise refuse(f"event {sn} carries fields a {ilk} does not: {sorted(event)}")
+            if ilk == "dip" and not isinstance(event.get("di"), str):
+                raise refuse(f"event {sn} names its delegator as {event.get('di')!r}")
             if ilk == "dip" and event.get("di") not in self._key_index:
                 raise refuse("its delegator's key log has not been replayed here")
             if ilk == "dip" and not any(
@@ -382,6 +403,11 @@ class FacadeSubstrate:
         self._require_known(aid)
         index = self._key_index[aid]
         return f"{_SIG_CODE}{index}.{self._mac(aid, index, body)}"
+
+    def verify_acdc(self, sad: Mapping[str, object], signature: str) -> bool:
+        """The credential's issuer's signature, over the credential as issued."""
+        issuer = sad.get("i")
+        return isinstance(issuer, str) and self.verify(issuer, sad, signature)
 
     def verify(self, aid: AID, body: Mapping[str, object], signature: str) -> bool:
         if aid not in self._key_index:

@@ -24,15 +24,20 @@ fold module reads, a key log belonging to nobody who signs, founds or delegates.
 A partial fold of a record is the proper subset ``custos-4.2.md:3178-3181`` names
 as a must-reject.
 
-What this does not verify, stated rather than discovered: the signature a
-credential embedded in an event carries for its own issuer. The event's own
-signature covers those bytes, and for an endorsement the event's signer is the
-credential's issuer; for a certification it is the domain admitting a sponsor's
-dossier, and the sponsor's own signature is not re-checked here.
+A credential embedded in an event is verified too, against its own issuer's
+replayed key log: for a certification that issuer is the sponsor, not the domain
+that admitted the dossier, and the domain's signature alone would say nothing
+about whether the sponsor signed what it counts.
+
+The record is bounded before anything in it is trusted — its event and key-log
+counts, each event's size and nesting depth, and each key log's length at the
+substrate — so a stranger's record cannot make the reader allocate or replay
+without limit before it is refused (bakobo ``dev/standards/input-handling.md``).
 """
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -68,6 +73,14 @@ KINDS: Mapping[str, str] = {
     "dup": "duplicity",
     "cert": "certification",
 }
+
+#: Bounds on a record, checked before any of it is replayed. Acme's record is 43
+#: events and six key logs; these leave room for a real domain's history and none
+#: for a record built to exhaust the reader.
+MAX_EVENTS = 100_000
+MAX_KELS = 10_000
+MAX_EVENT_TEXT = 1_000_000
+MAX_DEPTH = 32
 
 RECORD_MALFORMED = ErrorCode(
     code="e.input.record-malformed.f",
@@ -131,6 +144,13 @@ def ingest(record: object, substrate: Substrate) -> Corpus:
     kels, entries = fields["kels"], fields["events"]
     if not isinstance(gaid, str) or not isinstance(kels, list) or not isinstance(entries, list):
         raise RECORD_MALFORMED(problem="The record's gaid, kels or events has the wrong shape.")
+    if len(entries) > MAX_EVENTS or len(kels) > MAX_KELS:
+        raise RECORD_MALFORMED(
+            problem=(
+                f"The record carries {len(entries)} events and {len(kels)} key logs, past "
+                f"the bounds of {MAX_EVENTS} and {MAX_KELS}."
+            )
+        )
     replayed = [_replay(entry, substrate) for entry in kels]
     events = [_rebuilt(entry, substrate) for entry in entries]
     needed = set(_needed(events, gaid, substrate))
@@ -174,6 +194,7 @@ def _rebuilt(entry: object, substrate: Substrate) -> Event:
     said, kind, body = fields["said"], fields["kind"], fields["body"]
     if not isinstance(said, str) or not isinstance(body, Mapping):
         raise RECORD_MALFORMED(problem="An event entry's said or body has the wrong shape.")
+    _bounded(said, body)
     if kind not in KINDS.values():
         raise RECORD_MALFORMED(problem=f"The event {said} is a {kind!r}, which no fold reads.")
     if KINDS.get(str(body.get("t"))) != kind:
@@ -193,11 +214,42 @@ def _rebuilt(entry: object, substrate: Substrate) -> Event:
         raise RECORD_UNVERIFIABLE(
             said=said, problem=f"does not carry a signature {signer}'s key log verifies"
         )
+    credential = body.get("acdc")
+    if credential is not None and not (
+        isinstance(credential, Mapping)
+        and isinstance(body.get("acdc_sig"), str)
+        and substrate.verify_acdc(credential, str(body["acdc_sig"]))
+    ):
+        raise RECORD_UNVERIFIABLE(
+            said=said, problem="embeds a credential its issuer's key log does not verify"
+        )
     return Event(said=said, kind=str(kind), position=Position(sn), body=dict(body))
 
 
+def _bounded(said: str, body: Mapping[str, object]) -> None:
+    """Size and depth first, because meaning is only worth reading once both hold."""
+    if _depth(body) > MAX_DEPTH:
+        raise RECORD_MALFORMED(problem=f"The event {said} nests deeper than {MAX_DEPTH}.")
+    if len(json.dumps(body)) > MAX_EVENT_TEXT:
+        raise RECORD_MALFORMED(
+            problem=f"The event {said} is longer than {MAX_EVENT_TEXT} characters."
+        )
+
+
+def _depth(value: object, depth: int = 0) -> int:
+    """How deeply ``value`` nests, stopping as soon as it is too deep to matter."""
+    if depth > MAX_DEPTH:
+        return depth
+    if isinstance(value, Mapping):
+        return max((_depth(item, depth + 1) for item in value.values()), default=depth + 1)
+    if isinstance(value, list):
+        return max((_depth(item, depth + 1) for item in value), default=depth + 1)
+    return depth
+
+
 def _needed(events: Sequence[Event], gaid: AID, substrate: Substrate) -> list[AID]:
-    """The gAID, every signer, and their delegators, delegators first."""
+    """The gAID, every signer, every embedded credential's issuer, and their
+    delegators, delegators first."""
     wanted: list[AID] = []
 
     def want(aid: AID) -> None:
@@ -211,4 +263,7 @@ def _needed(events: Sequence[Event], gaid: AID, substrate: Substrate) -> list[AI
     want(gaid)
     for event in events:
         want(str(event.body["i"]))
+        credential = event.body.get("acdc")
+        if isinstance(credential, Mapping):
+            want(str(credential["i"]))
     return wanted

@@ -72,7 +72,7 @@ from .errors import (
     REGISTRY_UNKNOWN,
     STORE_NOT_OURS,
 )
-from .facade import _checked_seal, _edges
+from .facade import MAX_KEL_TEXT, _checked_seal, _edges
 from .protocol import (
     ACDC_DT,
     AID,
@@ -314,6 +314,10 @@ class KeripySubstrate:
             raise KEL_UNVERIFIABLE(
                 aid=aid, problem="this substrate already holds key state for it"
             )
+        if len(exported) > MAX_KEL_TEXT:
+            raise KEL_UNVERIFIABLE(
+                aid=aid, problem=f"it is longer than {MAX_KEL_TEXT} characters"
+            )
         held = set(self._hby.kevers)
         try:
             messages = json.loads(exported)
@@ -546,20 +550,33 @@ class KeripySubstrate:
         and every one of them means the same thing here — no authority.
         """
         try:
-            established, _, qb64 = signature.partition(COORDINATE)
-            if not qb64:
-                return False
-            serder = self._hby.db.evts.get(keys=(aid, established))
-            if serder is None:
-                return False
-            verified, _ = eventing.verifySigs(
-                raw=self._raw(body),
-                sigers=[Siger(qb64=qb64)],
-                verfers=serder.verfers,
-            )
-            return bool(verified)
+            return self._verified(aid, self._raw(body), signature)
         except Exception:
             return False
+
+    def verify_acdc(self, sad: Mapping[str, object], signature: str) -> bool:
+        """Whether ``signature`` is the credential's issuer's, over KERI's own bytes.
+
+        Total and fail-closed for the reason :meth:`verify` is. The bytes are the
+        credential's serialization as keripy makes it, never this module's sorted
+        form, because that is what :meth:`issue_acdc` signed.
+        """
+        try:
+            return self._verified(str(sad["i"]), SerderACDC(sad=dict(sad)).raw, signature)
+        except Exception:
+            return False
+
+    def _verified(self, aid: AID, raw: bytes, signature: str) -> bool:
+        established, _, qb64 = signature.partition(COORDINATE)
+        if not qb64:
+            return False
+        serder = self._hby.db.evts.get(keys=(aid, established))
+        if serder is None:
+            return False
+        verified, _ = eventing.verifySigs(
+            raw=raw, sigers=[Siger(qb64=qb64)], verfers=serder.verfers
+        )
+        return bool(verified)
 
     # -- internals ------------------------------------------------------------
 

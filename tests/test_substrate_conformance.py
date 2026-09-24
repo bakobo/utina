@@ -986,3 +986,26 @@ def test_a_delegated_key_log_replays_only_after_its_delegator(substrate_name):
         with pytest.raises(BakoboError) as raised:
             reader.ingest_kel(seat, writer.export_kel(seat))
         assert raised.value.is_exactly("e.proof.kel-unverifiable.f")
+
+
+def test_a_credential_verifies_against_its_issuer(conformant, marta):
+    sad, signature = endorsement_acdc(conformant, marta)
+    assert conformant.verify_acdc(sad, signature)
+    assert not conformant.verify_acdc({**sad, "s": "E" + "x" * 43}, signature)
+    assert not conformant.verify_acdc({**sad, "i": "E" + "z" * 43}, signature)
+    assert not conformant.verify_acdc({k: v for k, v in sad.items() if k != "i"}, signature)
+    assert not conformant.verify_acdc(sad, "nonsense")
+
+
+def test_a_key_log_past_the_bound_is_refused_unread(substrate_name, monkeypatch):
+    import utina.substrate.facade as facade_module
+    import utina.substrate.keripy as keripy_module
+
+    with substrate_named(substrate_name) as writer, substrate_named(substrate_name) as reader:
+        gaid, _, _ = _written(writer)
+        exported = writer.export_kel(gaid)
+        monkeypatch.setattr(facade_module, "MAX_KEL_TEXT", len(exported) - 1)
+        monkeypatch.setattr(keripy_module, "MAX_KEL_TEXT", len(exported) - 1)
+        with pytest.raises(BakoboError) as raised:
+            reader.ingest_kel(gaid, exported)
+        assert raised.value.is_exactly("e.proof.kel-unverifiable.f")
