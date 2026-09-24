@@ -9,17 +9,17 @@ Moves to `utina/docs/demo-script.md` when the repo exists.
 
 | Party | Role | Alias, as the screens show it | AID |
 |---|---|---|---|
-| Marta Reyes | founder | `9-marta-as-founder` | `acme:marta` under the facade; a real prefix under keripy |
-| Dev Patel | founder | `9-dev-as-founder` | `acme:dev` |
-| Nina Adeyemi | outside director; holds board seat 3's keys | `9-nina-as-director` | `acme:nina` |
-| Board seat 3 | the office the amendment seats, a delegated AID of the gAID | `9-acme-as-board-seat-3` | `acme:seat3` |
-| Acme, Inc. | the governed domain (gAID) | `9-acme-as-governed-domain` | `acme:gaid` |
+| Marta Reyes | founder | `marta-founder,6` | `acme:marta` under the facade; a real prefix under keripy |
+| Dev Patel | founder | `dev-founder,6` | `acme:dev` |
+| Nina Adeyemi, as board seat 3 | the office the amendment seats — a delegated AID of the gAID, owned by her and dedicated to this capacity | `nina-board-seat-3,6` | `acme:seat3` |
+| Acme, Inc. | the governed domain (gAID) | `acme-governed-domain,6` | `acme:gaid` |
 
 The middle column is what every screen prints. It is a [COIA](https://github.com/dhh1128/coia)
 alias — a display name local to Acme, carrying no security claim and never entering a
-committed byte — and the `9` marks a demo environment with no real-world consequence.
+committed byte — and the trailing `,6` is COIA's test flag: throwaway, demo, no
+real-world consequence.
 Screens never print a piece of an AID, because a prefix cannot support the comparison it
-invites; the AID itself is one command away, `utina whois 9-marta-as-founder`. Inside
+invites; the AID itself is one command away, `utina whois marta-founder`. Inside
 these screens every party is at Acme, so the columns drop the shared scope and the law
 screen's header states it. The reasoning is `this.i` @clcoia.
 

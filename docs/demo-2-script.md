@@ -39,18 +39,17 @@ Six kernels, not five — kernel 3 is one beat and rides on the recorded opener'
 
 | Party | Role | Alias, as the screens show it | Identifier |
 |---|---|---|---|
-| Acme, Inc. | the governed domain (gAID) | `9-acme-as-governed-domain` | `acme:gaid` under the facade; a real prefix under keripy |
-| Acme's governance registry | the TEL the seat credential is issued under | `9-acme-as-governance-registry` | a real registry identifier under keripy |
-| Marta Reyes | founder | `9-marta-as-founder` | `acme:marta` |
-| Dev Patel | founder | `9-dev-as-founder` | `acme:dev` |
-| Board seat 3 | the office — a **delegated AID of the gAID** | `9-acme-as-board-seat-3` | `acme:seat3` |
-| Nina Adeyemi | outside director; holds seat 3's current keys | `9-nina-as-director` | shown as the seat's controller, never as a slot's endorser |
-| Nina's signing device | a delegated AID of seat 3 | `9-nina-as-device` | `acme:nina-device` |
-| Quinn Osei | an outsider who endorses without a seat | `9-quinn-as-outsider` | `acme:quinn` |
+| Acme, Inc. | the governed domain (gAID) | `acme-governed-domain,6` | `acme:gaid` under the facade; a real prefix under keripy |
+| Acme's governance registry | the TEL the seat credential is issued under | `acme-governance-registry,6` | a real registry identifier under keripy |
+| Marta Reyes | founder | `marta-founder,6` | `acme:marta` |
+| Dev Patel | founder | `dev-founder,6` | `acme:dev` |
+| Nina Adeyemi, as board seat 3 | the office she holds — a **delegated AID of the gAID**, owned by her and dedicated to this capacity | `nina-board-seat-3,6` | `acme:seat3` |
+| Nina's signing device | a delegated AID of her seat | `nina-board-seat-3-device,6` | `acme:nina-device` |
+| Quinn Osei | Acme's CFO, who endorses without a seat | `quinn-cfo,6` | `acme:quinn` |
 
 Two changes from demo 1, both load-bearing.
 
-**The seat is an identifier, not a person.** Demo 1 slotted `9-nina-as-director` directly. Demo 2 slots `9-acme-as-board-seat-3`, an office whose keys Nina holds. This is `custos-4.2.md:2139-2148` taken literally — seated organs SHOULD be delegated identifiers of the gAID, so that delegation "dual-anchors the seat's key events (the organ signs; the delegator seals)" and "gives the charter's delegation strata KERI's delegation semantics rather than a metaphor." It also makes tenure expressible: a director leaving is a rotation on the seat, not a reissued credential, which is `custos-4.2.md`'s own claim that tenure is rotation policy.
+**The seat is a capacity, not a separate party.** Demo 1 slotted Nina directly, as herself. Demo 2 slots board seat 3 — an AID Nina owns and uses for nothing else, which is `custos-4.2.md:2145` taken literally: the seat credential names "the organ's AID as issuee", and an organ's AID is one its holder owns in that role. The delegation still dual-anchors the seat's key events, the organ signing and the delegator sealing, so KERI's delegation semantics are real here rather than a metaphor. What it buys is accountability: duplicity at that AID is Nina's, not an abstraction's, and beat 20 has somebody to be about. Tenure is a credential question rather than a key-rotation one — a director leaving turns in the badge, and the next one is issued their own, because rotating the seat to a newcomer would leave them controlling a history somebody else signed.
 
 **A fourth and fifth party exist to be refused.** Quinn endorses without holding the seat, and Nina's device endorses while holding a delegated AID of the seat. One fails credential verification and one passes, and neither outcome is a finding. That contrast is the whole point of Act II.
 
@@ -122,7 +121,7 @@ Beats 3 and 5 are deliberately left pending. They are Act II's material.
 | # | Question | Clause | Slots | Sum | Expected | Ground it must carry |
 |---|---|---|---|---|---|---|
 | 7 | Seat the board (the amendment itself) | **A2** | Marta E, Dev E | 1.0 | **affirmed** | judged under the law it replaces; the delegating seal's coordinate in Acme's KEL; the `dip` in seat 3's KEL; the seat credential's issuance event in Acme's registry; the declared disturbance set `{hire-vp-sales}` |
-| 8 | `seat 9-acme-as-board-seat-3` | — | — | — | **two bindings** | KERI: Acme's delegating seal + seat 3's `dip` naming Acme in `di`. ACDC: the seat credential, issuee = seat 3, issued under Acme's registry, registry state `issued` |
+| 8 | `seat nina-board-seat-3,6` | — | — | — | **two bindings** | KERI: Acme's delegating seal + seat 3's `dip` naming Acme in `di`. ACDC: the seat credential, issuee = seat 3, issued under Acme's registry, registry state `issued` |
 | 9 | Hire a VP of Sales, re-asked after the amendment | A1 **repealed** | — | — | **pending** | species `expired/abandoned`; ground is **the amending enactment's SAID**; cure is re-presentation |
 | 10 | Release escrowed founder equity, re-asked after the amendment | A3 | Marta E, Dev P | 0.5 | **pending** | species `absent`, same requirement as beat 5; the three-part stability check shown: same clause SAID, same requirement space, same pinned lens |
 | 11 | Release escrowed founder equity, after Dev endorses it | A3 | Marta E, Dev E | 1.0 | **affirmed** | clause A3 + both endorsement SAIDs — cured across an amendment, under the clause that never moved |
@@ -150,8 +149,8 @@ Beats 3 and 5 are deliberately left pending. They are Act II's material.
 | # | Question | Clause | Slots | Sum | Expected | Ground it must carry |
 |---|---|---|---|---|---|---|
 | 21 | Approve the capital plan | B1 | Marta E, Dev P, seat 3 P | 0.5 | **pending** | a second question pending under B1, alongside beat 17's |
-| 22 | Lower the ordinary-acts bar (the second amendment) | B2 | Marta E, Dev E, seat 3 E | 1.0 | *declared* affirmed | the enactment's declared disturbance set names **only** the Q3 budget, and not the capital plan |
-| 23 | `disturbance <the second amendment>` | — | — | — | **self-convicted** | declared set vs. computed set, side by side; the computed set contains both B1 questions; the mismatch is the proof |
+| 22 | Lower the ordinary-acts bar (the second amendment) | B2 | Marta E, Dev E, seat 3 E | 1.0 | **affirmed** | unanimous and entirely lawful, which is the setup: the cost in beat 23 is the cost of a *good* amendment, not of anyone cheating |
+| 23 | `disturbance <the second amendment>` | — | — | — | *(a report, not a verdict)* | the three acts in flight the amendment ended: the retabled budget, the capital plan, the Q3 budget. Nobody voted them down and none can now finish. Any stranger holding the log computes the same list |
 
 ### Coda
 
@@ -188,13 +187,13 @@ Cut order inside the live thirteen, if the clock runs out in the room: beat 12 f
 
 Two rows above rest on readings the ratified text does not settle. Both follow `custos-questions.md`'s discipline: state the span, state the readings, pin one, and file the question against Custos.
 
-**Beat 23 — what value does an under-declaring amendment return?** Determination 5 says a mismatch "convicts the declaration" and that the amender "has testified falsely about its own amendment, in committed bytes," but it does not say which of the four values the enactment's own lawfulness question returns. Reading A: **defeated**, citation = the mismatch, on the ground that the enactment violated a committed requirement. Reading B: **self-convicted**, on the ground that the enactment commits two things that cannot both be true of the same bytes — the declared set, and the law change whose consequences the fold computes — which is `custos-4.2.md:1499-1530`'s "two voices where its constitution demands one." **Pinned: B.** It is the stronger reading and by far the better demo, and it is the reading that makes the disturbance-set declaration worth its one field. This is DIVERGENT and goes to Custos as a question; 4.3 owes the sentence.
+**Beat 23 — what does an amendment owe about the acts it ends?** This demo used to answer "a declaration, and a conviction where it is wrong": an amending enactment carried a declared disturbance set, the fold computed the true one, and a mismatch returned **self-convicted**. Daniel removed that on 2026-09-23 (`this.i` @ow6dzro4). The declared set gated nothing — the law changed identically whether it was accurate, wrong or absent — so an obligation that changes no outcome is not one governance should impose, and the duty could not always be discharged honestly anyway, since the truth is computed at effectuation while the declaration was made at commitment. What survives is the computation, which was always the part doing the work: beat 23 reports which acts in flight the amendment ended, and convicts nobody. None of this was ratified — "disturb" appears nowhere in `custos-4.2.md` — so the question that goes to Custos is now whether an amendment owes anything at all about its casualties.
 
 **Beat 9 — is `expired/abandoned` reachable at all today?** `PendingSpecies.EXPIRED_ABANDONED` exists in utina's type and is currently unreachable under the shipped `UNREACHABLE_YIELDS = Defeated` pin (`this.i` @dozrtx). Beat 9 is a *new producer* of it, on the amendment path, and does not touch that constant. The two must not be conflated in the implementation, and the oracle asserts the species and its ground rather than merely the value.
 
 ## Decision notes
 
-**Why the seat is an identifier and not a person.** `custos-4.2.md:2139-2148`. Slotting the office rather than the officer buys three things the demo shows and one it only names: dual-anchored key events, custodial recovery of a compromised organ inside KERI's own delegated-recovery rules, delegation strata with KERI's semantics rather than a metaphor — and, named only, tenure as rotation policy. It also fixes a smaller thing: demo 1's screens slotted a person, which quietly implied that a governance power is attached to a human rather than to an office a human currently holds.
+**Why the seat is a capacity and not a separate party.** `custos-4.2.md:2145` requires the seat credential to name "the organ's AID as issuee", and an organ's AID is one its holder owns and uses for that role and nothing else. So board seat 3 is Nina's AID in that capacity, which buys what slotting an office was always after — dual-anchored key events, custodial recovery inside KERI's own delegated-recovery rules, delegation strata with KERI's semantics rather than a metaphor — and one thing slotting an abstraction could not: an accountable human. Duplicity at that AID is Nina's, so beat 20 has somebody to be about. Tenure is a credential question rather than a rotation one: a director leaving turns in the badge and the next is issued their own, because rotating the seat to a newcomer would leave them controlling a history somebody else signed. Demo 1's screens slotted a person in *every* capacity, which is the thing to avoid; slotting an abstraction was an overcorrection.
 
 **Why revocation is a registry operation and an `RMxN` operator in the law, and not a field on the credential.** This is already the ruling of record in tick `56js`: the dossier's Endorsed predicate is signed + `disp` + `act` + expected issuer + anchored, with revocation not a term in it and no registry field in the normative schema. The seat credential is registry-bound because `custos-4.2.md:1420-1422` requires a standing-conferring credential to be revocable through its registry; the endorsements stay registry-less because nothing in their predicate reaches for one. Two credential kinds with different obligations, and the demo shows both.
 
