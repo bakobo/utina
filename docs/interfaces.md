@@ -104,8 +104,14 @@ ill-posed question rather than legislating the missing rule. It is **not** a
 subclass of `Finding` and must never appear inside one.
 
 ```python
+class SealKind(Enum):
+    DIGEST = "digest"
+    EVENT = "event"
+    COVENANT = "covenant"
+
 @dataclass(frozen=True)
 class Refusal:
+    seal_kind: SealKind           # the seal ladder's kind the ground is missing under
     missing: str                  # what the law does not supply, named concretely
     detail: str
 ```

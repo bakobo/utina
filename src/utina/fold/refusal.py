@@ -65,6 +65,11 @@ class SealKind(Enum):
 class Refusal:
     """The evaluator declining an ill-posed question, with its ground named.
 
+    ``seal_kind`` names which of the seal ladder's three commitments the ground
+    is missing under, because the conformance predicate compares it
+    (``custos-4.2.md:3016-3028``, this.i @kr7j7d7l). It is required: a refusal
+    that forgot its kind would otherwise carry a plausible one.
+
     ``missing`` names what the law does not supply, concretely enough that a
     reader can go and commit it — an act class with no composition rule, a seam
     with no ordering. ``detail`` amplifies for a human reader and may be empty;
