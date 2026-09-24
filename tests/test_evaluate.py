@@ -19,6 +19,7 @@ The order is ``docs/interfaces.md``'s and it is not an implementation detail:
 from __future__ import annotations
 
 import importlib
+from collections.abc import Sequence
 from fractions import Fraction
 
 import pytest
@@ -54,6 +55,11 @@ GAID = "acme:gaid"
 
 #: What every slot below names as the schema its evidence must satisfy.
 SCHEMA = ENDORSEMENT_SCHEMA
+
+#: What a certifying domain names as the schema its tallies must satisfy, and one
+#: other, so that a clause pinning its own can be told from a clause inheriting.
+CERT_SCHEMA = "Ecertification-schema-said"
+OTHER_SCHEMA = "Eanother-certification-schema"
 
 
 # --- a committed log, built by hand -------------------------------------------
@@ -142,11 +148,41 @@ class Log:
             },
         )
 
-    def certify(self, name: str, subject: str) -> str:
-        """The domain admitting a tally: the act becomes consequential here."""
+    def certify(
+        self, name: str, subject: str, counted: Sequence[tuple[str, str]] = ()
+    ) -> str:
+        """The domain admitting a tally: the act becomes consequential here.
+
+        ``counted`` is what the sponsor's dossier cites, one edge per disposition with
+        the weight claimed for it. It is spelled out at every call site rather than
+        derived from the log, because a certification is proof and what it claims is
+        the thing under test — a helper that computed the right answer would make every
+        certification here honest by construction (``this.i`` @7shpbven).
+        """
+        members: dict[str, object] = {"o": "MxN"}
+        for index, (said, weight) in enumerate(counted):
+            members[f"e{index}"] = {"n": said, "s": ENDORSEMENT_SCHEMA, "w": weight}
         return self._add(
-            name, "certification", {"t": "cert", "i": GAID, "certifies": subject}
+            name,
+            "certification",
+            {
+                "t": "cert",
+                "i": GAID,
+                "certifies": subject,
+                "acdc": {
+                    "d": f"E{name}-credential",
+                    "i": GAID,
+                    "s": CERT_SCHEMA,
+                    "a": {"said": subject, "act": "issue"},
+                    "e": {"endorsements": members},
+                },
+                "acdc_sig": f"E{name}-sig",
+            },
         )
+
+    def tally(self, *pairs: tuple[str, str]) -> list[tuple[str, str]]:
+        """The edges a certification cites: each party's committed endorsement, weighted."""
+        return [(self.said(f"endorse-{who}"), weight) for who, weight in pairs]
 
     def amend(self, name: str, clauses, act: str = "amend") -> str:
         body: dict[str, object] = {
@@ -833,10 +869,6 @@ def test_a_settled_act_is_not_ended_by_a_later_amendment(founded):
 # that names none authorizes its acts by their arithmetic alone, which is every
 # other test in this file.
 
-CERT_SCHEMA = "Ecertification-schema-said"
-OTHER_SCHEMA = "Eanother-certification-schema"
-
-
 def with_certification(block: dict[str, object], value: object) -> dict[str, object]:
     """A clause block that says something about certifying: a schema, or False."""
     return {**block, "certification": value}
@@ -855,6 +887,12 @@ def unanimous(log: Log) -> str:
     log.endorse(MARTA, tabled)
     log.endorse(DEV, tabled)
     return tabled
+
+
+#: The tally a sound certification of :func:`unanimous`'s act cites: one edge per
+#: founder, each worth the half its slot commits, summing to the unity the
+#: certification claims.
+SOUND = ((MARTA, "1/2"), (DEV, "1/2"))
 
 
 def test_a_threshold_met_but_uncertified_act_is_pending():
@@ -877,7 +915,7 @@ def test_a_threshold_met_but_uncertified_act_is_pending():
 def test_the_same_act_is_affirmed_once_the_domain_certifies_it():
     log = certifying_domain()
     tabled = unanimous(log)
-    log.certify("cert", tabled)
+    log.certify("cert", tabled, log.tally(*SOUND))
 
     finding = evaluate(log.corpus, Committed(tabled), at=log.now)
 
@@ -895,7 +933,12 @@ def test_a_domain_that_requires_no_certification_affirms_on_the_arithmetic():
 
 
 def test_a_certification_of_some_other_act_does_not_authorize_this_one():
-    """The subject is named, so a tally cannot be spent on a decision it never counted."""
+    """The subject is named, so a tally cannot be spent on a decision it never counted.
+
+    Its tally is left empty and that is not an oversight: a certification naming
+    another subject is never examined for this question at all, so what it cites is
+    beside the point and a fixture that pretended otherwise would test nothing.
+    """
     log = certifying_domain()
     tabled = unanimous(log)
     other = log.act("other", "hire")
@@ -920,17 +963,6 @@ def test_certification_is_not_what_is_outstanding_while_the_threshold_is_unmet()
     assert [one.endorser for one in finding.requirement] == [DEV]
 
 
-def test_a_certification_does_not_rescue_an_act_whose_threshold_is_unreachable():
-    """Certifying is recording that a threshold was met, never deciding that it was."""
-    log = certifying_domain()
-    tabled = log.act("hire", "hire")
-    log.endorse(MARTA, tabled)
-    log.decline(DEV, tabled)
-    log.certify("cert", tabled)
-
-    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Defeated)
-
-
 def test_the_certification_is_asked_of_the_coordinate_the_question_is_asked_from():
     """Before the tally is admitted the act is pending; after it, affirmed.
 
@@ -940,7 +972,7 @@ def test_the_certification_is_asked_of_the_coordinate_the_question_is_asked_from
     log = certifying_domain()
     tabled = unanimous(log)
     before = log.now
-    log.certify("cert", tabled)
+    log.certify("cert", tabled, log.tally(*SOUND))
 
     assert isinstance(evaluate(log.corpus, Committed(tabled), at=before), Pending)
     assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)
@@ -1008,6 +1040,132 @@ def test_an_unreadable_certification_field_inherits_rather_than_exempts():
 
     assert isinstance(finding, Pending)
     assert finding.requirement[0].schema == CERT_SCHEMA
+
+
+# --- a false certification convicts (this.i @7shpbven) ------------------------
+#
+# A certification is proof rather than assertion, so one the record refutes has
+# contradicted itself on bytes its sponsor signed and its domain admitted. The
+# two contradictions are independent: against the certification's own edges, and
+# against every disposition the domain had admitted when it admitted the tally.
+
+
+#: Three slots at a half each, so a single endorsement can never reach unity and a
+#: sponsor inflating one edge is telling a lie the record can name.
+BOARD_OF_THREE = [clause("A1", ["hire"], (MARTA, "1/2"), (DEV, "1/2"), (NINA, "1/2"))]
+
+
+def test_a_certification_whose_own_edges_fall_short_convicts():
+    """The first contradiction: the tally claims unity and its edges do not reach it.
+
+    ``utina.enact`` refuses to build this one, so it can only arrive from a foreign
+    corpus — which is exactly why the fold checks rather than trusting that its own
+    constructor wrote the log it is reading.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert", tabled, log.tally((MARTA, "1/2")))
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == log.said("cert")
+    assert finding.proof.pair == (), "the contradiction is internal to the tally"
+
+
+def test_a_certification_citing_around_a_declination_convicts():
+    """The second contradiction, and the one the milestone exists for.
+
+    A declination spends its slot, so omitting one changes the answer and leaves no
+    trace in the certification itself — the sponsor's edges sum to unity and only the
+    record knows better. The proof names both halves so a reader sees what contradicted
+    what without fetching the package.
+    """
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.decline(DEV, tabled)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.pair == (log.said("cert"), log.said(f"decline-{DEV}"))
+
+
+def test_the_omitted_declination_named_is_the_lexicographic_minimum():
+    """Two verifiers holding the same bundle emit the same finding down to the byte.
+
+    Which of several omissions is named may not be a property of the order the walk
+    happened to take, so it is the minimum rather than the first one found
+    (``:1766-1770``'s discipline, applied to a proof pair).
+    """
+    log = Log()
+    log.law("inception", "inception", BOARD_OF_THREE, certification=CERT_SCHEMA)
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.decline(DEV, tabled)
+    log.decline(NINA, tabled)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    omitted = min(log.said(f"decline-{DEV}"), log.said(f"decline-{NINA}"))
+    assert finding.proof.pair == (log.said("cert"), omitted)
+
+
+def test_a_certification_the_record_refutes_with_nothing_omitted_names_no_pair():
+    """Short of votes rather than cited around: there is no omission to name.
+
+    Marta alone has spoken and the sponsor claims her half was worth the whole. The
+    record refutes it, and the proof package stands on its own because no committed
+    declination is being hidden.
+    """
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == log.said("cert")
+    assert finding.proof.pair == ()
+
+
+def test_the_record_is_read_at_the_certifications_coordinate_not_the_questions():
+    """What a certification claims is that the threshold was met when it was admitted.
+
+    Dev's endorsement arrives after the tally. It cures the act going forward and it
+    does not un-say what the domain committed, so the conviction stands at both
+    coordinates rather than being washed out by later evidence.
+    """
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+    at_admission = log.now
+    log.endorse(DEV, tabled)
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=at_admission), SelfConvicted)
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), SelfConvicted)
+
+
+def test_a_domain_requiring_no_certification_is_not_convicted_by_a_stray_one():
+    """Where a clause stands on its arithmetic, a tally is not load-bearing.
+
+    An unsupported certification in such a domain is an irrelevant event rather than a
+    contradiction of anything, and the gate is the same one that decides whether an
+    absent certification is outstanding — so the two halves cannot disagree about
+    whether this domain has certifications at all.
+    """
+    log = Log()
+    log.law("inception", "inception", FOUNDERS_LAW)
+    tabled = unanimous(log)
+    log.certify("cert", tabled, log.tally((MARTA, "1/2")))
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)
 
 
 def test_what_a_clause_says_about_certifying_is_in_its_committed_bytes():

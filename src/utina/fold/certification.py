@@ -36,11 +36,12 @@ for this subject exist at or before this coordinate.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from fractions import Fraction
 
 from utina.fold.corpus import Corpus, Event
-from utina.fold.slots import credential
+from utina.fold.group import AID, Disposition, Group
+from utina.fold.slots import SlotDisposition, classify, credential, declinations
 from utina.fold.triple import SAID, Position
 
 __all__ = [
@@ -48,6 +49,7 @@ __all__ = [
     "CERTIFIES_FIELD",
     "REQUIRES_FIELD",
     "certifying",
+    "contradicting",
     "counted_by",
     "reached_by",
     "required_by",
@@ -133,3 +135,57 @@ def reached_by(event: Event) -> Fraction:
     short has contradicted itself on bytes its sponsor signed.
     """
     return sum((weight for _, weight in counted_by(event)), Fraction(0))
+
+
+def contradicting(
+    corpus: Corpus, group: Group, subject: SAID, at: Position
+) -> tuple[Event, SAID | None] | None:
+    """The committed certification of ``subject`` the record does not support, if any.
+
+    A certification is proof rather than assertion, so one the record contradicts is
+    self-contradiction on bytes its sponsor signed and its domain admitted (``this.i``
+    @7shpbven). What comes back is the contradicting certification and, where the
+    record names one, the disposition it cited around — never a finding, because
+    whether a contradiction convicts is the evaluator's dispatch and not this module's.
+
+    **Two contradictions, in a fixed order**, because a certification can carry both
+    and two verifiers must name the same one.
+
+    Against *itself*: the cited edges sum to less than unity while the certification
+    claims a met threshold. ``utina.enact`` refuses to emit one of these
+    (``this.i`` @qk3kcds6), and the check is kept anyway because the fold may not
+    assume its own constructor wrote the log it is reading.
+
+    Against *the record*: the clause's arithmetic over every disposition the domain
+    admitted at or before the certification's own coordinate does not reach unity.
+    This is the one @epztz4wd ruled, and it is the reason the check is not confined to
+    the cited edges — edges prove presence and never absence, so a sponsor who cites
+    around a declination leaves no trace in the certification itself. The coordinate
+    is the certification's rather than the question's, because what a certification
+    claims is that the threshold was met when it was admitted.
+    """
+    event = certifying(corpus, subject, at)
+    if event is None:
+        return None
+    if reached_by(event) < 1:
+        return event, None
+    classified = classify(group, corpus.upto(event.position), subject)
+    held: dict[AID, Disposition] = {one.endorser: one.disposition for one in classified}
+    if group.satisfied(held):
+        return None
+    return event, _cited_around(event, classified)
+
+
+def _cited_around(event: Event, classified: Sequence[SlotDisposition]) -> SAID | None:
+    """The declination this certification omitted, where the record carries one.
+
+    The lexicographic minimum, in the discipline ``:1766-1770`` applies to a defeated
+    finding's citation: two verifiers holding the same bundle emit the same finding
+    down to the byte, so which of several omissions is named may not be a property of
+    the order they were walked in. ``None`` where the certification omitted nothing and
+    the threshold simply was not met, in which case the contradiction is internal and
+    the proof package alone names it.
+    """
+    cited = {said for said, _ in counted_by(event)}
+    omitted = sorted(said for _, said in declinations(classified) if said not in cited)
+    return omitted[0] if omitted else None

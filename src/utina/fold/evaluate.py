@@ -25,6 +25,14 @@ Custos obligation rather than a convenience:
 5. Unity unreachable — see ``UNREACHABLE_YIELDS`` below.
 6. Otherwise pending, naming the outstanding slots in canonical order.
 
+**Two convictions sit between 3 and 4**, and they are there rather than in the
+dispatch because a record that convicts itself is not waiting on arithmetic. An
+observed duplicity converts the question (``fold/bearing.py``), and a certification
+the record does not support convicts it (``fold/certification.py``, ``this.i``
+@7shpbven). The second could not live in the affirmed arm: a certification that
+cites around a declination produces a record whose threshold is *unreachable*, so a
+check reached only under step 4 would never see the case it exists for.
+
 **Which law judges which question** is the other rule here, and it differs by
 constructor. A ``Committed`` question asks whether an act *was* lawful, so it is
 judged under the law in force at that act's own coordinate — which is what makes
@@ -195,6 +203,14 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
     tainted = _tainted(corpus, subject, clause, classified, at)
     if tainted is not None:
         return tainted
+
+    # Before the threshold dispatch, and that placement is the whole point. A
+    # certification of an act the record DEFEATS is exactly what citing around a
+    # declination produces — a declination spends its slot — so a check reached only
+    # under ``satisfied`` would never see the case it exists for (this.i @7shpbven).
+    falsified = _falsified(corpus, law, subject, clause, at)
+    if falsified is not None:
+        return falsified
 
     if clause.group.satisfied(held):
         # The threshold is met and that is not the same as the act being
@@ -414,6 +430,42 @@ def _certification_schema(law: Constitution, clause: Clause) -> SAID | None:
     if clause.exempt_from_certification:
         return None
     return clause.certification if clause.certification is not None else law.certification
+
+
+def _falsified(
+    corpus: Corpus,
+    law: Constitution,
+    subject: _Subject,
+    clause: Clause,
+    at: Position,
+) -> SelfConvicted | None:
+    """The conviction a certification the record does not support fires, if any.
+
+    The predicate is ``certification.contradicting``; what is decided here is that a
+    contradiction convicts rather than merely failing to authorize, and what the proof
+    package carries (``this.i`` @7shpbven). A certification claims a met threshold, so
+    one the record refutes is "two voices where its constitution demands one"
+    (``:1527-1533``) — and it is the domain's own admitted bytes on both sides, which
+    is what makes this self-conviction rather than a defeat by somebody else's evidence.
+
+    **Gated on the law wanting one at all.** Where a clause stands on its arithmetic, a
+    certification is not load-bearing and an unsupported one is an irrelevant event
+    rather than a contradiction of anything. The gate is ``_certification_schema``'s,
+    the same one that decides whether an absent certification is outstanding, so the
+    two halves of certification cannot disagree about whether this domain has any.
+
+    The pair is carried where the record names an omitted declination and left off
+    where it does not, which is the distinction ``Proof.pair`` was built for: a reader
+    holding the finding sees what contradicted what without fetching the package.
+    """
+    if _certification_schema(law, clause) is None:
+        return None
+    found = certification.contradicting(corpus, clause.group, subject.said, at)
+    if found is None:
+        return None
+    event, omitted = found
+    pair = (event.said, omitted) if omitted is not None else ()
+    return SelfConvicted(proof=Proof(package=event.said, pair=pair))
 
 
 def _uncertified(
