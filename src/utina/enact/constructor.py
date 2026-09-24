@@ -659,11 +659,13 @@ class Constructor:
             position=self._values.position(seq),
             body={**sealed, "sig": signature},
         )
-        self._emitted.append(event)
-        self._saids.add(said)
         self.substrate.seal(
             self.gaid,
             ({"i": self.gel, "s": format(seq, "x"), "d": said},),
             establishment=establishment,
         )
+        # Recorded only once the key log has it: an event nothing sealed is not a
+        # GEL event, and the fold would refuse a record that carried one.
+        self._emitted.append(event)
+        self._saids.add(said)
         return event

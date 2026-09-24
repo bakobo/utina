@@ -340,3 +340,18 @@ def test_a_far_node_whose_attributes_are_not_a_block_has_no_issuee():
     assert facade._issuee({"a": "not a block"}) is None
     assert facade._issuee({}) is None
     assert facade._issuee({"a": {"i": 7}}) is None
+
+
+@pytest.mark.parametrize(
+    "seal", [{"i": "Egel", "s": "0"}, {"d": 7}, "not a seal"], ids=["no-d", "int-d", "str"]
+)
+@pytest.mark.parametrize("establishment", [False, True], ids=["ixn", "rot"])
+def test_a_malformed_seal_is_refused_before_anything_moves(seal, establishment):
+    """Fail closed without a partial write: the log and the key state are as they were."""
+    substrate = FacadeSubstrate()
+    substrate.incept("acme:marta")
+    before = (substrate.key_events("acme:marta"), substrate._key_index["acme:marta"])
+    with pytest.raises(BakoboError) as caught:
+        substrate.seal("acme:marta", (seal,), establishment=establishment)
+    assert caught.value.is_exactly("e.input.seal-malformed.f")
+    assert (substrate.key_events("acme:marta"), substrate._key_index["acme:marta"]) == before

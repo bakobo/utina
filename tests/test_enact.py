@@ -812,3 +812,26 @@ def test_a_certification_carrying_no_tally_group_counts_nothing(founded):
 
     assert certification.counted_by(cert) == ()
     assert certification.reached_by(cert) == 0
+
+
+def test_an_event_the_key_log_refused_is_not_recorded(substrate, values):
+    """Anchoring is part of committing: an event whose seal the substrate refused
+    must not appear in what the constructor has emitted (this.i @wsxwkwgv)."""
+
+    class Refusing(type(substrate)):
+        refuse = False
+
+        def seal(self, aid, seals, *, establishment=False):
+            if self.refuse:
+                raise RuntimeError("the key log refused the write")
+            return super().seal(aid, seals, establishment=establishment)
+
+    refusing = Refusing()
+    constructor = Constructor(refusing, refusing.incept(GAID), values=values)
+    constructor.incept_domain(LAW)
+    refusing.refuse = True
+    with pytest.raises(RuntimeError):
+        constructor.propose("open-bank-account")
+    assert [event.kind for event in constructor.emitted] == ["inception"]
+    refusing.refuse = False
+    assert constructor.propose("open-bank-account").position.seq == 1

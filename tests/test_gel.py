@@ -252,10 +252,11 @@ def test_an_adopted_founding_law_may_name_the_gaid():
         lambda kel: kel[1].update(a=[{"i": GEL, "s": "zz", "d": "E0-inception"}]),
         lambda kel: kel[1].update(a=[{"i": GEL, "s": 0, "d": "E0-inception"}]),
         lambda kel: kel[1].update(a=[{"i": GEL, "s": "00", "d": "E0-inception"}]),
+        lambda kel: kel[1].update(a=[{"i": GEL, "s": "0"}]),
         lambda kel: kel.clear(),
     ],
     ids=["foreign", "gap", "no-inception", "seal-list", "bad-sn", "int-sn", "padded-sn",
-         "empty"],
+         "no-digest", "empty"],
 )
 def test_a_key_log_that_is_not_the_gaids_own_is_refused(damage):
     events, kel = born(event(1))

@@ -70,7 +70,7 @@ from .errors import (
     REGISTRY_UNKNOWN,
     STORE_NOT_OURS,
 )
-from .facade import _edges
+from .facade import _checked_seal, _edges
 from .protocol import (
     ACDC_DT,
     AID,
@@ -273,7 +273,7 @@ class KeripySubstrate:
         log and leaves the keys where they are.
         """
         hab = self._hab(aid)
-        data = [dict(seal) for seal in seals]
+        data = [_checked_seal(aid, seal) for seal in seals]
         if establishment:
             hab.rotate(data=data)
         else:

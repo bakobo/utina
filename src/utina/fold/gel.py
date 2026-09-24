@@ -244,7 +244,12 @@ def _gel_seals(
             if not isinstance(seal, Mapping) or seal.get("i") != gel:
                 continue
             sn = _sequence(seal.get("s"), gaid)
-            said = str(seal.get("d"))
+            said = seal.get("d")
+            if not isinstance(said, str):
+                raise KEY_LOG_FOREIGN(
+                    gaid=gaid,
+                    problem=f"a seal for the GEL commits no identifier: {dict(seal)!r}",
+                )
             if sn != expected:
                 raise GEL_ORDER(
                     problem=(

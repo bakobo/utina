@@ -20,7 +20,14 @@ from collections.abc import Mapping, Sequence
 from types import TracebackType
 
 from .canonical import SAID_PLACEHOLDER, canonical_bytes, digest
-from .errors import ACDC_UNVERIFIABLE, AID_UNKNOWN, ALIAS_TAKEN, NOT_ISSUED, REGISTRY_UNKNOWN
+from .errors import (
+    ACDC_UNVERIFIABLE,
+    AID_UNKNOWN,
+    ALIAS_TAKEN,
+    NOT_ISSUED,
+    REGISTRY_UNKNOWN,
+    SEAL_MALFORMED,
+)
 from .protocol import (
     ACDC_DT,
     AID,
@@ -73,6 +80,13 @@ def _issuee(sad: Mapping[str, object]) -> AID | None:
         return None
     issuee = block.get("i")
     return issuee if isinstance(issuee, str) else None
+
+
+def _checked_seal(aid: AID, seal: object) -> dict[str, str]:
+    """``seal`` as a mapping whose ``d`` is text, or a refusal before anything moves."""
+    if not isinstance(seal, Mapping) or not isinstance(seal.get("d"), str):
+        raise SEAL_MALFORMED(aid=aid, seal=seal)
+    return dict(seal)
 
 
 class FacadeSubstrate:
@@ -153,12 +167,10 @@ class FacadeSubstrate:
         """One key event carrying ``seals`` in the order given: a rotation, or an
         interaction where the keys are not to move."""
         self._require_known(aid)
+        checked = [_checked_seal(aid, seal) for seal in seals]
         if establishment:
             self._key_index[aid] += 1
-        return self._append(
-            aid, "rot" if establishment else "ixn", [dict(seal) for seal in seals],
-            keys=establishment,
-        )
+        return self._append(aid, "rot" if establishment else "ixn", checked, keys=establishment)
 
     def key_events(self, aid: AID) -> tuple[Mapping[str, object], ...]:
         """``aid``'s key log, in order, as the mappings its events commit."""
