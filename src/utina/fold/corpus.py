@@ -76,12 +76,16 @@ class Event:
 class Corpus:
     """Committed events, held in canonical order and offered in no other."""
 
-    def __init__(self, events: tuple[Event, ...]) -> None:
+    def __init__(self, events: tuple[Event, ...], *, genesis: object | None = None) -> None:
         self._events = events
         self._by_said = {event.said: event for event in events}
+        self.genesis = genesis
+        """How the domain was founded, where the order was derived from its key
+        log (``fold/gel.py``), and ``None`` for a corpus positioned by hand, which
+        claims no anchoring at all."""
 
     @classmethod
-    def load(cls, events: Iterable[Event]) -> Corpus:
+    def load(cls, events: Iterable[Event], *, genesis: object | None = None) -> Corpus:
         """Put committed events into canonical order, or refuse to order them.
 
         An event presented more than once folds once: 3087-3089 makes the
@@ -96,7 +100,7 @@ class Corpus:
             if settled != event:
                 raise ORDER_AMBIENT(said=event.said)
         ordered = sorted(seen.values(), key=lambda event: (event.position.seq, event.said))
-        return cls(tuple(ordered))
+        return cls(tuple(ordered), genesis=genesis)
 
     def upto(self, position: Position) -> tuple[Event, ...]:
         """The committed events at or before ``position``, in canonical order."""
