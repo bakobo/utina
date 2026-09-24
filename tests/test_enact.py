@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from fractions import Fraction
 from pathlib import Path
 
 import jsonschema
@@ -20,7 +21,7 @@ import pytest
 from bakobo.errors import BakoboError
 
 from utina.enact import Constructor
-from utina.fold import standing
+from utina.fold import certification, standing
 from utina.substrate import (
     ENDORSEMENT_SCHEMA,
     GCD_RULES,
@@ -182,6 +183,7 @@ def test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it(f
     verbs = {name for name in dir(founded) if not name.startswith("_")}
     assert verbs == {
         "anchoring_event",
+        "certify",
         "confer",
         "decline",
         "emitted",
@@ -694,3 +696,105 @@ def test_observing_duplicity_touches_no_registry(founded):
     founded.observe_duplicity("acme:seat3", ["EFirst", "ESecond"])
 
     assert founded.substrate.registry_state(registry, credential) == ISSUED
+
+
+# --- certification: the sponsor assembles, the domain admits (this.i @2e2dncfe) --
+
+HALF = Fraction(1, 2)
+
+
+def tallied(founded, *, sponsor="acme:marta"):
+    """An act both founders endorsed, and the pair of dispositions that carried it."""
+    act = founded.propose("open-bank-account")
+    yes = founded.endorse("acme:marta", act.said)
+    also = founded.endorse("acme:dev", act.said)
+    return act, [(yes.said, HALF), (also.said, HALF)]
+
+
+def test_a_certification_is_one_gel_event_signed_by_the_domain(founded):
+    """Two acts, one committed event, and the asymmetry is the point.
+
+    Only the gAID's controller can anchor into the gAID's KEL, so nothing a sponsor
+    does can put anything in a domain's log. Admission is necessarily the domain's,
+    and the sponsor's dossier travels inside the domain's event carrying its own
+    signature — the way an endorsement's credential already does.
+    """
+    act, counted = tallied(founded)
+
+    cert = founded.certify(act.said, sponsor="acme:marta", counted=counted)
+
+    assert cert.kind == "certification"
+    assert cert.body["certifies"] == act.said
+    assert founded.substrate.verify(founded.gaid, cert.body, cert.body["sig"])
+
+
+def test_the_dossier_inside_it_is_the_sponsors_and_carries_their_signature(founded):
+    """A stranger verifies the tally with KERI tooling and the key log alone."""
+    act, counted = tallied(founded)
+
+    cert = founded.certify(act.said, sponsor="acme:marta", counted=counted)
+
+    acdc = cert.body["acdc"]
+    assert acdc["i"] == "acme:marta", "the sponsor issued it, not the domain"
+    assert founded.substrate.verify("acme:marta", acdc, cert.body["acdc_sig"])
+
+
+def test_it_carries_one_edge_per_counted_disposition(founded):
+    """The edges are the proof, so every counted act is nameable and resolvable."""
+    act, counted = tallied(founded)
+
+    cert = founded.certify(act.said, sponsor="acme:marta", counted=counted)
+
+    cited = certification.counted_by(cert)
+    assert {node for node, _ in cited} == {said for said, _ in counted}
+    assert certification.reached_by(cert) == 1
+
+
+def test_the_domain_refuses_a_tally_its_edges_do_not_support(founded):
+    """A certification is the proof rather than an assertion about one.
+
+    One founder of two is half of unity, so this dossier would claim a threshold
+    its own edges contradict. Nothing is committed.
+    """
+    act = founded.propose("open-bank-account")
+    yes = founded.endorse("acme:marta", act.said)
+    before = len(founded.emitted)
+
+    with pytest.raises(BakoboError) as raised:
+        founded.certify(act.said, sponsor="acme:marta", counted=[(yes.said, HALF)])
+
+    assert "e.proof.tally-unsupported.f" in str(raised.value.code)
+    assert "1/2" in str(raised.value)
+    assert len(founded.emitted) == before, "a refused certification commits nothing"
+
+
+def test_a_certification_of_nothing_committed_is_refused(founded):
+    """There is no tallying a decision the record has never seen tabled."""
+    with pytest.raises(BakoboError) as raised:
+        founded.certify("E" + "z" * 43, sponsor="acme:marta", counted=[("Ex", HALF)])
+
+    assert "e.state.subject-unknown.f" in str(raised.value.code)
+
+
+def test_a_malformed_edge_contributes_nothing_rather_than_being_guessed_at(founded):
+    """Fail closed: the alternative is a tally reaching unity on unreadable bytes."""
+    act, counted = tallied(founded)
+    cert = founded.certify(act.said, sponsor="acme:marta", counted=counted)
+    edges = cert.body["acdc"]["e"]["endorsements"]
+
+    # A member naming no node, one whose weight will not parse, and one that is not
+    # a mapping at all. Each is skipped; none of them adds weight.
+    edges["broken1"] = {"n": "", "w": "1/2"}
+    edges["broken2"] = {"n": "Esomething", "w": "not-a-fraction"}
+    edges["broken3"] = "not a mapping"
+
+    assert certification.reached_by(cert) == 1, "only the two real edges count"
+
+
+def test_a_certification_carrying_no_tally_group_counts_nothing(founded):
+    act, counted = tallied(founded)
+    cert = founded.certify(act.said, sponsor="acme:marta", counted=counted)
+    cert.body["acdc"]["e"] = {}
+
+    assert certification.counted_by(cert) == ()
+    assert certification.reached_by(cert) == 0

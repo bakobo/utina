@@ -15,9 +15,11 @@ endorsement and an untouched slot is not an act at all (this.i @7szbfw).
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from fractions import Fraction
 
 from utina.substrate import (
     AID,
+    CERTIFICATION_SCHEMA,
     DI2I,
     EDGE_NODE_FIELD,
     EDGE_OPERATOR_FIELD,
@@ -31,6 +33,7 @@ from utina.substrate import (
 )
 
 from .errors import (
+    CERTIFICATION_UNSUPPORTED,
     CITATION_UNKNOWN,
     DOMAIN_INCEPTED,
     DOMAIN_UNINCEPTED,
@@ -386,6 +389,83 @@ class Constructor:
     def _require_founded(self) -> None:
         if not self._founded:
             raise DOMAIN_UNINCEPTED(gaid=self.gaid)
+
+    def certify(
+        self,
+        subject: SAID,
+        *,
+        sponsor: AID,
+        counted: Sequence[tuple[SAID, Fraction]],
+    ) -> Event:
+        """Admit a sponsor's tally, which is what makes ``subject`` consequential.
+
+        **Two acts and one committed event, and the asymmetry is the point.** The
+        sponsor assembles a dossier ACDC citing each disposition they counted and
+        signs it with their own key; the domain verifies it and admits it to the GEL
+        with an event of its own. Only the second is a GEL event, because only the
+        gAID's controller can anchor into the gAID's KEL — nothing a sponsor does can
+        put anything in a domain's log, which is why admission is necessarily the
+        domain's act (``this.i`` @ftjpdph5's sibling, @2e2dncfe). So the sponsor's
+        dossier travels INSIDE the domain's event, carrying its own signature, the
+        way an endorsement's credential already does (@vi4t4i).
+
+        **The domain checks before it admits**, and what it checks here is the floor:
+        that the weights the dossier cites sum to unity. A certification is not an
+        assertion that a threshold was met, it is the proof — a verifier walks the
+        edges and recomputes — so one claiming more than its edges support would
+        contradict itself on bytes its own sponsor signed, and the domain declines to
+        put that in its log.
+
+        ``counted`` is supplied by the caller rather than computed here, and that is
+        the plane boundary rather than laziness: which dispositions a clause counts
+        and what each is worth is the fold's question, and this module may not ask it
+        (``tests/test_purity.py``).
+        """
+        self._require_founded()
+        if subject not in self._saids:
+            raise SUBJECT_UNKNOWN(aid=sponsor, subject=subject)
+        reached = sum((weight for _, weight in counted), Fraction(0))
+        if reached < 1:
+            raise CERTIFICATION_UNSUPPORTED(
+                sponsor=sponsor,
+                subject=subject,
+                reached=f"{reached.numerator}/{reached.denominator}",
+            )
+        sad, signature = self.substrate.issue_acdc(
+            sponsor,
+            CERTIFICATION_SCHEMA,
+            {"said": subject, "act": ISSUANCE},
+            edges=self._tally_edges(counted),
+        )
+        return self._emit(
+            "certification",
+            {
+                "t": "cert",
+                "i": self.gaid,
+                "certifies": subject,
+                "acdc": sad,
+                "acdc_sig": signature,
+            },
+            self.gaid,
+        )
+
+    @staticmethod
+    def _tally_edges(counted: Sequence[tuple[SAID, Fraction]]) -> dict[str, object]:
+        """One edge per counted disposition, weighted, under the threshold operator.
+
+        The shape is the dossier specification's joint issuance: an edge group whose
+        ``o`` field carries the operator and whose member edges are the slots, each
+        with its weight in ``w`` (``dossier-spec-body.md:351``). Weights commit as
+        exact rational strings, which is the form the committed law already uses.
+        """
+        members: dict[str, object] = {EDGE_OPERATOR_FIELD: "MxN"}
+        for index, (said, weight) in enumerate(counted):
+            members[f"e{index}"] = {
+                EDGE_NODE_FIELD: said,
+                SCHEMA_FIELD: ENDORSEMENT_SCHEMA,
+                "w": f"{weight.numerator}/{weight.denominator}",
+            }
+        return {"endorsements": members}
 
     def _qualifying_edge(self, aid: AID, qualification: SAID) -> dict[str, object]:
         """The DI2I edge citing ``qualification`` as what qualifies ``aid``.

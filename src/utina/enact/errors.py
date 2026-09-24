@@ -115,3 +115,21 @@ SIGNATURE_UNVERIFIABLE = ErrorCode(
         "canonical encoding or the key state the signature names."
     ),
 )
+
+CERTIFICATION_UNSUPPORTED = ErrorCode(
+    code="e.proof.tally-unsupported.f",
+    title="This certification claims a threshold its own edges do not reach.",
+    detail=(
+        "{sponsor} assembled a certification of {subject} citing endorsements whose weights "
+        "sum to {reached} of the unity the clause requires. The domain refuses to admit it. "
+        "A certification is not an assertion that a threshold was met — it is the proof, and "
+        "its edges are the proof: a verifier walks them, recomputes the sum, and a "
+        "certification that claimed more than its edges support would contradict itself on "
+        "bytes its own sponsor signed. Nothing was committed and the act remains uncertified."
+    ),
+    args=("sponsor", "subject", "reached"),
+    hint=(
+        "Gather the missing endorsements and assemble the certification again. A tally "
+        "cannot make a decision consequential that its own evidence does not carry."
+    ),
+)

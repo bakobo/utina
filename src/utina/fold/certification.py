@@ -37,8 +37,10 @@ for this subject exist at or before this coordinate.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from fractions import Fraction
 
 from utina.fold.corpus import Corpus, Event
+from utina.fold.slots import credential
 from utina.fold.triple import SAID, Position
 
 __all__ = [
@@ -46,6 +48,8 @@ __all__ = [
     "CERTIFIES_FIELD",
     "REQUIRES_FIELD",
     "certifying",
+    "counted_by",
+    "reached_by",
     "required_by",
 ]
 
@@ -84,3 +88,48 @@ def certifying(corpus: Corpus, said: SAID, upto: Position) -> Event | None:
         if event.body.get(CERTIFIES_FIELD) == said:
             return event
     return None
+
+
+TALLY_GROUP = "endorsements"
+"""The edge group a certification's dossier carries its counted dispositions in."""
+
+
+def counted_by(event: Event) -> tuple[tuple[SAID, Fraction], ...]:
+    """Every disposition this certification cites, with the weight it claims for it.
+
+    Read off the committed dossier rather than taken on anybody's word, which is what
+    makes a certification proof rather than assertion: a verifier walks these edges,
+    resolves each one against the record, and recomputes the sum for themselves.
+
+    Malformed members are skipped rather than guessed at. A member that does not name
+    a node, or whose weight will not parse, contributes nothing — which is the
+    fail-closed direction, since the alternative is a certification reaching unity on
+    bytes the fold could not read.
+    """
+    group = credential(event).get("e", {})
+    members = group.get(TALLY_GROUP) if isinstance(group, dict) else None
+    if not isinstance(members, dict):
+        return ()
+    cited = []
+    for key, member in members.items():
+        if key == "o" or not isinstance(member, dict):
+            continue
+        node = member.get("n")
+        weight = member.get("w")
+        if not isinstance(node, str) or not node or not isinstance(weight, str):
+            continue
+        try:
+            cited.append((node, Fraction(weight)))
+        except (ValueError, ZeroDivisionError):
+            continue
+    return tuple(cited)
+
+
+def reached_by(event: Event) -> Fraction:
+    """What this certification's own edges add up to.
+
+    Unity is the threshold every operator here is satisfied at, so this is the
+    number a verifier compares against 1 — and a certification whose edges fall
+    short has contradicted itself on bytes its sponsor signed.
+    """
+    return sum((weight for _, weight in counted_by(event)), Fraction(0))

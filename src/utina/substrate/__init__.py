@@ -18,6 +18,7 @@ from .facade import FacadeSubstrate
 from .protocol import (
     ACDC_DT,
     AID,
+    CERTIFICATION_SCHEMA,
     DI2I,
     EDGE_NODE_FIELD,
     EDGE_OPERATOR_FIELD,
@@ -43,6 +44,7 @@ __all__ = [
     "AID",
     "AID_UNKNOWN",
     "ALIAS_TAKEN",
+    "CERTIFICATION_SCHEMA",
     "DI2I",
     "EDGES_FIELD",
     "EDGE_NODE_FIELD",

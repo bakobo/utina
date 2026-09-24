@@ -45,6 +45,16 @@ ENDORSEMENT_SCHEMA = "EAfn0gRMUnp6d1hyE5qJCN86kBFBp80JwMdm0BqiC1B0"
 #: from it, so an upstream edit is a red test rather than an untypable credential.
 GCD_SCHEMA = "EAqOeo_YMHDEMZ-dIJTYd72nsoUS-C1RdXtOdfAj7ZxR"
 
+#: The schema a certification's dossier satisfies — the artifact a sponsor assembles
+#: to prove a threshold was met, with one edge per disposition it counts. The dossier
+#: specification's joint-issuance section is where this shape comes from: an edge
+#: group whose ``o`` field carries the threshold operator and whose member edges are
+#: the slots, each with its weight (``dossier-spec-body.md:351``). Pinned here for the
+#: same reason the two above are, and provisional in the same way ``GCD_SCHEMA`` is —
+#: the document this names is not yet vendored, so this is a placeholder identifier
+#: rather than a recomputed pin (tick 5psg holds the wider conformance work).
+CERTIFICATION_SCHEMA = "EAcertification0dossier0schema0placeholder00"
+
 #: The governance framework a GCD is issued under, named by its ruleset's own
 #: identifier because "the act of issuing or receiving a GCD credential
 #: constitutes binding acceptance of the rules". Committed in the compact form —
