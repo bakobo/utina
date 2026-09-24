@@ -269,7 +269,7 @@ class RequirementElement:
     first determination widened ``expired/abandoned`` to admit exactly that
     ground rather than minting a fifth species, and a finding that said "no
     longer curable" without saying what did it would be an assertion
-    (this.i @<pending>).
+    (this.i @waihlx27).
     """
 
     endorser: AID
@@ -492,8 +492,10 @@ class Defeated(Finding):
 class Pending(Finding):
     """The evidence neither affirms nor defeats; the finding names what is missing.
 
-    Ground: the typed requirement set, deduplicated and in the canonical
-    four-field order (``:1647-1656``). The invariant is checked here rather than
+    Ground: the typed requirement set, deduplicated and in canonical order
+    (``:1647-1656``) — the ruled four fields, then schema and ground to break ties
+    between elements the four leave equal (this.i @fdhqffc3). The invariant is
+    checked here rather than
     assumed, so a set built by hand cannot be smuggled into a finding whose
     payload equality is supposed to be decidable;
     ``canonical_requirement_set`` is how one is built.
@@ -527,12 +529,16 @@ class Pending(Finding):
             value="a pending finding",
             ground="the typed requirement set that names what would discharge it",
         )
-        keys = [member.sort_key() for member in elements]
+        # The full dedup key, not the four-field sort key: it is the order's
+        # refinement, so two distinct elements sharing a sort key are neither
+        # rejected as duplicates nor left in arrival order (this.i @fdhqffc3).
+        keys = [member.dedup_key() for member in elements]
         require(
             keys == sorted(keys),
             MALFORMED_INPUT,
             field="a pending finding's requirement",
-            expected="the canonical order: subject, kind, citing-clause bytes, then species",
+            expected="the canonical order: subject, kind, citing-clause bytes, species, "
+            "then schema and ground",
             found="a set in some other order — build it with canonical_requirement_set",
         )
         require(
@@ -584,9 +590,14 @@ def canonical_requirement_set(
     differing only in species do not merge: a party told that missing evidence
     would cure and a party told that a recovery window stands open have received
     materially different instructions from the same record.
+
+    The order is the dedup key's, whose first four fields are the ruled order
+    (``:1650-1651``); the last two only break ties the ruled order leaves open,
+    so a set whose sort keys are distinct is ordered exactly as before
+    (this.i @fdhqffc3).
     """
     merged = {member.dedup_key(): member for member in elements}
-    return tuple(sorted(merged.values(), key=RequirementElement.sort_key))
+    return tuple(merged[key] for key in sorted(merged))
 
 
 def select_defeat(citations: Sequence[Citation]) -> Citation:

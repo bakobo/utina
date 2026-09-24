@@ -369,6 +369,57 @@ def test_two_elements_differing_only_in_species_do_not_merge() -> None:
     assert len(canonical_requirement_set([absent, window])) == 2
 
 
+OTHER_SCHEMA = "E" + "t" * 43
+
+
+@pytest.mark.parametrize(
+    "variant",
+    [
+        {"schema": OTHER_SCHEMA},
+        {"species": PendingSpecies.EXPIRED_ABANDONED, "ground": "E" + "g" * 43},
+    ],
+    ids=["schema", "ground"],
+)
+def test_elements_sharing_a_sort_key_survive_as_a_constructible_pending(
+    variant: dict[str, object],
+) -> None:
+    """@fdhqffc3: the builder and Pending agree on what one element is.
+
+    Two elements differing only in schema, or only in ground, are two elements by
+    the dedup key. The builder used to keep both and Pending then refused them as
+    duplicates, because its uniqueness check saw only the four sorted fields.
+    """
+    base = element()
+    if "ground" in variant:
+        base = dataclasses.replace(base, species=PendingSpecies.EXPIRED_ABANDONED)
+        other = dataclasses.replace(base, ground=variant["ground"])  # type: ignore[arg-type]
+    else:
+        other = dataclasses.replace(base, schema=variant["schema"])  # type: ignore[arg-type]
+    assert base.sort_key() == other.sort_key()
+    ordered = canonical_requirement_set([base, other])
+    assert len(ordered) == 2
+    assert Pending(requirement=ordered).requirement == ordered
+
+
+def test_elements_sharing_a_sort_key_order_the_same_whatever_order_they_arrive_in() -> None:
+    """@fdhqffc3: the six-field key breaks the tie the four-field order leaves open."""
+    first = element()
+    second = dataclasses.replace(first, schema=OTHER_SCHEMA)
+    forward = canonical_requirement_set([first, second])
+    backward = canonical_requirement_set([second, first])
+    assert forward == backward
+    assert [e.schema for e in forward] == [SCHEMA, OTHER_SCHEMA]
+
+
+def test_a_pending_finding_refuses_a_tie_left_in_arrival_order() -> None:
+    """Pending checks the full order, so a hand-built set cannot smuggle a tie out of order."""
+    first = element()
+    second = dataclasses.replace(first, schema=OTHER_SCHEMA)
+    with pytest.raises(BakoboError) as raised:
+        Pending(requirement=(second, first))
+    assert raised.value.is_exactly("e.input.malformed.f")
+
+
 def test_the_canonical_set_of_nothing_is_nothing() -> None:
     """Emptiness is refused by Pending, not by the ordering helper."""
     assert canonical_requirement_set([]) == ()

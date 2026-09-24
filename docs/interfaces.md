@@ -81,12 +81,15 @@ class Citation:
 class RequirementElement:
     endorser: AID
     clause: str
+    schema: SAID                       # the schema its evidence must satisfy (Q17)
     kind: str = "endorsement"          # binding at :1585-1586
     species: PendingSpecies = PendingSpecies.ABSENT
+    ground: SAID = ""                  # the event that closed its cure path, if any
 
 @dataclass(frozen=True)
 class Proof:                           # ground for SelfConvicted
     package: SAID
+    pair: tuple[SAID, ...] = ()        # the contradicting pair: empty, or exactly two
 
 @dataclass(frozen=True)
 class Declination:
@@ -134,17 +137,31 @@ class Disposition(StrEnum):
     DECLINED = "declined"         # signed, disp="decline"; spends the slot
 
 @dataclass(frozen=True)
+class Qualification:              # what an endorser must hold to act in a slot
+    schema: SAID
+    issuer: AID
+
+@dataclass(frozen=True)
 class Slot:
     endorser: AID
     weight: Fraction
+    schema: SAID                  # the schema the slot's evidence must satisfy
+    qualification: Qualification | None = None   # None: the law entitles directly
+    office: str | None = None     # set when the slot seats an office, not a party
 
 @dataclass(frozen=True)
 class Group:
     operator: str                 # "MxN"
     slots: tuple[Slot, ...]
+    def satisfied(self, dispositions: Mapping[AID, Disposition]) -> bool: ...
     def satisfied_by(self, endorsers: AbstractSet[AID]) -> bool: ...
     def reachable(self, dispositions: Mapping[AID, Disposition]) -> bool: ...
+    def outstanding(self, dispositions: Mapping[AID, Disposition]) -> tuple[Slot, ...]: ...
 ```
+
+`satisfied` is what the evaluator asks, over the dispositions the slot walk
+classified. `outstanding` names the slots still able to move the result, which
+become a pending finding's requirement elements.
 
 `satisfied_by` is the convenience form used by tests and the CLI: the endorsed
 weights of the named endorsers sum to at least 1. `reachable` answers whether
@@ -160,11 +177,16 @@ class Clause:
     id: str                       # "A1", "B2"
     governs: tuple[str, ...]      # act kinds this clause rules
     group: Group
+    certification: str | None = None        # overrides the law's; None inherits
+    exempt_from_certification: bool = False
 
 @dataclass(frozen=True)
 class Constitution:
     law_head: LawHead
     clauses: tuple[Clause, ...]
+    semantics: SAID | None = None       # the pinned threshold semantics (axiom 4)
+    certification: SAID | None = None   # the law's default certification schema
+    source: SAID = ""                   # the event this edition came from
     @classmethod
     def at(cls, corpus: Corpus, position: Position) -> Constitution: ...
     def clause(self, id: str) -> Clause: ...
@@ -291,8 +313,16 @@ class Substrate(Protocol):
     def incept(self, alias: str) -> AID: ...
     def rotate(self, aid: AID, anchor: SAID) -> SAID: ...
     def anchoring_event(self, said: SAID) -> SAID | None: ...
+    def delegate(self, delegator: AID, alias: str) -> AID: ...
+    def delegator_of(self, aid: AID) -> AID | None: ...
+    def open_registry(self, controller: AID, alias: str) -> SAID: ...
+    def revoke_acdc(self, registry: SAID, said: SAID) -> SAID: ...
+    def registry_state(self, registry: SAID, said: SAID) -> str | None: ...
+    def verify_edges(self, sad: Mapping[str, object]) -> bool: ...
     def issue_acdc(
-        self, issuer: AID, schema: SAID, attributes: Mapping[str, object]
+        self, issuer: AID, schema: SAID, attributes: Mapping[str, object], *,
+        registry: SAID | None = None, edges: Mapping[str, object] | None = None,
+        rules: SAID | None = None, nonce: str | None = None,
     ) -> tuple[Mapping[str, object], str]: ...
 ```
 
@@ -368,8 +398,27 @@ class Constructor:
         self, law: Mapping[str, object], *, act: str | None = None
     ) -> Event: ...
     def propose(self, act: str) -> Event: ...
-    def endorse(self, aid: AID, subject: SAID) -> Event: ...
-    def decline(self, aid: AID, subject: SAID) -> Event: ...
+    def endorse(
+        self, aid: AID, subject: SAID, *, qualification: SAID | None = None
+    ) -> Event: ...
+    def decline(
+        self, aid: AID, subject: SAID, *, qualification: SAID | None = None
+    ) -> Event: ...
+    @property
+    def emitted(self) -> tuple[Event, ...]: ...
+    @property
+    def registry(self) -> SAID | None: ...
+    def open_registry(self, alias: str, *, controller: AID | None = None) -> SAID: ...
+    def confer(
+        self, delegate: AID, *, role: str, acts: Sequence[str],
+        issuer: AID | None = None, presents_as: AID | None = None, nonce: str | None = None,
+    ) -> Event: ...
+    def revoke(self, credential: SAID, *, controller: AID | None = None) -> Event: ...
+    def observe_duplicity(self, party: AID, pair: Sequence[SAID]) -> Event: ...
+    def anchoring_event(self, said: SAID) -> SAID | None: ...
+    def certify(
+        self, subject: SAID, *, sponsor: AID, counted: Sequence[tuple[SAID, Fraction]]
+    ) -> Event: ...
 ```
 
 Nothing here judges, and nothing in `utina.fold` writes.

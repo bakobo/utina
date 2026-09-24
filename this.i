@@ -281,6 +281,29 @@ Make Custos's replayable governance useful to a real organization = goal:
         `authority` is wrong for three of the four defeat kinds; the field is documented at the
         point of default and the pin is logged as a divergence.
 
+    A requirement set is one element per deduplication key, ordered by that key = decision:
+      id: fdhqffc3
+      why: >
+        The element grew two fields past the four the order is ruled over — schema (Q17) and the
+        ground that closed a cure path (@waihlx27) — and the dedup key sees all six, because
+        custos-4.2.md:1652-1656 says it "sees every field the element carries". Two elements
+        differing only in schema or ground therefore survive deduplication as two, and share one
+        four-field sort key. Until this decision the two halves disagreed about them: the builder
+        kept both and sorted by the four-field key, so their relative order was whatever order
+        they arrived in, and Pending then rejected them as duplicates because its uniqueness
+        check ran over the four-field key. Found by an outside review of the codomain on
+        2026-09-24; unreachable today, because a clause slots each endorser once under one schema.
+        Chose to order by the full dedup key and to check uniqueness over it, so the six-field
+        key breaks ties the four-field order leaves open. The four-field order is a prefix of it,
+        so every set whose sort keys are already distinct — every set utina produces today — is
+        byte-identical before and after. Rejected refusing two elements with one sort key,
+        because the text says they are different elements and a refusal would make a pending
+        finding unconstructible on a record that is merely unusual. Rejected dropping schema and
+        ground from the dedup key, back to four fields, because that would merge two elements that
+        tell a party different things. Tradeoff accepted: the tie-break is utina's reading,
+        not the text's, since :1650-1651 rules the order over exactly four fields. Logged as an
+        amendment to Q17.
+
     Derive the canonical order from the coordinate and the identifier alone = decision:
       id: qv7m3d
       why: >
@@ -1982,3 +2005,33 @@ Make Custos's replayable governance useful to a real organization = goal:
         names a ground, so the test now keys on the species that actually means it,
         expired/abandoned. Equivalent today and correct once a second kind of ground exists —
         without it a tainted act would read as newly disturbed by whatever amendment came next.
+
+    A convicted subject is convicted even while its slots are still open = decision:
+      id: zmlvpkhl
+      why: >
+        When a subject is convicted by a bearing pair at or before the position and some slot of
+        the governing clause has no disposition, the fold returns self-convicted, not pending.
+        This was already the behaviour — the bearing walk runs after the requirement space is
+        built and before any verdict is chosen — but it was the product of where one call sat,
+        not a recorded reading, and an outside comparison found a second engine returning
+        pending on the same case, both citing custos-4.2.md:1753-1762. Recorded as Q38.
+        Chose conviction-wins. The transition table's condition for pending to self-convicted
+        (1664-1671) is the pair entering the bundle; under pending-wins the pair enters and
+        nothing moves until the last missing endorsement arrives, which the table does not name.
+        A pending finding names its cure (1575), and here the cure it would name is false: the
+        missing endorsements arriving does not bring the question to a lawful value, and no
+        missing bytes cure a conviction. And pending-wins lets a subject's own contradiction
+        stay hidden for as long as any other party withholds a vote.
+        Rejected pending-wins, whose textual case is real: 1753-1762 says no finding is terminal
+        while any enumerated check is unexamined. utina reads a slot the fold looked at and found
+        empty as examined, and a check whose evidence has not arrived as a different thing from
+        one nobody looked at. Tradeoff accepted: on any record where a subject contradicts
+        itself mid-vote, a conforming engine holding the other reading returns a different value.
+        THE SAME REASONING REACHES THE TAINT ARM, found while checking this node against M4's
+        second conviction. The bearing walk returned on the first convicted party it met, so an
+        earlier taint at a cited endorser hid a later conviction of the subject, and the fold
+        returned pending with a taint's cure — an owned act of the tainted party — on a question
+        that act cannot rescue. And a second tainted endorser went unnamed, so the pending told a
+        reader one act would suffice when two were owed. Chose to walk every observation at or
+        before the position: any subject conviction wins, and otherwise the pending names every
+        taint, in canonical order. Neither case occurs on a record utina builds today.

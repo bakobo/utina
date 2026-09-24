@@ -1224,6 +1224,91 @@ def test_a_duplicity_observation_at_the_subjects_committer_convicts_the_question
     assert finding.proof.package == mark
 
 
+def test_a_convicted_subject_is_convicted_while_its_slots_are_still_open():
+    """Q38 reading A: conviction wins over open slots. The edge fires when the
+    pair enters the bundle (``:1664-1671``), and a pending here would name a cure
+    — the missing endorsements — whose arrival cures nothing."""
+    log = Log()
+    log.law("founding", "inception", BOARD_LAW)
+    act = log.act("hire", "hire")
+    log.endorse(MARTA, act)
+    assert isinstance(evaluate(log.corpus, Committed(act), at=log.now), Pending)
+    mark = observed(log, GAID)
+
+    finding = evaluate(log.corpus, Committed(act), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == mark
+
+
+def test_a_convicted_subject_is_convicted_even_where_a_cited_taint_came_first():
+    """Q38 again, against the taint arm: a pending naming a taint's cure would
+    promise that the tainted party's owned act rescues a question whose subject
+    has already contradicted itself. The walk must not stop at the first
+    observation it meets."""
+    log = Log()
+    act = affirmed_hire(log)
+    observed(log, DEV, "dup-dev")
+    mark = observed(log, GAID, "dup-gaid")
+
+    finding = evaluate(log.corpus, Committed(act), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == mark
+
+
+def test_a_taint_names_the_schema_of_the_tainted_partys_own_slot():
+    """A requirement element names the schema its slot's evidence must satisfy
+    (``:1946-1951``), so a taint at the second slot names the second slot's."""
+    other = "Eanother-endorsement-schema"
+    law = [
+        {
+            "id": "H1",
+            "governs": ["hire"],
+            "group": {
+                "operator": "MxN",
+                "slots": [
+                    {"endorser": MARTA, "weight": "1/2", "schema": SCHEMA},
+                    {"endorser": DEV, "weight": "1/2", "schema": other},
+                ],
+            },
+        }
+    ]
+    log = Log()
+    log.law("founding", "inception", law)
+    act = log.act("hire", "hire")
+    log.endorse(MARTA, act)
+    log.endorse(DEV, act)
+    assert isinstance(evaluate(log.corpus, Committed(act), at=log.now), Affirmed)
+    observed(log, DEV)
+
+    finding = evaluate(log.corpus, Committed(act), at=log.now)
+
+    assert isinstance(finding, Pending)
+    assert [(one.endorser, one.schema) for one in finding.requirement] == [(DEV, other)]
+
+
+def test_every_tainted_cited_party_is_named_in_the_pending():
+    """No finding is terminal while any enumerated check is unexamined
+    (``:1753-1762``), and each taint is its own check with its own cure: a
+    pending that named one of two would tell a reader one act suffices."""
+    log = Log()
+    act = affirmed_hire(log)
+    first = observed(log, DEV, "dup-dev")
+    second = observed(log, MARTA, "dup-marta")
+
+    finding = evaluate(log.corpus, Committed(act), at=log.now)
+
+    assert isinstance(finding, Pending)
+    assert {(one.endorser, one.ground) for one in finding.requirement} == {
+        (DEV, first),
+        (MARTA, second),
+    }
+    assert all(
+        one.species is PendingSpecies.UNRESOLVED_CONFLICT for one in finding.requirement
+    )
+
+
 def test_a_taint_reaches_forward_and_never_backward():
     """"What was affirmed above stands at its coordinate forever" (``:1805``)."""
     log = Log()
