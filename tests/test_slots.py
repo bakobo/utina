@@ -894,12 +894,39 @@ def seated_office() -> Group:
 
 
 def test_an_office_slot_is_filled_by_whoever_holds_its_credential():
-    """The law never names Nina, and her endorsement fills the seat anyway."""
+    """The law never names Nina, and her endorsement fills the seat anyway.
+
+    The mapping is addressed by the SEAT and the classification reports the party in
+    it, which are two different questions (``this.i`` @qjjlkrxt). An earlier version
+    of this case asserted ``dispositions(...)[NINA]`` — the holder as the key — and
+    it passed while the slot contributed no weight to any threshold, because
+    ``Group._where`` was looking the same slot up under the empty string.
+    """
     events = [seating(), signed("EAct1", NINA)]
 
-    assert slots.dispositions(seated_office(), events, SUBJECT)[NINA] is (
+    assert slots.dispositions(seated_office(), events, SUBJECT)[OFFICE] is (
         Disposition.ENDORSED
     )
+    classified = slots.classify(seated_office(), events, SUBJECT)
+    filled = [one for one in classified if one.key == OFFICE]
+    assert [one.endorser for one in filled] == [NINA], "the row names who is in the seat"
+
+
+def test_a_filled_office_slot_carries_its_weight():
+    """The assertion M2 owed and did not make, and the whole of ``this.i`` @qjjlkrxt.
+
+    Testing that an office is FILLED is a claim about the slot predicate. Whether the
+    group then counts it is a different claim, and for as long as nothing asserted it
+    the office machinery was arithmetically inert: every office slot read pending in
+    ``satisfied``, ``reachable`` and ``outstanding`` however the record stood.
+    """
+    group = seated_office()
+    events = [seating(), signed("EAct1", MARTA), signed("EAct2", NINA)]
+
+    held = slots.dispositions(group, events, SUBJECT)
+
+    assert group.endorsed_weight(held) == HALF + HALF
+    assert group.satisfied(held), "Marta's half and the seat's half reach unity"
 
 
 def test_a_vacant_office_is_pending_under_its_own_name():
@@ -919,7 +946,7 @@ def test_revoking_the_seating_empties_the_office_without_touching_the_law():
     before = [seating(), signed("EAct1", NINA)]
     after = [*before, revoked("ERevoke", "ESeat-credential", registry="EAcmeRegistry")]
 
-    assert slots.dispositions(seated_office(), before, SUBJECT)[NINA] is (
+    assert slots.dispositions(seated_office(), before, SUBJECT)[OFFICE] is (
         Disposition.ENDORSED
     )
     assert slots.dispositions(seated_office(), after, SUBJECT)[OFFICE] is (
@@ -955,9 +982,12 @@ def test_a_revoked_seating_does_not_count_towards_ambiguity():
     assert slots.seating_is_ambiguous(seated_office(), events) is None
 
     # And the office is Dev's now, which is what a succession looks like: the seat
-    # never moved in the law, only who is standing in it.
-    held = slots.dispositions(seated_office(), events, SUBJECT)
-    assert DEV in held and OFFICE not in held
+    # never moved in the law, only who is standing in it. So the key is the office
+    # in both states — that is what makes it stable across a change of holder — and
+    # it is the classification's endorser that moved.
+    classified = slots.classify(seated_office(), events, SUBJECT)
+    seat = [one for one in classified if one.key == OFFICE]
+    assert [one.endorser for one in seat] == [DEV]
 
 
 def test_a_slot_naming_a_party_is_unaffected_by_any_of_this():

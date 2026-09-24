@@ -41,7 +41,7 @@ from fractions import Fraction
 
 from utina.fold.clause import Clause
 from utina.fold.corpus import Corpus, Event
-from utina.fold.group import AID, Disposition, Group
+from utina.fold.group import Disposition, Group
 from utina.fold.slots import SlotDisposition, classify, credential, declinations
 from utina.fold.triple import SAID, Position
 
@@ -192,7 +192,7 @@ def contradicting(
     if reached_by(event) < 1:
         return event, None
     classified = classify(group, corpus.upto(event.position), subject)
-    held: dict[AID, Disposition] = {one.endorser: one.disposition for one in classified}
+    held: dict[str, Disposition] = {one.key: one.disposition for one in classified}
     if group.satisfied(held):
         return None
     return event, _cited_around(event, classified)

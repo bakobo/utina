@@ -196,7 +196,7 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
     spent = _requirements(
         clause, classified, Disposition.DECLINED, PendingSpecies.EXPIRED_ABANDONED
     )
-    held = {one.endorser: one.disposition for one in classified}
+    held = {one.key: one.disposition for one in classified}
 
     uncertified = _uncertified(corpus, law, subject, clause, at)
 
@@ -661,16 +661,23 @@ def _requirements(
 
     The walk is over the clause's own slots rather than over the classifications,
     because the schema an element must name lives in the slot and nowhere else
-    (this.i @z373ew7j). The dispositions are read back by endorser, which is
-    exact: a group slots each endorser at most once.
+    (this.i @z373ew7j). The dispositions are read back by :attr:`Slot.key` — the
+    seat rather than its occupant — which is exact: a group has each seat once.
+
+    **An element names the party where the law slots one and the OFFICE where it
+    seats one** (this.i @qjjlkrxt). A slot that seats an office commits no AID, so
+    an element built from ``slot.endorser`` would carry the empty string and the
+    Ground Axiom would refuse the finding — a pending naming nobody has not said
+    what would discharge it. "board-seat-3, absent" is the true and useful answer,
+    and it is what a reader needs whether the seat is vacant or merely silent.
 
     ``ground`` names the committed event that made these elements what they are,
     and is empty for every cure that is simply the arrival of missing evidence.
     """
-    held = {one.endorser: one.disposition for one in classified}
+    held = {one.key: one.disposition for one in classified}
     return canonical_requirement_set(
         RequirementElement(
-            endorser=slot.endorser,
+            endorser=slot.key,
             clause=clause.id,
             schema=slot.schema,
             kind="endorsement",
@@ -678,7 +685,7 @@ def _requirements(
             ground=ground,
         )
         for slot in clause.group.slots
-        if held.get(slot.endorser) is holding
+        if held.get(slot.key) is holding
     )
 
 

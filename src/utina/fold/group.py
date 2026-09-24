@@ -226,6 +226,19 @@ class Slot:
     naming it is more use to a reader than naming nobody.
     """
 
+    @property
+    def key(self) -> str:
+        """What addresses this slot in a disposition mapping: the seat, not its occupant.
+
+        The office where the slot seats one, and the endorser otherwise. A slot that
+        seats an office names no AID at all, so keying a mapping by ``endorser`` would
+        address every such slot by the empty string — which is the defect ``this.i``
+        @qjjlkrxt repairs, and under which a filled office contributed no weight to any
+        threshold. The key is stable across a change of director, which is the whole
+        point of seating an office rather than a person (@ftjpdph5).
+        """
+        return self.office or self.endorser
+
     def __post_init__(self) -> None:
         if not isinstance(self.schema, str) or not self.schema:
             raise SLOT_SCHEMA_MISSING(endorser=self.endorser)
@@ -311,10 +324,12 @@ class Group:
     ) -> Iterable[Slot]:
         """The slots whose disposition is one of ``admitted``.
 
-        A slot the mapping does not mention is pending, because a pending slot and an
-        absent one are equivalent in trust terms; and an entry naming an endorser this
-        group does not slot is never reached, so it can neither add weight nor keep any.
+        Addressed by :attr:`Slot.key` — the seat — rather than by the party in it, so
+        that an office slot is reachable at all (``this.i`` @qjjlkrxt). A slot the
+        mapping does not mention is pending, because a pending slot and an absent one
+        are equivalent in trust terms; and an entry naming a seat this group does not
+        have is never reached, so it can neither add weight nor keep any.
         """
         for slot in self.slots:
-            if dispositions.get(slot.endorser, Disposition.PENDING) in admitted:
+            if dispositions.get(slot.key, Disposition.PENDING) in admitted:
                 yield slot

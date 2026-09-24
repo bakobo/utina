@@ -203,11 +203,24 @@ class SlotDisposition:
     ``said`` is the committed act the disposition rests on, and it is ``None``
     exactly when the disposition is PENDING — because a pending slot is the absence
     of an act, and a ground it does not have is one the finding must not claim.
+
+    ``key`` is which SEAT this is and ``endorser`` is who is in it, and they are two
+    different questions rather than one written twice (``this.i`` @qjjlkrxt). On a
+    slot the law entitles directly they coincide. On a slot that seats an office the
+    key is the office, stable across a change of director, while the endorser is the
+    holder the record resolved — or the office's own name where nobody holds it,
+    because "board-seat-3, pending" tells a reader what to go and do and an empty
+    column does not.
     """
 
     endorser: AID
     disposition: Disposition
     said: SAID | None = None
+    key: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.key:
+            object.__setattr__(self, "key", self.endorser)
 
 
 def classify(
@@ -234,7 +247,7 @@ def dispositions(
     group: Group, events: Iterable[CommittedEvent], subject: SAID
 ) -> dict[AID, Disposition]:
     """The mapping ``Group.reachable`` and ``Group.satisfied`` consume."""
-    return {one.endorser: one.disposition for one in classify(group, events, subject)}
+    return {one.key: one.disposition for one in classify(group, events, subject)}
 
 
 def endorsements(classified: Iterable[SlotDisposition]) -> tuple[SAID, ...]:
@@ -336,7 +349,7 @@ def _in_flight(
     consult ``UNREACHABLE_YIELDS`` and must not (``this.i`` @dozrtx).
     """
     held = {
-        one.endorser: one.disposition
+        one.key: one.disposition
         for one in (_classify_slot(slot, committed, retracted, subject) for slot in group.slots)
     }
     return group.reachable(held) and not group.satisfied(held)
@@ -352,9 +365,10 @@ def _classify_slot(
     # rather than off the law. An office nobody holds is pending under its own
     # name: "board-seat-3, nobody" tells a reader more than an empty string would,
     # and it is the honest answer — the seat exists and is vacant.
+    key = slot.key
     holder = _holder(slot, committed)
     if holder is None:
-        return SlotDisposition(slot.office or slot.endorser, Disposition.PENDING)
+        return SlotDisposition(slot.office or slot.endorser, Disposition.PENDING, key=key)
     slot = slot if not slot.office else replace(slot, endorser=holder)
     standing = [
         event
@@ -366,8 +380,8 @@ def _classify_slot(
     for wanted, disposition in _PRECEDENCE:
         for event in standing:
             if attributes(event).get(DISPOSITION_FIELD) == wanted:
-                return SlotDisposition(slot.endorser, disposition, event.said)
-    return SlotDisposition(slot.endorser, Disposition.PENDING)
+                return SlotDisposition(slot.endorser, disposition, event.said, key=key)
+    return SlotDisposition(slot.endorser, Disposition.PENDING, key=key)
 
 
 def _holder(slot: Slot, asof: Sequence[CommittedEvent]) -> AID | None:

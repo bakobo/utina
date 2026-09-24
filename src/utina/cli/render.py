@@ -325,7 +325,7 @@ def brief_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
             ]
         )
     clause = cast(Clause, appraisal.clause)
-    held = {one.endorser: one.disposition for one in appraisal.slots}
+    held = {one.key: one.disposition for one in appraisal.slots}
     word = outcome.verdict.value.upper()
     tint = VERDICT_COLOR[outcome.verdict]
     satisfied = clause.group.satisfied(held)
@@ -454,7 +454,7 @@ def _arithmetic(
     appraisal: Appraisal, clause: Clause, aliases: Aliases, style: Style
 ) -> list[str]:
     """The slots, their weights, what each holds, and both sums against unity."""
-    held = {one.endorser: one.disposition for one in appraisal.slots}
+    held = {one.key: one.disposition for one in appraisal.slots}
     header = f"{'slot':<{SLOT}}{'weight':>6}   {'disposition':<14}committed act"
     lines = [MARGIN + style.label(header)]
     for slot, disposition in zip(clause.group.slots, appraisal.slots, strict=True):
