@@ -492,8 +492,10 @@ class Defeated(Finding):
 class Pending(Finding):
     """The evidence neither affirms nor defeats; the finding names what is missing.
 
-    Ground: the typed requirement set, deduplicated and in the canonical
-    four-field order (``:1647-1656``). The invariant is checked here rather than
+    Ground: the typed requirement set, deduplicated and in canonical order
+    (``:1647-1656``) — the ruled four fields, then schema and ground to break ties
+    between elements the four leave equal (this.i @fdhqffc3). The invariant is
+    checked here rather than
     assumed, so a set built by hand cannot be smuggled into a finding whose
     payload equality is supposed to be decidable;
     ``canonical_requirement_set`` is how one is built.

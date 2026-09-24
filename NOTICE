@@ -45,6 +45,8 @@ is the exception. schemas/dossier-spec-body.md is a verbatim copy of that
 repository's spec/dossier-spec-body.md at commit
 5906e8cf570099761b57761fac6cbec50325b3c1, redistributed unmodified because
 utina's law pins its semantics by the SHA-256 of exactly those bytes and the
-test suite recomputes the digest. The specification is subject to the OWF
-Contributor License Agreement 1.0 - Copyright, as its own copyright notice
-states; that license, not this repository's, governs the file.
+test suite recomputes the digest. The copied file carries no notice of its own.
+The upstream specification, of which it is the body, is subject to the OWF
+Contributor License Agreement 1.0 - Copyright, as stated in that repository's
+spec/dossier-spec-head.md; that license, not this repository's, governs the
+file.
