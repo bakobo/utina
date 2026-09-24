@@ -2027,3 +2027,11 @@ Make Custos's replayable governance useful to a real organization = goal:
         empty as examined, and a check whose evidence has not arrived as a different thing from
         one nobody looked at. Tradeoff accepted: on any record where a subject contradicts
         itself mid-vote, a conforming engine holding the other reading returns a different value.
+        THE SAME REASONING REACHES THE TAINT ARM, found while checking this node against M4's
+        second conviction. The bearing walk returned on the first convicted party it met, so an
+        earlier taint at a cited endorser hid a later conviction of the subject, and the fold
+        returned pending with a taint's cure — an owned act of the tainted party — on a question
+        that act cannot rescue. And a second tainted endorser went unnamed, so the pending told a
+        reader one act would suffice when two were owed. Chose to walk every observation at or
+        before the position: any subject conviction wins, and otherwise the pending names every
+        taint, in canonical order. Neither case occurs on a record utina builds today.
