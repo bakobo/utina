@@ -2005,3 +2005,25 @@ Make Custos's replayable governance useful to a real organization = goal:
         names a ground, so the test now keys on the species that actually means it,
         expired/abandoned. Equivalent today and correct once a second kind of ground exists —
         without it a tainted act would read as newly disturbed by whatever amendment came next.
+
+    A convicted subject is convicted even while its slots are still open = decision:
+      id: zmlvpkhl
+      why: >
+        When a subject is convicted by a bearing pair at or before the position and some slot of
+        the governing clause has no disposition, the fold returns self-convicted, not pending.
+        This was already the behaviour — the bearing walk runs after the requirement space is
+        built and before any verdict is chosen — but it was the product of where one call sat,
+        not a recorded reading, and an outside comparison found a second engine returning
+        pending on the same case, both citing custos-4.2.md:1753-1762. Recorded as Q38.
+        Chose conviction-wins. The transition table's condition for pending to self-convicted
+        (1664-1671) is the pair entering the bundle; under pending-wins the pair enters and
+        nothing moves until the last missing endorsement arrives, which the table does not name.
+        A pending finding names its cure (1575), and here the cure it would name is false: the
+        missing endorsements arriving does not bring the question to a lawful value, and no
+        missing bytes cure a conviction. And pending-wins lets a subject's own contradiction
+        stay hidden for as long as any other party withholds a vote.
+        Rejected pending-wins, whose textual case is real: 1753-1762 says no finding is terminal
+        while any enumerated check is unexamined. utina reads a slot the fold looked at and found
+        empty as examined, and a check whose evidence has not arrived as a different thing from
+        one nobody looked at. Tradeoff accepted: on any record where a subject contradicts
+        itself mid-vote, a conforming engine holding the other reading returns a different value.
