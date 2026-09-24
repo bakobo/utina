@@ -68,6 +68,7 @@ before the fold can still be followed. The per-commission files are gone.
 | Q35 | what does an amendment owe about the acts it ends | gap | new 2026-09-23 |
 | Q36 | how is a suppressed act evidenced when the domain omits it | gap | new 2026-09-23 |
 | Q37 | may a clause slot seat an office rather than name a party | DIVERGENT | new 2026-09-24 |
+| Q38 | a subject convicted while slots are open: pending or self-convicted | DIVERGENT | new 2026-09-24 |
 
 ---
 
@@ -706,6 +707,23 @@ is the strongest form of divergence in the codomain.
 **Ask Custos:** which enumeration governs a composed-evidence requirement element,
 and is the discharge species mandatory on one produced by an unfilled slot? (Its
 species would presumably be **absent**, cured by the arrival of the endorsement.)
+
+**Amended 2026-09-24.** The pin above is stale in one respect: the element now carries
+six fields — endorser, clause, schema, kind, species, and the `ground` that names the
+event closing its cure path (`this.i` @waihlx27) — so utina has moved toward reading B,
+with schema a field of its own rather than folded into the kind. That sharpens the
+divergence rather than easing it. An engine carrying the four fields of `:1647-1651`
+deduplicates over four and merges two elements this engine keeps apart.
+
+It also exposed a second, smaller question. `:1650-1651` rules the order over exactly
+four fields, so two elements differing only in a field past those four are distinct
+by the dedup key and tied by the order, and the text gives no way to order them. utina
+breaks the tie with the remaining fields of the dedup key, schema then ground, and
+checks both order and uniqueness over that one key (`this.i` @fdhqffc3). Before that
+decision the builder and `Pending` disagreed about such a pair: the builder kept both
+in arrival order and `Pending` refused them as duplicates. No record utina builds
+reaches the case. **Ask Custos**, in addition: where an element carries more than the
+four ordered fields, what breaks a tie among them?
 
 ---
 
@@ -1457,6 +1475,29 @@ with no network resolve the schema that issuance requires?
 **Two consequences utina pins, which the text does not.** An office two parties hold at once is **refused** rather than adjudicated: `MxN` commits "exactly N slots, one per candidate endorser" (`dossier-spec-body.md:369`), two standing seatings break that structurally, and nothing says which supersedes. An office held by many *by design*, whose count moves, is not that defect — it is the dossier's `MxQ`, an open-ended set of qualified endorsers, which utina does not implement (tick `5psg`). And a vacant office is **pending under its own name** rather than under nobody's.
 
 **Ask Custos.** May a clause slot commit an office and no identifier, with the holder resolved from standing credentials? If so, `:2145`'s "the organ's AID" wants a sentence saying whose AID that is — the holder's, dedicated to the capacity — because the alternative reading produces records in which no human is accountable for anything.
+
+## Q38 — A subject convicted while slots are still open: pending or self-convicted? **DIVERGENT**
+
+*New 2026-09-24, from an outside comparison of two engines' codomains. Neither this register nor `this.i` had recorded the choice, because utina made it by where it put one call.*
+
+**Span:** `:1664-1671` (the transition table: pending → self-convicted when "a bearing contradictory pair, or new governed-status evidence … enters the bundle"); `:1753-1762` ("no finding is terminal while any enumerated check in the question's committed requirement space is unexamined. An evaluator holding a bundle that leaves any enumerated check unexamined returns pending with that check as its typed requirement"); `:1563` and `:1575` (pending species "describe cure paths", and each species "names its cure").
+
+**Where it bit:** `evaluate`, at a question whose subject is convicted by a bearing pair at or before the position while some slot of the governing clause has no disposition. `_tainted` runs after the requirement space is built and before any verdict is chosen (`src/utina/fold/evaluate.py:194-196`), so its answer wins over every other.
+
+- **Reading A — conviction wins.** A bearing conviction is itself one of the enumerated checks, and once it has been examined and fires, the finding is self-convicted whatever else is outstanding. The transition table's condition for pending → self-convicted is the pair *entering the bundle*, not the requirement set discharging.
+- **Reading B — pending wins.** An open slot is an unexamined check, and `:1753-1762` says no finding is terminal while one exists, so the evaluator returns pending naming the open slots and consults convictions only once every requirement has discharged.
+
+Both readings cite `:1753-1762`, and the text supports each. They part on what "unexamined" means: whether a slot the evaluator looked at and found empty has been examined (A) or has not, because its evidence has not yet arrived (B).
+
+**Pinned: A.** Three reasons. First, under B the table's pending → self-convicted edge does not fire when its stated condition occurs: the pair enters the bundle and the finding stays pending, and it moves to self-convicted only later, when the last missing endorsement arrives — an event the table does not name as the edge's condition. Second, a pending finding's requirement names a cure (`:1575`), and under B the cure it names is false. The arrival of the missing endorsements does not bring the question to a lawful value; it brings it to self-convicted, and no missing bytes cure a conviction. Third, B makes the conviction's visibility depend on how many other parties have acted, so a subject whose question is still collecting endorsements is shielded from its own contradiction for as long as someone withholds. `this.i` @zmlvpkhl; pinned by `tests/test_evaluate.py::test_a_convicted_subject_is_convicted_while_its_slots_are_still_open`.
+
+**What A does not change.** The third-party arm is the same dispatch. A convicted *cited* party taints the voice rather than convicting the question (`this.i` @f3pmxu3x), and the taint returns pending with species unresolved-conflict, so under either reading a taint yields pending; the readings differ only in which requirement elements that pending carries. utina's carries the taint alone.
+
+**Divergence.** On every record where a subject is convicted before its question's requirement set has discharged, two conforming engines return self-convicted and pending on identical bytes. The case is reachable in any domain where a party can contradict itself while a vote is still open.
+
+**A sibling, recorded here because it is the same missing rule.** Reading B, applied consistently, also puts pending ahead of defeat when a question has several requirements and one is defeated while another is open, which `:1760-1762` supports in as many words ("never defeated either"). utina never reaches that case because a question is governed by one clause and one group, and within a group a declination that forecloses unity defeats whatever slots remain (Q1, Q16). An engine composing several requirements per question does reach it.
+
+**Ask Custos.** The transition table says which edges are lawful and not which value wins where several are supportable at one position. State a precedence among the four values, or define "unexamined" so that it settles one: does a slot whose evidence has not arrived count as an unexamined check?
 
 ---
 

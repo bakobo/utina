@@ -1224,6 +1224,23 @@ def test_a_duplicity_observation_at_the_subjects_committer_convicts_the_question
     assert finding.proof.package == mark
 
 
+def test_a_convicted_subject_is_convicted_while_its_slots_are_still_open():
+    """Q38 reading A: conviction wins over open slots. The edge fires when the
+    pair enters the bundle (``:1664-1671``), and a pending here would name a cure
+    — the missing endorsements — whose arrival cures nothing."""
+    log = Log()
+    log.law("founding", "inception", BOARD_LAW)
+    act = log.act("hire", "hire")
+    log.endorse(MARTA, act)
+    assert isinstance(evaluate(log.corpus, Committed(act), at=log.now), Pending)
+    mark = observed(log, GAID)
+
+    finding = evaluate(log.corpus, Committed(act), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == mark
+
+
 def test_a_taint_reaches_forward_and_never_backward():
     """"What was affirmed above stands at its coordinate forever" (``:1805``)."""
     log = Log()
