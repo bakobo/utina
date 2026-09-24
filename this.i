@@ -1549,6 +1549,48 @@ Make Custos's replayable governance useful to a real organization = goal:
         left empty: the two contradicting commitments are in one event, so there are not two
         identifiers to name, and the ruled payload is the package alone anyway (1659-1660).
 
+    A certification is one GEL event, because only the domain can write one = decision:
+      id: qk3kcds6
+      why: >
+        The build plan called for two committed events per certified act — the sponsor's dossier
+        and the domain's admission. That was wrong and the reason is @2e2dncfe's own: only the
+        gAID's controller can anchor into the gAID's KEL (`:1114-1120`), so nothing a sponsor
+        does can put anything in a domain's log, and there is no such thing as a sponsor's GEL
+        event. Chose one event, signed by the domain, carrying the sponsor's dossier ACDC inside
+        it with the sponsor's own signature — exactly the shape an endorsement already uses
+        (@vi4t4i), so a stranger verifies the tally with KERI tooling and the key log alone.
+        Two acts and one event, and the asymmetry is the content rather than an encoding
+        convenience: the sponsor's act is real, attributable and signed, and it is not
+        consequential until somebody with authority over the log admits it. That is the whole
+        claim of @2e2dncfe restated at the level of bytes.
+        What the domain checks before admitting is the FLOOR and is deliberately narrow: that
+        the weights the dossier cites reach unity. Rejected having the constructor recompute
+        which dispositions the clause counts, because that is the fold's question and
+        `utina.enact` may not ask it — `tests/test_purity.py` enforces the boundary. So the
+        caller supplies what it is claiming and the domain checks the claim, which is also the
+        honest division of labour: the sponsor did the legwork and owns what they counted.
+
+    A certification is checked against the whole record, not against its own edges = decision:
+      id: epztz4wd
+      why: >
+        Daniel ruled this on 2026-09-24. Edges prove presence and never absence, so a check
+        confined to what a certification cites catches only a sponsor claiming a threshold they
+        did not reach — which the constructor already refuses at commitment (@qk3kcds6), making
+        that check nearly redundant. The interesting failure is a sponsor who cites AROUND a
+        disposition the domain has already admitted: in this model a declination SPENDS a slot
+        rather than merely failing to fill it, so omitting one changes the answer and leaves no
+        trace in the certification itself. Checking against the record catches it.
+        This is what makes the false-certification beat worth showing, and it is also why tick
+        4uus matters more than it looked: a certification can only be checked against what the
+        domain admitted, so admission discipline is load-bearing for certification's integrity
+        rather than a tidy-up.
+        Its limit is named rather than left to be discovered, and it is structural: a
+        disposition the domain NEVER admitted is invisible to this and to everything else in the
+        record, because only the domain can write to its own log. Suppression is not preventable
+        — it is evidenceable by a party holding their own log, which is KERI's posture for
+        duplicity applied one tier up. Custos has the shape for that at `:2518-2530` and scopes
+        it to key state; the governance-tier case has no committed form. Filed as Q36.
+
     The law creates a seat; a credential fills it = decision:
       id: ftjpdph5
       why: >

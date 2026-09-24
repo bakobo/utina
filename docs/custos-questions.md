@@ -64,6 +64,10 @@ before the fold can still be followed. The per-commission files are gone.
 | Q31 | what is a threshold defeat's subcode | DIVERGENT | new at integration |
 | Q32 | must an endorsement be an ACDC issuance in a registry | DIVERGENT | new at the keripy substrate |
 | Q33 | at which coordinate does an affirmed enactment take force | DIVERGENT | new at demo 2 |
+| Q34 | is a decision consequential when cast or when certified | DIVERGENT | new 2026-09-23 |
+| Q35 | what does an amendment owe about the acts it ends | gap | new 2026-09-23 |
+| Q36 | how is a suppressed act evidenced when the domain omits it | gap | new 2026-09-23 |
+| Q37 | may a clause slot seat an office rather than name a party | DIVERGENT | new 2026-09-24 |
 
 ---
 
@@ -1377,6 +1381,82 @@ with no network resolve the schema that issuance requires?
 **What B does not settle, and what utina cannot express.** Once force is keyed to affirmation, an enactment's commitment order and its effectuation order can disagree: commit two amendments to one predecessor, affirm the second before the first, and two editions become in force at coordinates whose order is the reverse of their events'. `:3038-3050` rules that case, in the clause where Custos governs its own succession and calls it "the same discipline this standard imposes on every governed corpus, applied to itself" (`:2992-2994`) — the successor cites its predecessor's bytes, eligibility is latest-unsuperseded, and "where two enactments claim the same predecessor, the GEL's committed order rules: the earlier lawful enactment is the succession, and the later travels as evidence — of error or of duplicity." utina cannot apply either half: its enactment events carry a law body and no predecessor citation, so nothing committed says which predecessor an enactment claims, and "already superseded at that coordinate" has no committed term to test. The law fold keeps its walk in canonical order and therefore resolves such a fork to the last law event in force, which is an artifact of the walk and not a reading of the text. Every record utina builds has a linear succession, where the two rules cannot disagree.
 
 **Ask Custos** — filed as [`Nicholas-Keystate/custos#96`](https://github.com/Nicholas-Keystate/custos/issues/96), both halves. Define the effectuation coordinate. Does an enactment's edition bind from the coordinate at which the enactment reaches unity, and does an enactment that is defeated or never affirmed confer nothing? This is R4 in `docs/custos-proposals.md`, where it is stated as a requirement rather than a reading; one sentence at the succession rule closes both. Second, and consequent: §17's succession record and fork rule presume a committed predecessor citation on every enactment, and §18's GEL event grammar never obliges one. Either §18 owes the field, or §17 owes the rule that applies without it.
+
+## Q34 — Is a decision consequential when its votes are cast, or when the tally is certified? **DIVERGENT**
+
+*New 2026-09-23, from Daniel. The question the fold had never asked, because it had always answered it one way without noticing there was a choice.*
+
+**Span:** `:1502-1507` (the Ground Axiom: a finding carries what it rests on); `:1622` ("decidable and affirmation reachable"); the four findings at `:1527`; and — the load-bearing absence — nothing anywhere that names a moment at which an act becomes authorized. `dossier-spec-body.md:377-379` is the nearest committed machinery: a joint issuance MAY advertise a **finalization event** through its `fi` field, and a **finalizer** who "observes the threshold to be met" anchors the threshold-satisfying proofs in that AID's KEL, which "a verifier SHOULD use as the definitive proof of issuance."
+
+**Where it bit:** `evaluate`. utina affirmed an act the moment its slot weights summed to unity, with no event marking that they had.
+
+- **Reading A — cast.** The threshold is a property of the evidence bundle, so an act is authorized at the first coordinate where the weights reach unity, whether or not anybody has noticed. This is what utina did and what the four findings read most naturally as.
+- **Reading B — certified.** A threshold being met and an act being authorized are different facts, and the second needs a committed act to exist. The dossier's finalization event is that act, promoted from advisory to constitutive.
+
+**Pinned: B**, and it is a change to Custos rather than a reading of it. The argument is Daniel's and it is an analogy that survives pushing: an election is not consequential when votes are cast, nor when a pollster guesses at them, but when they are officially tabulated and certified. Reading A makes the moment of authorization a fact nobody commits, computable only by whoever happens to hold the whole bundle — and by Custos's own observation premise at `:2969-2975`, "completeness of view is never a committed property of any enumerable party." So under A the moment an act became lawful is a function of who is asking and what they have seen, which is precisely the property replayability is supposed to remove. `this.i` @2e2dncfe.
+
+**How utina implements it.** A sponsor gathers the dispositions, issues a dossier ACDC whose edges cite each one with its weight, and the domain verifies that dossier and admits it to the GEL with an event of its own. The certifier is therefore not merely asserting: a verifier walks the edges, recomputes the sum, and a certification claiming more than its edges support contradicts itself on bytes its own sponsor signed. A domain says whether it wants this by naming the schema its certifications must satisfy, exactly as a slot names the endorsement schema its evidence must satisfy (`:1946-1951`); a law naming none requires none, and the clause may override the law's default in either direction.
+
+**Divergence.** Total, on every record. Under A an act with unity reached is affirmed; under B it is pending with a requirement of kind `certification`, at every coordinate until one is admitted. Two conforming engines return different values on identical bytes for every decision in any domain that adopted this.
+
+**Ask Custos.** Should a governance act become consequential only on a committed certification, and if so should the dossier's finalization event be raised from SHOULD-use-as-proof to constitutive for governance acts? Note the smaller shape of the request: the machinery, the roles and the field already exist in the dossier specification and need no invention — what is missing is the sentence making them load-bearing. See also Q36, which is what certification does *not* fix.
+
+---
+
+## Q35 — What does an amendment owe about the acts it ends? **gap**
+
+*New 2026-09-23. This entry replaces a pinned reading that has been withdrawn, and the withdrawal is the interesting part.*
+
+**Span:** `:2649` (an act lawful under the law then in force "remains lawful in the record even after the law that authorized it is superseded" — the retrospective half, which is settled); `:1730-1733` (the monotonicity guarantee is scoped "**at a fixed law head**, never over wall time", so the document knows the across-head case is different and declines to say how); `:1775` (`superseded` is a defeater class, but defined as "a later lawful act displaced the subject" — a competing *act*, not a changed *rule*). The word "disturb" appears **nowhere** in `custos-4.2.md`.
+
+**Where it bit:** utina implemented a declared disturbance set — an amending enactment naming the pending acts it claimed to end, with the fold computing the true set and returning **self-convicted** on a mismatch. That came from issue #82's fifth determination and from `docs/custos-proposals.md` R3, neither of which is ratified, and the demo presented it as conformance.
+
+**Withdrawn 2026-09-23**, by Daniel, on one sentence: an obligation that changes no outcome is not one governance should impose. The declared set was read in exactly two places — the mismatch check and the screen that drew it — and gated nothing. The law changed identically whether it was accurate, wrong or absent, so the field existed only to create something that could be false. It could not always be discharged honestly either: the fold computes the true set at effectuation (Q33) while the declaration is made at commitment, and any party may table an act in the window between, so an honest amender can be convicted for a third party's later act. Demonstrated on a built record rather than argued. `this.i` @ow6dzro4.
+
+**What utina does now.** The substantive rule stands — an act in flight before an enactment took force, whose cure path is closed after, is ended by it, and only where *that act's own clause* moved, which is the specificity that stops an amendment being a way to kill anything inconvenient. The fold computes which, the `disturbance` screen reports them, and nobody is charged with anything.
+
+**Ask Custos.** Two things, and the first is the gap. What becomes of a pending act when the clause governing it is amended, and what becomes of endorsements given under the predecessor? `:1730-1733` says the across-head case is different and stops. This is R3 in `docs/custos-proposals.md`. Second, and only if the first is answered: does an amender owe any *declaration* about the acts it ends — and if the answer is yes, note that the duty must be dischargeable at the coordinate it is made, which the effectuation/commitment gap currently prevents.
+
+---
+
+## Q36 — How is an act evidenced when the domain's own log omits it? **gap**
+
+*New 2026-09-23. Found while working out what certification (Q34) does and does not buy.*
+
+**Span:** `:1114-1120` (GEL events "are sealed into the gAID's KEL by the same anchoring discipline KERI's registry layer uses for TELs"); `:2969-2975` (the observation premise: "completeness of view is never a committed property of any enumerable party… the total view is a join no single party holds"); `:2518-2530` (the **watcher discrepancy report** and the key-state-notice comparison package — two committed object forms by which a watcher evidences that observed key state for an identifier diverges from another observed state, "so the divergence is recomputable from the package rather than believed from the report").
+
+**Where it bit:** working out whether a certifier could suppress a declination. They can, and so can the domain, and no mechanism in the document reaches it.
+
+**The shape of it.** Only the gAID's controller can anchor into the gAID's KEL, so nothing an external party does can put anything in a domain's log. A GEL therefore records what the domain *accepted*, never what the world *did* — which is not a defect to engineer away, it is what a log is, and a company's minute book has the same property. Certification does not fix it: checking a certification against the whole GEL catches a sponsor citing around a disposition the domain already admitted, and nothing catches one the domain never admitted.
+
+**The remedy that exists is asymmetric and is KERI's own posture.** An excluded party's act lives in *their* log, signed and permanent, whether the domain likes it or not. So suppression is not preventable — it is evidenceable by anyone holding both logs, exactly as duplicity is evidenced rather than prevented.
+
+**The gap.** `:2518-2530` is the right machinery and the wrong scope. The watcher discrepancy report is defined over **key state** divergence. There is no committed object form for "this party committed an act bearing on a governed question, and the domain's governance log does not contain it."
+
+**Ask Custos.** Does the cross-frame discipline's evidence production extend to governance-tier omission, and if so what is the committed form? The discrepancy report is the pattern to copy rather than a new invention. Worth noting for whoever files it: the 2025 US electoral-certification dispute is the same shape — the attack was on the certifying step rather than on the votes, and the check that held was that the states held their own records, so the divergence was computable by anyone who cared to look.
+
+---
+
+## Q37 — May a clause slot seat an office rather than name a party? **DIVERGENT**
+
+*New 2026-09-24, from Daniel: "We have to change the law to create a board seat. We don't change the law to fill the seat."*
+
+**Span:** `:2139-2148` — "Seated organs SHOULD be delegated identifiers of the gAID… The seat grant itself takes credential form where the objects section types it: **a seat credential naming the organ's AID as issuee**, issued under the domain's registry"; `:1924` (§9 delegates to the Constitution which schemas, issued by which registries, confer which powers); `:1946-1951` (each slot names the schema its evidence must satisfy).
+
+**Where it bit:** utina's clause slots named an AID, always. Seating an office therefore meant slotting the office's AID, so appointing or removing a director was an amendment to the committed law.
+
+- **Reading A — a slot names an AID.** The literal reading of every slot example. Who may act is committed law, and changing who holds a seat is changing the law.
+- **Reading B — a slot may seat an office, and a credential says who fills it.** `:2145` names the seat credential's issuee, and `:1924` delegates to the Constitution what confers a power — so a slot can commit the *qualification* and leave the holder to the record.
+
+**Pinned: B.** Creating a seat is an amendment, filling it is an issuance, vacating it is a revocation, and only the first touches the law. Under A, personnel is constitutional: a company amends its operating agreement to replace a director, which is not how any real governance works and not something the text requires. `this.i` @ftjpdph5.
+
+**A second reading, settled the same day, that B depends on.** "The organ's AID" at `:2145` is an AID **its holder owns**, dedicated to that capacity — the role-dedicated-AID model, one AID per person-and-role pair. Under the alternative reading, where the organ's AID belongs to the domain, a record can contain no accountable human at all: utina's did, and Nina appeared in zero committed events while duplicity attached to an abstraction of Acme's. The ratified text does not distinguish the two readings and both are lawful, which is the divergence.
+
+**Divergence.** Two conforming engines given one committed law disagree about who may fill a slot, and about whether a change of officeholder requires an amendment. Under A a revocation cannot empty a slot without the law moving; under B it does, at the next coordinate.
+
+**Two consequences utina pins, which the text does not.** An office two parties hold at once is **refused** rather than adjudicated: `MxN` commits "exactly N slots, one per candidate endorser" (`dossier-spec-body.md:369`), two standing seatings break that structurally, and nothing says which supersedes. An office held by many *by design*, whose count moves, is not that defect — it is the dossier's `MxQ`, an open-ended set of qualified endorsers, which utina does not implement (tick `5psg`). And a vacant office is **pending under its own name** rather than under nobody's.
+
+**Ask Custos.** May a clause slot commit an office and no identifier, with the holder resolved from standing credentials? If so, `:2145`'s "the organ's AID" wants a sentence saying whose AID that is — the holder's, dedicated to the capacity — because the alternative reading produces records in which no human is accountable for anything.
 
 ---
 
