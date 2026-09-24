@@ -130,9 +130,10 @@ class FacadeSubstrate:
         """
         if alias in self._key_index:
             raise ALIAS_TAKEN(alias=alias)
+        checked = [_checked_seal(alias, {"d": said}) for said in seals]
         self._key_index[alias] = 0
         self._kels[alias] = []
-        self._append(alias, "icp", [{"d": said} for said in seals], keys=True)
+        self._append(alias, "icp", checked, keys=True)
         return alias
 
     def delegate(self, delegator: AID, alias: str) -> AID:

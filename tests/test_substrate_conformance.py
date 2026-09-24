@@ -274,6 +274,15 @@ def test_an_inception_may_seal_digests_and_they_read_back(conformant):
     assert conformant.anchoring_event(law) == inception["d"]
 
 
+def test_an_inception_asked_to_seal_a_non_digest_is_refused_before_anything_exists(
+    conformant,
+):
+    with pytest.raises(BakoboError) as raised:
+        conformant.incept("acme:gaid", seals=(7,))
+    assert raised.value.is_exactly("e.input.seal-malformed.f")
+    assert conformant.incept("acme:gaid")
+
+
 def test_a_bare_inception_seals_nothing(conformant, marta):
     (inception,) = conformant.key_events(marta)
     assert list(inception["a"]) == []

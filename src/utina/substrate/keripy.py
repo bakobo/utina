@@ -210,7 +210,9 @@ class KeripySubstrate:
         """
         if self._hby.habByName(alias) is not None:
             raise ALIAS_TAKEN(alias=alias)
-        data = [SealDigest(d=said)._asdict() for said in seals]
+        data = [
+            SealDigest(d=_checked_seal(alias, {"d": said})["d"])._asdict() for said in seals
+        ]
         prefix: str = self._hby.makeHab(name=alias, data=data, **_SINGLE_SIG).pre
         return prefix
 
