@@ -41,7 +41,7 @@ before the fold can still be followed. The per-commission files are gone.
 | Q8 | may a pending carry an empty requirement set | DIVERGENT | QC4 |
 | Q9 | the refusal record has no committed form | convergent decision, DIVERGENT record | QC5 |
 | Q10 | "citing-clause bytes" has no stated flattening | convergent here | QC6 |
-| Q11 | intra-anchor order with no seal index | DIVERGENT | QL1 |
+| Q11 | intra-anchor order with no seal index | DIVERGENT; A since 2026-09-24 | QL1 |
 | Q12 | re-presenting one committed event | convergent | QL2 |
 | Q13 | re-presentation against collision | DIVERGENT | QL3 |
 | Q14 | is an amendment an edition or a delta | DIVERGENT | QL4 |
@@ -54,7 +54,7 @@ before the fold can still be followed. The per-commission files are gone.
 | Q21 | is a slot's weight bounded | DIVERGENT | S6 (slots) |
 | Q22 | law whose slots cannot sum to unity | DIVERGENT | S7 (slots) |
 | Q23 | which field carries the SAID, under what digest | DIVERGENT | S1 (substrate) |
-| Q24 | canonical order with no KEL to derive it from | convergent | S2 (substrate) |
+| Q24 | canonical order with no KEL to derive it from | retired 2026-09-24 | S2 (substrate) |
 | Q25 | is the anchoring establishment event in the GEL | DIVERGENT | S3 (substrate) |
 | Q26 | what a prospective question binds to | DIVERGENT | S4 (substrate) |
 | Q27 | are signatures in the bytes the SAID digests | convergent | S5 (substrate) |
@@ -69,6 +69,7 @@ before the fold can still be followed. The per-commission files are gone.
 | Q36 | how is a suppressed act evidenced when the domain omits it | gap | new 2026-09-23 |
 | Q37 | may a clause slot seat an office rather than name a party | DIVERGENT | new 2026-09-24 |
 | Q38 | a subject convicted while slots are open: pending or self-convicted | DIVERGENT | new 2026-09-24 |
+| Q45 | a founding law designating a registry that names the gAID it may not name | gap | new 2026-09-24 |
 
 ---
 
@@ -470,6 +471,17 @@ reason to seal both into the same one.
 discharged before the fold, by whatever assembles the bundle? If the latter,
 1222-1227's two-component position and 3095's seal-list order need reconciling —
 they cannot both be the whole story.
+
+**Amended 2026-09-24: reading A, for every corpus the constructor writes.** Each
+GEL event is now sealed into the gAID's key log with an event seal naming the GEL,
+the event's GEL sequence number and its identifier, and `fold/gel.py` requires those
+sequence numbers to count up in key-log order and then seal-list order (`this.i`
+@wsxwkwgv). So the seal index survives into the fold, and a position is still one
+number — the GEL sequence number, which the seal list fixes. That also suggests an
+answer to the Ask: a position of `(the GEL's identifier, its sequence number)` is an
+`(identifier, sn)` pair in 1222-1227's sense, and carries 3095's intra-anchor order
+without a third component, exactly as a TEL event's does. Reading B still governs
+hand-positioned corpora, which fold unit tests build and nothing a user runs does.
 
 ---
 
@@ -1024,6 +1036,13 @@ be wrong the first time two events share an anchor.
 **Ask Custos:** is a committed per-event coordinate a lawful order source, or
 does `:3094` close the list at two?
 
+**Amended 2026-09-24: retired in favour of B for every corpus the constructor
+writes.** Every GEL event is anchored now, and `fold/gel.py` derives the order from
+the key log and refuses a corpus whose committed coordinates disagree with it
+(`this.i` @wsxwkwgv). The committed `s` stays in each event, as a TEL event's does,
+and is now checked against its seal rather than trusted. The equality this entry
+called a property of how utina builds the log is enforced rather than assumed.
+
 ---
 
 ---
@@ -1070,6 +1089,14 @@ this pin, and the reason it is filed DIVERGENT rather than as a modeling note.
 
 **Ask Custos:** does the fold consume the anchoring establishment events, and
 if not, how does a clause condition on anchor grade?
+
+**Amended 2026-09-24.** The pin stands — no key event is a GEL member — but its
+cost is gone. The gAID's key events now travel beside the GEL as evidence, the fold
+reads the seal that anchors each GEL event, and an enactment anchored in an
+interaction rather than an establishment event is refused (`fold/gel.py`,
+`this.i` @wsxwkwgv). So the fold does see anchor grade, which was the
+uncomfortable half. What it still cannot do is verify a key event's signatures;
+that belongs in the substrate plane, on an ingestion path (tick `6ofh`).
 
 ---
 
@@ -1519,6 +1546,24 @@ Both readings cite `:1753-1762`, and the text supports each. They part on what "
 **A sibling, recorded here because it is the same missing rule.** Reading B, applied consistently, also puts pending ahead of defeat when a question has several requirements and one is defeated while another is open, which `:1760-1762` supports in as many words ("never defeated either"). utina never reaches that case because a question is governed by one clause and one group, and within a group a declination that forecloses unity defeats whatever slots remain (Q1, Q16). An engine composing several requirements per question does reach it.
 
 **Ask Custos.** The transition table says which edges are lawful and not which value wins where several are supportable at one position. State a precedence among the four values, or define "unexamined" so that it settles one: does a slot whose evidence has not arrived count as an unexamined check?
+
+## Q45 — How can a founding law designate a registry that names the gAID, when the founding law may not name the gAID? **gap**
+
+*New 2026-09-24, found building the genesis knot. Q39–Q44 are left for the certification work in flight.*
+
+**Span:** `:1073-1087` (a born-governed genesis is `(K0, C)`; K0 seals C; "the gAID SHALL NOT appear in C or in any body C cites, transitively"; C "refers to the domain's authority only through a reserved sentinel resolved at verification"); `:3151-3153` ("a domain's founding law SHALL commit the identifier of the governance registry it designates as its GEL, at inception grade, sealed by the genesis knot").
+
+**Where it bit:** `Constructor.found`. A KERI registry's identifier is a digest over its inception, which names its controller, so the registry's identifier depends on the gAID. The gAID depends on K0, K0 on C, and 3151 puts the registry's identifier in C. Read literally, the two sentences cannot both hold for a KERI registry.
+
+- **Reading A — the designation lives in the knot, not in C.** The gAID's first rotation seals both the founding law and a registry inception naming the gAID. Lawful, and it is how another engine builds its knot, but the identifier is then committed by a rotation and not by the founding law.
+- **Reading B — the sentinel reaches the registry.** The GEL's identifier digests a registry inception that names its controller through the sentinel rather than as the gAID. C can then commit it outright, and the sentinel resolves to whichever prefix's inception seals C.
+- **Reading C — C commits the inputs, and the verifier derives the identifier.** C commits a nonce, and the identifier is recomputed from `(gAID, nonce)` at verification. C then commits no identifier at all.
+
+**Pinned: B** (`this.i` @ryh5orta). It is the only reading under which C itself commits an identifier, as 3151 says, without naming the gAID, as 1085 forbids. The sentinel's value is ours to choose, because the text reserves one without giving it: utina uses `#gAID`, which is outside the qb64 alphabet. The cost is that utina's GEL identifier is not a KERI registry, and no KERI tool resolves a TEL for it. That is consistent with utina speaking its own governance ilks (track two, `:3119-3127`), and it would not be available to a track-one domain whose GEL events are registry forms.
+
+**Divergence:** the designation's committed location and the GEL identifier's bytes. Under A a verifier finds the designation in the first rotation, and under B and C in the founding law. Two engines therefore disagree about whether a record with an empty rotation seal list is designated.
+
+**Ask Custos:** does 1085's exclusion extend to the designated registry's identifier? If it does, which cut breaks the cycle: the knot (A), the sentinel (B) or derivation (C)? And what is the sentinel's reserved value? Two engines choosing different sentinels produce different founding-law bytes from one intent.
 
 ---
 

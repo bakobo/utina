@@ -210,8 +210,9 @@ class Event:
     body: Mapping[str, object]    # committed payload; opaque to the walk
 
 class Corpus:
+    genesis: Genesis | None       # None where the corpus was positioned by hand
     @classmethod
-    def load(cls, events: Iterable[Event]) -> Corpus: ...
+    def load(cls, events: Iterable[Event], *, genesis: object | None = None) -> Corpus: ...
     def upto(self, position: Position) -> tuple[Event, ...]: ...   # canonical order
     def event(self, said: SAID) -> Event | None: ...
 ```
@@ -219,6 +220,27 @@ class Corpus:
 The walk derives its order from committed bytes alone — anchoring order first,
 then intra-anchor order as the anchoring event states. Arrival order, storage
 order and any ambient sequence are forbidden inputs.
+
+## `utina.fold.gel` — the GEL as the gAID's key log says it is
+
+```python
+class Genesis(Enum):
+    BORN = "born-governed"        # the gAID's inception sealed the founding law
+    ADOPTED = "adopted"           # incepted bare, law anchored later: lesser grade
+
+def anchored(
+    events: Iterable[Event], kel: Sequence[Mapping[str, object]], *, gaid: str
+) -> Corpus: ...
+```
+
+Every corpus the constructor writes is admitted here (this.i @wsxwkwgv). The
+founding law names the GEL it designates in `gel`; each GEL event is sealed into
+the gAID's key log with an event seal `{i: gel, s: <hex GEL sequence number>, d:
+<event SAID>}`. `anchored` refuses a gap or reordering in those seals, an event
+nothing seals, a sealed event nobody presented, an event whose `s` or position is
+not its seal's, an enactment sealed in an interaction, and a born-governed founding
+law that names its own gAID. `Corpus.load` is the hand-positioned door fold unit
+tests use, and claims no anchoring.
 
 ## The law body — the other silent seam
 
@@ -310,7 +332,11 @@ class Substrate(Protocol):
     def said(self, body: Mapping[str, object]) -> SAID: ...
     def sign(self, aid: AID, body: Mapping[str, object]) -> str: ...
     def verify(self, aid: AID, body: Mapping[str, object], signature: str) -> bool: ...
-    def incept(self, alias: str) -> AID: ...
+    def incept(self, alias: str, *, seals: Sequence[SAID] = ()) -> AID: ...
+    def seal(
+        self, aid: AID, seals: Sequence[Mapping[str, str]], *, establishment: bool = False
+    ) -> SAID: ...
+    def key_events(self, aid: AID) -> tuple[Mapping[str, object], ...]: ...
     def rotate(self, aid: AID, anchor: SAID) -> SAID: ...
     def anchoring_event(self, said: SAID) -> SAID | None: ...
     def delegate(self, delegator: AID, alias: str) -> AID: ...
@@ -393,7 +419,15 @@ class Constructor:
         cls, substrate: Substrate, gaid: AID, *,
         values: FoldValues, events: Sequence[Event],
     ) -> Constructor: ...
-    def incept_domain(self, founding_law: Mapping[str, object]) -> Event: ...
+    @classmethod
+    def found(
+        cls, substrate: Substrate, alias: str, founding_law: Mapping[str, object], *,
+        values: FoldValues, nonce: str = GEL_NONCE,
+    ) -> Constructor: ...              # born governed: the gAID's inception seals the law
+    def incept_domain(self, founding_law: Mapping[str, object]) -> Event: ...  # adopted
+    gel: SAID                          # the GEL the founding law designates
+    @property
+    def key_events(self) -> tuple[Mapping[str, object], ...]: ...
     def enact_amendment(
         self, law: Mapping[str, object], *, act: str | None = None
     ) -> Event: ...
