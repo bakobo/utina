@@ -18,6 +18,7 @@ from pathlib import Path
 
 from utina.acme import Acme, build
 from utina.fold.corpus import Corpus, Event
+from utina.fold.gel import anchored
 from utina.fold.triple import Position
 from utina.substrate import FACADE, substrate_named
 
@@ -35,8 +36,16 @@ class RealValues:
     ) -> Event:
         return Event(said=said, kind=kind, position=position, body=body)
 
-    def corpus(self, events: Sequence[Event]) -> Corpus:
-        return Corpus.load(events)
+    def corpus(
+        self,
+        events: Sequence[Event],
+        *,
+        kel: Sequence[Mapping[str, object]] | None = None,
+        gaid: str | None = None,
+    ) -> Corpus:
+        if kel is None:
+            return Corpus.load(events)
+        return anchored(events, kel, gaid=str(gaid))
 
 
 @contextmanager

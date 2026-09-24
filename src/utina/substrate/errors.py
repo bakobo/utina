@@ -116,3 +116,15 @@ AID_UNKNOWN = ErrorCode(
     args=("aid",),
     hint="Incept the identifier before signing or rotating as it.",
 )
+
+SEAL_MALFORMED = ErrorCode(
+    code="e.input.seal-malformed.f",
+    title="A seal a key event was asked to carry is not a seal.",
+    detail=(
+        "A key event for {aid} was asked to carry {seal!r}, which names no digest. Every "
+        "seal commits a self-addressing identifier in its d field, and a seal that does not "
+        "commits nothing anyone could check."
+    ),
+    args=("aid", "seal"),
+    hint="Pass seals as mappings whose d field is the digest being sealed.",
+)

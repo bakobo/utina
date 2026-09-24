@@ -251,6 +251,94 @@ def test_a_rotation_does_not_disturb_another_party_s_signatures(conformant, mart
     assert conformant.verify(marta, BODY, signature)
 
 
+# --- seal and key_events: the key log as evidence (@wsxwkwgv, @4b2mmhbf) --------
+
+#: An event seal, the shape a TEL event's anchor takes: which log, where, what.
+LOG = "E" + "g" * 43
+
+
+def event_seal(sn: int, said: str) -> dict[str, str]:
+    return {"i": LOG, "s": format(sn, "x"), "d": said}
+
+
+def test_an_inception_may_seal_digests_and_they_read_back(conformant):
+    """1079-1080: "K0 SHALL seal C's self-addressing identifier among its
+    anchoring seals" — the genesis knot needs an inception that carries one."""
+    law = conformant.said({"clauses": []})
+    gaid = conformant.incept("acme:gaid", seals=(law,))
+    (inception,) = conformant.key_events(gaid)
+    assert inception["t"] == "icp"
+    assert inception["s"] == "0"
+    assert inception["i"] == gaid
+    assert {"d": law} in list(inception["a"])
+    assert conformant.anchoring_event(law) == inception["d"]
+
+
+def test_an_inception_asked_to_seal_a_non_digest_is_refused_before_anything_exists(
+    conformant,
+):
+    with pytest.raises(BakoboError) as raised:
+        conformant.incept("acme:gaid", seals=(7,))
+    assert raised.value.is_exactly("e.input.seal-malformed.f")
+    assert conformant.incept("acme:gaid")
+
+
+def test_a_bare_inception_seals_nothing(conformant, marta):
+    (inception,) = conformant.key_events(marta)
+    assert list(inception["a"]) == []
+
+
+def test_a_seal_in_an_interaction_moves_the_log_and_not_the_keys(conformant, marta):
+    signature = conformant.sign(marta, BODY)
+    said = conformant.seal(marta, (event_seal(0, "E" + "a" * 43),))
+    events = conformant.key_events(marta)
+    assert [event["t"] for event in events] == ["icp", "ixn"]
+    assert events[1]["d"] == said
+    assert events[1]["s"] == "1"
+    assert list(events[1]["a"]) == [event_seal(0, "E" + "a" * 43)]
+    assert conformant.verify(marta, BODY, signature)
+
+
+def test_a_seal_in_an_establishment_event_is_a_rotation(conformant, marta):
+    conformant.seal(marta, (event_seal(0, "E" + "a" * 43),), establishment=True)
+    assert [event["t"] for event in conformant.key_events(marta)] == ["icp", "rot"]
+
+
+def test_one_key_event_may_carry_several_seals_in_the_order_given(conformant, marta):
+    """3095: intra-anchor order is "as the anchoring event's seal list states"."""
+    seals = (event_seal(1, "E" + "b" * 43), event_seal(0, "E" + "a" * 43))
+    conformant.seal(marta, seals)
+    assert list(conformant.key_events(marta)[-1]["a"]) == list(seals)
+
+
+def test_a_rotation_is_a_key_event_too(conformant, marta):
+    anchor = conformant.said({"t": "enact"})
+    rotation = conformant.rotate(marta, anchor)
+    last = conformant.key_events(marta)[-1]
+    assert (last["t"], last["d"]) == ("rot", rotation)
+    assert {"d": anchor} in list(last["a"])
+
+
+def test_key_events_are_deterministic(conformant, substrate_name):
+    with substrate_named(substrate_name) as other:
+        for substrate in (conformant, other):
+            aid = substrate.incept("acme:gaid", seals=(LOG,))
+            substrate.seal(aid, (event_seal(0, "E" + "a" * 43),))
+        assert conformant.key_events(aid) == other.key_events(aid)
+
+
+def test_sealing_as_an_identifier_with_no_key_state_is_refused(conformant):
+    with pytest.raises(BakoboError) as raised:
+        conformant.seal("E" + "z" * 43, (event_seal(0, "E" + "a" * 43),))
+    assert raised.value.is_exactly("e.id.aid-unknown.f")
+
+
+def test_the_key_events_of_an_identifier_with_no_key_state_are_refused(conformant):
+    with pytest.raises(BakoboError) as raised:
+        conformant.key_events("E" + "z" * 43)
+    assert raised.value.is_exactly("e.id.aid-unknown.f")
+
+
 # --- issue_acdc: a registry-less credential ------------------------------------
 
 #: A SAID-shaped subject for a credential to be about.

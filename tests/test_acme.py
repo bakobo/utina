@@ -251,7 +251,27 @@ def test_the_seat_credential_says_what_authority_the_seat_inherited(acme_double)
 def test_the_founding_law_is_committed_at_inception(acme_double):
     inception = acme_double.events[0]
     assert inception.kind == "inception"
-    assert inception.body["law"] == FOUNDING_LAW
+    law = inception.body["law"]
+    assert {k: v for k, v in law.items() if k not in ("gel", "d")} == FOUNDING_LAW
+
+
+def test_acme_is_born_governed(acme_double):
+    """The gAID's inception seals the founding law (custos-4.2.md:1079-1082)."""
+    law = acme_double.events[0].body["law"]
+    assert acme_double.kel[0]["t"] == "icp"
+    assert {"d": law["d"]} in list(acme_double.kel[0]["a"])
+
+
+def test_every_acme_event_is_sealed_into_the_gaids_key_log(acme_double):
+    """1114-1120, and the membership face: one GEL seal per committed event."""
+    law = acme_double.events[0].body["law"]
+    sealed = [
+        seal["d"]
+        for event in acme_double.kel
+        for seal in event["a"]
+        if seal.get("i") == law["gel"]
+    ]
+    assert sealed == [event.said for event in acme_double.events]
 
 
 def test_the_successor_law_is_committed_by_the_amendment(acme_double):

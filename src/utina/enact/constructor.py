@@ -60,6 +60,21 @@ ISSUANCE = "issue"
 ISSUANCE_KIND = "issuance"
 SCHEMA_FIELD = "s"
 
+#: Where a founding law names the log it designates as its GEL, and the reserved
+#: sentinel a GEL identifier names its controller through. The fold reads the
+#: first under the same literal (``fold/gel.py``); neither plane imports the other.
+#: The sentinel's value is ours: ``custos-4.2.md:1076-1078`` reserves "a sentinel
+#: resolved at verification" without giving one, and ``#`` is outside the qb64
+#: alphabet, so no identifier can ever be mistaken for it (this.i @ryh5orta).
+GEL_FIELD = "gel"
+GEL_SENTINEL = "#gAID"
+
+#: The nonce a domain's GEL identifier is derived with, unless a domain supplies
+#: its own. Two domains sharing it and a founding text are still distinguished by
+#: their inceptions (``custos-4.2.md:1083-1084``), and a GEL's seals are only ever
+#: read out of its own gAID's key log.
+GEL_NONCE = "utina-gel"
+
 #: The name of the edge an endorser's qualification rides on. The dossier
 #: specification's own label for a qualification-proof edge
 #: (``dossier-spec-body.md``'s endorsement schema, ``e.qp``), which is exactly
@@ -67,10 +82,28 @@ SCHEMA_FIELD = "s"
 QUALIFICATION_EDGE = "qp"
 
 
+def gel_identifier(substrate: Substrate, nonce: str = GEL_NONCE) -> SAID:
+    """The identifier of a GEL whose controller is not yet known.
+
+    The digest of a registry inception naming its controller only through the
+    sentinel, so it can be computed before the gAID exists and committed in the
+    founding law the gAID's inception seals — which is how 3151's designation and
+    1085's exclusion coexist (this.i @ryh5orta).
+    """
+    return substrate.said({"t": "gel", "ii": GEL_SENTINEL, "u": nonce})
+
+
 class Constructor:
     """The writing plane for one governed domain."""
 
-    def __init__(self, substrate: Substrate, gaid: AID, *, values: FoldValues) -> None:
+    def __init__(
+        self,
+        substrate: Substrate,
+        gaid: AID,
+        *,
+        values: FoldValues,
+        gel: SAID | None = None,
+    ) -> None:
         """Take a gAID that already exists, because under keripy it must.
 
         A keripy prefix is a digest of its own inception event and is unknowable
@@ -82,6 +115,8 @@ class Constructor:
         """
         self.substrate = substrate
         self.gaid = gaid
+        self.gel = gel_identifier(substrate) if gel is None else gel
+        """The identifier of the log this domain's founding law designates as its GEL."""
         self._values = values
         self._emitted: list[Event] = []
         self._saids: set[SAID] = set()
@@ -115,21 +150,83 @@ class Constructor:
         for expected, event in enumerate(events):
             if event.position.seq != expected:
                 raise RECORD_UNRESUMABLE(expected=expected, found=event.position.seq)
-        constructor = cls(substrate, gaid, values=values)
+        constructor = cls(substrate, gaid, values=values, gel=cls._designated(events))
         constructor._emitted = list(events)
         constructor._saids = {event.said for event in events}
         constructor._founded = any(event.kind == "inception" for event in events)
         return constructor
 
+    @staticmethod
+    def _designated(events: Sequence[Event]) -> SAID | None:
+        """The GEL a resumed record's founding law designates, if it has one."""
+        for event in events:
+            law = event.body.get("law") if event.kind == "inception" else None
+            if isinstance(law, Mapping) and isinstance(law.get(GEL_FIELD), str):
+                return str(law[GEL_FIELD])
+        return None
+
+    @property
+    def key_events(self) -> tuple[Mapping[str, object], ...]:
+        """The gAID's key log, which says where every GEL event was committed.
+
+        Asked of the substrate rather than kept here, for the reason
+        :meth:`anchoring_event` gives. This is what the fold derives the GEL's
+        order and membership from (``fold/gel.py``, this.i @wsxwkwgv).
+        """
+        return self.substrate.key_events(self.gaid)
+
     # -- the verbs ------------------------------------------------------------
 
+    @classmethod
+    def found(
+        cls,
+        substrate: Substrate,
+        alias: str,
+        founding_law: Mapping[str, object],
+        *,
+        values: FoldValues,
+        nonce: str = GEL_NONCE,
+    ) -> Constructor:
+        """Bring a born-governed domain into being: the genesis knot, then its GEL.
+
+        ``custos-4.2.md:1073-1084``: the founding law is computed first, its
+        authors pre-existing the domain; the gAID's inception seals the law's
+        identifier, so the law lies inside the bytes the identity digests; and
+        the GEL opens with the event committing that law. The designation goes
+        into the law before its identifier is taken, because 3151 wants it "at
+        inception grade, sealed by the genesis knot" (this.i @4b2mmhbf).
+
+        The gAID is incepted here and not by the composition root, because only
+        this verb knows the founding law's identifier.
+        """
+        gel = gel_identifier(substrate, nonce)
+        law = cls._designating(substrate, founding_law, gel)
+        gaid = substrate.incept(alias, seals=(str(law["d"]),))
+        constructor = cls(substrate, gaid, values=values, gel=gel)
+        constructor._emit_founding(law)
+        return constructor
+
     def incept_domain(self, founding_law: Mapping[str, object]) -> Event:
-        """Bring the domain into being under a founding law."""
+        """Bring an adopted domain into being: a gAID incepted bare, its law later.
+
+        Lawful at the lesser grade ``custos-4.2.md:1088-1092`` confesses — the
+        identity ranges over keys alone — and :meth:`found` is the construction
+        that is not. Both designate the GEL in the founding law.
+        """
         if self._founded:
             raise DOMAIN_INCEPTED(gaid=self.gaid)
-        event = self._emit(
-            "inception", {"t": "icp", "i": self.gaid, "law": founding_law}, self.gaid
-        )
+        return self._emit_founding(self._designating(self.substrate, founding_law, self.gel))
+
+    @staticmethod
+    def _designating(
+        substrate: Substrate, founding_law: Mapping[str, object], gel: SAID
+    ) -> dict[str, object]:
+        """``founding_law`` naming the GEL it designates, and carrying its own identifier."""
+        law = {**founding_law, GEL_FIELD: gel}
+        return {**law, "d": substrate.said(law)}
+
+    def _emit_founding(self, law: Mapping[str, object]) -> Event:
+        event = self._emit("inception", {"t": "icp", "i": self.gaid, "law": law}, self.gaid)
         self._founded = True
         return event
 
@@ -165,9 +262,7 @@ class Constructor:
         body: dict[str, object] = {"t": "enact", "i": self.gaid, "law": law}
         if act is not None:
             body["act"] = act
-        event = self._emit("enactment", body, self.gaid)
-        self.substrate.rotate(self.gaid, event.said)
-        return event
+        return self._emit("enactment", body, self.gaid, establishment=True)
 
     def open_registry(self, alias: str, *, controller: AID | None = None) -> SAID:
         """Open a credential registry for ``controller``, and hold its identifier.
@@ -531,15 +626,25 @@ class Constructor:
             aid,
         )
 
-    def _emit(self, kind: str, body: Mapping[str, object], signer: AID) -> Event:
-        """Seal, sign, check, and only then commit.
+    def _emit(
+        self,
+        kind: str,
+        body: Mapping[str, object],
+        signer: AID,
+        *,
+        establishment: bool = False,
+    ) -> Event:
+        """Seal, sign, check, commit, and anchor.
 
-        The order is the point. The coordinate goes into the bytes before the
-        identifier is computed, so the fold's canonical order is derivable from
-        committed bytes alone (Q24). The identifier goes in before the signature,
-        so the signature commits to it. And the signature is verified before the
-        event is recorded, because an event whose own signature does not stand
-        up confers no authority and must not reach the record.
+        The order is the point. The GEL sequence number goes into the bytes
+        before the identifier is computed, as a TEL event's does. The identifier
+        goes in before the signature, so the signature commits to it. The
+        signature is verified before the event is recorded, because an event
+        whose own signature does not stand up confers no authority and must not
+        reach the record. And then the gAID seals it into its key log with an
+        event seal naming the GEL, its sequence number and its identifier — in a
+        rotation for an enactment (2085-2087), an interaction otherwise — which
+        is where the fold reads its order and membership from (this.i @wsxwkwgv).
         """
         seq = len(self._emitted)
         sealed = {**body, "s": seq}
@@ -554,6 +659,13 @@ class Constructor:
             position=self._values.position(seq),
             body={**sealed, "sig": signature},
         )
+        self.substrate.seal(
+            self.gaid,
+            ({"i": self.gel, "s": format(seq, "x"), "d": said},),
+            establishment=establishment,
+        )
+        # Recorded only once the key log has it: an event nothing sealed is not a
+        # GEL event, and the fold would refuse a record that carried one.
         self._emitted.append(event)
         self._saids.add(said)
         return event

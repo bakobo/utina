@@ -51,19 +51,19 @@
 
   position    d1 (seq 3)
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
-  subject     ECYuJOxTVvzHhYiaiPVZjBSLjq6mc21FltYQsGugAKs2
+  subject     EEn0_r7PRKyOB5fKHQXo7oLzOvvKh8Mm2QzaHjX6RVEP
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EL5LXWAM9Y2k...
-  dev-founder,6          1/2   endorsed      ENAI9K4JQLDp...
+  marta-founder,6        1/2   endorsed      EG4Hru2dhIUh...
+  dev-founder,6          1/2   endorsed      EKI2tBjGUAnh...
                       ------
   endorsed                 1   of 1          unity reached
   reachable                1   of 1          unity still reachable
 
   ground
     clauses     A1
-    reached by  EL5LXWAM9Y2k..., ENAI9K4JQLDp...
-    evidence    41a4c6487c62e31e...
+    reached by  EG4Hru2dhIUh..., EKI2tBjGUAnh...
+    evidence    cabcf7e9bfba1d32...
 
 
 
@@ -79,10 +79,10 @@
 
   position    d2 (seq 5)
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
-  subject     EBloouPzyh0EOtIeuo6SkW4dG1rQl2c2E7PQ8hPxt51X
+  subject     EHSH6VlPrCyWjPC4T5LEkC7Gsi8Ez_mF0CKpzl_siTwd
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EMdNssZFX8Cy...
+  marta-founder,6        1/2   endorsed      EHRPJG6uwS_R...
   dev-founder,6          1/2   pending       -
                       ------
   endorsed               1/2   of 1          unity not reached
@@ -106,11 +106,11 @@
 
   position    d3 (seq 8)
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
-  subject     EPnmUK39AMUCzGv4pqG2HNAoLQxtVBIypKD1YDMAuXuv
+  subject     EGd8WATAtKUqqTiuIZDK6VsOYqm0Vd1ZXmwGJNhEdXv7
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EL9LHhrRFq0s...
-  dev-founder,6          1/2   declined      EKh0ViYSqK5U...
+  marta-founder,6        1/2   endorsed      EJa5RFw4j6LO...
+  dev-founder,6          1/2   declined      EPaxSw5JlXfM...
                       ------
   endorsed               1/2   of 1          unity not reached
   reachable              1/2   of 1          unity unreachable: a declined slot is spent
@@ -119,7 +119,7 @@
     clause      A1
     defeater    authority (the actor lacked the invoked power)
     subcode     dev-founder-acme,6
-    citation    the declination EKh0ViYSqK5U... committed by dev-founder-acme,6
+    citation    the declination EPaxSw5JlXfM... committed by dev-founder-acme,6
     reason      Unity is unreachable under clause A1: dev-founder-acme,6 committed a
                 signed declination, which spends that slot's weight, and the weight that
                 can still arrive no longer reaches unity.
@@ -138,10 +138,10 @@
 
   position    b5 (seq 10)
   law head    51d03abbfb85...          clause A3 (MxN), unity 1
-  subject     EPf5NL50o3ttI6JF5kWbp4MSm_ng7uKOW3SzTnFf9VSP
+  subject     ENnQWccbhulXwep9PLhwsE_2jfDSyK8qWDUqRiJZl72F
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EEFvHaNau-rp...
+  marta-founder,6        1/2   endorsed      EJuwKUfTJurV...
   dev-founder,6          1/2   pending       -
                       ------
   endorsed               1/2   of 1          unity not reached
@@ -168,7 +168,7 @@
 
   question    may Acme perform an act of the class declare-dividend?
   position    d8 (seq 26)
-  law head    2df5c3323492...
+  law head    c729af3a8b7c...
 
   missing     a committed clause governing acts of the class declare-dividend
   detail      The law in force at this position rules no clause over this class of act.

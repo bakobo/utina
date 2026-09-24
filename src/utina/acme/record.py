@@ -28,6 +28,9 @@ class Acme:
     aids: Mapping[str, AID]
     substrate: Substrate
     values: FoldValues
+    kel: tuple[Mapping[str, object], ...] = ()
+    """The gAID's key log, which says where each event was committed. The corpus
+    derives its order and membership from it (this.i @wsxwkwgv)."""
     registry: SAID | None = None
     """The domain's credential registry, if the story opened one. Held because a
     registry-bound credential's state is asked per registry, and a caller that
@@ -80,4 +83,4 @@ class Acme:
         permutation is real; the sameness has to come from the fold deriving its
         order from committed bytes, which is the property under test.
         """
-        return self.values.corpus(self.permuted_events(seed))
+        return self.values.corpus(self.permuted_events(seed), kel=self.kel, gaid=self.gaid)

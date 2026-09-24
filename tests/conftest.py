@@ -93,7 +93,9 @@ class DoubleValues:
     ) -> DoubleEvent:
         return DoubleEvent(said=said, kind=kind, position=position, body=body)
 
-    def corpus(self, events: Sequence[DoubleEvent]) -> DoubleCorpus:
+    def corpus(
+        self, events: Sequence[DoubleEvent], *, kel: object = None, gaid: object = None
+    ) -> DoubleCorpus:
         return DoubleCorpus.load(events)
 
 
@@ -135,10 +137,10 @@ class RealValues:
 
         return Event(said=said, kind=kind, position=position, body=body)
 
-    def corpus(self, events: Sequence[Any]) -> Any:
-        from utina.fold.corpus import Corpus
+    def corpus(self, events: Sequence[Any], *, kel: Any = None, gaid: Any = None) -> Any:
+        from utina.cli.world import RealValues as Real
 
-        return Corpus.load(events)
+        return Real().corpus(events, kel=kel, gaid=gaid)
 
 
 @pytest.fixture(params=NAMES, scope="session")

@@ -16,11 +16,18 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from types import TracebackType
 
 from .canonical import SAID_PLACEHOLDER, canonical_bytes, digest
-from .errors import ACDC_UNVERIFIABLE, AID_UNKNOWN, ALIAS_TAKEN, NOT_ISSUED, REGISTRY_UNKNOWN
+from .errors import (
+    ACDC_UNVERIFIABLE,
+    AID_UNKNOWN,
+    ALIAS_TAKEN,
+    NOT_ISSUED,
+    REGISTRY_UNKNOWN,
+    SEAL_MALFORMED,
+)
 from .protocol import (
     ACDC_DT,
     AID,
@@ -75,12 +82,19 @@ def _issuee(sad: Mapping[str, object]) -> AID | None:
     return issuee if isinstance(issuee, str) else None
 
 
+def _checked_seal(aid: AID, seal: object) -> dict[str, str]:
+    """``seal`` as a mapping whose ``d`` is text, or a refusal before anything moves."""
+    if not isinstance(seal, Mapping) or not isinstance(seal.get("d"), str):
+        raise SEAL_MALFORMED(aid=aid, seal=seal)
+    return dict(seal)
+
+
 class FacadeSubstrate:
     """The demo's substrate. Implements :class:`~utina.substrate.Substrate`."""
 
     def __init__(self) -> None:
         self._key_index: dict[AID, int] = {}
-        self._kel_seq: dict[AID, int] = {}
+        self._kels: dict[AID, list[dict[str, object]]] = {}
         self._anchors: dict[SAID, SAID] = {}
         self._delegators: dict[AID, AID] = {}
         self._registries: dict[SAID, AID] = {}
@@ -106,11 +120,20 @@ class FacadeSubstrate:
 
     # -- identity -------------------------------------------------------------
 
-    def incept(self, alias: str) -> AID:
+    def incept(self, alias: str, *, seals: Sequence[SAID] = ()) -> AID:
+        """The alias itself, with an inception event carrying ``seals``.
+
+        Under keripy the identifier is a digest of that inception, so a founding
+        law sealed into it lies inside the bytes the identity ranges over. Here
+        the identifier is the alias, and that property is simulated rather than
+        held: the seal is on the record, and nothing digests it (this.i @4b2mmhbf).
+        """
         if alias in self._key_index:
             raise ALIAS_TAKEN(alias=alias)
+        checked = [_checked_seal(alias, {"d": said}) for said in seals]
         self._key_index[alias] = 0
-        self._kel_seq[alias] = 0
+        self._kels[alias] = []
+        self._append(alias, "icp", checked, keys=True)
         return alias
 
     def delegate(self, delegator: AID, alias: str) -> AID:
@@ -133,19 +156,27 @@ class FacadeSubstrate:
         return self._delegators.get(aid)
 
     def rotate(self, aid: AID, anchor: SAID) -> SAID:
+        return self.seal(aid, ({"d": anchor},), establishment=True)
+
+    def seal(
+        self,
+        aid: AID,
+        seals: Sequence[Mapping[str, str]],
+        *,
+        establishment: bool = False,
+    ) -> SAID:
+        """One key event carrying ``seals`` in the order given: a rotation, or an
+        interaction where the keys are not to move."""
         self._require_known(aid)
-        self._key_index[aid] += 1
-        self._kel_seq[aid] += 1
-        body: dict[str, object] = {
-            "t": "rot",
-            "i": aid,
-            "s": self._kel_seq[aid],
-            "k": (self._key_id(aid),),
-            "a": ({"d": anchor},),
-        }
-        said = self.said(body)
-        self._anchors[anchor] = said
-        return said
+        checked = [_checked_seal(aid, seal) for seal in seals]
+        if establishment:
+            self._key_index[aid] += 1
+        return self._append(aid, "rot" if establishment else "ixn", checked, keys=establishment)
+
+    def key_events(self, aid: AID) -> tuple[Mapping[str, object], ...]:
+        """``aid``'s key log, in order, as the mappings its events commit."""
+        self._require_known(aid)
+        return tuple(dict(event) for event in self._kels[aid])
 
     def anchoring_event(self, said: SAID) -> SAID | None:
         """The key event that sealed ``said``, if one did — rotation or interaction."""
@@ -293,15 +324,26 @@ class FacadeSubstrate:
 
     def _interact(self, aid: AID, anchor: SAID) -> SAID:
         """Seal ``anchor`` into an interaction event: the log moves, the keys stay."""
-        self._kel_seq[aid] += 1
-        body: dict[str, object] = {
-            "t": "ixn",
-            "i": aid,
-            "s": self._kel_seq[aid],
-            "a": ({"d": anchor},),
-        }
+        return self._append(aid, "ixn", [{"d": anchor}], keys=False)
+
+    def _append(
+        self, aid: AID, ilk: str, seals: list[dict[str, str]], *, keys: bool
+    ) -> SAID:
+        """Commit one key event to ``aid``'s log and index what it seals.
+
+        The shape is KERI's where the fold reads it — ``t``, ``i``, ``s`` as a
+        hex sequence number, ``d``, and the seal list ``a`` — and an
+        establishment event also names its key state in ``k``.
+        """
+        log = self._kels[aid]
+        body: dict[str, object] = {"t": ilk, "i": aid, "s": format(len(log), "x")}
+        if keys:
+            body["k"] = [self._key_id(aid)]
+        body["a"] = seals
         said = self.said(body)
-        self._anchors[anchor] = said
+        log.append({**body, "d": said})
+        for seal in seals:
+            self._anchors.setdefault(seal["d"], said)
         return said
 
     def _require_known(self, aid: AID) -> None:

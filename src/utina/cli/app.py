@@ -494,7 +494,9 @@ def enact_command(args: argparse.Namespace, console: Console) -> int:
             qualification=resolve_credential(record.saids, record.events, args.citing),
         )
 
-        corpus = RealValues().corpus(constructor.emitted)
+        corpus = RealValues().corpus(
+            constructor.emitted, kel=constructor.key_events, gaid=constructor.gaid
+        )
         after = appraise(
             corpus, Committed(subject), at=event.position, label="after this act"
         )

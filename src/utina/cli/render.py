@@ -729,8 +729,8 @@ def log_screen(
     lines = [
         *headline(style, style.strong(f"COMMITTED LOG AT {label} (seq {position.seq})")),
         "",
-        f"{MARGIN}{len(events)} events, in canonical order: anchoring coordinate first, "
-        "then identifier.",
+        f"{MARGIN}{len(events)} events, in the order the domain's key log sealed them: "
+        "key event first, then seal list.",
         f"{MARGIN}Arrival order is not consulted and there is nowhere here to read one from.",
         "",
         MARGIN + style.label(f"{'seq':>3}  {'kind':<12} {'identifier':<18} what it commits"),

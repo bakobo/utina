@@ -58,8 +58,13 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     here, and never varied.
     """
     substrate = FacadeSubstrate() if substrate is None else substrate
-    aids = {alias: substrate.incept(alias) for alias in (GAID, MARTA, DEV)}
+    aids = {alias: substrate.incept(alias) for alias in (MARTA, DEV)}
     marta, dev = aids[MARTA], aids[DEV]
+    # The gAID is incepted by the verb that founds the domain, after the founders,
+    # because its inception seals the founding law and the founding law names them
+    # (the genesis knot, custos-4.2.md:1073-1084, this.i @4b2mmhbf).
+    constructor = Constructor.found(substrate, GAID, founding_law(aids), values=values)
+    aids[GAID] = constructor.gaid
     # Nina is incepted and aliased and commits no act. She holds board seat 3's
     # keys in the story; in the record the seat signs, because the law slots the
     # office and the substrate holds every party's keys anyway (@z373ew7j).
@@ -79,7 +84,6 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # beat 14's endorsement is refused at commitment, so the record's own story
     # about Quinn is that he is a real party who never got into it.
     aids[QUINN] = substrate.incept(QUINN)
-    constructor = Constructor(substrate, aids[GAID], values=values)
 
     saids: dict[str, str] = {}
     labels: dict[str, int] = {}
@@ -93,7 +97,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
         labels[label] = event.position.seq  # type: ignore[attr-defined]
 
     # Inception. The founding law commits A1, A2 and A3, all three unanimous.
-    mark("inception", constructor.incept_domain(founding_law(aids)))
+    mark("inception", constructor.emitted[0])
     name("inception", constructor.emitted[0])
 
     # D1 — both founders endorse opening a bank account.
@@ -273,9 +277,11 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     mark("b20", constructor.observe_duplicity(seat3, [f"{seat3}-kel-2a", f"{seat3}-kel-2b"]))
 
     events = constructor.emitted
+    kel = constructor.key_events
     return Acme(
         events=events,
-        corpus=values.corpus(events),
+        corpus=values.corpus(events, kel=kel, gaid=constructor.gaid),
+        kel=kel,
         labels=labels,
         saids=saids,
         aids=aids,
