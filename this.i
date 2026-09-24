@@ -2035,3 +2035,79 @@ Make Custos's replayable governance useful to a real organization = goal:
         reader one act would suffice when two were owed. Chose to walk every observation at or
         before the position: any subject conviction wins, and otherwise the pending names every
         taint, in canonical order. Neither case occurs on a record utina builds today.
+
+    The GEL is sealed into the gAID's key log, and the fold derives its order from the seals = decision:
+      id: wsxwkwgv
+      why: >
+        custos-4.2.md:1114-1120 seals every GEL event into the gAID's KEL "by the same anchoring
+        discipline KERI's registry layer uses for TELs", and 3091-3101 derives the fold's order
+        from that anchoring: KEL order first, then the seal list. Until now only enactments were
+        anchored, order came from a sequence number the writer committed (Q24), and the seal
+        index had been flattened away (Q11). Tick 4uus.
+        Chose the TEL discipline literally. Each GEL event is sealed with an EVENT seal
+        {i: the GEL's identifier, s: the event's GEL sequence number, d: its SAID} — the
+        shape a TEL event's anchor takes — into an interaction event, or a rotation for an
+        enactment (2085-2087). The event body keeps its own s, as a TEL event does, so Position
+        is still the GEL sequence number and no coordinate moves. The gAID's key events travel
+        beside the GEL events as evidence, and Corpus.anchored checks the two against each
+        other: the seals naming the GEL run 0..n-1 in KEL-then-seal-list order, every seal has
+        a presented event, every presented event has a seal, each event's s is its seal's, and
+        an enactment sealed in an interaction event is refused (3232). Every failure refuses the
+        stream, because 3178-3181 makes membership fail loud and names "a membership rule
+        yielding a proper subset of the GEL without a refusal" a must-reject.
+        Rejected putting the key events into the corpus as GEL members, which keeps Q25's pin:
+        a rotation is evidence of where a governance event was committed, not a governance
+        event. Rejected a digest seal {d} per event, which is what enactments used, because a
+        digest seal cannot say which log the sealed thing belongs to, so a fold could not tell
+        a GEL event's seal from a credential's and could never detect an omitted event. The
+        event seal's i is what makes membership decidable.
+        This supersedes @qv7m3d's order (coordinate then SAID) wherever key events are
+        presented, and the part of @jdie6v that kept the fold from seeing any anchoring.
+        Corpus.load stays as the hand-positioned door that fold unit tests use; everything the
+        constructor writes goes through Corpus.anchored. Tradeoff accepted: the fold reads key
+        events it cannot verify, the same trust it already extends to signatures (@f3pmxu3x);
+        verifying them belongs to an ingestion path in the substrate plane (tick 6ofh).
+
+    The founding law designates its GEL by an identifier computed before the gAID exists = decision:
+      id: ryh5orta
+      why: >
+        3151-3153: "a domain's founding law SHALL commit the identifier of the governance
+        registry it designates as its GEL, at inception grade, sealed by the genesis knot". And
+        1085: "the gAID SHALL NOT appear in C or in any body C cites". Read together those are a
+        cycle for any registry whose identifier digests its controller, which a KERI registry's
+        does: the registry names the gAID, the founding law names the registry, and the gAID is a
+        digest over the inception that seals the founding law.
+        Chose to break it with the sentinel the text already provides (1076-1078). The GEL's
+        identifier is the digest of a registry-inception body {t: gel, ii: <the sentinel>, u:
+        <nonce>}, which names the controller only through the sentinel, so it is computable
+        before the gAID exists and the founding law can commit it outright. The sentinel
+        resolves to whichever prefix's inception seals the founding law, as 1078 says.
+        Rejected the construction another engine uses, where the gAID's first rotation seals
+        both the founding law and a registry inception naming the gAID: it is lawful, but the
+        designation then lives in a rotation rather than in the founding law, which is not what
+        3151 says. Rejected deriving the identifier from (gAID, nonce) at verification, which
+        makes the founding law commit a nonce and not an identifier. Tradeoff accepted: the GEL
+        identifier is not a keripy registry — no Tever exists for it and a KERI tool resolves
+        none — because utina's GEL events are its own governance ilks, not registry forms (track
+        two, 3119-3127). Logged as a Q: the text does not say how 1085 and 3151 coexist.
+
+    A born-governed domain's inception seals its founding law = decision:
+      id: 4b2mmhbf
+      why: >
+        1073-1084: a born-governed GARD's genesis is (K0, C), and "K0 SHALL seal C's
+        self-addressing identifier among its anchoring seals", so the founding law is inside the
+        bytes the gAID digests. utina incepted the gAID bare and put the founding law in an
+        unanchored event, which is not even the adopted construction 1088-1092 allows at a lesser
+        grade, since that one anchors the law later.
+        Chose Constructor.found, which takes the founding law, commits the GEL designation into
+        it, gives it its SAID, incepts the gAID with a digest seal of that SAID, and then emits
+        the GEL's inception event. incept_domain stays as the adopted construction — a gAID
+        incepted bare, the law sealed by an interaction afterwards — because 1088 makes it
+        lawful and every test that builds a record by hand relies on it. The fold reports which
+        grade a record is at, refuses a founding law no key event seals, and refuses a
+        born-governed founding law that contains the gAID. Supersedes @crrtzf's rule that the
+        composition root incepts every party: the gAID is now incepted by the verb that founds
+        it, because only that verb knows the founding law's SAID. Tradeoff accepted: under the
+        facade an identifier is its alias rather than a digest of its inception, so there
+        "inside the bytes the identity digests" is simulated. The facade says so; keripy makes it
+        true.
