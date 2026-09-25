@@ -2688,3 +2688,115 @@ Make Custos's replayable governance useful to a real organization = goal:
         widening the label error to take which KIND of name was asked for, which would
         have made one code cover two obstacles and defeated prefix-matching on either.
 
+
+    A second domain exists to show governance composing, or not at all = decision:
+      id: rc5fibel
+      why: >
+        Ruled by Daniel on 2026-09-25, against an earlier draft of this repo's own second
+        domain: "there is no point in having a second governed domain unless it intersects
+        with the first in an interesting way, because the whole point of introducing it is
+        to show how governance is composable." A minimal fixture that merely proved
+        `--domain` resolves two values tested the flag and demonstrated nothing, and is
+        withdrawn.
+        The narrative is his. Acme goes to open a bank account, having approved that action
+        under its own governance. Meridian Bank's own law obliges it to confirm that a
+        prospective customer could lawfully take the action. Meridian folds Acme's GEL to
+        prove it, and commits the evidence of its due diligence. The first half is already
+        in the record and costs nothing: beat D1 IS `open-bank-account`, tabled, endorsed by
+        both founders and certified, at a coordinate the room has already seen.
+        **Neither domain reads the other's law, and that is what makes it buildable.**
+        custos-4.2.md:2044 defers a portable clause language — "sealing a subject to another
+        domain's law ... is chartered to the encoding round and not designed here" — and
+        that deferral is what F-MWPT warned against. Nothing here does it. Meridian's own
+        clause says "confirm the counterparty's domain approved this act"; Acme's clauses
+        never enter Meridian's law and Meridian's never reach Acme. What crosses is a
+        certified RESULT over committed inputs, which is the opening the certification plan
+        noticed — a counterparty can read a certified result without reading the other
+        domain's clauses.
+        Three properties were measured rather than hoped. Two domains over separate keripy
+        substrates collide on no identifier, though the pinned salt and sequential key
+        indices made that worth probing. The fold is pure over data, so Meridian needs none
+        of Acme's keys: verification happens at construction inside the writing domain, and
+        a stranger recomputes from the logs alone — which is this repo's founding claim
+        (@rk4mzq) doing work rather than being restated. And **Acme's record stays
+        byte-identical**: it never learns it was inspected, so no artifact is re-pinned and
+        neither oracle's position table moves. That last is a constraint on the build rather
+        than a happy accident, and the first thing to check if it ever seems to have slipped.
+
+    An evaluation seal commits the inputs and never the answer = decision:
+      id: gsli4bea
+      why: >
+        custos-4.2.md:2057 names a fourth seal kind — "a commitment to a verdict: we ran
+        clause C against subject X; result R" — and defers it, because "no discriminating
+        fixture exists" and because "a sealed verdict raises the oracle problem in seal
+        form: the seal is only as good as its evaluator, and a consumer who trusts the seal
+        has trusted the evaluator it cannot see". It ships the admissibility rule anyway, as
+        committed doctrine, expressly so the deferral "cannot drift into silent adoption":
+        admissible only over verifiable algorithms, and "commit predicates, never verdicts.
+        A sealed verdict a stranger cannot recompute is smuggled authority."
+        utina's fold is such an algorithm, which is the whole of @rk4mzq and what `utina
+        replay` demonstrates, so a seal over it is admissible on the stated condition. Chose
+        to commit exactly the inputs a stranger re-folds — the counterparty's gAID, the GEL
+        coordinate, the law head in force there, the clause identifier and the subject's
+        SAID — and no verdict field at all. Rejected carrying the verdict as well "for
+        convenience": a verdict field is precisely what would let a later reader, or a later
+        maintainer, treat the seal as an answer rather than as a pointer to one, and the
+        answer is one fold away. The cost of the rule here is zero, which is the argument
+        for obeying it exactly rather than approximately.
+        **utina is a fixture for a deferred construct and must say so wherever it says
+        anything.** Custos notes that no discriminating fixture exists; this is one, which
+        is a reason to build it carefully and never a licence to describe the seal as
+        ratified. Approved by Daniel 2026-09-25.
+
+    The answer is recomputed whenever asked, never retrieved = decision:
+      id: fsbgamvi
+      why: >
+        Given @gsli4bea there is no stored verdict to read, so this follows — but it is
+        written down because it is the half a later optimization would quietly undo. The
+        seal says WHICH question was asked; Meridian's fold answers it again every time
+        anybody asks, from the committed evidence, rather than caching what it concluded on
+        the day.
+        That is also what makes the beat land rather than merely being correct. The room
+        watches Meridian decline to take Acme's word for it, and is then told it need not
+        take Meridian's word either: same fold, same committed inputs, same answer from
+        either side of the table. A cached verdict would leave the audience with exactly the
+        trust relationship the demo exists to remove.
+        Rejected memoizing the counterparty fold behind the seal, which is the obvious
+        performance move and which would make the answer a function of when it was first
+        asked. Approved by Daniel 2026-09-25.
+
+    The counterparty's evidence enters Meridian's own bundle; the fold's inputs stay closed = decision:
+      id: odfkffca
+      why: >
+        The one decision here that touches an axiom, so it was put to Daniel explicitly
+        rather than resolved in passing. Custos §1.4 axiom 2 closes the fold's inputs at
+        three committed values. Handing the fold a second, FOREIGN corpus as a fourth input
+        is an axiom-level change and is refused.
+        Chose instead that the Acme events Meridian relied on enter **Meridian's own**
+        evidence bundle as admitted evidence — the way a bank keeps the customer's board
+        resolution in the customer's file. The fold's inputs stay exactly three, the evidence
+        is Meridian's own committed record, and the "any stranger recomputes" property holds
+        over Meridian's log alone, which is stronger than it would have been: a reader needs
+        one log rather than two and needs no live access to Acme at all. @gnviwwjc already
+        requires a record to present nothing the fold does not examine, so the admitted
+        events are examined rather than merely carried.
+        Rejected a second corpus argument on the fold, above. Rejected Meridian fetching
+        Acme's log out of band at question time, which would make the answer depend on when
+        it was asked and on whether a counterparty was reachable — the opposite of a
+        replayable record. Approved by Daniel 2026-09-25.
+
+    The seal's anchor grade is named rather than left ambient = decision:
+      id: pu4mifrl
+      why: >
+        custos-4.2.md names anchor grade as "itself a committed choice with committed
+        consequences" and warns that a seal carried in an interaction event is erasable in
+        principle: superseding recovery at the key tier can displace the event that carried
+        it, so the seal's survival becomes a promise of the recovery policy rather than a
+        property of the record.
+        Chose the interaction event, on the grounds that every GEL event this record already
+        commits rides the same way and that a due-diligence record is not a key-tier
+        commitment. What is decided here is not really the grade but that the grade is SAID:
+        the standard's whole point in naming grades is that a reader should not have to infer
+        one, and a repo that picked the cheap option silently would be reproducing the
+        failure the section exists to prevent. Establishment grade remains available and is a
+        substrate-level change. Approved by Daniel 2026-09-25.
