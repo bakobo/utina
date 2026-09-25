@@ -28,6 +28,8 @@ from __future__ import annotations
 import re
 from io import StringIO
 
+import pytest
+
 from utina.cli import Console, run
 from utina.cli.pill import MONO, PAINTED, posture
 from utina.cli.world import world
@@ -89,6 +91,7 @@ def test_a_screen_asks_for_the_rung_its_own_console_decided() -> None:
 # --- the cue itself -----------------------------------------------------------
 
 
+@pytest.mark.skip(reason="subject pill disabled for the demo")
 def test_the_subject_is_a_pill_that_opens_with_the_bands_and_ends_in_the_tail() -> None:
     """Four band cells, then the value's own head and tail cells around elisions.
 
@@ -150,6 +153,7 @@ def test_a_screen_with_nothing_tabled_says_so_rather_than_drawing_a_cue() -> Non
     assert not GLYPHS.search(line)
 
 
+@pytest.mark.skip(reason="subject pill disabled for the demo")
 def test_the_cue_reaches_a_second_domain_without_being_told_about_it() -> None:
     """It is a function of the value, so it is domain-agnostic for free."""
     line = subject_line(

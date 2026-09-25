@@ -68,7 +68,7 @@
 
   position    d1 (seq 4)
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
-  subject     ⣐⣿⠐⡀ EHuY⡧fA9h⠨swyB
+  subject     EHuYkhcEsw6MUcc2Ja1cfA9hDTY79cdlI1RRMbtTswyB
 
   slot                weight   disposition   committed act
   marta-founder,6        1/2   endorsed      EA2o4R_E1_tV...
@@ -106,7 +106,7 @@
 
   position    d2 (seq 6)
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
-  subject     ⣽⣇⣿⣶ EGaV⡹zzkn⡸wzeV
+  subject     EGaVz8hvVnPwNroRlDJszzkn6yy9YrqZqLIzvs8bwzeV
 
   slot                weight   disposition   committed act
   marta-founder,6        1/2   endorsed      EEPv81qzvdOt...
@@ -144,7 +144,7 @@
 
   position    d3 (seq 9)
   law head    51d03abbfb85...          clause A1 (MxN), unity 1
-  subject     ⣇█⣇⣿ EK5a⡙rmXp⠍4oJv
+  subject     EK5aEpOlK_78nQwOBFQqrmXpBcd1H6L9wKeoUj304oJv
 
   slot                weight   disposition   committed act
   marta-founder,6        1/2   endorsed      EH2so1QROlKe...
@@ -186,7 +186,7 @@
 
   position    b5 (seq 11)
   law head    51d03abbfb85...          clause A3 (MxN), unity 1
-  subject     ⣀⣷⣆⣿ EPpk⡎kPrK⡌jKMw
+  subject     EPpk67g6frrFSDDUjHKFkPrKq4ebCHqnQ1WXOm4CjKMw
 
   slot                weight   disposition   committed act
   marta-founder,6        1/2   endorsed      EHwuKQwsw2FG...
