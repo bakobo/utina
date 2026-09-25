@@ -49,7 +49,7 @@ import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from utina.fold import bearing, certification, disturbance, semantics
+from utina.fold import bearing, certification, diligence, disturbance, semantics
 from utina.fold.clause import Clause
 from utina.fold.constitution import ACT_CLASS_FIELD, Constitution
 from utina.fold.corpus import Corpus, Event
@@ -228,6 +228,14 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
         # votes cast are not a result until they are tabulated (this.i @2e2dncfe).
         if uncertified is not None:
             return Pending(requirement=(uncertified,))
+        # And where the law obliges the domain to have LOOKED before it transacts. A
+        # certification says this domain's own threshold was met; diligence says the
+        # counterparty's was, recomputed here from evidence this domain committed
+        # (this.i @rc5fibel). Second, because a domain that has not tabulated its own
+        # vote has nothing yet to be diligent about.
+        undiligent = _undiligent(corpus, law, subject, clause, at)
+        if undiligent is not None:
+            return Pending(requirement=(undiligent,))
         return Affirmed(
             clauses=(clause.id,),
             endorsements=endorsements(classified),
@@ -500,6 +508,94 @@ def _uncertified(
         schema=schema,
         kind=certification.CERTIFICATION_KIND,
     )
+
+
+def _undiligent(
+    corpus: Corpus,
+    law: Constitution,
+    subject: _Subject,
+    clause: Clause,
+    at: Position,
+) -> RequirementElement | None:
+    """What is outstanding when a law obliges diligence and has not got it yet.
+
+    ``None`` where the edition obliges none, and ``None`` where a seal stands whose own
+    inputs, re-folded here and now, produce the answer it points at.
+
+    **The answer is recomputed, never retrieved** (``this.i`` @fsbgamvi). The seal
+    commits the counterparty's gAID, coordinate, law head, clause and subject and no
+    verdict at all (@gsli4bea, and ``custos-4.2.md:2067``: "commit predicates, never
+    verdicts"), so there is nothing here to read off — the evidence is re-folded, the
+    named coordinate is evaluated, and the named law head and clause are checked to be
+    the ones that produce it. A seal naming inputs that do not support it leaves the
+    requirement outstanding, which is fail-closed: the effect does not land.
+
+    Checking the head and the clause is what keeps the seal a commitment rather than a
+    gesture. Without them a seal could point at a coordinate whose law had moved, and
+    the recomputation would answer a different question than the one sealed.
+    """
+    schema = law.diligence
+    if schema is None:
+        return None
+    if not subject.said:  # pragma: no cover - a satisfied threshold implies a subject
+        return None
+    sealed = diligence.sealing(corpus, subject.said, at, schema)
+    if sealed is not None and supported(sealed):
+        return None
+    committer = _committer(corpus, subject)
+    if not committer:  # pragma: no cover - a satisfied threshold implies a committer
+        return None
+    return RequirementElement(
+        endorser=committer,
+        clause=clause.id,
+        schema=schema,
+        kind=diligence.DILIGENCE_KIND,
+    )
+
+
+def supported(sealed: Event) -> bool:
+    """Whether re-folding this seal's own evidence produces the answer it points at.
+
+    The recursion is here rather than in ``fold/diligence.py`` so the import stays one
+    way: the evaluator reaches for the seal's parts, and the seal's module never reaches
+    back for the evaluator.
+
+    **Public because the display plane has to ask the identical question.** The eval
+    screen shows what a domain checked, and a screen deciding for itself whether a seal
+    holds up would be a second path to a governance-relevant fact — which diverged the
+    first time it was written, printing "refolds to AFFIRMED" for a seal whose forged
+    law head the finding beside it had already rejected (@clxchk, and the same rule that
+    makes ``utina.cli.appraisal`` import the evaluator's constants rather than restate
+    them).
+    """
+    recomputable = diligence.recomputable(sealed)
+    if recomputable is None:
+        return False
+    corpus, subject, at, clause, head = recomputable
+    theirs = Constitution.at(corpus, at)
+    if theirs.law_head.said != head:
+        return False
+    if theirs.diligence is not None:
+        # **Transitive diligence is out of scope, and refused rather than followed.**
+        # Re-folding evidence whose own law obliges diligence would call back into this
+        # function through a seal embedded in the embedded record, with no depth this
+        # side of Python's recursion limit — and every level of it is bytes an
+        # attacker chose (codex review, 2026-09-25). Refusing is the fail-closed
+        # reading and it is a limit worth stating: utina answers "did their domain
+        # approve this", not "and did everyone their domain relied on approve theirs".
+        # A counterparty whose own law requires diligence cannot be the subject of
+        # diligence here, and the requirement stays outstanding rather than passing on
+        # a claim this engine did not check.
+        return False
+    outcome = evaluate(corpus, Committed(subject), at=at)
+    # The named clause has to be the one that DID the work, not merely one the law
+    # happens to contain. Checking only that it exists let a seal name any clause of
+    # the counterparty's edition — caught by probe on 2026-09-25, where a seal over
+    # Acme's bank account renamed to clause A2 still affirmed, because A2 is a real
+    # clause of that edition and nothing tied it to the subject. A seal names the
+    # question it claims to have asked; if the answer came from elsewhere it named the
+    # wrong question, and that is a fail-closed miss rather than a detail.
+    return isinstance(outcome, Affirmed) and clause in outcome.clauses
 
 
 def _tainted(

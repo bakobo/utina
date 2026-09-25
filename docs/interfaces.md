@@ -510,6 +510,7 @@ the illegal `e.law.clause-unknown.f`; the code below is the one spelling.
 | `e.input.malformed.law.f` | committed bytes presented as law will not read as law |
 | `e.input.format.slot-weight.f` | a slot weight is not an exact rational |
 | `e.input.range.slot-weight.f` | a slot weight is not greater than zero |
+| `e.input.range.position.f` | a `--at` sequence number is past the end of the record |
 | `e.input.missing.group-slots.f` | a composition rule names no endorser |
 | `e.input.multi.slot-endorser.f` | a composition rule slots one endorser twice |
 | `e.input.not-canonical.f` | a value has no canonical byte image |
@@ -519,8 +520,10 @@ the illegal `e.law.clause-unknown.f`; the code below is the one spelling.
 | `e.state.domain-incepted.f` | the domain this constructor writes for already exists |
 | `e.state.domain-unincepted.f` | a verb was used before the domain was incepted |
 | `e.state.subject-unknown.f` | a disposition names a subject nothing committed |
-| `e.state.label-unknown.f` | the demo record has no beat by that name |
-| `e.state.name-unknown.f` | the demo record committed no act by that name |
+| `e.state.label-unknown.f` | this domain's record has no position by that label |
+| `e.state.labels-absent.f` | a label was asked for in a domain that commits none |
+| `e.state.beat-unknown.f` | a demo script has no beat by that name |
+| `e.state.name-unknown.f` | this domain's record committed no event by that name |
 | `e.id.alias-taken.f` | an alias already has key state |
 | `e.id.aid-unknown.f` | an identifier has no key state to sign or verify under |
 | `e.proof.signature-unverifiable.f` | an event's own signature does not stand up |

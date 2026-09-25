@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from fractions import Fraction
 
+from utina.domain import Record
 from utina.enact import Constructor
 from utina.substrate import FacadeSubstrate, FoldValues, Substrate
 
@@ -24,6 +25,8 @@ from .law import (
     DEV,
     DEVICE,
     DEVICE_ROLE,
+    DISPLAY,
+    DOMAIN,
     EQUITY_ACTS,
     GAID,
     GOVERNANCE_REGISTRY,
@@ -42,7 +45,6 @@ from .law import (
     founding_law,
     lowered_law,
 )
-from .record import Acme
 
 BANK_ACCOUNT, HIRE, LEASE, BUDGET = ORDINARY_ACTS
 AMEND = AMENDMENT_ACTS[0]
@@ -54,7 +56,7 @@ EQUITY = EQUITY_ACTS[0]
 HALF, THIRD = Fraction(1, 2), Fraction(1, 3)
 
 
-def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
+def build(*, values: FoldValues, substrate: Substrate | None = None) -> Record:
     """Drive Acme's whole story and return the record it produced.
 
     This is the composition root, and inception happens here rather than inside
@@ -371,7 +373,10 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
 
     events = constructor.emitted
     kel = constructor.key_events
-    return Acme(
+    return Record(
+        name=DOMAIN,
+        display=DISPLAY,
+        gaid=constructor.gaid,
         events=events,
         corpus=values.corpus(events, kel=kel, gaid=constructor.gaid),
         kel=kel,

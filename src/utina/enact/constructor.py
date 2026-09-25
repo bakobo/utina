@@ -24,6 +24,7 @@ from utina.substrate import (
     EDGE_NODE_FIELD,
     EDGE_OPERATOR_FIELD,
     ENDORSEMENT_SCHEMA,
+    EVALUATION_SCHEMA,
     GCD_RULES,
     GCD_SCHEMA,
     SAID,
@@ -501,6 +502,73 @@ class Constructor:
     def _require_founded(self) -> None:
         if not self._founded:
             raise DOMAIN_UNINCEPTED(gaid=self.gaid)
+
+    def seal_evaluation(
+        self,
+        subject: SAID,
+        *,
+        counterparty: AID,
+        clause: str,
+        on: SAID,
+        at: int,
+        head: str,
+        events: Sequence[Event],
+        kel: Sequence[Mapping[str, object]],
+    ) -> Event:
+        """Commit what this domain checked about a counterparty, and what it checked it against.
+
+        One event with two halves, because filing the counterparty's record and recording
+        what was checked against it are one act. The **seal** names the inputs — whose
+        domain, which coordinate, which law head was in force there, which clause, and
+        over which subject — and the **evidence** is that counterparty's own committed
+        events and key log, admitted into this domain's record (``this.i`` @odfkffca).
+
+        **There is no verdict field, and that is the whole design.**
+        ``custos-4.2.md:2067`` admits an evaluation seal "only over verifiable
+        algorithms ... Commit predicates, never verdicts. A sealed verdict a stranger
+        cannot recompute is smuggled authority." So this commits the question and never
+        the answer; the fold re-derives the answer from the admitted evidence every time
+        anybody asks (@gsli4bea, @fsbgamvi). Nothing downstream can shortcut it, because
+        there is nothing recorded to shortcut to.
+
+        **This constructor does not check the claim**, and that is deliberate rather
+        than lax. Judging evidence is the fold's job under Custos section 1.3, and a
+        writing plane that re-folded a counterparty's log before committing would be
+        judging — the same line ``certify`` holds when it checks only that its cited
+        weights sum to unity. What lands here is a domain's signed statement of what it
+        looked at. Whether it supports anything is answered where every other
+        governance question is answered.
+
+        The counterparty's events are flattened to their committed parts rather than
+        carried as objects: a record has to survive being written down and read back by
+        a stranger with no copy of this package (``fold/diligence.py`` rebuilds them).
+        """
+        self._require_founded()
+        # The field names are spelled rather than imported from ``utina.fold``. The
+        # writing plane does not import the fold (this.i @tvaq2s) — ``certify`` writes
+        # its own "certifies" for the same reason — so the seam is a committed byte
+        # layout that both planes know, and ``fold/diligence.py`` is where the reading
+        # half lives. ``tests/test_seam.py`` is what keeps the two spellings together.
+        seal = {
+            "schema": EVALUATION_SCHEMA,
+            "domain": counterparty,
+            "at": at,
+            "head": head,
+            "clause": clause,
+            "subject": on,
+        }
+        evidence = {
+            "events": tuple(
+                {"said": one.said, "kind": one.kind, "seq": one.position.seq, "body": one.body}
+                for one in events
+            ),
+            "kel": tuple(kel),
+        }
+        return self._emit(
+            "evaluation",
+            {"t": "evl", "for": subject, "seal": seal, "evidence": evidence},
+            self.gaid,
+        )
 
     def certify(
         self,

@@ -41,9 +41,10 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from utina.acme import LABEL_UNKNOWN
+from utina.cli.errors import BEAT_UNKNOWN
 from utina.cli.render import MARGIN, RULE, WRAP
 from utina.cli.style import SCAFFOLD, Style
+from utina.cli.world import DEFAULT_DOMAIN
 from utina.substrate import FACADE, KERIPY
 
 if TYPE_CHECKING:  # pragma: no cover - the import exists only for the annotation
@@ -355,6 +356,54 @@ KERNELS = (
             ),
         ),
     ),
+    Kernel(
+        "Governance that composes",
+        "a governance engine is something each organization runs for itself",
+        "two organizations transact, neither reads the other's constitution, and both "
+        "get an answer the room can check",
+        (
+            Beat(
+                "27",
+                "Meridian Bank's law obliges it to look",
+                "A second governed domain, and nothing about it is Acme's. Two officers, "
+                "one clause, one act — and beside the clause, a term saying that opening "
+                "an account for a customer requires confirming the customer could "
+                "lawfully take the action. That obligation is Meridian's own, written in "
+                "Meridian's own law. It names no clause of Acme's, no identifier of "
+                "Acme's, and no act class of Acme's, because a domain that had to read "
+                "another domain's constitution to transact with it would not compose; it "
+                "would merge.",
+                ("law", "--domain", "bank", "--at", "5"),
+            ),
+            Beat(
+                "28",
+                "Both officers sign, and it is still not enough",
+                "Unity is reached and the domain has certified the tally, so by beat 12's "
+                "rule this act is authorized. It is not. Meridian asked more of itself "
+                "than a count, and the screen names exactly what is outstanding: "
+                "diligence, under Meridian's own clause, absent. A bank that has not yet "
+                "looked at the customer's file has not finished, and the record says so "
+                "rather than the compliance officer saying so.",
+                ("eval", "open-customer-account", "--domain", "bank", "--at", "4", "--brief"),
+            ),
+            Beat(
+                "29",
+                "Meridian folds Acme's log, and shows you the fold",
+                "Back at beat 2 you watched Acme approve opening a bank account under its "
+                "own governance. Meridian now holds a copy of Acme's record up to that "
+                "coordinate and has committed what it checked: whose domain, which "
+                "coordinate, which law was in force there, which clause, over which act. "
+                "It committed no verdict — the standard forbids one, because a sealed "
+                "answer a stranger cannot recompute is authority smuggled in as evidence. "
+                "So the last line of this screen is not something Meridian is telling "
+                "you. It is what Acme's log says when this engine folds it again, now, in "
+                "front of you, out of Meridian's own record. You do not have to take "
+                "Acme's word for it, Meridian did not, and you do not have to take "
+                "Meridian's either.",
+                ("eval", "open-customer-account", "--domain", "bank", "--at", "5", "--brief"),
+            ),
+        ),
+    ),
 )
 
 LIVE = tuple(beat for kernel in KERNELS for beat in kernel.beats)
@@ -452,8 +501,8 @@ def _named(identifier: str) -> Beat:
     for beat in OPENER + LIVE + LEAVE_BEHIND:
         if beat.id == identifier:
             return beat
-    raise LABEL_UNKNOWN(
-        label=identifier,
+    raise BEAT_UNKNOWN(
+        beat=identifier,
         known=", ".join(beat.id for beat in OPENER + LIVE + LEAVE_BEHIND),
     )
 
@@ -544,8 +593,19 @@ def coordinate_of(beat: Beat) -> str:
     Beat 14 is the one with no coordinate: an endorsement the toolchain refuses is not
     asked anywhere, so the span carries the previous beat's coordinate forward rather
     than resetting — which is right, because nothing on that beat moved the record.
+
+    **A beat asked of another domain has no coordinate here either**, and that case is
+    not merely absent but actively dangerous without this. Act VI's beats carry
+    Meridian's coordinates, which since ``this.i`` @qtm5ntkg are plain sequence numbers,
+    so ``--at 4`` resolves against Acme's record too — to a completely unrelated
+    position. The meanwhile card and the sequence diagram would then describe a span the
+    beat is not asked at, and describe it plausibly, which is the shape of failure this
+    repo refuses everywhere. Treated exactly as beat 14 is: nothing of Acme's moved, so
+    the previous coordinate carries forward.
     """
     argv = beat.argv
+    if "--domain" in argv and argv[argv.index("--domain") + 1] != DEFAULT_DOMAIN:
+        return ""
     if "--at" not in argv:
         return ""
     return argv[argv.index("--at") + 1]

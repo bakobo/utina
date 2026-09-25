@@ -201,6 +201,7 @@ def test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it(f
         "registry",
         "resume",
         "revoke",
+        "seal_evaluation",
         "substrate",
     }
 

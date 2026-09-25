@@ -1,13 +1,17 @@
 """The quarantines' fitness functions, of which there are two.
 
 The first and older one is the KERI quarantine, described below. The second is the
-alias quarantine (this.i @cldspl): a COIA alias is creator-local, carries no security
-claim, and must never enter committed bytes, be an input to the fold, or affect a
-finding. That is a structural claim, so it is defended structurally — ``utina.fold``,
-``utina.enact`` and ``utina.acme`` may not import ``utina.coia`` at all, and the same
-AST inspection that catches a lazy KERI import catches a lazy alias import. Unlike the
+DISPLAY quarantine (this.i @cldspl, widened to entviz and not yet ratified): a
+COIA alias is
+creator-local, carries no security claim, and must never enter committed bytes, be an
+input to the fold, or affect a finding — and an entviz pill is the same kind of thing
+one step further out, a rendering of a value that asserts nothing about it and may
+never be mistaken for evidence. That is a structural claim, so it is defended
+structurally — no plane below the CLI may import either, and the same AST inspection
+that catches a lazy KERI import catches a lazy display import. Unlike the
 KERI rule, ``utina.cli`` is exempt rather than covered, because display is the plane
-whose whole job is display.
+whose whole job is display. Every other plane is covered, including the two a second
+governed domain added (this.i @s34hkwkv, @qprzacju).
 
 The original docstring follows.
 
@@ -19,8 +23,9 @@ keripy is a real dependency that claim widens: not only the fold but every plane
 above the substrate has to stay free of it, or ``--substrate facade`` is a flag
 over an already-loaded dependency rather than a fallback (this.i @343xvm).
 
-So this reads every module of ``utina.fold``, ``utina.enact``, ``utina.acme``
-and ``utina.cli`` as source and fails if any imports a KERI package. Inside
+So this reads every module of ``utina.fold``, ``utina.enact``, ``utina.domain``,
+``utina.acme``, ``utina.bank``, ``utina.replay`` and ``utina.cli`` as source and fails
+if any imports a KERI package. Inside
 ``utina.substrate`` the same rule holds with exactly one exemption: the files
 named ``keri*.py``, which are the implementation the quarantine exists to
 contain.
@@ -43,7 +48,10 @@ from utina.fold import FORBIDDEN_IMPORTS
 SRC = pathlib.Path(__file__).resolve().parent.parent / "src" / "utina"
 
 #: Every plane above the substrate. None of these may name a KERI package.
-QUARANTINED = ("fold", "enact", "acme", "cli", "replay")
+#: ``domain`` and ``bank`` joined the list with this.i @s34hkwkv and @qprzacju: a plane
+#: that moved out of ``acme``, and a second fixture beside it, must not thereby leave
+#: the rules ``acme`` was under.
+QUARANTINED = ("fold", "enact", "domain", "acme", "bank", "cli", "replay")
 
 #: The one place a KERI package may be imported: the substrate's own backend.
 EXEMPT = "keri"
@@ -52,7 +60,7 @@ EXEMPT = "keri"
 def quarantined_modules() -> list[pathlib.Path]:
     """Every source file the quarantine covers, so new ones need no edit here.
 
-    The four planes entirely, plus the substrate minus its keripy backend —
+    Every quarantined plane entirely, plus the substrate minus its keripy backend —
     ``utina.substrate.protocol`` and the facade are as bound by this as the fold
     is, since a KERI import there would load keripy for the facade path too.
     """
@@ -148,12 +156,16 @@ def test_the_backend_is_exempt_and_the_exemption_is_not_empty() -> None:
 # creator-local nickname with no security claim standing where committed evidence
 # belongs. Enforced here rather than by review, for the same reason as above.
 
-#: The display-only module the planes below the CLI may not reach for.
-DISPLAY_ONLY = "utina.coia"
+#: The display-only modules the planes below the CLI may not reach for. ``utina.coia``
+#: mints aliases (@cldspl) and ``entviz`` draws recognition cues over values; both are
+#: renderings that carry no security claim, and both would be read as one if they
+#: appeared beneath the plane whose whole job is display. The entviz half has no
+#: this.i node yet and is owed one.
+DISPLAY_ONLY = ("utina.coia", "entviz")
 
 #: The planes an alias may not reach. utina.cli is absent on purpose: it is the
 #: display plane, and it is the one that is supposed to import this.
-ALIAS_QUARANTINED = ("fold", "enact", "acme")
+ALIAS_QUARANTINED = ("fold", "enact", "domain", "acme", "bank")
 
 
 def alias_quarantined_modules() -> list[pathlib.Path]:
@@ -207,8 +219,12 @@ def imported_modules(tree: ast.AST, package: str) -> set[str]:
 def alias_offenders_in(source: str, filename: str, package: str) -> set[str]:
     """The display-only modules ``source`` imports."""
     named = imported_modules(ast.parse(source, filename=filename), package)
-    within = DISPLAY_ONLY + "."
-    return {name for name in named if name == DISPLAY_ONLY or name.startswith(within)}
+    return {
+        name
+        for name in named
+        for forbidden in DISPLAY_ONLY
+        if name == forbidden or name.startswith(forbidden + ".")
+    }
 
 
 def test_every_alias_quarantined_plane_has_modules() -> None:
@@ -237,16 +253,29 @@ def test_a_plane_below_the_display_plane_imports_no_alias_machinery(
     )
 
 
-def test_the_display_plane_really_does_render_aliases() -> None:
-    """The exemption guards something, rather than being a dead rule."""
+@pytest.mark.parametrize("forbidden", DISPLAY_ONLY)
+def test_the_display_plane_really_does_render_each_quarantined_thing(
+    forbidden: str,
+) -> None:
+    """The exemption guards something, rather than being a dead rule.
+
+    Per module rather than in aggregate: one importer would otherwise satisfy the
+    assertion for both, so a display dependency that stopped being used would leave a
+    quarantine standing over nothing.
+    """
     importers = [
         path
         for path in sorted((SRC / "cli").rglob("*.py"))
-        if alias_offenders_in(path.read_text(encoding="utf-8"), str(path), package_of(path))
+        if any(
+            name == forbidden or name.startswith(forbidden + ".")
+            for name in alias_offenders_in(
+                path.read_text(encoding="utf-8"), str(path), package_of(path)
+            )
+        )
     ]
     assert importers, (
-        "no module in utina.cli imports utina.coia, which means the alias quarantine "
-        "guards nothing and the screens are not rendering aliases at all"
+        f"no module in utina.cli imports {forbidden}, which means its half of the "
+        "display quarantine guards nothing and the screens are not rendering it at all"
     )
 
 
@@ -259,6 +288,9 @@ def test_the_alias_guard_catches_every_shape_of_the_import_it_forbids() -> None:
         "def render():\n    from utina.coia import create_alias\n    return create_alias\n",
         "from ..coia import create_alias\n",
         "from .. import coia\n",
+        "import entviz\n",
+        "from entviz.terminal import whois\n",
+        "def draw():\n    from entviz.terminal import pill\n    return pill\n",
     ):
         assert alias_offenders_in(source, "fold/evaluate.py", "utina.fold"), source
     # And does not fire on the imports these planes legitimately make.

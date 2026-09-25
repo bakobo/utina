@@ -30,15 +30,16 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from utina import coia
-from utina.acme import DEV, DEVICE, GAID, MARTA, QUINN, SEAT
+from utina import acme, bank, coia
 from utina.cli.errors import ALIAS_PREFIX_AMBIGUOUS
 
-__all__ = ["PARTIES", "SCOPE", "Aliases", "Party", "aliases_over"]
+__all__ = ["CASTS", "PARTIES", "SCOPE", "Aliases", "Cast", "Party", "aliases_over"]
 
-#: The scope every alias in this CLI shares. The whole world of these commands is one
-#: governed domain, which is what makes COIA's empty-scope short form legitimate in a
-#: column rather than an abbreviation of something longer (this.i @clscop).
+#: The scope Acme's aliases share. Every command's world is ONE governed domain — the
+#: one ``--domain`` selected — which is what makes COIA's empty-scope short form
+#: legitimate in a column rather than an abbreviation of something longer (this.i
+#: @clscop). One scope per domain, never one for the CLI, since the whole claim of the
+#: short form is that the scope every column drops is the same scope.
 SCOPE = "Acme"
 
 #: The language every alias here is minted in. COIA requires a generator to reject a
@@ -100,12 +101,51 @@ class Party:
 #: Nina has no separate personal AID here. She has many in life, and none of them is
 #: any of this record's business; the only facet this narrative touches is the seat.
 PARTIES: Mapping[str, Party] = {
-    GAID: Party("Acme", "governed domain", scope=""),
-    MARTA: Party("Marta", "founder"),
-    DEV: Party("Dev", "founder"),
-    SEAT: Party("Nina", "board seat 3"),
-    DEVICE: Party("Nina", "board seat 3 device"),
-    QUINN: Party("Quinn", "CFO"),
+    acme.GAID: Party("Acme", "governed domain", scope=""),
+    acme.MARTA: Party("Marta", "founder"),
+    acme.DEV: Party("Dev", "founder"),
+    acme.SEAT: Party("Nina", "board seat 3"),
+    acme.DEVICE: Party("Nina", "board seat 3 device"),
+    acme.QUINN: Party("Quinn", "CFO"),
+}
+
+#: Meridian's cast: the domain and its two credit officers. Small because the record is
+#: (this.i @qprzacju), and present at all because a domain with no cast renders its
+#: parties as raw identifiers — which is :meth:`Aliases.full` correctly refusing to
+#: invent a name, and which looks on screen exactly like a bug (this.i @6exkxbbv).
+#:
+#: The role is ``officer`` and not ``credit officer`` because the short form has to fit
+#: ``utina.cli.render.SLOT``, and ``priya-credit-officer,6`` is twenty-two characters
+#: against a twenty-column budget. Widening the column is not available: it would move
+#: every tracked demo artifact to make room for a fixture. A role is a COIA facet rather
+#: than a job title, and ``officer`` is the facet this record touches.
+BANK_PARTIES: Mapping[str, Party] = {
+    bank.GAID: Party("Meridian", "governed domain", scope=""),
+    bank.PRIYA: Party("Priya", "officer"),
+    bank.TOMAS: Party("Tomas", "officer"),
+    # Meridian's own nickname for a domain it does business with, which is exactly what
+    # COIA says an alias is: creator-local, carrying no claim anybody else has to
+    # accept. Acme calls the same identifier "Acme, governed domain"; Meridian calls it
+    # "Acme, our customer". Both are true and neither is the identifier.
+    bank.CUSTOMER: Party("Acme", "customer", scope=""),
+}
+
+
+@dataclass(frozen=True)
+class Cast:
+    """One domain's display facts: the scope its aliases carry, and who is in it."""
+
+    scope: str
+    parties: Mapping[str, Party]
+
+
+#: Every domain's cast, keyed by ``Record.name`` — the same key ``--domain`` takes and
+#: ``utina.cli.world.DOMAINS`` is keyed by. A domain absent from here is not an error:
+#: :func:`aliases_over` renders its parties as identifiers, which is honest, and adding
+#: a cast is the one display-plane step a new domain owes (this.i @6exkxbbv).
+CASTS: Mapping[str, Cast] = {
+    acme.DOMAIN: Cast(scope=SCOPE, parties=PARTIES),
+    bank.DOMAIN: Cast(scope="Meridian", parties=BANK_PARTIES),
 }
 
 
@@ -217,23 +257,30 @@ def _alias(who: str, role: str, scope: str = "", flags: str = "") -> str:
     return minted
 
 
-def aliases_over(aids: Mapping[str, str]) -> Aliases:
-    """The alias table for the identifiers ``aids`` maps Acme's party names onto.
+def aliases_over(aids: Mapping[str, str], domain: str) -> Aliases:
+    """The alias table for the identifiers ``aids`` maps ``domain``'s party names onto.
 
-    The composition root's half of this commission. ``aids`` is what
-    ``utina.acme.build`` got back from ``substrate.incept`` for each party, so the
-    table is a function of the substrate's answers and the display facts in
-    :data:`PARTIES`, and of nothing else. A party the table has no entry for is simply
-    absent; :meth:`Aliases.full` then shows its identifier whole.
+    The composition root's half of this commission. ``aids`` is what that domain's
+    ``build`` got back from ``substrate.incept`` for each party, so the table is a
+    function of the substrate's answers and the display facts in :data:`CASTS`, and of
+    nothing else. A party the cast has no entry for is simply absent; :meth:`Aliases.full`
+    then shows its identifier whole.
+
+    A domain with no cast at all takes the same path with nothing in it, and every party
+    renders as its identifier. That is deliberate rather than tolerated (this.i
+    @6exkxbbv): the display plane may not refuse to draw a record the fold can read, and
+    it may not invent a name for a party nobody told it about.
     """
+    cast = CASTS.get(domain)
+    scope_of_domain = "" if cast is None else cast.scope
     full: dict[str, str] = {}
     short: dict[str, str] = {}
     by_query: dict[str, str] = {}
-    for name, party in PARTIES.items():
+    for name, party in ({} if cast is None else cast.parties).items():
         identifier = aids.get(name)
         if identifier is None:
             continue
-        scope = SCOPE if party.scope is None else party.scope
+        scope = scope_of_domain if party.scope is None else party.scope
         full[identifier] = _alias(party.who, party.role, scope, FLAGS)
         short[identifier] = _alias(party.who, party.role, flags=FLAGS)
         # Keyed on the body with its flag group stripped, so a query resolves whether
@@ -243,5 +290,5 @@ def aliases_over(aids: Mapping[str, str]) -> Aliases:
         by_query[_alias(party.who, party.role, scope)] = identifier
         by_query[_alias(party.who, party.role)] = identifier
     return Aliases(
-        scope=SCOPE, _full=full, _short=short, _by_query=by_query
+        scope=scope_of_domain, _full=full, _short=short, _by_query=by_query
     )

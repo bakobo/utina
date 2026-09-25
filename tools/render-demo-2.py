@@ -46,6 +46,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from utina.acme import DEV, DEVICE, GAID, MARTA, QUINN, SEAT  # noqa: E402
+from utina.bank import GAID as BANK_GAID  # noqa: E402
+from utina.bank import PRIYA, TOMAS  # noqa: E402
 from utina.cli import Console, run  # noqa: E402
 from utina.cli.demo2 import (  # noqa: E402
     CUT_ORDER,
@@ -81,6 +83,11 @@ LIFELINES = (
     ("Seat3", SEAT),
     ("Device", DEVICE),
     ("Quinn", QUINN),
+    # Act VI's second domain and its two officers. Last, so every lifeline the first
+    # five acts use keeps its column and the diagram's shape does not move.
+    ("Meridian", BANK_GAID),
+    ("Priya", PRIYA),
+    ("Tomas", TOMAS),
 )
 
 #: Who speaks to whom at each marked beat. Written here rather than derived from the
@@ -117,6 +124,20 @@ ARROWS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("Acme", "Acme", "certify"),
     ),
     "23": (("Acme", "Acme", "compute which acts in flight the amendment ended"),),
+    # Act VI. The one arrow in this document that crosses between two domains is
+    # Meridian reading, and it points at Acme's lifeline because that is where the
+    # evidence came from — not at Acme the party, who is told nothing and does nothing.
+    "27": (("Meridian", "Meridian", "commit a law obliging diligence on a counterparty"),),
+    "28": (
+        ("Priya", "Meridian", "endorse opening the account"),
+        ("Tomas", "Meridian", "endorse"),
+        ("Meridian", "Meridian", "certify — and it is still not authorized"),
+    ),
+    "29": (
+        ("Acme", "Meridian", "Acme's committed record, as far as beat 2's coordinate"),
+        ("Meridian", "Meridian", "commit what was checked: whose, where, which clause"),
+        ("Meridian", "Meridian", "refold Acme's log now, from Meridian's own record"),
+    ),
     "26": (
         ("Marta", "Acme", "endorse the equity release, tabled again"),
         ("Dev", "Acme", "decline"),
@@ -248,11 +269,19 @@ def sequence() -> str:
     fixture rebuild — as this one had.
     """
     from utina.acme import build
+    from utina.bank import build as bank_build
     from utina.cli.aliases import aliases_over
     from utina.cli.world import RealValues
 
-    record = build(values=RealValues())
-    aliases = aliases_over(record.aids)
+    values = RealValues()
+    record = build(values=values)
+    # Act VI's lifelines belong to a second domain, so the diagram resolves each one
+    # against whichever record owns it. Built over the same values and in the same
+    # order the CLI builds them, so the identifiers are the ones a reader would see.
+    meridian = bank_build(values=values, counterparty=record)
+    casts = [
+        (one, aliases_over(one.aids, one.name)) for one in (record, meridian)
+    ]
     lines = [
         "# Demo 2, as a sequence",
         "",
@@ -286,7 +315,7 @@ def sequence() -> str:
         "    autonumber",
     ]
     lines.extend(
-        f"    participant {short} as {aliases.short(record.aid(alias))}"
+        f"    participant {short} as {_lifeline(casts, alias)}"
         for short, alias in LIFELINES
     )
 
@@ -331,6 +360,21 @@ def _beat(record, beat, previous: str) -> list[str]:
         f"    Note right of Acme: beat {beat.id} — {beat.title} ({where})",
         *(f"    {source}->>{target}: {text}" for source, target, text in ARROWS[beat.id]),
     ]
+
+
+def _lifeline(casts, alias: str) -> str:
+    """One participant's label, from the record that incepted it.
+
+    A party is still named by its alias and never by its identifier (``this.i``
+    @clcoia); what changed is that there are now two casts to look it up in, and each
+    domain names only its own. Meridian's alias for Acme is deliberately NOT used here —
+    the diagram is the demo's own account of who is on stage, and every other lifeline
+    is the name that party's own domain gives it.
+    """
+    for record, aliases in casts:
+        if alias in record.aids:
+            return aliases.short(record.aid(alias))
+    raise KeyError(f"no domain in this demo incepted {alias}")
 
 
 def _between(record, previous: str, label: str) -> list[str]:

@@ -34,7 +34,8 @@ from fractions import Fraction
 from typing import cast
 
 from utina.cli.aliases import Aliases
-from utina.cli.appraisal import Appraisal
+from utina.cli.appraisal import Appraisal, Diligence
+from utina.cli.pill import posture
 from utina.cli.style import (
     AWAITING,
     DISPOSITION_COLOR,
@@ -47,6 +48,7 @@ from utina.cli.style import (
     VERDICT_COLOR,
     Style,
 )
+from utina.domain import is_sequence
 from utina.fold import bearing, certification
 from utina.fold.clause import Clause
 from utina.fold.constitution import Constitution
@@ -294,6 +296,32 @@ def eval_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
     return _screen(_finding_lines(appraisal, outcome, aliases, style))
 
 
+def _brief_diligence(done: Diligence | None, aliases: Aliases, style: Style) -> list[str]:
+    """The six-line block collapsed to one, for the screen the live run plays.
+
+    Absent from every beat but one, so it costs the other screens nothing. It survives
+    the cut at all — where the subject identifier and the column header did not —
+    because on the beat that carries it, it IS the beat: a line saying "we hold their
+    record and re-folding it here says this" is the whole claim, and a brief screen
+    that dropped it would play the beat without its point.
+
+    What is dropped from the full form is their law head and the count of events held.
+    Both are checkable on the full screen the follow-up carries, and neither is what a
+    room reads in the six seconds this line gets.
+    """
+    if done is None:
+        return []
+    return [
+        *wrapped(
+            style,
+            "diligence",
+            f"{aliases.full(done.counterparty)} at their seq {done.at.seq} under their "
+            f"clause {done.clause}, refolded here from their own committed record: "
+            f"{verdict_word(done.outcome)}",
+        ),
+    ]
+
+
 def brief_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
     """The same appraisal in eight to ten lines, for a beat that has to be held.
 
@@ -365,6 +393,7 @@ def brief_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
                 REACHED if reachable else SPENT,
             ),
             "",
+            *_brief_diligence(appraisal.diligence, aliases, style),
             *wrapped(
                 style,
                 "ground",
@@ -458,12 +487,15 @@ def _finding_lines(
         field(
             style,
             "subject",
-            appraisal.subject or "nothing of this class has been tabled at this position",
+            posture(appraisal.subject, color=style.enabled)
+            if appraisal.subject
+            else "nothing of this class has been tabled at this position",
         ),
         "",
         *_arithmetic(appraisal, clause, aliases, style),
         "",
         *ground_of(finding, aliases, style),
+        *_diligence(appraisal.diligence, aliases, style),
     ]
 
 
@@ -517,6 +549,59 @@ def _arithmetic(
         )
     )
     return lines
+
+
+def _diligence(done: Diligence | None, aliases: Aliases, style: Style) -> list[str]:
+    """What this domain checked about its counterparty, and what the check says now.
+
+    Absent from almost every screen, because almost no law obliges any. Where one does,
+    an affirmation that rests on it and did not show it was under-reporting: the ground
+    named this domain's own clause and its own endorsements, and the entire composition
+    — another organization, another constitution, another log — was invisible on the
+    one screen built to display it.
+
+    **The last line is the beat.** Everything above it is what the seal COMMITTED; the
+    outcome is what re-folding the committed evidence says right now, here, in front of
+    the room. The two are separate on purpose, because the claim is not "the bank says
+    Acme approved it" but "the bank kept Acme's log and you can check it yourself"
+    (``this.i`` @fsbgamvi). A screen that printed the seal's own word for the answer
+    would demonstrate the opposite of what this is for — which is also why the seal
+    carries no verdict for it to print (@gsli4bea).
+    """
+    if done is None:
+        return []
+    # Unpainted, and that is not an oversight. The six colours each name one health
+    # state of THIS domain's question (``this.i`` @w6bpgbwi), and this line answers a
+    # different domain's. Painting it green would put a claim about Acme into Meridian's
+    # palette, where a reader would take it for a claim about Meridian.
+    verdict = verdict_word(done.outcome)
+    # ``counterparty`` is exactly the default column width, so the value would begin
+    # where the label ends with nothing between them. This block gets two more columns
+    # rather than a shorter word: the labels are the only place the screen says whose
+    # side of the table each line is about, and "their act" reads wrong beside "party".
+    wide = FIELD + 2
+    return [
+        "",
+        MARGIN + style.strong("diligence - what this domain checked before acting"),
+        field(style, "counterparty", aliases.full(done.counterparty), indent=4, width=wide),
+        field(style, "their act", abbrev(done.subject), indent=4, width=wide),
+        field(
+            style,
+            "at",
+            f"their seq {done.at.seq}, under their clause {done.clause}",
+            indent=4,
+            width=wide,
+        ),
+        field(style, "their law", abbrev(done.head, 16), indent=4, width=wide),
+        field(
+            style,
+            "we hold",
+            f"{done.events} of their committed events, and their key log",
+            indent=4,
+            width=wide,
+        ),
+        field(style, "refolds to", verdict, indent=4, width=wide),
+    ]
 
 
 def ground_of(finding: Finding, aliases: Aliases, style: Style) -> list[str]:
@@ -650,6 +735,36 @@ def _refusal_lines(
 # --- utina law ----------------------------------------------------------------
 
 
+def _requires(law: Constitution, style: Style) -> list[str]:
+    """What this edition asks of an act beyond the arithmetic of its clauses.
+
+    A law is not only its clauses. An edition may say that a decision is consequential
+    only once the domain certifies the tally (``fold/certification.py``), and it may say
+    that acting on a counterparty requires having folded the counterparty's own record
+    (``fold/diligence.py``). Both are committed terms of the law, and a screen calling
+    itself "the law in force" that showed neither was showing part of a law and naming
+    it the whole.
+
+    It was missing for certification long before diligence existed, which is how it
+    came to be noticed: Act VI's narration says "beside the clause, a term saying that
+    opening an account requires confirming the customer could lawfully act", and a
+    narrator would have said that over a screen that did not contain it. A demo where
+    the words and the screen disagree is the one failure this whole arrangement exists
+    to prevent.
+
+    Absent where the edition names neither, which keeps the line off every screen whose
+    law has nothing extra to say.
+    """
+    asked = []
+    if law.certification is not None:
+        asked.append("a certification of the tally, by the domain itself")
+    if law.diligence is not None:
+        asked.append("diligence: the counterparty's own governance, folded and sealed")
+    if not asked:
+        return []
+    return list(wrapped(style, "requires", "; ".join(asked)))
+
+
 def law_screen(
     law: Constitution, label: str, position: Position, aliases: Aliases, style: Style
 ) -> str:
@@ -695,6 +810,7 @@ def law_screen(
             f"lists below drop the shared 'at {aliases.scope.lower()}'. Run utina whois "
             "<alias> for the identifier behind one.",
         ),
+        *_requires(law, style),
     ]
     for clause in law.clauses:
         total = sum((slot.weight for slot in clause.group.slots), Fraction(0))
@@ -759,6 +875,13 @@ def meanwhile_screen(
     are committed nowhere — the record has sequence numbers. Saying it here costs two
     lines and is the same disclosure the law screen's alias header already makes about
     party names.
+
+    **It names only the coordinates that really are labels.** A domain with no label
+    table is addressed by sequence number (``this.i`` @qtm5ntkg), and a note telling a
+    reader that ``0`` and ``6`` are this demo's names for coordinates would be false
+    about the two things on the screen it points at — which is a worse failure than the
+    silence it was written to fix. Where both are numbers there is nothing to disclose
+    and the note is absent.
     """
     certifications = sum(1 for one in events if one.kind == certification.CERTIFICATION_KIND)
     # Right-aligned to the rule's end, so the heading reads as an aside between beats
@@ -776,22 +899,31 @@ def meanwhile_screen(
             f"{MARGIN}{event.position.seq:>3}  {event.kind:<13} "
             f"{abbrev(event.said):<18} {_gloss(event, aliases)}"
         )
-    if not labels:
-        return _screen(lines)
-    lines.extend(
-        [
-            "",
-            *wrapped(
-                style,
-                "labels",
-                f"{since} and {upto} are this demo's names for coordinates and are "
-                "committed nowhere. The record has sequence numbers, which is what "
-                "the seq column above shows and what a stranger folding the same log "
-                "would address it by.",
-            ),
-        ]
-    )
+    ours = tuple(one for one in (since, upto) if not is_sequence(one))
+    if labels and ours:
+        lines.extend(["", *wrapped(style, "labels", _labels_are_ours(ours))])
     return _screen(lines)
+
+
+def _labels_are_ours(ours: tuple[str, ...]) -> str:
+    """The closing note, naming the one or two coordinates that are a demo's names.
+
+    The two-coordinate wording is unchanged to the byte, because every tracked demo
+    artifact pins a card that carries it and a rephrasing would move five files to say
+    the same thing.
+    """
+    if len(ours) == 1:
+        return (
+            f"{ours[0]} is this demo's name for a coordinate and is committed nowhere. "
+            "The record has sequence numbers, which is what the seq column above shows "
+            "and what a stranger folding the same log would address it by."
+        )
+    return (
+        f"{ours[0]} and {ours[1]} are this demo's names for coordinates and are "
+        "committed nowhere. The record has sequence numbers, which is what "
+        "the seq column above shows and what a stranger folding the same log "
+        "would address it by."
+    )
 
 
 def _tally(events: int, certifications: int) -> str:

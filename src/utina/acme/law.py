@@ -8,28 +8,73 @@ half moved to real credentials (this.i @7db5c4); this, the law half, is the
 wide commission tick ~5psg tracks — real edge groups oblige the semantics pin
 and the refusal machinery axiom 4 demands.
 
-The encoding is a field-for-field image of the parsed types in
-``docs/interfaces.md``: a clause carries ``id``, ``governs`` and ``group``; a
-group carries ``operator`` and ``slots``; a slot carries ``endorser`` and
-``weight`` (this.i @5ujoa2). Weights are :class:`fractions.Fraction` and commit
-as exact rational strings, because unity has to be decidable and a float would
-make it not.
+The encoding lives in ``utina.domain.law`` and is imported rather than restated: a
+clause carries ``id``, ``governs`` and ``group``; a group carries ``operator`` and
+``slots``; a slot carries ``endorser`` and ``weight`` (this.i @5ujoa2). What is Acme's
+own, and what this module holds, is which acts each clause governs, who is slotted, at
+what weight, and that Acme certifies at all.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from fractions import Fraction
 
-from utina.fold.certification import REQUIRES_FIELD
-from utina.fold.semantics import DOSSIER, DOSSIER_KEY, SEMANTICS_FIELD
-from utina.substrate import CERTIFICATION_SCHEMA, ENDORSEMENT_SCHEMA, GCD_SCHEMA
+from utina.domain.law import (
+    CERTIFICATION_FIELD,
+    clause,
+    even,
+    seat_slot,
+    seated_by,
+    semantics_block,
+    slot,
+)
+from utina.fold.semantics import SEMANTICS_FIELD
+from utina.substrate import CERTIFICATION_SCHEMA
 
-#: Where a law names the schema its certifications must satisfy. The fold's own
-#: field name, imported rather than spelled again here: a law that named the field
-#: differently would require no certification at all, and would look on the page
-#: exactly like one that did.
-CERTIFICATION_FIELD = REQUIRES_FIELD
+__all__ = [
+    "AMENDMENT_ACTS",
+    "BOARD_LAW",
+    "CAPITAL_PLAN",
+    "CERTIFICATION_FIELD",
+    "DEV",
+    "DEVICE",
+    "DEVICE_ROLE",
+    "DISPLAY",
+    "DOMAIN",
+    "EQUITY_ACTS",
+    "FOUNDERS",
+    "FOUNDING_LAW",
+    "GAID",
+    "GOVERNANCE_REGISTRY",
+    "MARTA",
+    "ORDINARY_ACTS",
+    "Q2_FORECAST",
+    "Q3_BUDGET",
+    "QUINN",
+    "RESEATING_NONCE",
+    "SEAT",
+    "SEAT_ACTS",
+    "SEAT_OFFICE",
+    "SEAT_REGISTRY",
+    "UNGOVERNED_ACT",
+    "board_law",
+    "clause",
+    "equity_clause",
+    "founding_law",
+    "lowered_law",
+    "seat_slot",
+    "seated_by",
+    "semantics_block",
+    "slot",
+]
+
+#: What ``--domain`` takes to select this record, and what its display cast is keyed by.
+DOMAIN = "acme"
+
+#: What a screen calls this domain. The company's own name, which no substrate knows and
+#: which is committed nowhere.
+DISPLAY = "Acme"
 
 #: The governed domain. An *alias*, not an identifier: under keripy a prefix is
 #: a digest of its own inception event and cannot be named beforehand, so the law
@@ -154,76 +199,6 @@ RESEATING_NONCE = "0AB1dGluYS1yZXNlYXQtMDAx"
 UNGOVERNED_ACT = "declare-dividend"
 
 
-def slot(endorser: str, weight: Fraction) -> Mapping[str, object]:
-    """One committed slot: who may act, with how much weight, and with what evidence.
-
-    The weight commits as an exact rational **string** — ``"1/2"`` — which is
-    ``docs/interfaces.md``'s shape for the law body and what
-    ``utina.fold.clause`` parses. It is written here rather than left to the
-    encoder because the fold reads the committed value, not the committed bytes,
-    and the two have to be the same thing. The bytes are unchanged either way:
-    the canonical encoder writes a ``Fraction`` as ``"1/2"`` too, so no
-    identifier moves.
-
-    Every slot of Acme's law names the dossier's endorsement schema, because
-    every clause here is discharged by endorsements. The field is committed
-    rather than assumed (``custos-4.2.md:1946-1951``): the seat credential is a
-    second ACDC kind, and a requirement that could not say which of the two it
-    wanted would be satisfiable by the wrong one.
-
-    Every slot this builds names a party the law entitles DIRECTLY, and so carries no
-    qualification: Acme's founders are slotted as themselves and nothing but the law
-    qualifies them. The one slot whose holder had to be standing on a credential was
-    board seat 3's, and it is an office slot now — :func:`seat_slot`, where the
-    qualification is mandatory rather than optional (this.i @ftjpdph5).
-    """
-    return {
-        "endorser": endorser,
-        "weight": f"{weight.numerator}/{weight.denominator}",
-        "schema": ENDORSEMENT_SCHEMA,
-    }
-
-
-def seat_slot(
-    office: str, weight: Fraction, qualification: Mapping[str, object]
-) -> Mapping[str, object]:
-    """One committed slot that seats an OFFICE rather than naming a party.
-
-    The difference from :func:`slot` is the whole of ``this.i`` @ftjpdph5, and it is
-    one field: there is no ``endorser``, so the law commits no AID for this seat at
-    all. Who fills it is read off the record — whoever holds a standing credential of
-    the ``qualification`` seating them in ``office`` — which is what makes appointing
-    a director an issuance rather than a constitutional amendment.
-
-    A qualification is mandatory here and optional on a party slot, and that
-    asymmetry is not an accident: a slot that named an office and required nothing to
-    be standing on would be seated by anybody willing to claim the title. The fold
-    refuses such a slot when it reads the law; committing one would be writing a
-    defect for the fold to catch rather than not writing it.
-    """
-    return {
-        "office": office,
-        "weight": f"{weight.numerator}/{weight.denominator}",
-        "schema": ENDORSEMENT_SCHEMA,
-        "qualification": qualification,
-    }
-
-
-def clause(
-    identifier: str, governs: Sequence[str], slots: Sequence[Mapping[str, object]]
-) -> Mapping[str, object]:
-    return {
-        "id": identifier,
-        "governs": tuple(governs),
-        "group": {"operator": "MxN", "slots": tuple(slots)},  # ~5psg
-    }
-
-
-def _even(endorsers: Sequence[str], weight: Fraction) -> tuple[Mapping[str, object], ...]:
-    """Slots of equal weight, one per endorser the law entitles directly."""
-    return tuple(slot(endorser, weight) for endorser in endorsers)
-
-
 def _board_slots(aids: Mapping[str, str], weight: Fraction) -> tuple[Mapping[str, object], ...]:
     """The board's three slots at ``weight`` apiece: two founders and one office.
 
@@ -234,22 +209,8 @@ def _board_slots(aids: Mapping[str, str], weight: Fraction) -> tuple[Mapping[str
     B2 differ only in their weights, and a third slot that differed in anything else
     would be two different seats wearing one name.
     """
-    founders = _even([aids[alias] for alias in FOUNDERS], weight)
+    founders = even([aids[alias] for alias in FOUNDERS], weight)
     return (*founders, seat_slot(SEAT_OFFICE, weight, seated_by(aids[GAID])))
-
-
-def seated_by(domain: str) -> Mapping[str, object]:
-    """What board seat 3's holder must be standing on: the domain's own GCD.
-
-    Both terms are committed because §9 asks for both — "which schemas, issued by
-    which registries, confer which powers" (custos-4.2.md:1924). The issuer is
-    named rather than the registry because a registry's identifier is not known
-    when the law that requires it is written: Acme opens its governance registry
-    after the amendment that seats the board. Naming the issuer is the same
-    restriction reached from the other side, and the fold resolves the registry
-    out of the issuance itself.
-    """
-    return {"schema": GCD_SCHEMA, "issuer": domain}
 
 
 def equity_clause(aids: Mapping[str, str]) -> Mapping[str, object]:
@@ -264,26 +225,8 @@ def equity_clause(aids: Mapping[str, str]) -> Mapping[str, object]:
     stays true under maintenance (this.i @rwo55zyw).
     """
     return clause(
-        "A3", EQUITY_ACTS, _even([aids[alias] for alias in FOUNDERS], Fraction(1, 2))
+        "A3", EQUITY_ACTS, even([aids[alias] for alias in FOUNDERS], Fraction(1, 2))
     )
-
-
-def semantics_block() -> Mapping[str, object]:
-    """What every edition of Acme's law pins, and why it pins anything.
-
-    Acme's composition rule is expressed in the dossier specification's terms —
-    its operator vocabulary, its slot shape, its three dispositions — so that
-    specification is an external semantics, and axiom 4 (custos-4.2.md:290)
-    requires an external semantics to be pinned by committed digest. An
-    unrecognized or absent pin is refused by the fold rather than assumed at
-    whatever revision happens to be installed (utina.fold.semantics, tick 2uhi).
-
-    Committed in every edition rather than inherited from the first, for the
-    reason A3 is re-committed in every edition: an amendment replaces the edition
-    rather than adding to it (this.i @wg3jr6), so a term left out of a successor
-    is a term that edition does not carry.
-    """
-    return {DOSSIER_KEY: DOSSIER}
 
 
 def founding_law(aids: Mapping[str, str]) -> Mapping[str, object]:
@@ -307,8 +250,8 @@ def founding_law(aids: Mapping[str, str]) -> Mapping[str, object]:
     founders = [aids[alias] for alias in FOUNDERS]
     return {
         "clauses": (
-            clause("A1", ORDINARY_ACTS, _even(founders, Fraction(1, 2))),
-            clause("A2", AMENDMENT_ACTS, _even(founders, Fraction(1, 2))),
+            clause("A1", ORDINARY_ACTS, even(founders, Fraction(1, 2))),
+            clause("A2", AMENDMENT_ACTS, even(founders, Fraction(1, 2))),
             equity_clause(aids),
         ),
         CERTIFICATION_FIELD: CERTIFICATION_SCHEMA,
