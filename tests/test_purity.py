@@ -1,13 +1,10 @@
 """The quarantines' fitness functions, of which there are two.
 
 The first and older one is the KERI quarantine, described below. The second is the
-DISPLAY quarantine (this.i @cldspl, widened to entviz and not yet ratified): a
-COIA alias is
-creator-local, carries no security claim, and must never enter committed bytes, be an
-input to the fold, or affect a finding — and an entviz pill is the same kind of thing
-one step further out, a rendering of a value that asserts nothing about it and may
-never be mistaken for evidence. That is a structural claim, so it is defended
-structurally — no plane below the CLI may import either, and the same AST inspection
+DISPLAY quarantine (this.i @cldspl): a COIA alias is creator-local, carries no
+security claim, and must never enter committed bytes, be an input to the fold, or
+affect a finding. That is a structural claim, so it is defended structurally — no
+plane below the CLI may import it, and the same AST inspection
 that catches a lazy KERI import catches a lazy display import. Unlike the
 KERI rule, ``utina.cli`` is exempt rather than covered, because display is the plane
 whose whole job is display. Every other plane is covered, including the two a second
@@ -157,11 +154,9 @@ def test_the_backend_is_exempt_and_the_exemption_is_not_empty() -> None:
 # belongs. Enforced here rather than by review, for the same reason as above.
 
 #: The display-only modules the planes below the CLI may not reach for. ``utina.coia``
-#: mints aliases (@cldspl) and ``entviz`` draws recognition cues over values; both are
-#: renderings that carry no security claim, and both would be read as one if they
-#: appeared beneath the plane whose whole job is display. The entviz half has no
-#: this.i node yet and is owed one.
-DISPLAY_ONLY = ("utina.coia", "entviz")
+#: mints aliases (@cldspl), a rendering that carries no security claim and would be
+#: read as one if it appeared beneath the plane whose whole job is display.
+DISPLAY_ONLY = ("utina.coia",)
 
 #: The planes an alias may not reach. utina.cli is absent on purpose: it is the
 #: display plane, and it is the one that is supposed to import this.
@@ -288,9 +283,6 @@ def test_the_alias_guard_catches_every_shape_of_the_import_it_forbids() -> None:
         "def render():\n    from utina.coia import create_alias\n    return create_alias\n",
         "from ..coia import create_alias\n",
         "from .. import coia\n",
-        "import entviz\n",
-        "from entviz.terminal import whois\n",
-        "def draw():\n    from entviz.terminal import pill\n    return pill\n",
     ):
         assert alias_offenders_in(source, "fold/evaluate.py", "utina.fold"), source
     # And does not fire on the imports these planes legitimately make.

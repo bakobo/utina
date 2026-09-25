@@ -438,7 +438,7 @@ def whois_command(args: argparse.Namespace, console: Console) -> int:
 
     Removing the prefix from every screen removes the only way an audience could see an
     identifier at all, and sometimes seeing one is the point. So it is an explicit act
-    rather than a glance: this is the pill's expand affordance, where verification is
+    rather than a glance: this is the expand affordance, where verification is
     allowed to happen because the reader asked for it.
     """
     with _world(args) as record:

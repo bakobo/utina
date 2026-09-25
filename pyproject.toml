@@ -23,17 +23,8 @@ classifiers = [
 # inspection over every plane above it (this.i @343xvm). Pinned by commit, not by
 # version — 2.0.0-dev6 is a moving target, and a demo that cannot be rebuilt from
 # its manifest is not replayable.
-#
-# entviz draws the recognition cue on the eval screen's subject field, and is
-# quarantined the same way and for the same shape of reason: a value
-# visualization is display, so only utina.cli may reach it (this.i @fqaxwnid,
-# enforced beside the alias quarantine). It declares lxml, which is reachable
-# only through the SVG pipeline the terminal pill never touches
-# (entviz/docs/terminal-pill.md §6) — declared unconditionally by that
-# distribution, and the cost is named here rather than discovered in CI.
 dependencies = [
     "bakobo-errors",
-    "entviz>=0.18.3",
     "keri",
 ]
 
