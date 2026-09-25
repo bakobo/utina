@@ -1766,6 +1766,36 @@ Make Custos's replayable governance useful to a real organization = goal:
         contested only in the past is not caught and `_holder` takes the first of two. That gap
         predates this and is left where it was rather than half-closed here.
 
+    The meanwhile card is a COMMAND, and it shortens the run = decision:
+      id: eelnh6dn
+      why: >
+        M9. Between two marked beats the record commits events the room never sees, and
+        the narrator was covering them in speech — which is the expensive medium. Daniel
+        corrected an earlier reading of this milestone that had it LENGTHENING the live
+        run: the room reads a screen faster than it hears a sentence, so putting the span
+        on screen buys narration time back rather than spending it.
+        IT IS A CLI COMMAND AND NOT A CARD THE DRIVER PRINTS, which is forced rather than
+        chosen. `utina.cli.demo2` computes nothing (@cldemo, and `test_the_demo_driver
+        computes_nothing` enforces it): a beat is a title, a narration and an argv, and
+        the walk dispatches through the same entry point a shell reaches. A card the
+        driver assembled from the corpus would make the driver a second reader of the
+        record, and the demo's own claim is that every screen is one a person could have
+        produced by typing. So `utina meanwhile --from <label> --to <label>` is the
+        screen, and the driver emits its argv between beats like any other command.
+        WHAT IT SAYS, and the third part is the one that is not obvious. The count and
+        the events, so nothing between beats is hidden. The certifications among them
+        named as such, because after M6 every affirmation rests on one and a room that
+        never saw them would think an endorsement authorized something. And that the
+        position labels are OURS: `d1` and `b17` are this demo's names for coordinates
+        and are committed nowhere — the record has sequence numbers. Saying so on the
+        screen is cheaper than saying it once in narration and hoping it is remembered,
+        and it is the same disclosure the alias header already makes about party names.
+        THE SPAN COMES OFF THE BEATS' OWN ARGV rather than from a second field naming it.
+        A `--at` duplicated into a `Beat.at` would be two literals that can disagree, and
+        the failure mode is a meanwhile card describing a span the beat is not asked at.
+        Beats with no `--at` — beat 14's enact, which is a refusal — carry the previous
+        beat's coordinate forward, because no coordinate is where the question is asked.
+
     The law creates a seat; a credential fills it = decision:
       id: ftjpdph5
       why: >
