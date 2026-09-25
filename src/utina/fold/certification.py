@@ -36,7 +36,7 @@ for this subject exist at or before this coordinate.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from fractions import Fraction
 
 from utina.fold.clause import Clause
@@ -55,6 +55,7 @@ __all__ = [
     "CERTIFICATION_KIND",
     "CERTIFIES_FIELD",
     "REQUIRES_FIELD",
+    "certifications",
     "certifying",
     "contradicting",
     "counted_by",
@@ -123,6 +124,28 @@ def certifying(corpus: Corpus, said: SAID, upto: Position, schema: SAID) -> Even
     that could not say which evidence it wanted would be satisfiable by the wrong one."
     Read fail-closed, in the shape the rest of this module uses: a credential whose
     schema is absent or is not a usable identifier satisfies nothing.
+
+    **First-match is right for AUTHORIZATION and wrong for falsity**, which is why
+    :func:`certifications` exists beside this. A later tally cannot move the coordinate
+    an act became consequential at; it can perfectly well be a lie the domain signed.
+    """
+    return next(certifications(corpus, said, upto, schema), None)
+
+
+def certifications(
+    corpus: Corpus, said: SAID, upto: Position, schema: SAID
+) -> Iterator[Event]:
+    """Every certification of ``said`` this law would accept, in committed order.
+
+    :func:`certifying` takes the first of these because that is the coordinate the act
+    became consequential at. **Falsity has to look at all of them**, and the two are
+    genuinely different questions: a second tally changes nothing about when the act was
+    authorized, and is still a claim the domain signed — so a false one contradicts the
+    record whether or not it was load-bearing (``this.i`` @epztz4wd, @7shpbven, whose
+    "over every committed certification of the subject" this makes true).
+
+    Found on PR #9, where the check read the first certification only: a sound tally
+    followed by a short one left the second self-contradiction unexamined.
     """
     for event in corpus.upto(upto):
         if event.kind != CERTIFICATION_KIND:
@@ -130,8 +153,7 @@ def certifying(corpus: Corpus, said: SAID, upto: Position, schema: SAID) -> Even
         if event.body.get(CERTIFIES_FIELD) != said:
             continue
         if credential(event).get(SCHEMA_FIELD) == schema:
-            return event
-    return None
+            yield event
 
 
 TALLY_GROUP = "endorsements"
@@ -205,10 +227,27 @@ def contradicting(
     around a declination leaves no trace in the certification itself. The coordinate
     is the certification's rather than the question's, because what a certification
     claims is that the threshold was met when it was admitted.
+
+    **Over EVERY certification of the subject, and the earliest contradictory one wins.**
+    Authorization takes the first tally and stops, because a later one cannot move the
+    coordinate an act became consequential at — but falsity is a different question, and
+    a lie the domain signed is a lie whether or not it was load-bearing. Reading only the
+    first meant a sound tally followed by a short one left the second self-contradiction
+    unexamined, which is a hole the round-two review on PR #9 found and which @7shpbven's
+    own wording — "over every committed certification of the subject" — already forbade.
+    Earliest rather than any, so two verifiers name the same one.
     """
-    event = certifying(corpus, subject, at, schema)
-    if event is None:
-        return None
+    for event in certifications(corpus, subject, at, schema):
+        found = _contradiction(event, corpus, group, subject)
+        if found is not None:
+            return found
+    return None
+
+
+def _contradiction(
+    event: Event, corpus: Corpus, group: Group, subject: SAID
+) -> tuple[Event, SAID | None] | None:
+    """Whether this one certification contradicts itself or the record, and on what."""
     if reached_by(event) < 1:
         return event, None
     classified = classify(group, corpus.upto(event.position), subject)

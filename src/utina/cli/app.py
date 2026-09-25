@@ -293,7 +293,7 @@ def build_parser(console: Console) -> _Parser:
 
     demo2 = commands.add_parser(
         "demo2", out=console.out, parents=[backend],
-        help="walk docs/demo-2-script.md: the opener, the live thirteen, or all of it",
+        help="walk docs/demo-2-script.md: the opener, the live run, or all of it",
     )
     demo2.add_argument("--part", choices=PARTS, default="live")
     demo2.add_argument("--no-pause", dest="no_pause", action="store_true")

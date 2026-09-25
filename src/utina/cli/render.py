@@ -297,7 +297,7 @@ def eval_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
 def brief_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
     """The same appraisal in eight to ten lines, for a beat that has to be held.
 
-    The live half of demo 2 is thirteen beats in about eighteen minutes, so the
+    The live half of demo 2 is a dozen-odd beats in about eighteen minutes, so the
     binding constraint is not compute — the whole ten-beat demo-1 run executes in
     0.22 seconds — it is how much screen a room can take in while somebody talks
     over it. This drops what a reader can reconstruct and keeps what they came to

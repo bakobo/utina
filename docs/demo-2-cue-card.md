@@ -29,7 +29,7 @@ utina demo2 --part opener --no-pause
 - **6.** May the board declare a dividend?
   `utina eval declare-dividend --at d8 --substrate keripy`
 
-## Live — thirteen beats in six kernels
+## Live — fourteen beats in seven kernels
 
 ```
 utina demo2 --part live

@@ -1596,3 +1596,42 @@ def test_a_certification_whose_credential_names_no_schema_discharges_nothing():
     log.certify("cert", tabled, log.tally(*SOUND), schema="")
 
     assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Pending)
+
+
+def test_a_false_certification_after_a_sound_one_still_convicts():
+    """The hole the round-two review on PR #9 found.
+
+    Authorization takes the FIRST tally and stops, because a later one cannot move the
+    coordinate an act became consequential at. Falsity is a different question, and the
+    check read the first certification only — so a sound tally followed by a short one
+    left the second self-contradiction unexamined, which @7shpbven's own "over every
+    committed certification of the subject" already forbade.
+
+    A lie the domain signed is a lie whether or not it was load-bearing.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert-sound", tabled, log.tally(*SOUND))
+    sound_only = log.now
+    log.certify("cert-short", tabled, log.tally((MARTA, "1/2")))
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=sound_only), Affirmed)
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == log.said("cert-short")
+
+
+def test_the_earliest_contradictory_certification_is_the_one_named():
+    """Two verifiers holding one bundle must name the same contradiction, so it is the
+    earliest rather than whichever the walk reached first."""
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert-short", tabled, log.tally((MARTA, "1/2")))
+    log.certify("cert-shorter", tabled, log.tally())
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == log.said("cert-short"), "the earliest, not the worst"

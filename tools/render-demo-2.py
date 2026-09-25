@@ -20,8 +20,11 @@ same entry point a shell reaches — so a transcript cannot be a screen the
 command could not produce. The cue card is generated from ``utina.cli.demo2``'s
 own ``OPENER``, ``KERNELS``, ``LEAVE_BEHIND`` and ``CUT_ORDER``, so it cannot
 name a beat the driver does not have. The sequence diagram is generated from the
-same kernels plus the record's own labels, and is collapsed on purpose — one
-message per marked beat, never one per committed event (``this.i`` @y7ytqzyj).
+same kernels plus the record's own labels, and is collapsed on purpose: one
+message per ACT a beat comprises, never one per committed event (``this.i``
+@y7ytqzyj). A beat is several speech acts where it is several — beat 7 is two
+endorsements and a certification — and flattening those to one arrow would delete
+the thing the diagram is for, which is who spoke to whom.
 
 **The opener runs under keripy**, because ``walk2`` forces it there: the
 opener's job is the this-is-really-KERI claim with real prefixes on screen. Its
@@ -48,6 +51,7 @@ from utina.cli.demo2 import (  # noqa: E402
     CUT_ORDER,
     KERNELS,
     LEAVE_BEHIND,
+    LIVE,
     OPENER,
     coordinate_of,
 )
@@ -120,7 +124,7 @@ ARROWS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("Acme", "Acme", "admit it: the cited weights do add to one"),
     ),
     # The leave-behind four. Beat 15 is the only place the device speaks, which is why
-    # the diagram carries them rather than stopping at the live thirteen: a reader who
+    # the diagram carries them rather than stopping at the live run: a reader who
     # was not in the room is exactly the reader the leave-behind is for.
     "11": (
         ("Dev", "Acme", "endorse the equity release, on the far side of the amendment"),
@@ -176,7 +180,7 @@ def _beat_list(beats, suffix: str = "") -> str:
 
 
 def _kernels() -> str:
-    """The live thirteen, grouped by kernel, numbered in playing order."""
+    """The live beats, grouped by kernel, numbered in playing order."""
     lines = []
     played = 0
     for kernel in KERNELS:
@@ -218,6 +222,7 @@ def cue_card(columns: int) -> str:
     """The operator's half of ``docs/demo-2-script.md``, from the driver itself."""
     return TEMPLATE.read_text(encoding="utf-8").format(
         columns=columns,
+        live_shape=f"{_count(len(LIVE))} beats in {_count(len(KERNELS))} kernels",
         opener=_beat_list(OPENER, suffix=" --substrate keripy"),
         live=_kernels(),
         cuts=" → ".join(f"beat {one}" for one in CUT_ORDER),
@@ -232,12 +237,15 @@ def sequence() -> str:
     diagram is a second account of the record and it drifts in silence. This one cannot
     name a beat the driver does not have or a coordinate the record does not carry.
 
-    **Collapsed on purpose** (``this.i`` @y7ytqzyj). One participant per party, one
-    message per marked beat, and the events between beats as notes. One arrow per
-    committed event would be an arrow per event in the record, which is unreadable on a
-    projector and says less than ``utina log`` already says in a table. The count is not
-    written here: the prose below derives it from the record, and a second copy in a
-    docstring is a copy that goes stale at the next fixture rebuild — as this one had.
+    **Collapsed on purpose** (``this.i`` @y7ytqzyj), and collapsed against the EVENTS
+    rather than against the acts. One participant per party, one message per act a beat
+    comprises, and the events between beats as notes. An arrow per committed event would
+    be unreadable on a projector and would say less than ``utina log`` already says in a
+    table; an arrow per *beat* would be the opposite mistake, flattening beat 7's two
+    endorsements and its certification into one line and deleting the thing a sequence
+    diagram is for. The count is not written here: the prose below derives it from the
+    record, and a second copy in a docstring is a copy that goes stale at the next
+    fixture rebuild — as this one had.
     """
     from utina.acme import build
     from utina.cli.aliases import aliases_over
@@ -245,7 +253,6 @@ def sequence() -> str:
 
     record = build(values=RealValues())
     aliases = aliases_over(record.aids)
-    live = [beat for kernel in KERNELS for beat in kernel.beats]
     lines = [
         "# Demo 2, as a sequence",
         "",
@@ -254,8 +261,9 @@ def sequence() -> str:
         # diff, and this file is tracked. The source is split across adjacent literals
         # only so that the Python stays inside its own line budget.
         (
-            "One participant per party, one message per marked beat, and the events"
-            " between beats as notes. **Collapsed on purpose** — the record commits"
+            "One participant per party, one message per act a beat comprises, and the"
+            " events between beats as notes. **Collapsed on purpose** — the record"
+            " commits"
             f" {len(record.events)} events, and a diagram with one arrow each would be"
             " unreadable and would say less than `utina log` already says in a table"
             " (`this.i` @y7ytqzyj)."
@@ -266,7 +274,7 @@ def sequence() -> str:
         # is the failure the whole generate-and-pin arrangement exists to prevent, so
         # committing it in the generator was the worst possible place for it.
         (
-            f"The live {_count(len(live))} come first, grouped by kernel in playing"
+            f"The live {_count(len(LIVE))} come first, grouped by kernel in playing"
             f" order, then the {_count(len(LEAVE_BEHIND))} leave-behind beats. Generated"
             " by `tools/render-demo-2.py` and pinned by"
             " `tests/test_demo_2_artifacts.py`: edit the driver or the record, never"

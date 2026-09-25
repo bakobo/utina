@@ -1,4 +1,4 @@
-"""Demo 2's run-of-show: an opener, thirteen live beats in six kernels, a coda.
+"""Demo 2's run-of-show: an opener, the live beats in their kernels, a coda.
 
 Like ``demo.py`` this module computes nothing. A beat is a title, a line of
 narration and the argv of a command a person could have typed, and the walk
@@ -15,12 +15,22 @@ The three parts are separate commands rather than one long walk because they are
 played differently. The opener is recorded and runs at full screen density under
 keripy, with real prefixes, so the room sees this is really KERI once and the
 live part never argues it again. The live part is brief-screened and paced for
-narration. The leave-behind is the whole twenty-five, recorded, sent afterwards.
+narration. The leave-behind is the whole run, every beat at full screen density,
+recorded and sent afterwards.
 
 **Timing.** Compute is free — demo 1's ten beats execute in 0.22 s on the facade
-and 1.30 s under keripy — so every minute in the room is narration. The live
-thirteen are budgeted at 17 to 19 minutes, of which beats 8 and 16 are screens
-rather than evaluations and run in well under a minute each.
+and 1.30 s under keripy — so every minute in the room is narration. The live run
+is budgeted at 17 to 19 minutes, of which beats 8 and 16 are screens rather than
+evaluations and run in well under a minute each, and beat 26 adds one more.
+
+**No count of anything is written down here, and that is load-bearing rather than
+tidy.** ``OPENER``, ``KERNELS`` and ``LEAVE_BEHIND`` below are the counts, and every
+operator-facing surface derives from them — the cue card's heading, the sequence
+diagram's prose. Beat 26 went in and left four separate literals saying "thirteen"
+behind it; the fix for those then walked past four more, including one in this very
+docstring that the sentence you are reading would have contradicted. Both rounds are
+``this.i`` @45pjebk4, and the lesson is that a count written in prose is a count
+nobody will remember to move.
 """
 
 from __future__ import annotations
@@ -339,7 +349,7 @@ KERNELS = (
 
 LIVE = tuple(beat for kernel in KERNELS for beat in kernel.beats)
 
-#: The beats the opener and the live thirteen leave out, at full screen density.
+#: The beats the opener and the live run leave out, at full screen density.
 #: Sent with the follow-up rather than played, because the likeliest thing this
 #: audience does next is try to read the specification.
 LEAVE_BEHIND = (
