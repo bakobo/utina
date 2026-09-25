@@ -3,8 +3,14 @@
 M8's criterion: the ``subject`` field renders as a corpus-posture pill; every other
 identifier is untouched; the strip-escapes invariant still holds on every screen.
 
-The third clause is the one that moved. The cue's two rungs are alternate renderings of
-the same information — entviz substitutes braille when it is told the stream takes no
+The field renders entviz's PILL: elided, about nineteen columns. Recognition is the
+goal and comparison is not, which was measured rather than assumed — no beat asks a
+reader to copy or compare a subject, ``--said`` takes a name or a twelve-character
+prefix, and every other identifier on every screen is already abbreviated. On a
+committed-act question the banner one line above still carries the value whole.
+
+The criterion's third clause is the one that moved. The cue's two rungs are alternate
+renderings of the same information — entviz substitutes braille when told the stream takes no
 colour, precisely so that what colour carried is carried by glyph count instead
 (``terminal-pill.md`` §4.3) — so stripping the escapes from the painted form does not
 yield the plain form, and nothing is lost either way. The invariant holds on every
@@ -83,15 +89,24 @@ def test_a_screen_asks_for_the_rung_its_own_console_decided() -> None:
 # --- the cue itself -----------------------------------------------------------
 
 
-def test_the_subject_carries_its_entropy_bands_and_then_the_value_whole() -> None:
-    """A whois line rather than a pill: every cell, so the value stays copyable."""
+def test_the_subject_is_a_pill_that_opens_with_the_bands_and_ends_in_the_tail() -> None:
+    """Four band cells, then the value's own head and tail cells around elisions.
+
+    The head and tail are asserted against the identifier itself rather than against a
+    literal, so the test says "this cue belongs to this value" rather than pinning a
+    rendering entviz is free to improve.
+    """
     with world() as record:
         said = record.said("seat-the-board")
     line = subject_line(screen("eval", "--said", "seat-the-board", "--at", "d4"))
-    assert line.endswith(said), "the value is not whole, or not last"
-    prefix = line[line.index("subject") + len("subject") :].strip()[: -len(said)].strip()
-    assert len(prefix) == 4, f"expected four band cells, got {prefix!r}"
-    assert all(GLYPHS.fullmatch(one) for one in prefix), prefix
+    cue = line[line.index("subject") + len("subject") :].strip()
+
+    bands, _, cells = cue.partition(" ")
+    assert len(bands) == 4, f"expected four band cells, got {bands!r}"
+    assert all(GLYPHS.fullmatch(one) for one in bands), bands
+    assert cells.startswith(said[:4]), f"{cells!r} does not open with the value's head"
+    assert cells.endswith(said[-4:]), f"{cells!r} does not close with the value's tail"
+    assert said not in cue, "a pill elides; this is the whole value"
 
 
 def test_the_cue_is_a_function_of_the_value_and_of_nothing_else() -> None:
@@ -102,14 +117,20 @@ def test_the_cue_is_a_function_of_the_value_and_of_nothing_else() -> None:
     assert posture(first, color=False) != posture(second, color=False)
 
 
-def test_a_real_identifier_is_carried_back_character_for_character() -> None:
-    """Entviz knows the encoding rules of real entropy, so a committed identifier
-    survives it byte for byte. Asserted over every identifier the record commits
-    rather than over one, since that is the claim utina relies on."""
+def test_every_committed_identifier_keeps_its_own_characters_in_the_cue() -> None:
+    """Entviz knows the encoding rules of real entropy, so a committed identifier's
+    cells are its own characters rather than a transformation of them.
+
+    Asserted over every identifier the record commits rather than over one, since that
+    is the claim utina relies on when it hands entviz a value and does not check the
+    answer. Head and tail, because those are the cells a pill shows.
+    """
     with world() as record:
         for said in record.saids.values():
-            assert ANSI.sub("", posture(said, color=True)).endswith(said)
-            assert posture(said, color=False).endswith(said)
+            for form in (ANSI.sub("", posture(said, color=True)), posture(said, color=False)):
+                cells = form.partition(" ")[2]
+                assert cells.startswith(said[:4]), (said, form)
+                assert cells.endswith(said[-4:]), (said, form)
 
 
 def test_every_other_identifier_is_untouched() -> None:
@@ -142,11 +163,11 @@ def test_the_cue_reaches_a_second_domain_without_being_told_about_it() -> None:
 
 def test_neither_rung_says_more_than_the_other_about_the_value() -> None:
     """The ladder must not invert (``terminal-pill.md`` §4.3): stripping colour is a
-    change of presentation, not a loss of the value. Both rungs are the same printable
-    width and both end in the identifier entire, which is what a reader copies."""
+    change of presentation rather than a loss. Both rungs are the same printable width
+    and both show the same cells; only the glyphs between them differ."""
     with world() as record:
         said = record.said("seat-the-board")
     painted, mono = posture(said, color=True), posture(said, color=False)
     assert len(ANSI.sub("", painted)) == len(mono)
-    assert ANSI.sub("", painted).endswith(said) and mono.endswith(said)
+    assert ANSI.sub("", painted).endswith(said[-4:]) and mono.endswith(said[-4:])
     assert ANSI.sub("", painted) != mono, "the mono rung swaps glyphs; it is not plain"

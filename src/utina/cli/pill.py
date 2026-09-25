@@ -1,10 +1,18 @@
-"""A recognition cue for the one identifier this CLI shows whole.
+"""A recognition cue on the ``subject`` field of an eval screen, and nowhere else.
 
-An entviz **whois line** on the ``subject`` field of an eval screen, and nowhere else:
-the four-cell entropy-band prefix, a space, and then the value's own cells. The goal is
-**recognition** — "have I seen this one before, is this the one I meant?" — and never
-comparison. An equality decision routes to the full value, which this line carries, or
-to a real entviz. That seam is entviz's own §1 and ``pill-design.md`` §2.1.
+An entviz **pill**: the four-cell entropy-band prefix, then the value's head, middle and
+tail cells with the elided runs summarized into single glyphs. About nineteen columns
+for a CESR identifier.
+
+The goal of this field is **recognition** — "have I seen this one before, is this the
+one I meant?" — and not comparison, which is the seam entviz's §1 and ``pill-design.md``
+§2.1 both draw. That was measured rather than assumed: no beat of either demo script
+asks a reader to copy or compare a subject, ``--said`` takes the record's own name or a
+twelve-character prefix so nobody types a full one, and every other identifier on every
+screen is already abbreviated to twelve characters. A lossless subject line was the odd
+one out rather than a capability anything used. An equality decision routes to the full
+value or to a real entviz; on a committed-act question the banner one line above still
+carries the identifier whole.
 
 **This module reports a capability and states no preference.** ``entviz.terminal.ansi``
 takes ``color="256"`` or ``color="none"``, and its docstring is explicit that capability
@@ -26,7 +34,7 @@ overrode it would be substituting a guess for a rule.
 
 from __future__ import annotations
 
-from entviz.terminal import ansi, whois  # type: ignore[import-untyped]
+from entviz.terminal import ansi, pill  # type: ignore[import-untyped]
 
 __all__ = ["MONO", "PAINTED", "posture"]
 
@@ -38,10 +46,10 @@ MONO = "none"
 
 
 def posture(value: str, *, color: bool) -> str:
-    """``value``'s cells, preceded by its entropy bands, drawn for this stream.
+    """``value`` as a pill, drawn for this stream.
 
     ``color`` is what the console determined about the stream it is writing to, not a
     request. Passed through to entviz as the rung, which is the argument that function
     exists to take.
     """
-    return str(ansi(whois(value), color=PAINTED if color else MONO))
+    return str(ansi(pill(value), color=PAINTED if color else MONO))
