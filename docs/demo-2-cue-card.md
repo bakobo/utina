@@ -4,7 +4,7 @@
 
 The run-of-show and its reasoning are `docs/demo-2-script.md`. This is the lectern copy: what to type, in what order, and what to drop if the clock runs out.
 
-**Terminal.** At least 89 columns — measured, the longest line these screens actually produce — with 100 what the layout targets. Dark background, which is what the palette assumes (`this.i` @b3nr4mq3). Color comes on by itself on a terminal; through a pipe or a pager it needs `FORCE_COLOR=1`.
+**Terminal.** At least 93 columns — measured, the longest line these screens actually produce — with 100 what the layout targets. Dark background, which is what the palette assumes (`this.i` @b3nr4mq3). Color comes on by itself on a terminal; through a pipe or a pager it needs `FORCE_COLOR=1`.
 
 **Pacing.** Without `--no-pause` the driver waits for Enter between beats, and that is the way to play this. The command is echoed before it runs, so the room sees what a person would have typed whether or not you type it — which means hand-typing buys credibility rather than content, at the cost of a chance to fumble. Worth typing by hand: beat 14, where the toolchain refusing a write is the beat, and beat 19, where typing nearly the same command twice for a deliberately unchanged answer reads better than a script doing it.
 

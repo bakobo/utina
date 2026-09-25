@@ -416,11 +416,21 @@ def walk2(
     backend = KERIPY if part == "opener" and substrate == FACADE else substrate
     sequence = _sequence(part) if beat is None else (_named(beat),)
     status = 0
+    since = ""
     for index, one in enumerate(sequence):
         kernel = _kernel_of(one)
         if kernel is not None:
             for line in _kernel_card(kernel, console.style):
                 console.out.write(line + "\n")
+        # What the record committed while nobody was looking, before the beat that
+        # arrives at the far end of it. A command like any other, because this module
+        # computes nothing (this.i @cldemo, @eelnh6dn) — so the span is read off the
+        # beats' own argv and handed to `utina meanwhile` to answer.
+        upto = _coordinate_of(one)
+        if since and upto and since != upto:
+            span = ("meanwhile", "--from", since, "--to", upto)
+            status = max(status, run(span + _backend_argv(backend, store), console))
+        since = upto or since
         argv = one.argv + _backend_argv(backend, store)
         for line in _announce(one, argv, console.style):
             console.out.write(line + "\n")
@@ -434,6 +444,24 @@ def walk2(
         if pause and index < len(sequence) - 1:
             console.pause()
     return status
+
+
+def _coordinate_of(beat: Beat) -> str:
+    """The label this beat asks its question at, or ``""`` where it asks at none.
+
+    Read off the beat's own ``argv`` rather than held in a second field beside it. A
+    ``--at`` duplicated into a ``Beat.at`` would be two literals free to disagree, and
+    the failure that buys is a meanwhile card describing a span the beat is not asked
+    at (``this.i`` @eelnh6dn).
+
+    Beat 14 is the one with no coordinate: an endorsement the toolchain refuses is not
+    asked anywhere, so the span carries the previous beat's coordinate forward rather
+    than resetting — which is right, because nothing on that beat moved the record.
+    """
+    argv = beat.argv
+    if "--at" not in argv:
+        return ""
+    return argv[argv.index("--at") + 1]
 
 
 def _backend_argv(substrate: str, store: Path | None) -> tuple[str, ...]:

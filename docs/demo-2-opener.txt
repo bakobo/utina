@@ -36,6 +36,20 @@
     governs   release-escrowed-equity
     slots     marta-founder,6 1/2, dev-founder,6 1/2
     weights   the slots sum to 1, so every slot is required
+  MEANWHILE, between inception and d1
+  ------------------------------------------------------------------------------------
+
+  4 committed events, of which 1 certification.
+
+  seq  kind          identifier         what it commits
+    1  act           EHuYkhcEsw6M...    an act of the class open-bank-account
+    2  endorsement   EA2o4R_E1_tV...    marta-founder,6 endorses EHuYkhcEsw6M...
+    3  endorsement   EJ15CKJc7X_W...    dev-founder,6 endorses EHuYkhcEsw6M...
+    4  certification EGwMUUPf-cmy...    the domain certifies EHuYkhcEsw6M...
+
+  labels      inception and d1 are this demo's names for coordinates and are committed
+              nowhere. The record has sequence numbers, which is what the seq column
+              above shows and what a stranger folding the same log would address it by.
 
 
 
@@ -64,6 +78,18 @@
     clauses     A1
     reached by  EA2o4R_E1_tV..., EJ15CKJc7X_W...
     evidence    7c93128eac3b4353...
+  MEANWHILE, between d1 and d2
+  ------------------------------------------------------------------------------------
+
+  2 committed events, and no certification among them.
+
+  seq  kind          identifier         what it commits
+    5  act           EGaVz8hvVnPw...    an act of the class hire-vp-sales
+    6  endorsement   EEPv81qzvdOt...    marta-founder,6 endorses EGaVz8hvVnPw...
+
+  labels      d1 and d2 are this demo's names for coordinates and are committed nowhere.
+              The record has sequence numbers, which is what the seq column above shows
+              and what a stranger folding the same log would address it by.
 
 
 
@@ -91,6 +117,19 @@
   ground - what would discharge this
     dev-founder-acme,6 endorsement under clause A1, absent
                        cured by the arrival of the missing evidence
+  MEANWHILE, between d2 and d3
+  ------------------------------------------------------------------------------------
+
+  3 committed events, and no certification among them.
+
+  seq  kind          identifier         what it commits
+    7  act           EK5aEpOlK_78...    an act of the class sign-office-lease
+    8  endorsement   EH2so1QROlKe...    marta-founder,6 endorses EK5aEpOlK_78...
+    9  endorsement   EE58bTVOtBvs...    dev-founder,6 declines EK5aEpOlK_78...
+
+  labels      d2 and d3 are this demo's names for coordinates and are committed nowhere.
+              The record has sequence numbers, which is what the seq column above shows
+              and what a stranger folding the same log would address it by.
 
 
 
@@ -123,6 +162,18 @@
     reason      Unity is unreachable under clause A1: dev-founder-acme,6 committed a
                 signed declination, which spends that slot's weight, and the weight that
                 can still arrive no longer reaches unity.
+  MEANWHILE, between d3 and b5
+  ------------------------------------------------------------------------------------
+
+  2 committed events, and no certification among them.
+
+  seq  kind          identifier         what it commits
+   10  act           EPpk67g6frrF...    an act of the class release-escrowed-equity
+   11  endorsement   EHwuKQwsw2FG...    marta-founder,6 endorses EPpk67g6frrF...
+
+  labels      d3 and b5 are this demo's names for coordinates and are committed nowhere.
+              The record has sequence numbers, which is what the seq column above shows
+              and what a stranger folding the same log would address it by.
 
 
 
@@ -150,6 +201,35 @@
   ground - what would discharge this
     dev-founder-acme,6 endorsement under clause A3, absent
                        cured by the arrival of the missing evidence
+  MEANWHILE, between b5 and d8
+  ------------------------------------------------------------------------------------
+
+  19 committed events, of which 3 certifications.
+
+  seq  kind          identifier         what it commits
+   12  enactment     EFu0R4h76rY2...    a successor law, enacted as amend-operating-agreement
+   13  endorsement   EB9sbwkGPYl2...    marta-founder,6 endorses EFu0R4h76rY2...
+   14  endorsement   EGPWO0uCcyVQ...    dev-founder,6 endorses EFu0R4h76rY2...
+   15  certification EEOJolOoPH4e...    the domain certifies EFu0R4h76rY2...
+   16  issuance      EDoibc_9gkKH...    acme-governed-domain,6 declines None
+   17  endorsement   ECMQAYt9bvEF...    dev-founder,6 endorses EPpk67g6frrF...
+   18  certification ELpaYl5mEwAS...    the domain certifies EPpk67g6frrF...
+   19  act           EIAnji4xLfxN...    an act of the class approve-budget
+   20  endorsement   ENNvcETFfCAz...    marta-founder,6 endorses EIAnji4xLfxN...
+   21  endorsement   ENpMNNfByfib...    nina-board-seat-3,6 endorses EIAnji4xLfxN...
+   22  certification EBz5s85oBFb9...    the domain certifies EIAnji4xLfxN...
+   23  act           EO9MGuhkQ9DJ...    an act of the class approve-budget
+   24  endorsement   EEt-6ULYD35t...    marta-founder,6 endorses EO9MGuhkQ9DJ...
+   25  endorsement   EFlHaP8FJl3C...    dev-founder,6 declines EO9MGuhkQ9DJ...
+   26  act           EEf-zpGzdKJk...    an act of the class amend-operating-agreement
+   27  endorsement   ECOfftPes9wf...    marta-founder,6 endorses EEf-zpGzdKJk...
+   28  endorsement   EOzre7vw4LNV...    dev-founder,6 endorses EEf-zpGzdKJk...
+   29  endorsement   EDuSpWY9GP94...    nina-board-seat-3,6 declines EEf-zpGzdKJk...
+   30  act           EKi1z-Cj--HI...    an act of the class declare-dividend
+
+  labels      b5 and d8 are this demo's names for coordinates and are committed nowhere.
+              The record has sequence numbers, which is what the seq column above shows
+              and what a stranger folding the same log would address it by.
 
 
 

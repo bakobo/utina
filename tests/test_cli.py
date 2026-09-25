@@ -1549,3 +1549,87 @@ def test_the_demo2_walk_pauses_between_beats_and_not_after_the_last():
     walk2(console, part="opener", pause=True, substrate="facade")
 
     assert len(pauses) == len(OPENER) - 1
+
+
+# --- utina meanwhile: the span between two beats (this.i @eelnh6dn) ------------
+
+
+def test_the_meanwhile_card_counts_exactly_what_the_log_counts_over_the_span():
+    """M9's criterion. Two readings of one span that disagreed would make the card a
+    second, unchecked account of the record — which is the thing every screen here is
+    built not to be."""
+
+    out = screen("meanwhile", "--from", "board-seated", "--to", "b13")
+    with world() as record:
+        since, upto = record.at("board-seated"), record.at("b13")
+        span = [one for one in record.corpus.upto(upto) if since < one.position]
+        certifications = [one for one in span if one.kind == "certification"]
+
+    assert f"{len(span)} committed events" in out
+    assert f"of which {len(certifications)} certification" in out
+    # And every event in the span is on the card, addressed by its own sequence number.
+    for event in span:
+        assert f"{event.position.seq:>3}  " in out
+
+
+def test_the_meanwhile_card_says_the_beat_labels_are_ours():
+    """The disclosure the milestone asks for, and the least obvious of its three parts.
+
+    ``d1`` and ``b17`` are this demo's names and are committed nowhere. Saying so on the
+    screen costs two lines and is the same disclosure the law screen's alias header
+    already makes about party names.
+    """
+    # The note wraps, so it is matched against the screen with its breaks flattened.
+    flat = " ".join(screen("meanwhile", "--from", "b16", "--to", "b17").split())
+    assert "b16 and b17 are this demo's names for coordinates" in flat
+    assert "committed nowhere" in flat
+    assert "The record has sequence numbers" in flat
+
+
+def test_a_span_with_no_certification_says_so_rather_than_staying_silent():
+    out = screen("meanwhile", "--from", "b16", "--to", "b17")
+    assert "no certification among them" in out
+
+
+def test_a_backwards_span_prints_nothing_at_all():
+    """The demo's play order is not the record's: beat 8 is asked at seq 16 and follows
+    beat 13 at seq 33. Going back there is nothing that happened while nobody was
+    looking, and a card saying "nothing was committed" would be false as well as noisy —
+    plenty was committed and the room has already seen it."""
+    assert screen("meanwhile", "--from", "b13", "--to", "b8") == ""
+    # The other one the record carries: beat 20's duplicity observation is the LAST
+    # event, one coordinate after the amendment beat 22 asks about, so the live run's
+    # 20-then-22 order steps back by one. The comment at the foot of acme/build.py
+    # explains why the observation has to be last.
+    assert screen("meanwhile", "--from", "b20", "--to", "b22") == ""
+
+
+def test_an_empty_span_between_one_coordinate_and_itself_prints_nothing():
+    assert screen("meanwhile", "--from", "d5", "--to", "d5") == ""
+
+
+def test_the_live_run_carries_a_meanwhile_card_wherever_the_record_advances():
+    """The driver emits one between every pair of beats and the command decides whether
+    there is anything to say, so the driver still reads nothing off the record."""
+    from utina.cli.demo2 import _coordinate_of, _sequence
+
+    out = screen("demo2", "--part", "live", "--no-pause")
+
+    # The driver's rule, exactly: between each beat and the one before it that had a
+    # coordinate. Beat 14 has none — an endorsement the toolchain refuses is asked
+    # nowhere — so it carries the previous coordinate forward rather than resetting.
+    with world() as record:
+        previous = ""
+        expected = []
+        for beat in _sequence("live"):
+            label = _coordinate_of(beat)
+            if not label:
+                continue
+            if previous and record.at(label).seq > record.at(previous).seq:
+                expected.append(label)
+            previous = label
+
+    assert expected, "the live run has forward spans to describe"
+    assert out.count("MEANWHILE, between") == len(expected)
+    for label in expected:
+        assert f"and {label}" in out

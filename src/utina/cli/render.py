@@ -80,6 +80,7 @@ __all__ = [
     "ground_of",
     "law_screen",
     "log_screen",
+    "meanwhile_screen",
     "rational",
     "replay_screen",
     "replay_verdict",
@@ -719,6 +720,72 @@ def _weight_note(total: Fraction) -> str:
 # --- utina log ----------------------------------------------------------------
 
 
+def meanwhile_screen(
+    events: tuple[Event, ...],
+    since: str,
+    upto: str,
+    aliases: Aliases,
+    style: Style,
+) -> str:
+    """What the record committed between two marked beats, which the room never sees.
+
+    **It shortens the live run.** A room reads a screen faster than it hears a
+    sentence, so the span the narrator used to cover in speech is cheaper on the
+    projector (``this.i`` @eelnh6dn).
+
+    Certifications are counted out separately because after M6 every affirmation rests
+    on one, and a room that never saw them would come away thinking an endorsement
+    authorized something.
+
+    The closing note is the third thing this screen owes, and the least obvious: the
+    beat labels are OURS. ``d1`` and ``b17`` are this demo's names for coordinates and
+    are committed nowhere — the record has sequence numbers. Saying it here costs two
+    lines and is the same disclosure the law screen's alias header already makes about
+    party names.
+    """
+    certifications = sum(1 for one in events if one.kind == certification.CERTIFICATION_KIND)
+    lines = [
+        *headline(style, style.strong(f"MEANWHILE, between {since} and {upto}")),
+        "",
+        f"{MARGIN}{_tally(len(events), certifications)}",
+        "",
+        MARGIN + style.label(f"{'seq':>3}  {'kind':<13} {'identifier':<18} what it commits"),
+    ]
+    for event in events:
+        lines.append(
+            f"{MARGIN}{event.position.seq:>3}  {event.kind:<13} "
+            f"{abbrev(event.said):<18} {_gloss(event, aliases)}"
+        )
+    lines.extend(
+        [
+            "",
+            *wrapped(
+                style,
+                "labels",
+                f"{since} and {upto} are this demo's names for coordinates and are "
+                "committed nowhere. The record has sequence numbers, which is what "
+                "the seq column above shows and what a stranger folding the same log "
+                "would address it by.",
+            ),
+        ]
+    )
+    return _screen(lines)
+
+
+def _tally(events: int, certifications: int) -> str:
+    """The span's size, and how much of it is the domain admitting a tally.
+
+    Never called with an empty span: ``meanwhile_command`` prints nothing at all rather
+    than a screen saying nothing happened, because where the demo's play order steps
+    back the record is not empty — the room has simply already seen it.
+    """
+    what = "event" if events == 1 else "events"
+    if not certifications:
+        return f"{events} committed {what}, and no certification among them."
+    which = "certification" if certifications == 1 else "certifications"
+    return f"{events} committed {what}, of which {certifications} {which}."
+
+
 def log_screen(
     events: tuple[Event, ...],
     label: str,
@@ -734,11 +801,11 @@ def log_screen(
         "key event first, then seal list.",
         f"{MARGIN}Arrival order is not consulted and there is nowhere here to read one from.",
         "",
-        MARGIN + style.label(f"{'seq':>3}  {'kind':<12} {'identifier':<18} what it commits"),
+        MARGIN + style.label(f"{'seq':>3}  {'kind':<13} {'identifier':<18} what it commits"),
     ]
     for event in events:
         lines.append(
-            f"{MARGIN}{event.position.seq:>3}  {event.kind:<12} "
+            f"{MARGIN}{event.position.seq:>3}  {event.kind:<13} "
             f"{abbrev(event.said):<18} {_gloss(event, aliases)}"
         )
     return _screen(lines)

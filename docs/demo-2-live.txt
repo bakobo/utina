@@ -84,6 +84,35 @@
   expects: a "no" means no
   happens: defeat under two slots, pending under three. The Constitution changed; the
     arithmetic did the rest
+  MEANWHILE, between board-seated and b13
+  ------------------------------------------------------------------------------------
+
+  18 committed events, of which 2 certifications.
+
+  seq  kind          identifier         what it commits
+   16  issuance      Egg_zDGvfCi4...    acme-governed-domain,6 declines None
+   17  endorsement   EQfnCxJn58wc...    dev-founder,6 endorses Efx7xD35Qc6n...
+   18  certification EQ20ITrciOU4...    the domain certifies Efx7xD35Qc6n...
+   19  act           E3CkC7KlYyV8...    an act of the class approve-budget
+   20  endorsement   EdWJdTA6J6Uk...    marta-founder,6 endorses E3CkC7KlYyV8...
+   21  endorsement   EMyOnRplLjSS...    nina-board-seat-3,6 endorses E3CkC7KlYyV8...
+   22  certification EuIxLtEoR1AU...    the domain certifies E3CkC7KlYyV8...
+   23  act           EGjUl5wf-EgX...    an act of the class approve-budget
+   24  endorsement   EUW6tAqZbtUY...    marta-founder,6 endorses EGjUl5wf-EgX...
+   25  endorsement   ExxK_2VcUUGv...    dev-founder,6 declines EGjUl5wf-EgX...
+   26  act           EgI-ZVEjrCWQ...    an act of the class amend-operating-agreement
+   27  endorsement   EA9CR8mNUjZS...    marta-founder,6 endorses EgI-ZVEjrCWQ...
+   28  endorsement   E-J1KRVMWmk6...    dev-founder,6 endorses EgI-ZVEjrCWQ...
+   29  endorsement   EHo6kG2k2fsX...    nina-board-seat-3,6 declines EgI-ZVEjrCWQ...
+   30  act           E6z8GBN0AKLe...    an act of the class declare-dividend
+   31  act           E978XZbiieJi...    an act of the class approve-budget
+   32  endorsement   Eqrox0_SoNlQ...    marta-founder,6 endorses E978XZbiieJi...
+   33  endorsement   E3xAA9ue-EBq...    dev-founder,6 declines E978XZbiieJi...
+
+  labels      board-seated and b13 are this demo's names for coordinates and are
+              committed nowhere. The record has sequence numbers, which is what the seq
+              column above shows and what a stranger folding the same log would address
+              it by.
 
 
 
@@ -150,6 +179,22 @@
   the office may do is the credential's business, and because it is a credential it can
   be revoked — at which point this slot empties and the office is an office nobody
   holds.
+  MEANWHILE, between b8 and d5
+  ------------------------------------------------------------------------------------
+
+  6 committed events, of which 2 certifications.
+
+  seq  kind          identifier         what it commits
+   17  endorsement   EQfnCxJn58wc...    dev-founder,6 endorses Efx7xD35Qc6n...
+   18  certification EQ20ITrciOU4...    the domain certifies Efx7xD35Qc6n...
+   19  act           E3CkC7KlYyV8...    an act of the class approve-budget
+   20  endorsement   EdWJdTA6J6Uk...    marta-founder,6 endorses E3CkC7KlYyV8...
+   21  endorsement   EMyOnRplLjSS...    nina-board-seat-3,6 endorses E3CkC7KlYyV8...
+   22  certification EuIxLtEoR1AU...    the domain certifies E3CkC7KlYyV8...
+
+  labels      b8 and d5 are this demo's names for coordinates and are committed nowhere.
+              The record has sequence numbers, which is what the seq column above shows
+              and what a stranger folding the same log would address it by.
 
 
 
@@ -203,6 +248,31 @@ ERROR  e.proof.edge-unvalidated.f
   expects: revoking undoes the decision
   happens: it changes the next answer and not the last one — and then duplicity, which
     does reach back
+  MEANWHILE, between d5 and b16
+  ------------------------------------------------------------------------------------
+
+  15 committed events, of which 1 certification.
+
+  seq  kind          identifier         what it commits
+   23  act           EGjUl5wf-EgX...    an act of the class approve-budget
+   24  endorsement   EUW6tAqZbtUY...    marta-founder,6 endorses EGjUl5wf-EgX...
+   25  endorsement   ExxK_2VcUUGv...    dev-founder,6 declines EGjUl5wf-EgX...
+   26  act           EgI-ZVEjrCWQ...    an act of the class amend-operating-agreement
+   27  endorsement   EA9CR8mNUjZS...    marta-founder,6 endorses EgI-ZVEjrCWQ...
+   28  endorsement   E-J1KRVMWmk6...    dev-founder,6 endorses EgI-ZVEjrCWQ...
+   29  endorsement   EHo6kG2k2fsX...    nina-board-seat-3,6 declines EgI-ZVEjrCWQ...
+   30  act           E6z8GBN0AKLe...    an act of the class declare-dividend
+   31  act           E978XZbiieJi...    an act of the class approve-budget
+   32  endorsement   Eqrox0_SoNlQ...    marta-founder,6 endorses E978XZbiieJi...
+   33  endorsement   E3xAA9ue-EBq...    dev-founder,6 declines E978XZbiieJi...
+   34  issuance      EbjTKtkpqaX7...    nina-board-seat-3,6 declines None
+   35  endorsement   EywNRbWKpq7C...    nina-board-seat-3-device,6 endorses E978XZbiieJi...
+   36  certification Eq95lN0TB6dh...    the domain certifies E978XZbiieJi...
+   37  revocation    EYeZoOx5aJ1Y...    —
+
+  labels      d5 and b16 are this demo's names for coordinates and are committed
+              nowhere. The record has sequence numbers, which is what the seq column
+              above shows and what a stranger folding the same log would address it by.
 
 
 
@@ -228,6 +298,18 @@ ERROR  e.proof.edge-unvalidated.f
   untouched, its keys still verify, and every finding that cited the credential while it
   stood still stands at its own coordinate. What a revocation reaches is the next act,
   not the last one.
+  MEANWHILE, between b16 and b17
+  ------------------------------------------------------------------------------------
+
+  2 committed events, and no certification among them.
+
+  seq  kind          identifier         what it commits
+   38  act           EZjrmSQI6tfg...    an act of the class approve-budget
+   39  endorsement   E6-OzCA3xGQ8...    marta-founder,6 endorses EZjrmSQI6tfg...
+
+  labels      b16 and b17 are this demo's names for coordinates and are committed
+              nowhere. The record has sequence numbers, which is what the seq column
+              above shows and what a stranger folding the same log would address it by.
 
 
 
@@ -270,6 +352,25 @@ ERROR  e.proof.edge-unvalidated.f
   endorsed 1 of 1, unity reached; reachable 3/2, still reachable
 
   ground      clause B1, reached by EMyOnRplLjSS..., EdWJdTA6J6Uk...
+  MEANWHILE, between b17 and b20
+  ------------------------------------------------------------------------------------
+
+  9 committed events, of which 1 certification.
+
+  seq  kind          identifier         what it commits
+   40  act           E2G9oY2qa45h...    an act of the class approve-budget
+   41  endorsement   EefYnxLYlvDI...    marta-founder,6 endorses E2G9oY2qa45h...
+   42  issuance      EAuxWOzifE1K...    acme-governed-domain,6 declines None
+   43  enactment     EtyDXisE5JD0...    a successor law, enacted as amend-operating-agreement
+   44  endorsement   EGUPEbARj1kk...    marta-founder,6 endorses EtyDXisE5JD0...
+   45  endorsement   EwhWVkXbZuyI...    dev-founder,6 endorses EtyDXisE5JD0...
+   46  endorsement   E6ps1wA65K50...    nina-board-seat-3,6 endorses EtyDXisE5JD0...
+   47  certification E6fkmiPbplYG...    the domain certifies EtyDXisE5JD0...
+   48  duplicity     EJFsGa7HjFS_...    duplicity observed at nina-board-seat-3,6
+
+  labels      b17 and b20 are this demo's names for coordinates and are committed
+              nowhere. The record has sequence numbers, which is what the seq column
+              above shows and what a stranger folding the same log would address it by.
 
 
 
