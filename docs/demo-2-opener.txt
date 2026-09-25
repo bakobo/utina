@@ -91,10 +91,6 @@
     5  act           EGaVz8hvVnPw...    an act of the class hire-vp-sales
     6  endorsement   EEPv81qzvdOt...    marta-founder,6 endorses EGaVz8hvVnPw...
 
-  labels      d1 and d2 are this demo's names for coordinates and are committed nowhere.
-              The record has sequence numbers, which is what the seq column above shows
-              and what a stranger folding the same log would address it by.
-
 
 
   ------------------------------------------------------------------------------------
@@ -132,10 +128,6 @@
     7  act           EK5aEpOlK_78...    an act of the class sign-office-lease
     8  endorsement   EH2so1QROlKe...    marta-founder,6 endorses EK5aEpOlK_78...
     9  endorsement   EE58bTVOtBvs...    dev-founder,6 declines EK5aEpOlK_78...
-
-  labels      d2 and d3 are this demo's names for coordinates and are committed nowhere.
-              The record has sequence numbers, which is what the seq column above shows
-              and what a stranger folding the same log would address it by.
 
 
 
@@ -178,10 +170,6 @@
   seq  kind          identifier         what it commits
    10  act           EPpk67g6frrF...    an act of the class release-escrowed-equity
    11  endorsement   EHwuKQwsw2FG...    marta-founder,6 endorses EPpk67g6frrF...
-
-  labels      d3 and b5 are this demo's names for coordinates and are committed nowhere.
-              The record has sequence numbers, which is what the seq column above shows
-              and what a stranger folding the same log would address it by.
 
 
 
@@ -236,10 +224,6 @@
    28  endorsement   EOzre7vw4LNV...    dev-founder,6 endorses EEf-zpGzdKJk...
    29  endorsement   EDuSpWY9GP94...    nina-board-seat-3,6 declines EEf-zpGzdKJk...
    30  act           EKi1z-Cj--HI...    an act of the class declare-dividend
-
-  labels      b5 and d8 are this demo's names for coordinates and are committed nowhere.
-              The record has sequence numbers, which is what the seq column above shows
-              and what a stranger folding the same log would address it by.
 
 
 

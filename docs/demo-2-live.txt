@@ -37,8 +37,6 @@
 
 
 
-
-
   ------------------------------------------------------------------------------------
   BEAT 9     The hire, re-asked after the amendment
   Beat 3's question, from the far side. Clause A1 is repealed, so the cure path is shut
@@ -149,8 +147,6 @@
 
 
 
-
-
   ------------------------------------------------------------------------------------
   BEAT 8     Board seat 3, and the two bindings that make it an office
   KERI's half is a delegation, dual-anchored: seat 3 signed its own dip naming Acme, and
@@ -199,10 +195,6 @@
    20  endorsement   EdWJdTA6J6Uk...    marta-founder,6 endorses E3CkC7KlYyV8...
    21  endorsement   EMyOnRplLjSS...    nina-board-seat-3,6 endorses E3CkC7KlYyV8...
    22  certification EuIxLtEoR1AU...    the domain certifies E3CkC7KlYyV8...
-
-  labels      b8 and d5 are this demo's names for coordinates and are committed nowhere.
-              The record has sequence numbers, which is what the seq column above shows
-              and what a stranger folding the same log would address it by.
 
 
 
@@ -280,10 +272,6 @@ ERROR  e.proof.edge-unvalidated.f
    36  certification Eq95lN0TB6dh...    the domain certifies E978XZbiieJi...
    37  revocation    EYeZoOx5aJ1Y...    revokes E1eY46Jhp41J...
 
-  labels      d5 and b16 are this demo's names for coordinates and are committed
-              nowhere. The record has sequence numbers, which is what the seq column
-              above shows and what a stranger folding the same log would address it by.
-
 
 
   ------------------------------------------------------------------------------------
@@ -318,10 +306,6 @@ ERROR  e.proof.edge-unvalidated.f
   seq  kind          identifier         what it commits
    38  act           EZjrmSQI6tfg...    an act of the class approve-budget
    39  endorsement   E6-OzCA3xGQ8...    marta-founder,6 endorses EZjrmSQI6tfg...
-
-  labels      b16 and b17 are this demo's names for coordinates and are committed
-              nowhere. The record has sequence numbers, which is what the seq column
-              above shows and what a stranger folding the same log would address it by.
 
 
 
@@ -382,10 +366,6 @@ ERROR  e.proof.edge-unvalidated.f
    47  certification E6fkmiPbplYG...    the domain certifies EtyDXisE5JD0...
    48  duplicity     EJFsGa7HjFS_...    duplicity observed at nina-board-seat-3,6
 
-  labels      b17 and b20 are this demo's names for coordinates and are committed
-              nowhere. The record has sequence numbers, which is what the seq column
-              above shows and what a stranger folding the same log would address it by.
-
 
 
   ------------------------------------------------------------------------------------
@@ -420,8 +400,6 @@ ERROR  e.proof.edge-unvalidated.f
 
 
 
-
-
   ------------------------------------------------------------------------------------
   BEAT 22    The second amendment: lower the ordinary-acts bar
   The board passes it unanimously, all three slots, unity reached. It is entirely lawful
@@ -439,8 +417,6 @@ ERROR  e.proof.edge-unvalidated.f
   endorsed 1 of 1, unity reached; reachable 1, still reachable
 
   ground      clause B2, reached by E6ps1wA65K50..., EGUPEbARj1kk..., EwhWVkXbZuyI...
-
-
 
 
 
@@ -492,10 +468,6 @@ ERROR  e.proof.edge-unvalidated.f
    50  endorsement   EcZ8rhpFYT1P...    marta-founder,6 endorses EM0YPtJoDXTA...
    51  endorsement   EGiHD3Xz6gHb...    dev-founder,6 declines EM0YPtJoDXTA...
    52  certification ERRRAUt0KgnU...    the domain certifies EM0YPtJoDXTA...
-
-  labels      b23 and b26 are this demo's names for coordinates and are committed
-              nowhere. The record has sequence numbers, which is what the seq column
-              above shows and what a stranger folding the same log would address it by.
 
 
 

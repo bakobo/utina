@@ -741,6 +741,8 @@ def meanwhile_screen(
     upto: str,
     aliases: Aliases,
     style: Style,
+    *,
+    labels: bool = True,
 ) -> str:
     """What the record committed between two marked beats, which the room never sees.
 
@@ -774,6 +776,8 @@ def meanwhile_screen(
             f"{MARGIN}{event.position.seq:>3}  {event.kind:<13} "
             f"{abbrev(event.said):<18} {_gloss(event, aliases)}"
         )
+    if not labels:
+        return _screen(lines)
     lines.extend(
         [
             "",

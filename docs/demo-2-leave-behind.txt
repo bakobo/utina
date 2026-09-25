@@ -88,8 +88,6 @@
 
 
 
-
-
   ------------------------------------------------------------------------------------
   BEAT 18    Beat 12's question, re-asked at beat 12's own position
   Byte-identical to the original finding, ground included. Beat 19 is the same answer
@@ -144,10 +142,6 @@
    40  act           E2G9oY2qa45h...    an act of the class approve-budget
    41  endorsement   EefYnxLYlvDI...    marta-founder,6 endorses E2G9oY2qa45h...
 
-  labels      d5 and b21 are this demo's names for coordinates and are committed
-              nowhere. The record has sequence numbers, which is what the seq column
-              above shows and what a stranger folding the same log would address it by.
-
 
 
   ------------------------------------------------------------------------------------
@@ -180,8 +174,6 @@
 
 
 
-
-
   ------------------------------------------------------------------------------------
   BEAT 24    The first decision, re-asked from the end of the record
   The past is recomputable under the law in force then: still affirmed, still under A1,
@@ -207,8 +199,6 @@
     clauses     A1
     reached by  E7rZDgjVNGiJ..., ETFRV_i1XbrD...
     evidence    f76908871f89ea9c...
-
-
 
 
 

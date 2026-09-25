@@ -35,6 +35,7 @@ nobody will remember to move.
 
 from __future__ import annotations
 
+import io
 import textwrap
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -460,6 +461,7 @@ def walk2(
     sequence = _sequence(part) if beat is None else (_named(beat),)
     status = 0
     since = ""
+    labelled = False
     for index, one in enumerate(sequence):
         kernel = _kernel_of(one)
         if kernel is not None:
@@ -471,10 +473,20 @@ def walk2(
         # beats' own argv and handed to `utina meanwhile` to answer.
         upto = coordinate_of(one)
         if since and upto and since != upto:
-            span = ("meanwhile", "--from", since, "--to", upto)
-            # Two lines of air, or the heading runs into the kernel card above it.
-            console.out.write("\n\n")
-            status = max(status, run(span + _backend_argv(backend, store), console))
+            span: tuple[str, ...] = ("meanwhile", "--from", since, "--to", upto)
+            # The note that beat labels are ours says the same thing every time, so
+            # only the first meanwhile screen of a run carries it. An empty span prints
+            # nothing, so whether one rendered is read off what it wrote.
+            span += ("--no-labels",) if labelled else ()
+            buffer = io.StringIO()
+            status = max(
+                status,
+                run(span + _backend_argv(backend, store), replace(console, out=buffer)),
+            )
+            if screen := buffer.getvalue():
+                # Two lines of air, or the heading runs into the kernel card above it.
+                console.out.write("\n\n" + screen)
+                labelled = True
         since = upto or since
         argv = one.argv + _backend_argv(backend, store)
         for line in _announce(one, argv, console.style):

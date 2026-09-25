@@ -240,6 +240,10 @@ def build_parser(console: Console) -> _Parser:
     )
     meanwhile.add_argument("--from", dest="since", required=True, metavar="POSITION")
     meanwhile.add_argument("--to", dest="upto", required=True, metavar="POSITION")
+    meanwhile.add_argument(
+        "--no-labels", dest="labels", action="store_false",
+        help="omit the note that beat labels are this demo's names, once it has been shown",
+    )
 
     replay = commands.add_parser(
         "replay", out=console.out, parents=[backend],
@@ -397,7 +401,8 @@ def meanwhile_command(args: argparse.Namespace, console: Console) -> int:
             return 0
         console.out.write(
             meanwhile_screen(
-                events, args.since, args.upto, _aliases(record), console.style
+                events, args.since, args.upto, _aliases(record), console.style,
+                labels=args.labels,
             )
         )
     return 0
