@@ -72,14 +72,20 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # (the genesis knot, custos-4.2.md:1073-1084, this.i @4b2mmhbf).
     constructor = Constructor.found(substrate, GAID, founding_law(aids), values=values)
     aids[GAID] = constructor.gaid
-    # Nina is incepted and aliased and commits no act. She holds board seat 3's
-    # keys in the story; in the record the seat signs, because the law slots the
-    # office and the substrate holds every party's keys anyway (@z373ew7j).
+    # Nina is not incepted and commits no act. She holds board seat 3's keys in the
+    # story; in the record the seat signs, because the law slots the OFFICE and the
+    # substrate holds every party's keys anyway (@z373ew7j, @ftjpdph5).
 
-    # Board seat 3 is an office, not a person: a delegated identifier of the
-    # domain, whose keys Nina holds (custos-4.2.md:2139-2148, this.i @2a25xudi).
-    # It is delegated after the four self-incepted parties so that their key
-    # material, derived from the pinned salt by index, does not move.
+    # Board seat 3 is an office, not a person: a delegated identifier of the domain,
+    # whose keys Nina holds (custos-4.2.md:2139-2148, this.i @2a25xudi). Delegated
+    # after the self-incepted parties so their key material, derived from the pinned
+    # salt by index, does not move.
+    #
+    # ~23su — the certification plan ruled that this should delegate from NINA rather
+    # than from the domain. Deferred by Daniel on 2026-09-25 and left here on purpose:
+    # :2139 says a seated organ SHOULD be a delegated identifier of the gAID, and its
+    # reason is custodial recovery of a compromised organ, which is beat 20's whole
+    # situation. The tick carries the argument both ways.
     seat3 = aids[SEAT] = substrate.delegate(aids[GAID], SEAT)
 
     # Beat 15's device: delegated from the SEAT, not from Nina and not from the
