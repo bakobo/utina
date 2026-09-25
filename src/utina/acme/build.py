@@ -365,6 +365,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # taint succession and the beat would show beat 20's screen a second time.
     liar = name("equity-retabled", constructor.propose(EQUITY))
     claimed = constructor.endorse(marta, liar)
+    name("marta-endorses-retabled-equity", claimed)
     name("equity-retabled-declined", constructor.decline(dev, liar))
     mark("b26", certify(f"{EQUITY}-falsely-certified", liar, (claimed, Fraction(1, 1))))
 

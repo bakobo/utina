@@ -750,3 +750,45 @@ def test_many_unratified_enactments_do_not_make_the_law_fold_explode():
     started = time.monotonic()
     assert sorted_ids(Constitution.at(Corpus.load(events), Position(39))) == ["A1", "A2"]
     assert time.monotonic() - started < 5
+
+
+def test_a_law_whose_certification_field_is_unreadable_refuses_the_edition():
+    """The fail-open a substitute reviewer reproduced: a typo disabling the requirement.
+
+    Reading a present-but-unreadable field as ABSENT meant a domain could switch off its
+    own certification requirement with a malformed value and have every act affirmed on
+    arithmetic alone. Axiom 4's posture one field along: an unreadable external semantics
+    refuses rather than being assumed away, and the clause level already inherited rather
+    than exempting (``this.i`` @2e2dncfe, ``fold/semantics.py``).
+    """
+    founding = Event(
+        said="E0-inception",
+        kind="inception",
+        position=INCEPTION,
+        body={"law": {"clauses": STATE_ONE, "certification": {"schema": "Erequired"}}},
+    )
+    record = Corpus.load([founding, *EVENTS[1:]])
+
+    with pytest.raises(BakoboError) as raised:
+        Constitution.at(record, LATER)
+
+    assert raised.value.code == "e.input.malformed.law.f"
+    assert "certification" in raised.value.detail
+
+
+def test_a_law_naming_no_certification_schema_at_all_is_not_unreadable():
+    """Absent is a governance choice Custos delegates (``:1924``), not a defect."""
+    assert ids(Constitution.at(corpus(), LATER)) == ["B1", "B2"]
+
+
+def test_a_law_saying_its_acts_stand_on_their_arithmetic_is_read_rather_than_refused():
+    """``False`` is the committed way a clause says so; a law carrying it means the same."""
+    founding = Event(
+        said="E0-inception",
+        kind="inception",
+        position=INCEPTION,
+        body={"law": {"clauses": STATE_ONE, "certification": False}},
+    )
+    record = Corpus.load([founding, *EVENTS[1:]])
+
+    assert ids(Constitution.at(record, LATER)) == ["B1", "B2"]

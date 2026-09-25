@@ -1063,3 +1063,34 @@ def test_a_slot_disposition_keys_itself_by_its_endorser_when_given_no_seat():
 
     assert direct.key == MARTA
     assert (seated.key, seated.endorser) == (OFFICE, NINA)
+
+
+def test_a_contested_office_fills_nothing_at_the_coordinate_it_was_contested():
+    """The reachability a substitute reviewer found, and it was mine to create.
+
+    ``seating_is_ambiguous`` refuses where the office is contested at the coordinate the
+    QUESTION is asked from, and that was the only coordinate ``_holder`` was ever called
+    at until ``this.i`` @djyj2bc2 made it per-act. After that there were coordinates the
+    refusal cannot see: a seating contested when an endorsement was made and resolved by
+    a revocation before the question is asked. That endorsement would have counted on a
+    first-of-two guess. @djyj2bc2's own note claimed the gap had not been widened, and it
+    had.
+    """
+    contested = [
+        seating(),
+        grant("ESeat2", issuer=DOMAIN, issuee=DEV),
+        signed("EAct1", NINA),
+    ]
+    # The contest resolves in Dev's favour, so afterwards the office has exactly one
+    # holder and nothing refuses. Nina's endorsement was made while it was contested.
+    settled = [*contested, revoked("ERevoke", "ESeat-credential", registry="EAcmeRegistry")]
+
+    # Asked over the contested bundle, the fold refuses the whole question.
+    assert slots.seating_is_ambiguous(seated_office(), contested) == OFFICE
+
+    # Asked after the contest is resolved, it does not refuse — and the endorsement made
+    # while the office was contested must still count for nothing.
+    assert slots.seating_is_ambiguous(seated_office(), settled) is None
+    assert slots.dispositions(seated_office(), settled, SUBJECT)[OFFICE] is (
+        Disposition.PENDING
+    )

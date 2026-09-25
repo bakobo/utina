@@ -408,10 +408,22 @@ def _holder(slot: Slot, asof: Sequence[CommittedEvent]) -> AID | None:
     answered by the record, and a vacant office is an ordinary state rather than a
     fault — beat 17's whole content is a seat nobody holds after a revocation.
 
-    Ambiguity is not resolved here. Where two parties hold one office the fold
-    refuses, and that decision belongs to the evaluator rather than to the row: this
-    function reports the first, and :func:`seating_is_ambiguous` is what the caller
-    asks before trusting any of it.
+    **A contested office fills nothing**, and that is fail-closed rather than a
+    refusal because of where this is asked from. ``seating_is_ambiguous`` refuses the
+    whole question where the office is contested at the coordinate the question is
+    asked from, and that used to be the only coordinate this function was ever called
+    at. Since @djyj2bc2 it is called once per candidate act, so there are coordinates
+    the evaluator's refusal never looks at — a seating contested when an endorsement
+    was made, resolved by a revocation before the question is asked, would otherwise
+    have that endorsement counted on a first-of-two guess. Returning ``None`` makes it
+    count for nothing, which is the same direction every other unverifiable thing in
+    this module takes.
+
+    That gap was real before @djyj2bc2 and that node's own note said it had not been
+    widened. The note was wrong: resolving once at the appraisal coordinate meant the
+    refusal covered exactly the coordinate this was asked at, and resolving per act
+    opened coordinates it cannot see. Found by a substitute review on PR #9, which
+    reproduced it.
     """
     if slot.office is None:
         return slot.endorser
@@ -421,7 +433,7 @@ def _holder(slot: Slot, asof: Sequence[CommittedEvent]) -> AID | None:
     seated = holders_of(
         asof, schema=wanted.schema, issuer=wanted.issuer, office=slot.office
     )
-    return seated[0] if seated else None
+    return seated[0] if len(seated) == 1 else None
 
 
 def seating_is_ambiguous(group: Group, asof: Sequence[CommittedEvent]) -> str | None:

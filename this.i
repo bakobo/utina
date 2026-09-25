@@ -1921,6 +1921,56 @@ Make Custos's replayable governance useful to a real organization = goal:
         function does not itself enforce; it holds because `Corpus` enforces it, and the
         docstring now says which.
 
+    A tally's edges must resolve, and unreadable law refuses rather than exempts = decision:
+      id: g3qt5r3l
+      why: >
+        Four defects from the substitute review on PR #9, after Copilot stopped returning
+        for the head and Daniel authorised a seat review in its place (`codex` on the whole
+        PR, `qwen` on the unreviewed delta, which came back SOUND). Three of the four were
+        REPRODUCED by running code rather than read off the diff, which is why they are here
+        as decisions rather than as declined suggestions.
+        A TALLY'S EDGES HAVE TO RESOLVE. `counted_by` read what a dossier CLAIMS and its own
+        docstring had said since the day it was written that a verifier "resolves each one
+        against the record" — and nothing did. The two checks in place were "do the claimed
+        weights sum to unity" and "does the record independently reach unity", and both are
+        true of a tally citing one edge that does not exist, at weight 1, over a record that
+        happens to carry the votes anyway. The reviewer emitted exactly that through
+        `Constructor.certify` and got Affirmed. `unresolved` now walks every cited edge: it
+        must name a committed act that ENDORSES this subject, in a slot the clause counts, at
+        no more than that slot's weight.
+        IT GOES LAST OF THE THREE, and the ordering is the decision rather than a detail. An
+        inflated weight is simultaneously a citation that does not stand up and a tally
+        written around a signed no, so resolving first renamed every existing proof pair from
+        the omitted declination to the offending edge. That is a worse answer for a reader:
+        absence is the surprising half and is what @epztz4wd ruled the beat on. Last, it
+        catches precisely what the other two cannot — fiction over a record that genuinely
+        reaches unity — and changes no existing verdict or pair.
+        UNREADABLE LAW REFUSES. `required_by` read a certification field that was present and
+        malformed as ABSENT, so a domain could disable its own certification requirement with
+        a typo and have every act affirmed on arithmetic alone; the reviewer set the field to
+        a mapping and watched it happen. Its docstring called that "fail-closed in the same
+        shape as the semantics block", which had the shape exactly backwards — an unreadable
+        semantics pin REFUSES the question rather than being ignored. `unreadable_in` is the
+        separate question, and `_edition_committed_by` raises on it, which is the pattern a
+        contradictory edition already used. The clause level had been right all along, so the
+        law level was the inconsistent one.
+        A CONTESTED OFFICE FILLS NOTHING, and this one was mine to create. @djyj2bc2 made
+        `_holder` resolve per candidate act instead of once at the appraisal coordinate,
+        which was right — but `seating_is_ambiguous` still refuses only at the coordinate the
+        question is asked from, so there are now coordinates the refusal cannot see. An
+        endorsement made while an office was contested, with the contest resolved by a
+        revocation before the question is asked, counted on a first-of-two guess. @djyj2bc2's
+        own note said the gap "is left where it was rather than half-closed here"; that was
+        wrong, because resolving once meant the refusal covered exactly the coordinate being
+        asked about. `_holder` now returns None where the office has more than one holder.
+        THE LESSON, and it is the third time on this PR: every one of these was a claim
+        written in a docstring and not implemented in the code beside it. The fail-open in
+        round one was the certification schema named by the law and never compared; this
+        round it is edges a docstring said a verifier resolves, and a field a docstring
+        called fail-closed while it failed open. A reviewer who reads the prose against the
+        code finds these and a reviewer who reads the code alone does not, which is an
+        argument for keeping the prose rather than for trimming it.
+
     The law creates a seat; a credential fills it = decision:
       id: ftjpdph5
       why: >

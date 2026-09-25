@@ -316,6 +316,21 @@ def _edition_committed_by(
         raise MALFORMED_LAW(
             field=LAW_FIELD, expected="a mapping carrying the clauses this event commits"
         )
+    # A certification requirement that is PRESENT and unreadable refuses the edition
+    # rather than exempting it. Reading it as absent let a domain disable its own
+    # certification requirement with a typo, which is the cheapest available attack on
+    # the whole mechanism — reproduced on PR #9 by setting the field to a mapping and
+    # watching an uncertified act come back affirmed. This is axiom 4's posture one field
+    # along: an unreadable external semantics refuses rather than being assumed away
+    # (``fold/semantics.py``), and the clause level already inherited rather than exempted.
+    if certification.unreadable_in(law):
+        raise MALFORMED_LAW(
+            field=certification.REQUIRES_FIELD,
+            expected=(
+                "the identifier of the schema this domain's certifications must satisfy, "
+                "or the field absent where it requires none"
+            ),
+        )
     return (
         Clause.edition_from_committed(law.get(CLAUSES_FIELD)),
         semantics.declared(law),

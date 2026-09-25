@@ -62,6 +62,8 @@ __all__ = [
     "reached_by",
     "required_by",
     "schema_for",
+    "unreadable_in",
+    "unresolved",
 ]
 
 CERTIFICATION_KIND = "certification"
@@ -77,12 +79,44 @@ REQUIRES_FIELD = "certification"
 def required_by(law: Mapping[str, object]) -> SAID | None:
     """The certification schema this law requires, or ``None`` where it requires none.
 
-    Read fail-closed in the same shape as the semantics block: a field whose value is
-    not a usable identifier is read as naming nothing rather than guessed at, because a
-    requirement the fold cannot read is not one it can hold anybody to.
+    ``None`` means the field is ABSENT. A field that is present and unreadable is a
+    different thing and :func:`unreadable_in` is what asks about it — because reading
+    one as the other is a fail-open, and it was one here until PR #9's substitute
+    review set the field to a mapping and watched an uncertified act come back affirmed.
+
+    The first draft of this called reading-as-absent "fail-closed in the same shape as
+    the semantics block", and that had the shape exactly backwards: an unreadable
+    semantics pin REFUSES the question rather than being ignored, and an unreadable
+    certification requirement was being ignored. The clause level had it right all along
+    — a malformed clause field inherits the law's rather than exempting the clause
+    (``tests/test_evaluate.py``) — so the law level was the inconsistent one.
     """
     named = law.get(REQUIRES_FIELD)
     return named if isinstance(named, str) and named else None
+
+
+def unreadable_in(law: Mapping[str, object]) -> bool:
+    """Whether this law's certification field is present and not a usable identifier.
+
+    A law that says something about certifying which this engine cannot read is law
+    this engine may not apply, and the answer is a refusal rather than an exemption.
+    That is axiom 4's own posture one field along: an unpinned or unrecognized external
+    semantics is refused, never assumed at whatever revision happens to be installed
+    (``fold/semantics.py``, ``custos-4.2.md:290``). Treating it as an exemption would
+    let a domain disable its own certification requirement with a typo, which is the
+    single cheapest attack on this whole mechanism.
+
+    Absent is not unreadable. A law naming no schema requires none, and that is a
+    governance choice Custos delegates (``:1924``), not a defect.
+    """
+    if REQUIRES_FIELD not in law:
+        return False
+    named = law[REQUIRES_FIELD]
+    # ``False`` is the committed way a CLAUSE says "my acts stand on their arithmetic".
+    # A law carrying it means the same thing and is read rather than refused.
+    if named is False:
+        return False
+    return not (isinstance(named, str) and named)
 
 
 def schema_for(clause: Clause, default: SAID | None) -> SAID | None:
@@ -171,6 +205,11 @@ def counted_by(event: Event) -> tuple[tuple[SAID, Fraction], ...]:
     a node, or whose weight will not parse, contributes nothing — which is the
     fail-closed direction, since the alternative is a certification reaching unity on
     bytes the fold could not read.
+
+    **This reads what the dossier CLAIMS and resolves nothing**; :func:`unresolved` is
+    the half that walks the record. The two are separate because a reader wants both
+    numbers — what was claimed and what stands up — and a single function returning
+    only the second would make a certification's own arithmetic unreadable.
     """
     group = credential(event).get("e", {})
     members = group.get(TALLY_GROUP) if isinstance(group, dict) else None
@@ -244,17 +283,67 @@ def contradicting(
     return None
 
 
+def unresolved(event: Event, corpus: Corpus, group: Group, subject: SAID) -> SAID | None:
+    """The first edge this certification cites that the record does not bear out.
+
+    ``counted_by`` reads what the dossier CLAIMS. This walks it: every cited edge has to
+    name a committed act that actually endorses ``subject``, in a slot this clause
+    counts, at the weight the slot commits. An edge naming nothing, naming a declination,
+    naming a party the clause does not slot, or claiming more weight than its slot
+    carries, is a citation that does not stand up.
+
+    **Without this a tally's edges were fiction and the fold did not notice.** The check
+    was "do the claimed weights sum to unity" and "does the record independently reach
+    unity", which are both true of a certification citing one edge that does not exist at
+    weight 1 over a record that happens to carry the votes anyway — reproduced on PR #9
+    by a substitute reviewer, which emitted exactly that and got ``Affirmed``. The
+    docstring of ``counted_by`` had said a verifier "resolves each one against the
+    record" since the day it was written, and nothing did (``this.i`` @epztz4wd's "a
+    verifier walks the edges, resolves each one, and recomputes the sum for themselves").
+
+    Returns the offending edge's identifier, which is what a proof pair wants: a reader
+    sees the certification and the citation that does not hold.
+    """
+    endorsing = {
+        one.said: one
+        for one in classify(group, corpus.upto(event.position), subject)
+        if one.said is not None and one.disposition is Disposition.ENDORSED
+    }
+    weights = {slot.key: slot.weight for slot in group.slots}
+    for node, claimed in counted_by(event):
+        stands = endorsing.get(node)
+        if stands is None or claimed > weights.get(stands.key, Fraction(0)):
+            return node
+    return None
+
+
 def _contradiction(
     event: Event, corpus: Corpus, group: Group, subject: SAID
 ) -> tuple[Event, SAID | None] | None:
-    """Whether this one certification contradicts itself or the record, and on what."""
+    """Whether this one certification contradicts itself or the record, and on what.
+
+    **Three checks, in this order, and the order decides which contradiction a proof
+    names.** Cheapest and most internal first — the cited weights against unity. Then
+    the record's own arithmetic, because that is the contradiction @epztz4wd ruled and
+    the one the demo's beat 26 is about: a sponsor citing around a declination the domain
+    already admitted. Then the citations themselves.
+
+    The edge-resolution check goes LAST deliberately. An inflated weight is both a
+    citation that does not stand up and a tally written around a signed no, so putting
+    resolution first renamed every existing proof pair from the omitted declination to
+    the offending edge — which is a worse answer for a reader, since absence is the
+    surprising half. Last, it catches exactly what the other two cannot: a tally citing
+    fiction over a record that independently reaches unity, which was a fail-open until
+    PR #9's substitute review emitted one and got ``Affirmed``.
+    """
     if reached_by(event) < 1:
         return event, None
     classified = classify(group, corpus.upto(event.position), subject)
     held: dict[str, Disposition] = {one.key: one.disposition for one in classified}
-    if group.satisfied(held):
-        return None
-    return event, _cited_around(event, classified)
+    if not group.satisfied(held):
+        return event, _cited_around(event, classified)
+    fiction = unresolved(event, corpus, group, subject)
+    return None if fiction is None else (event, fiction)
 
 
 def _cited_around(event: Event, classified: Sequence[SlotDisposition]) -> SAID | None:

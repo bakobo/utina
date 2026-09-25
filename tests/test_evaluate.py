@@ -1635,3 +1635,56 @@ def test_the_earliest_contradictory_certification_is_the_one_named():
 
     assert isinstance(finding, SelfConvicted)
     assert finding.proof.package == log.said("cert-short"), "the earliest, not the worst"
+
+
+# --- the substitute review's findings, PR #9 ----------------------------------
+
+
+def test_a_tally_citing_an_edge_that_does_not_resolve_convicts():
+    """The fail-open a substitute reviewer reproduced: fiction over a sound record.
+
+    The claimed weights sum to unity and the record independently reaches unity, so both
+    of the earlier checks pass — and the tally cites an endorsement that does not exist.
+    ``counted_by``'s docstring had said since the day it was written that a verifier
+    "resolves each one against the record", and nothing did.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert", tabled, [("Enot-a-committed-act", "1/1")])
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.pair == (log.said("cert"), "Enot-a-committed-act")
+
+
+def test_a_tally_citing_a_declination_as_though_it_endorsed_convicts():
+    """An edge has to name an act that ENDORSES the subject, not merely mention it."""
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.endorse(DEV, tabled)
+    other = log.act("other", "hire")
+    refused = log.decline(DEV, other)
+
+    log.certify("cert", tabled, [(log.said(f"endorse-{MARTA}"), "1/2"), (refused, "1/2")])
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), SelfConvicted)
+
+
+def test_a_tally_inflating_one_edge_beyond_its_slots_weight_convicts():
+    """A cited edge may not claim more than the slot its endorser holds commits."""
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), SelfConvicted)
+
+
+def test_a_sound_tally_over_a_sound_record_still_affirms():
+    """The control. Resolution is a new refusal and must not convict an honest tally."""
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert", tabled, log.tally(*SOUND))
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)

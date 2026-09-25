@@ -50,7 +50,7 @@ from utina.cli.appraisal import held_by, registry_holdings
 from utina.cli.render import law_screen, registry_screen, seat_screen
 from utina.cli.style import Style
 from utina.enact import Constructor
-from utina.fold import Constitution, bearing, evaluate, semantics, standing
+from utina.fold import Constitution, bearing, certification, evaluate, semantics, standing
 from utina.fold import slots as slot_predicate
 from utina.fold.evaluate import disturbed_by
 from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies, SelfConvicted
@@ -809,6 +809,18 @@ def test_b26_a_false_certification_convicts_its_sponsor_on_her_own_signature(acm
         acme.said(FALSE_CERTIFICATION),
         acme.said(FALSE_DECLINATION),
     )
+
+    # The LIE itself, which the verdict alone does not establish — a different false
+    # tally would satisfy everything above. Raised by the substitute review on PR #9.
+    tally = acme.corpus.event(acme.said(FALSE_CERTIFICATION))
+    assert tally.body["i"] == acme.gaid, "only the domain can admit a tally to its own log"
+    assert slot_predicate.credential(tally)["i"] == acme.aid(MARTA), "Marta sponsored it"
+
+    cited = dict(certification.counted_by(tally))
+    assert cited == {acme.said("marta-endorses-retabled-equity"): Fraction(1, 1)}, (
+        "her own endorsement, cited at the whole of unity where her slot commits a half"
+    )
+    assert acme.said(FALSE_DECLINATION) not in cited, "and Dev's signed no is not in it"
 
     # And the arithmetic the screen shows beside it: Marta's half, Dev's spent slot, and
     # a sum that never reached the unity the tally claimed.
