@@ -2670,3 +2670,20 @@ Make Custos's replayable governance useful to a real organization = goal:
         quarantine `tests/test_purity.py` holds (@cldspl) — the scope, the flag and the role are
         COIA's business and COIA's business is the CLI's alone. Rejected deriving a cast from
         the record's aids, which is where an invented name would come from.
+
+    A demo beat is not a record label, and no longer borrows its error = decision:
+      id: pvafdkfv
+      why: >
+        Both demo drivers raised the record's own `e.state.label-unknown.f` when asked for
+        a beat the script does not have, filling its `known` argument with the driver's
+        run-of-show ids. The two namespaces overlap only by accident — demo 2's beats are
+        numbered 1 to 26 and the record's labels are `b5`, `d1`, `board-seated` — so the
+        message told a reader that Acme's record committed labels called `1, 2, 3`, which
+        is a confident, specific and false answer about committed bytes. Latent until
+        @er57yvs7 widened that error's detail to name the domain whose record was asked;
+        sharpening a message is what made the borrowed one visibly wrong, which is the
+        argument for sharpening it. Chose `e.state.beat-unknown.f` in `utina.cli.errors`,
+        beside the alias codes and for their reason: a beat exists only in the display
+        plane, so an unknown one is an obstacle no other plane can describe. Rejected
+        widening the label error to take which KIND of name was asked for, which would
+        have made one code cover two obstacles and defeated prefix-matching on either.
