@@ -36,6 +36,8 @@
     governs   release-escrowed-equity
     slots     marta-founder,6 1/2, dev-founder,6 1/2
     weights   the slots sum to 1, so every slot is required
+
+
   MEANWHILE, between inception and d1
   ------------------------------------------------------------------------------------
 
@@ -78,6 +80,8 @@
     clauses     A1
     reached by  EA2o4R_E1_tV..., EJ15CKJc7X_W...
     evidence    7c93128eac3b4353...
+
+
   MEANWHILE, between d1 and d2
   ------------------------------------------------------------------------------------
 
@@ -117,6 +121,8 @@
   ground - what would discharge this
     dev-founder-acme,6 endorsement under clause A1, absent
                        cured by the arrival of the missing evidence
+
+
   MEANWHILE, between d2 and d3
   ------------------------------------------------------------------------------------
 
@@ -162,6 +168,8 @@
     reason      Unity is unreachable under clause A1: dev-founder-acme,6 committed a
                 signed declination, which spends that slot's weight, and the weight that
                 can still arrive no longer reaches unity.
+
+
   MEANWHILE, between d3 and b5
   ------------------------------------------------------------------------------------
 
@@ -201,6 +209,8 @@
   ground - what would discharge this
     dev-founder-acme,6 endorsement under clause A3, absent
                        cured by the arrival of the missing evidence
+
+
   MEANWHILE, between b5 and d8
   ------------------------------------------------------------------------------------
 

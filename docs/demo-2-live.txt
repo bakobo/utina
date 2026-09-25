@@ -37,6 +37,8 @@
 
 
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 9     The hire, re-asked after the amendment
   Beat 3's question, from the far side. Clause A1 is repealed, so the cure path is shut
@@ -84,6 +86,8 @@
   expects: a "no" means no
   happens: defeat under two slots, pending under three. The Constitution changed; the
     arithmetic did the rest
+
+
   MEANWHILE, between board-seated and b13
   ------------------------------------------------------------------------------------
 
@@ -145,6 +149,8 @@
 
 
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 8     Board seat 3, and the two bindings that make it an office
   KERI's half is a delegation, dual-anchored: seat 3 signed its own dip naming Acme, and
@@ -179,6 +185,8 @@
   the office may do is the credential's business, and because it is a credential it can
   be revoked — at which point this slot empties and the office is an office nobody
   holds.
+
+
   MEANWHILE, between b8 and d5
   ------------------------------------------------------------------------------------
 
@@ -248,6 +256,8 @@ ERROR  e.proof.edge-unvalidated.f
   expects: revoking undoes the decision
   happens: it changes the next answer and not the last one — and then duplicity, which
     does reach back
+
+
   MEANWHILE, between d5 and b16
   ------------------------------------------------------------------------------------
 
@@ -298,6 +308,8 @@ ERROR  e.proof.edge-unvalidated.f
   untouched, its keys still verify, and every finding that cited the credential while it
   stood still stands at its own coordinate. What a revocation reaches is the next act,
   not the last one.
+
+
   MEANWHILE, between b16 and b17
   ------------------------------------------------------------------------------------
 
@@ -352,6 +364,8 @@ ERROR  e.proof.edge-unvalidated.f
   endorsed 1 of 1, unity reached; reachable 3/2, still reachable
 
   ground      clause B1, reached by EMyOnRplLjSS..., EdWJdTA6J6Uk...
+
+
   MEANWHILE, between b17 and b20
   ------------------------------------------------------------------------------------
 
@@ -406,6 +420,8 @@ ERROR  e.proof.edge-unvalidated.f
 
 
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 22    The second amendment: lower the ordinary-acts bar
   The board passes it unanimously, all three slots, unity reached. It is entirely lawful
@@ -423,6 +439,8 @@ ERROR  e.proof.edge-unvalidated.f
   endorsed 1 of 1, unity reached; reachable 1, still reachable
 
   ground      clause B2, reached by E6ps1wA65K50..., EGUPEbARj1kk..., EwhWVkXbZuyI...
+
+
 
 
 
@@ -461,6 +479,8 @@ ERROR  e.proof.edge-unvalidated.f
   expects: a decision is authorized when the votes add up
   happens: it is authorized when the domain CERTIFIES that they did — and a
     certification the record refutes convicts the sponsor on their own signature
+
+
   MEANWHILE, between b23 and b26
   ------------------------------------------------------------------------------------
 

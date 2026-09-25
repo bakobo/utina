@@ -25,6 +25,8 @@
     clauses     A3
     reached by  EQfnCxJn58wc..., ETg2KsO0yZ3R...
     evidence    6758580da98474fe...
+
+
   MEANWHILE, between b11 and b15
   ------------------------------------------------------------------------------------
 
@@ -86,6 +88,8 @@
 
 
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 18    Beat 12's question, re-asked at beat 12's own position
   Byte-identical to the original finding, ground included. Beat 19 is the same answer
@@ -112,6 +116,8 @@
     clauses     B1
     reached by  EMyOnRplLjSS..., EdWJdTA6J6Uk...
     evidence    54467b6a07228fdc...
+
+
   MEANWHILE, between d5 and b21
   ------------------------------------------------------------------------------------
 
@@ -174,6 +180,8 @@
 
 
 
+
+
   ------------------------------------------------------------------------------------
   BEAT 24    The first decision, re-asked from the end of the record
   The past is recomputable under the law in force then: still affirmed, still under A1,
@@ -199,6 +207,8 @@
     clauses     A1
     reached by  E7rZDgjVNGiJ..., ETFRV_i1XbrD...
     evidence    f76908871f89ea9c...
+
+
 
 
 

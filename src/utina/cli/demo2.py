@@ -472,6 +472,8 @@ def walk2(
         upto = coordinate_of(one)
         if since and upto and since != upto:
             span = ("meanwhile", "--from", since, "--to", upto)
+            # Two lines of air, or the heading runs into the kernel card above it.
+            console.out.write("\n\n")
             status = max(status, run(span + _backend_argv(backend, store), console))
         since = upto or since
         argv = one.argv + _backend_argv(backend, store)
