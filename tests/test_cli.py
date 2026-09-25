@@ -1611,7 +1611,7 @@ def test_an_empty_span_between_one_coordinate_and_itself_prints_nothing():
 def test_the_live_run_carries_a_meanwhile_card_wherever_the_record_advances():
     """The driver emits one between every pair of beats and the command decides whether
     there is anything to say, so the driver still reads nothing off the record."""
-    from utina.cli.demo2 import _coordinate_of, _sequence
+    from utina.cli.demo2 import _sequence, coordinate_of
 
     out = screen("demo2", "--part", "live", "--no-pause")
 
@@ -1622,7 +1622,7 @@ def test_the_live_run_carries_a_meanwhile_card_wherever_the_record_advances():
         previous = ""
         expected = []
         for beat in _sequence("live"):
-            label = _coordinate_of(beat)
+            label = coordinate_of(beat)
             if not label:
                 continue
             if previous and record.at(label).seq > record.at(previous).seq:

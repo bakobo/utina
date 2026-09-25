@@ -38,7 +38,17 @@ from utina.substrate import FACADE, KERIPY
 if TYPE_CHECKING:  # pragma: no cover - the import exists only for the annotation
     from utina.cli.app import Console
 
-__all__ = ["CUT_ORDER", "KERNELS", "LEAVE_BEHIND", "LIVE", "OPENER", "Beat", "Kernel", "walk2"]
+__all__ = [
+    "CUT_ORDER",
+    "KERNELS",
+    "LEAVE_BEHIND",
+    "LIVE",
+    "OPENER",
+    "Beat",
+    "Kernel",
+    "coordinate_of",
+    "walk2",
+]
 
 
 @dataclass(frozen=True)
@@ -426,7 +436,7 @@ def walk2(
         # arrives at the far end of it. A command like any other, because this module
         # computes nothing (this.i @cldemo, @eelnh6dn) — so the span is read off the
         # beats' own argv and handed to `utina meanwhile` to answer.
-        upto = _coordinate_of(one)
+        upto = coordinate_of(one)
         if since and upto and since != upto:
             span = ("meanwhile", "--from", since, "--to", upto)
             status = max(status, run(span + _backend_argv(backend, store), console))
@@ -446,7 +456,7 @@ def walk2(
     return status
 
 
-def _coordinate_of(beat: Beat) -> str:
+def coordinate_of(beat: Beat) -> str:
     """The label this beat asks its question at, or ``""`` where it asks at none.
 
     Read off the beat's own ``argv`` rather than held in a second field beside it. A

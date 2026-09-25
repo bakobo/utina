@@ -54,7 +54,7 @@ def _renderer():
 
 RENDERER = _renderer()
 
-ARTIFACTS = [*RENDERER.TRANSCRIPTS, RENDERER.CUE_CARD]
+ARTIFACTS = [*RENDERER.TRANSCRIPTS, RENDERER.CUE_CARD, RENDERER.SEQUENCE]
 
 
 @pytest.fixture(scope="module")
@@ -155,3 +155,51 @@ def test_an_error_is_wrapped_like_every_other_paragraph():
     assert "ERROR  e.proof.edge-unvalidated.f" in live, "beat 14 is not in this transcript"
     for line in live.splitlines():
         assert len(line) <= 100
+
+
+# --- the collapsed sequence diagram (this.i @y7ytqzyj) -------------------------
+
+
+def test_every_marked_beat_has_exactly_one_entry_in_the_diagram():
+    """A beat with no arrow would be a lifeline the diagram silently drops.
+
+    The generator raises a ``KeyError`` on a beat it has no arrows for rather than
+    skipping it, so this asserts the other direction: that the table has not grown an
+    entry for a beat the driver no longer has.
+    """
+    from utina.cli.demo2 import KERNELS, LEAVE_BEHIND
+
+    marked = {beat.id for kernel in KERNELS for beat in kernel.beats}
+    marked |= {beat.id for beat in LEAVE_BEHIND}
+
+    assert set(RENDERER.ARROWS) == marked
+
+
+def test_the_diagram_is_collapsed_and_not_one_arrow_per_event():
+    """The whole of the milestone: forty-nine arrows is unreadable and says less than
+    ``utina log`` already says in a table."""
+    from utina.acme import build
+    from utina.cli.world import RealValues
+
+    diagram = (DOCS / RENDERER.SEQUENCE).read_text(encoding="utf-8")
+    arrows = [line for line in diagram.splitlines() if "->>" in line]
+    committed = len(build(values=RealValues()).events)
+
+    assert len(arrows) < committed, "a diagram with an arrow per event is not collapsed"
+    assert diagram.startswith("# Demo 2, as a sequence")
+    assert "```mermaid" in diagram and "sequenceDiagram" in diagram
+
+
+def test_the_diagram_names_parties_by_alias_and_never_by_identifier():
+    """this.i @clcoia, on the artifact read at the most glancing pace of any of them."""
+    from utina.acme import build
+    from utina.cli.world import RealValues
+
+    diagram = (DOCS / RENDERER.SEQUENCE).read_text(encoding="utf-8")
+    record = build(values=RealValues())
+
+    for identifier in record.aids.values():
+        assert identifier not in diagram, f"{identifier} is an identifier, not an alias"
+    for short, alias in RENDERER.LIFELINES:
+        assert f"participant {short} as " in diagram
+        assert alias not in diagram, "the alias CONSTANT is not the minted alias either"
