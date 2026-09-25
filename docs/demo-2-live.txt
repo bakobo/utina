@@ -88,8 +88,8 @@
     arithmetic did the rest
 
 
-      MEANWHILE, between board-seated and b13
-      --------------------------------------------------------------------------------
+                                               MEANWHILE, between board-seated and b13
+  ------------------------------------------------------------------------------------
 
   18 committed events, of which 2 certifications.
 
@@ -187,8 +187,8 @@
   holds.
 
 
-      MEANWHILE, between b8 and d5
-      --------------------------------------------------------------------------------
+                                                          MEANWHILE, between b8 and d5
+  ------------------------------------------------------------------------------------
 
   6 committed events, of which 2 certifications.
 
@@ -258,8 +258,8 @@ ERROR  e.proof.edge-unvalidated.f
     does reach back
 
 
-      MEANWHILE, between d5 and b16
-      --------------------------------------------------------------------------------
+                                                         MEANWHILE, between d5 and b16
+  ------------------------------------------------------------------------------------
 
   15 committed events, of which 1 certification.
 
@@ -310,8 +310,8 @@ ERROR  e.proof.edge-unvalidated.f
   not the last one.
 
 
-      MEANWHILE, between b16 and b17
-      --------------------------------------------------------------------------------
+                                                        MEANWHILE, between b16 and b17
+  ------------------------------------------------------------------------------------
 
   2 committed events, and no certification among them.
 
@@ -366,8 +366,8 @@ ERROR  e.proof.edge-unvalidated.f
   ground      clause B1, reached by EMyOnRplLjSS..., EdWJdTA6J6Uk...
 
 
-      MEANWHILE, between b17 and b20
-      --------------------------------------------------------------------------------
+                                                        MEANWHILE, between b17 and b20
+  ------------------------------------------------------------------------------------
 
   9 committed events, of which 1 certification.
 
@@ -481,8 +481,8 @@ ERROR  e.proof.edge-unvalidated.f
     certification the record refutes convicts the sponsor on their own signature
 
 
-      MEANWHILE, between b23 and b26
-      --------------------------------------------------------------------------------
+                                                        MEANWHILE, between b23 and b26
+  ------------------------------------------------------------------------------------
 
   5 committed events, of which 1 certification.
 

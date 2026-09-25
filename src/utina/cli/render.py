@@ -101,9 +101,6 @@ MARGIN = "  "
 #: rather than box drawing, which not every projector's font has.
 RULE = "-" * 84
 
-#: How far the meanwhile heading and its rule sit inside the margin.
-MEANWHILE_INDENT = " " * 4
-
 #: The width a field label occupies before its value starts.
 FIELD = 12
 
@@ -762,11 +759,11 @@ def meanwhile_screen(
     party names.
     """
     certifications = sum(1 for one in events if one.kind == certification.CERTIFICATION_KIND)
-    # Indented four and its rule shortened to match, so the heading reads as an aside
-    # between beats rather than as one more screen (Daniel, rehearsing demo 2).
+    # Right-aligned to the rule's end, so the heading reads as an aside between beats
+    # rather than as one more screen (Daniel, rehearsing demo 2). Padded before painting.
+    title = f"MEANWHILE, between {since} and {upto}"
     lines = [
-        MARGIN + MEANWHILE_INDENT + style.strong(f"MEANWHILE, between {since} and {upto}"),
-        MARGIN + MEANWHILE_INDENT + style.paint(RULE[len(MEANWHILE_INDENT) :], SCAFFOLD),
+        *headline(style, " " * (len(RULE) - len(title)) + style.strong(title)),
         "",
         f"{MARGIN}{_tally(len(events), certifications)}",
         "",
