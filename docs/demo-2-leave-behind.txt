@@ -12,7 +12,7 @@
 
   position    b11 (seq 18)
   law head    94ac5bb73b09...          clause A3 (MxN), unity 1
-  subject     Efx7xD35Qc6n1Y_BPH6UJvLR6D810Zo1Vr7FWZyDL32o
+  subject     ⣈⣴⣀⣿ Efx7xD35Qc6n1Y_BPH6UJvLR6D810Zo1Vr7FWZyDL32o
 
   slot                weight   disposition   committed act
   marta-founder,6        1/2   endorsed      ETg2KsO0yZ3R...
@@ -69,7 +69,7 @@
 
   position    b15 (seq 36)
   law head    94ac5bb73b09...          clause B1 (MxN), unity 1
-  subject     E978XZbiieJiY6nB9Xq5UZqbiVUtn-9RdC0z1uUz3aG8
+  subject     ⣿⣴⡐⣤ E978XZbiieJiY6nB9Xq5UZqbiVUtn-9RdC0z1uUz3aG8
 
   slot                weight   disposition   committed act
   marta-founder,6        1/2   endorsed      Eqrox0_SoNlQ...
@@ -98,7 +98,7 @@
 
   position    d5 (seq 22)
   law head    94ac5bb73b09...          clause B1 (MxN), unity 1
-  subject     E3CkC7KlYyV8iN1ECSn5YrwP_nTvhz3cQ4JwrEIqfrF0
+  subject     ⣟█⣭⣶ E3CkC7KlYyV8iN1ECSn5YrwP_nTvhz3cQ4JwrEIqfrF0
 
   slot                weight   disposition   committed act
   marta-founder,6        1/2   endorsed      EdWJdTA6J6Uk...
@@ -156,7 +156,7 @@
 
   position    b21 (seq 41)
   law head    94ac5bb73b09...          clause B1 (MxN), unity 1
-  subject     E2G9oY2qa45hZm6Pt47dpz-Vk1DEtb-96qTB7O0gkVcQ
+  subject     ⣂⣿⣾⣶ E2G9oY2qa45hZm6Pt47dpz-Vk1DEtb-96qTB7O0gkVcQ
 
   slot                weight   disposition   committed act
   marta-founder,6        1/2   endorsed      EefYnxLYlvDI...
@@ -186,7 +186,7 @@
 
   position    d9 (seq 30)
   law head    f3bd6baa1af2...          clause A1 (MxN), unity 1
-  subject     E9LNkisX-EfNzavJsJmBUx8IyDX_7jmCpAIL6cSvt5kY
+  subject     ⣀█⣭⣦ E9LNkisX-EfNzavJsJmBUx8IyDX_7jmCpAIL6cSvt5kY
 
   slot                weight   disposition   committed act
   marta-founder,6        1/2   endorsed      ETFRV_i1XbrD...

@@ -15,16 +15,25 @@ classifiers = [
     "Topic :: Security :: Cryptography",
 ]
 
-# Two runtime dependencies. Bakobo's error-code machinery has no dependencies of
+# Three runtime dependencies. Bakobo's error-code machinery has no dependencies of
 # its own and refuses an illegal code where it is declared. keripy is the real
 # KERI implementation behind `--substrate keripy`, and it is quarantined: Custos
 # §1.4 axiom 2 closes the fold's inputs at three committed values, so no plane
 # above the substrate may import it and tests/test_purity.py enforces that by AST
-# inspection over utina.fold, utina.enact, utina.acme and utina.cli (this.i
-# @343xvm). Pinned by commit, not by version — 2.0.0-dev6 is a moving target, and
-# a demo that cannot be rebuilt from its manifest is not replayable.
+# inspection over every plane above it (this.i @343xvm). Pinned by commit, not by
+# version — 2.0.0-dev6 is a moving target, and a demo that cannot be rebuilt from
+# its manifest is not replayable.
+#
+# entviz draws the recognition cue on the eval screen's subject field, and is
+# quarantined the same way and for the same shape of reason: a value
+# visualization is display, so only utina.cli may reach it (this.i @fqaxwnid,
+# enforced beside the alias quarantine). It declares lxml, which is reachable
+# only through the SVG pipeline the terminal pill never touches
+# (entviz/docs/terminal-pill.md §6) — declared unconditionally by that
+# distribution, and the cost is named here rather than discovered in CI.
 dependencies = [
     "bakobo-errors",
+    "entviz>=0.18.3",
     "keri",
 ]
 

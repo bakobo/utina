@@ -35,6 +35,7 @@ from typing import cast
 
 from utina.cli.aliases import Aliases
 from utina.cli.appraisal import Appraisal
+from utina.cli.pill import posture
 from utina.cli.style import (
     AWAITING,
     DISPOSITION_COLOR,
@@ -459,7 +460,9 @@ def _finding_lines(
         field(
             style,
             "subject",
-            appraisal.subject or "nothing of this class has been tabled at this position",
+            posture(appraisal.subject, color=style.enabled)
+            if appraisal.subject
+            else "nothing of this class has been tabled at this position",
         ),
         "",
         *_arithmetic(appraisal, clause, aliases, style),

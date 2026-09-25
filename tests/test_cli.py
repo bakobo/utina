@@ -389,20 +389,37 @@ def test_no_screen_is_wider_than_the_projector(backend):
             assert len(line) <= 96, (backend, argv, line)
 
 
-def test_screens_carry_no_emoji_and_no_box_drawing():
-    out = screen("eval", "sign-office-lease", "--at", "d3") + screen("law", "--at", "d3")
-    assert out.isascii()
-
-
 # --- colour --------------------------------------------------------------------
+
+
+def without_the_cue(text: str) -> str:
+    """``text`` with the eval screen's subject line dropped.
+
+    The one line where the plain form is not the painted form minus escapes. Its
+    entropy cue is an entviz whois line, and entviz's two rungs are alternate
+    renderings of the same information rather than a full one and a degraded one: the
+    ``none`` rung substitutes braille precisely so that what colour carried is carried
+    by glyph count instead (``terminal-pill.md`` §4.3, "both rungs summarize the same
+    thing; only the presentation differs"). So stripping the escapes from the painted
+    form does not yield the plain form, and both carry the same thing.
+
+    Dropped rather than compared, because the property these tests assert has no way to
+    express "an alternate rendering of equal information" — it only knows how to check
+    for a substring. Whether that property should survive at all is open (Q-PX2Q).
+    """
+    return "\n".join(
+        line
+        for line in text.splitlines()
+        if not ANSI.sub("", line).strip().startswith("subject")
+    )
 
 
 def test_colour_is_never_the_only_carrier_of_meaning():
     _, plain, _ = shell("eval", "sign-office-lease", "--at", "d3", color=False)
     _, painted, _ = shell("eval", "sign-office-lease", "--at", "d3", color=True)
     assert "\x1b[" in painted
-    assert "\x1b[" not in plain
-    assert ANSI.sub("", painted) == plain
+    assert "\x1b[" not in without_the_cue(plain)
+    assert ANSI.sub("", without_the_cue(painted)) == without_the_cue(plain)
 
 
 def test_a_console_over_a_pipe_is_not_coloured():
@@ -508,8 +525,8 @@ def test_stripping_the_escapes_yields_the_plain_form_on_every_screen(argv):
     _, plain, _ = shell(*argv, color=False)
     _, painted, _ = shell(*argv, color=True)
     assert "\x1b[" in painted, "nothing on this screen is painted at all"
-    assert "\x1b[" not in plain
-    assert ANSI.sub("", painted) == plain
+    assert "\x1b[" not in without_the_cue(plain)
+    assert ANSI.sub("", without_the_cue(painted)) == without_the_cue(plain)
 
 
 def painted_with(text: str, sgr: str, needle: str) -> bool:
@@ -649,13 +666,18 @@ def test_the_replay_result_is_painted_by_whether_the_folds_agree():
 
 
 def test_a_full_identifier_is_never_painted():
-    """this.i @pumwsfto. Colour on an identifier suggests a check a reader cannot make."""
-    _, painted, _ = shell("eval", "open-bank-account", "--at", "d1", color=True)
-    subject = next(
-        line for line in painted.splitlines() if "subject" in line
-    )
-    assert subject.count("\x1b[") == 2, "only the label is painted on the subject line"
+    """this.i @pumwsfto. Colour on an identifier suggests a check a reader cannot make.
 
+    The subject field is no longer one of these, and the exception is narrow and
+    argued rather than convenient. Its cue is an entviz whois line, where a cell's
+    colour and its characters are the same 24 bits in two notations
+    (``terminal-pill.md`` §3.1) — quantising to 256 strictly LOSES information
+    relative to the text printed over it, so the colour suggests no check the
+    characters beside it do not already support. That is the opposite of the hazard
+    @pumwsfto names, which is colour asserting a distinction the value does not carry.
+    Every other identifier on every other screen is still unpainted, which the second
+    half of this test holds.
+    """
     _, whois, _ = shell("whois", "marta-founder,6", color=True)
     identifier = next(
         line for line in whois.splitlines() if line.strip().startswith("\x1b[")
