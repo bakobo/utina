@@ -70,6 +70,12 @@ class Beat:
     is an endorsement the toolchain refuses, and a driver that treated its exit
     status as failure would report the demo broken at the moment it worked.
 
+    ``looks_ahead`` marks a beat asked out of order, further along the record than the
+    beats around it. The meanwhile cursor does not move to it, so the next beat's span
+    is measured from the last beat that ran in order rather than from a coordinate the
+    record has not reached yet (Daniel, rehearsing: the live part opened at d4 with
+    nothing to say how it related to the opener's d8).
+
     There is no "not built yet" flag any more. Beat 20 was the last beat that
     needed one and it was ruled on 2026-09-15, so the run-of-show is the whole
     run-of-show. If a beat is ever blocked again, the five lines that printed a
@@ -81,6 +87,7 @@ class Beat:
     narration: str
     argv: tuple[str, ...] = ()
     refuses: bool = False
+    looks_ahead: bool = False
 
 
 @dataclass(frozen=True)
@@ -140,10 +147,12 @@ OPENER = (
     Beat(
         "6",
         "May the board declare a dividend?",
-        "No clause governs distributions. The engine refuses rather than legislating, "
-        "and the refusal names what is missing. Not a fifth verdict, and the screen "
-        "says so in as many words.",
+        "A look ahead, to seq 30, where the dividend is first proposed; the live part "
+        "picks up again after beat 5. No clause governs distributions. The engine "
+        "refuses rather than legislating, and the refusal names what is missing. Not "
+        "a fifth verdict, and the screen says so in as many words.",
         ("eval", "declare-dividend", "--at", "d8"),
+        looks_ahead=True,
     ),
 )
 
@@ -420,6 +429,24 @@ def _sequence(part: str) -> tuple[Beat, ...]:
     return OPENER + LIVE + LEAVE_BEHIND
 
 
+def _preceding(part: str) -> tuple[Beat, ...]:
+    """The beats a part follows in the full run, which is where its span starts."""
+    if part == "live":
+        return OPENER
+    if part == "leave-behind":
+        return OPENER + LIVE
+    return ()
+
+
+def _cursor(beats: tuple[Beat, ...]) -> str:
+    """The coordinate the meanwhile cursor rests on after these beats, look-aheads aside."""
+    since = ""
+    for one in beats:
+        if not one.looks_ahead:
+            since = coordinate_of(one) or since
+    return since
+
+
 def _named(identifier: str) -> Beat:
     """The beat that identifier names, or a refusal naming the ones that exist."""
     for beat in OPENER + LIVE + LEAVE_BEHIND:
@@ -460,7 +487,10 @@ def walk2(
     backend = KERIPY if part == "opener" and substrate == FACADE else substrate
     sequence = _sequence(part) if beat is None else (_named(beat),)
     status = 0
-    since = ""
+    # A part picks up where the in-order beats before it left off, so the live part
+    # opens on what was committed after the opener's beat 5. A single --beat has no
+    # predecessor to measure from and prints no span.
+    since = "" if beat is not None else _cursor(_preceding(part))
     labelled = False
     for index, one in enumerate(sequence):
         kernel = _kernel_of(one)
@@ -487,7 +517,7 @@ def walk2(
                 # Two lines of air, or the heading runs into the kernel card above it.
                 console.out.write("\n\n" + screen)
                 labelled = True
-        since = upto or since
+        since = since if one.looks_ahead else upto or since
         argv = one.argv + _backend_argv(backend, store)
         for line in _announce(one, argv, console.style):
             console.out.write(line + "\n")

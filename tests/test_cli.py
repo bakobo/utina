@@ -1611,15 +1611,16 @@ def test_an_empty_span_between_one_coordinate_and_itself_prints_nothing():
 def test_the_live_run_carries_a_meanwhile_card_wherever_the_record_advances():
     """The driver emits one between every pair of beats and the command decides whether
     there is anything to say, so the driver still reads nothing off the record."""
-    from utina.cli.demo2 import _sequence, coordinate_of
+    from utina.cli.demo2 import OPENER, _cursor, _sequence, coordinate_of
 
     out = screen("demo2", "--part", "live", "--no-pause")
 
     # The driver's rule, exactly: between each beat and the one before it that had a
     # coordinate. Beat 14 has none — an endorsement the toolchain refuses is asked
     # nowhere — so it carries the previous coordinate forward rather than resetting.
+    # The first beat measures from where the opener's in-order beats left off.
     with world() as record:
-        previous = ""
+        previous = _cursor(OPENER)
         expected = []
         for beat in _sequence("live"):
             label = coordinate_of(beat)

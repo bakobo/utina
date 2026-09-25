@@ -229,9 +229,10 @@
 
   ------------------------------------------------------------------------------------
   BEAT 6     May the board declare a dividend?
-  No clause governs distributions. The engine refuses rather than legislating, and the
-  refusal names what is missing. Not a fifth verdict, and the screen says so in as many
-  words.
+  A look ahead, to seq 30, where the dividend is first proposed; the live part picks up
+  again after beat 5. No clause governs distributions. The engine refuses rather than
+  legislating, and the refusal names what is missing. Not a fifth verdict, and the
+  screen says so in as many words.
 
   $ utina eval declare-dividend --at d8 --substrate keripy
 

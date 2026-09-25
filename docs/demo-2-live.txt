@@ -8,6 +8,22 @@
     declares what it disturbs
 
 
+                                                          MEANWHILE, between b5 and d4
+  ------------------------------------------------------------------------------------
+
+  4 committed events, of which 1 is a certification.
+
+  seq  kind          identifier         what it commits
+   12  enactment     Ekql3BdJ3m74...    a successor law, enacted as amend-operating-agreement
+   13  endorsement   E5Hz2HbAX_Rf...    marta-founder,6 endorses Ekql3BdJ3m74...
+   14  endorsement   EHYEOkjHGQcp...    dev-founder,6 endorses Ekql3BdJ3m74...
+   15  certification EkaqC8LbtvWx...    the domain certifies Ekql3BdJ3m74...
+
+  labels      b5 and d4 are this demo's names for coordinates and are committed nowhere.
+              The record has sequence numbers, which is what the seq column above shows
+              and what a stranger folding the same log would address it by.
+
+
 
   ------------------------------------------------------------------------------------
   BEAT 7     Seat the board: the amendment itself
@@ -110,11 +126,6 @@
    31  act           E978XZbiieJi...    an act of the class approve-budget
    32  endorsement   Eqrox0_SoNlQ...    marta-founder,6 endorses E978XZbiieJi...
    33  endorsement   E3xAA9ue-EBq...    dev-founder,6 declines E978XZbiieJi...
-
-  labels      board-seated and b13 are this demo's names for coordinates and are
-              committed nowhere. The record has sequence numbers, which is what the seq
-              column above shows and what a stranger folding the same log would address
-              it by.
 
 
 
