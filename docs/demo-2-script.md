@@ -16,7 +16,7 @@ That yields three artifacts of decreasing liveness and increasing depth.
 
 **Recorded opener, ~4 minutes, played first.** Beats 1–6 under `--substrate keripy`, with real prefixes, closing on `tools/read-keri-log.py` reading Acme's key log with keripy alone and no utina code. This establishes both the ground and the this-is-really-KERI claim, so the live part never has to argue either, and it leaves beats 3 and 5 pending as the live part's setup. Recorded rather than live because it is recap for this audience, and because a pre-baked segment is the right place to spend the fragile minutes.
 
-**Live, ~18 minutes, 12 beats in five kernels.** Chosen on one test: the beats where this audience's own intuition is wrong. Ordered so that the amendment is the hinge — everything after it uses the board it creates, and the act ends with an amendment being convicted, which rhymes with the amendment that opened it.
+**Live, ~18 minutes.** The beats and the kernels are counted once, in the overview below, so a beat added or cut moves one number and not four. Chosen on one test: the beats where this audience's own intuition is wrong. Ordered so that the amendment is the hinge — everything after it uses the board it creates, and the act ends with an amendment being convicted, which rhymes with the amendment that opened it.
 
 | Kernel | Beats | What the audience expects | What happens |
 |---|---|---|---|
