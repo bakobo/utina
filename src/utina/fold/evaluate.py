@@ -572,7 +572,20 @@ def supported(sealed: Event) -> bool:
     if recomputable is None:
         return False
     corpus, subject, at, clause, head = recomputable
-    if Constitution.at(corpus, at).law_head.said != head:
+    theirs = Constitution.at(corpus, at)
+    if theirs.law_head.said != head:
+        return False
+    if theirs.diligence is not None:
+        # **Transitive diligence is out of scope, and refused rather than followed.**
+        # Re-folding evidence whose own law obliges diligence would call back into this
+        # function through a seal embedded in the embedded record, with no depth this
+        # side of Python's recursion limit — and every level of it is bytes an
+        # attacker chose (codex review, 2026-09-25). Refusing is the fail-closed
+        # reading and it is a limit worth stating: utina answers "did their domain
+        # approve this", not "and did everyone their domain relied on approve theirs".
+        # A counterparty whose own law requires diligence cannot be the subject of
+        # diligence here, and the requirement stays outstanding rather than passing on
+        # a claim this engine did not check.
         return False
     outcome = evaluate(corpus, Committed(subject), at=at)
     # The named clause has to be the one that DID the work, not merely one the law

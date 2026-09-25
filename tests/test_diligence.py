@@ -32,6 +32,7 @@ from utina.fold.finding import Affirmed, Pending
 from utina.fold.gel import anchored
 from utina.fold.question import Committed, Proposal
 from utina.fold.triple import Position
+from utina.substrate import ENDORSEMENT_SCHEMA
 
 #: Where Meridian's seal sits in its own record, and the act it supports.
 SEAL_AT = 5
@@ -425,3 +426,183 @@ def test_an_edition_that_asks_for_neither_shows_no_terms_line() -> None:
         )
     assert "clause M1" in drawn, "the screen still drew the law"
     assert "requires" not in drawn
+
+
+# --- what a cross-model review found, 2026-09-25 ---------------------------------
+#
+# Every case below is a probe that came back AFFIRMED before the fix beside it. They
+# are kept as the review found them rather than tidied into one, because each is a
+# different way of getting authority out of bytes the reader chose.
+
+
+def _with_seal(record, **body):
+    """Meridian's corpus with the seal event's own body fields replaced."""
+    events = list(record.events)
+    events[SEAL_AT] = replace(events[SEAL_AT], body={**events[SEAL_AT].body, **body})
+    return anchored(events, record.kel, gaid=record.gaid)
+
+
+def _with_evidence(record, **block):
+    seal = record.events[SEAL_AT].body
+    return _with_seal(
+        record, **{diligence.EVIDENCE_FIELD: {**seal[diligence.EVIDENCE_FIELD], **block}}
+    )
+
+
+def test_a_coordinate_the_admitted_evidence_does_not_reach_is_refused(meridian) -> None:
+    """A seal naming seq 999999 over five admitted events came back AFFIRMED.
+
+    Folding past the end of a record answers over whatever happens to be present,
+    which is why it looked fine. The seal asserts an appraisal position, so it has to
+    carry the record that far.
+    """
+    assert verdict(resealed(meridian, **{diligence.COORDINATE_FIELD: 999999}), meridian) == (
+        "Pending"
+    )
+    assert verdict(resealed(meridian, **{diligence.COORDINATE_FIELD: -1}), meridian) == (
+        "Pending"
+    )
+
+
+def test_a_coordinate_that_is_a_boolean_is_not_a_coordinate(meridian) -> None:
+    """``bool`` is an ``int`` in Python, and ``True`` is not a position."""
+    assert verdict(resealed(meridian, **{diligence.COORDINATE_FIELD: True}), meridian) == (
+        "Pending"
+    )
+
+
+def test_a_string_where_the_key_log_belongs_is_refused_rather_than_raising(
+    meridian,
+) -> None:
+    """A string satisfies ``isinstance(x, Sequence)``, so ``anchored`` read one of its
+    characters and raised ``AttributeError`` out of an appraisal — an uncaught
+    exception where a pending finding belonged."""
+    corpus = _with_evidence(meridian, **{diligence.KEL_FIELD: "abc"})
+    assert verdict(corpus, meridian) == "Pending"
+
+
+def test_a_key_log_of_things_that_are_not_key_events_is_refused(meridian) -> None:
+    """One level less obvious than the string, and the same hole."""
+    corpus = _with_evidence(meridian, **{diligence.KEL_FIELD: ["abc", "def"]})
+    assert verdict(corpus, meridian) == "Pending"
+
+
+def test_more_admitted_events_than_the_bound_allows_are_refused(meridian) -> None:
+    """Size before shape before meaning. Until this bound existed, an attacker-chosen
+    seal could hand the reader any number of events to copy and parse first."""
+    admitted = meridian.events[SEAL_AT].body[diligence.EVIDENCE_FIELD]
+    overflowing = tuple(admitted[diligence.EVENTS_FIELD]) * (
+        diligence.MAX_ADMITTED_EVENTS // len(admitted[diligence.EVENTS_FIELD]) + 1
+    )
+    assert len(overflowing) > diligence.MAX_ADMITTED_EVENTS
+    corpus = _with_evidence(meridian, **{diligence.EVENTS_FIELD: overflowing})
+    assert verdict(corpus, meridian) == "Pending"
+
+    huge_log = [{"t": "ixn"}] * (diligence.MAX_ADMITTED_EVENTS + 1)
+    assert verdict(_with_evidence(meridian, **{diligence.KEL_FIELD: huge_log}), meridian) == (
+        "Pending"
+    )
+
+
+def test_a_counterparty_who_owes_diligence_of_their_own_is_refused(meridian) -> None:
+    """Transitive diligence is out of scope, and refused rather than followed.
+
+    Re-folding evidence whose own law obliges diligence calls back into ``supported``
+    through a seal inside the embedded record, with no depth this side of Python's
+    recursion limit — and every level of it is bytes the committer chose. Asserted
+    here by pointing a seal at MERIDIAN's own record, which is the one law in this
+    repo that owes diligence.
+    """
+    from utina.fold.evaluate import supported
+
+    ours = meridian.events[SEAL_AT]
+    theirs = {
+        diligence.EVENTS_FIELD: tuple(
+            {"said": one.said, "kind": one.kind, "seq": one.position.seq, "body": one.body}
+            for one in meridian.corpus.upto(meridian.values.position(meridian.last))
+        ),
+        diligence.KEL_FIELD: tuple(meridian.kel),
+    }
+    law = Constitution.at(meridian.corpus, meridian.values.position(meridian.last))
+    circular = replace(
+        ours,
+        body={
+            **ours.body,
+            diligence.SEAL_FIELD: {
+                **ours.body[diligence.SEAL_FIELD],
+                diligence.DOMAIN_FIELD: meridian.gaid,
+                diligence.COORDINATE_FIELD: meridian.last,
+                diligence.HEAD_FIELD: law.law_head.said,
+                diligence.CLAUSE_FIELD: "M1",
+                diligence.SUBJECT_FIELD: ours.body[diligence.SUPPORTS_FIELD],
+            },
+            diligence.EVIDENCE_FIELD: theirs,
+        },
+    )
+    assert law.diligence is not None, "Meridian is the domain that owes diligence"
+    assert not supported(circular)
+
+
+# --- the amendment path ------------------------------------------------------------
+
+
+def test_an_amendment_under_a_law_owing_diligence_does_not_take_force_without_it() -> None:
+    """The nastiest shape the review found, and the one with no fixture behind it.
+
+    ``_effectuation`` checked an enactment's threshold and its certification and made
+    the new edition effective. It never asked for the diligence the same law demands of
+    every other act — so the amendment evaluated PENDING while the edition it commits
+    took force anyway. That edition could then drop the diligence term and authorize
+    everything after it, which is a governance requirement removing itself.
+
+    Built by hand rather than from a fixture because no domain here both owes diligence
+    and can amend: Meridian has one clause and it is not an amendment clause. That
+    absence is exactly why the hole survived the suite.
+    """
+    from utina.fold.constitution import Constitution as Law
+
+    amend, endorser = "amend-the-agreement", "party:one"
+    edition = [
+        {
+            "id": "A1",
+            "governs": (amend,),
+            "group": {
+                "operator": "MxN",
+                "slots": (
+                    {"endorser": endorser, "weight": "1/1", "schema": ENDORSEMENT_SCHEMA},
+                ),
+            },
+        }
+    ]
+    owing = {"clauses": edition, diligence.REQUIRES_FIELD: "Eschema"}
+
+    events = [
+        Event(said="E0", kind="inception", position=Position(0), body={"law": owing}),
+        Event(
+            said="E1",
+            kind="enactment",
+            position=Position(1),
+            body={"act": amend, "law": {"clauses": edition}},
+        ),
+        Event(
+            said="E2",
+            kind="endorsement",
+            position=Position(2),
+            body={
+                "i": endorser,
+                "acdc": {
+                    "i": endorser,
+                    "s": ENDORSEMENT_SCHEMA,
+                    "a": {"disp": "endorse", "said": "E1", "act": "issue"},
+                },
+            },
+        ),
+    ]
+    record = Corpus.load(events)
+
+    # Unity is reached on the enactment at seq 2 — the endorsement is in and the one
+    # slot is filled — so the only thing standing between it and effect is diligence.
+    later = Position(3)
+    assert Law.at(record, later).law_head == Law.at(record, Position(0)).law_head, (
+        "the successor took force with no evaluation seal anywhere in the record"
+    )

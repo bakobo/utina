@@ -272,6 +272,16 @@ def _effectuation(
             corpus, clause, enactment, candidate.position, schema
         ):
             continue
+        # The same wall, one requirement along. An edition obliging diligence and an
+        # amendment that skipped it was a fail-open with a nasty shape: the amendment
+        # evaluated PENDING while its new edition took force anyway, and that edition
+        # could drop the diligence term and authorize everything after it (codex
+        # review, 2026-09-25). An enactment is an act, and every requirement its law
+        # places on an act is a requirement on it.
+        if judging.diligence is not None and not _diligent(
+            corpus, enactment, candidate.position, judging
+        ):
+            continue
         return candidate.position
     return None
 
@@ -299,6 +309,23 @@ def _governing(clauses: tuple[Clause, ...], act: str) -> Clause | None:
         if act in clause.governs:
             return clause
     return None
+
+
+def _diligent(
+    corpus: Corpus, enactment: Event, at: Position, judging: Constitution
+) -> bool:
+    """Whether a standing evaluation seal supports this enactment.
+
+    Existence and support, the same pair :func:`_certified` asks about a certification.
+    The support half is the evaluator's own ``supported`` — imported inside the call to
+    keep the module-level import one way, since the evaluator reads the law this module
+    folds.
+    """
+    from utina.fold.evaluate import supported
+
+    assert judging.diligence is not None
+    sealed = diligence.sealing(corpus, enactment.said, at, judging.diligence)
+    return sealed is not None and supported(sealed)
 
 
 def _edition_committed_by(

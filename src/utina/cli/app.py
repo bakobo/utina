@@ -102,7 +102,7 @@ color
 
 examples
   utina law --at inception
-  utina eval approve-credit-line --domain bank --at 6
+  utina eval open-customer-account --domain bank --at 5
   utina eval sign-office-lease --at d3
   utina eval --said seat-the-board --at d4
   utina replay --at board-seated
