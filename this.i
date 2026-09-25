@@ -2687,3 +2687,66 @@ Make Custos's replayable governance useful to a real organization = goal:
         plane, so an unknown one is an obstacle no other plane can describe. Rejected
         widening the label error to take which KIND of name was asked for, which would
         have made one code cover two obstacles and defeated prefix-matching on either.
+
+    The subject takes the pill's language without being painted, and stays whole = decision:
+      id: fqaxwnid
+      why: >
+        The build plan asks for the `subject` field to render as an entviz pill, and that
+        collides head-on with two standing rules. @pumwsfto: an identifier is NEVER painted,
+        because color on one suggests a distinction a reader could act on when the only safe
+        act is to compare the value whole. @w6bpgbwi and the strip-escapes test: no screen
+        carries a meaning in color alone. An entviz pill's 256 rung fails both on its face —
+        entviz's own terminal-pill.md §4.3 measures ~5 bits in the color-bar prefix and ~4
+        per separator that stripping the escapes destroys, so a painted pill would be the
+        first element in this CLI whose plain form said less than its colored form.
+        Both dissolve at once on the `none` rung, which is not a degraded fallback: §4.3 is
+        explicit that braille recovers BOTH channels a block glyph loses, that both rungs are
+        the same printable width, and that the ladder must not invert — "both rungs summarize
+        the same thing; only the presentation differs". So the whole channel rides in glyphs
+        that survive `strip`, a projector, a greyscale photograph and a deuteranope, and not
+        one character of the identifier is painted. @pumwsfto is honored literally rather
+        than argued around, and the strip-escapes test needs no amendment because the screen
+        emits no escape to strip.
+        The second half is the form. The plan says "pill", and a pill ELIDES — 19 columns for
+        a CESR AID against the value's 44. The subject line is the one place in this CLI where
+        a full identifier appears, chosen for that (@clhndl), and `utina whois` is the deliberate
+        expand affordance beside it (@clwhoi). Eliding it would delete the only surface an
+        audience can read or copy a value from, to make room for a recognition cue. Entviz has
+        the answer in its own vocabulary: §1 defines TWO forms over one design, the pill and
+        the **whois line**, which "shows every cell of the value on a line of its own, for
+        selection and copying" and opens with the same four-cell prefix "so a pill and its whois
+        line can be tied together by eye". That is a description of this field. So the subject
+        renders as the whois line: the pill's prefix, then the value entire.
+        Rejected the 256 rung with a widened invariant, which is an intent-level change to what
+        every screen guarantees and is not a rendering decision. Rejected the 256 rung with the
+        plain form as its unpainted twin, which passes the strip-escapes test — `strip(ansi(p,
+        "256"))` really does equal `p.plain` — while violating everything the test is for.
+        Rejected eliding, above. Rejected extending the prefix to any other identifier, which
+        the criterion forbids and which would put a recognition cue on values a reader has no
+        reason to recognize.
+        Two costs, both named rather than discounted. The glyphs are U+2800-U+28FF and the
+        block elements, and whether the DEMO terminal's font carries them is not something this
+        repo can test; the subject field is on nearly every beat, so a font that lacks them
+        fails widely rather than narrowly. And `entviz` becomes a runtime dependency of a demo
+        repo, bringing lxml with it — reachable only through the SVG pipeline the pill never
+        touches (§6), but declared unconditionally by the distribution. Both are one commit to
+        reverse: the import, the dependency, and the prefix.
+
+    A pill is never drawn over a value entviz would alter or does not recognize = constraint:
+      id: dmiuvkxp
+      why: >
+        `entviz.terminal.whois` normalizes case for the alphabets it treats as
+        case-insensitive — `whois("Eshort")` renders `ESHORT` — and its §5 promises only
+        "locale-invariant casing", not that the value comes back verbatim. On the one field
+        whose job is to be copied, a rendering that silently returns a DIFFERENT string is
+        worse than no rendering: a reader would copy a case-folded identifier that resolves to
+        nothing and have no way to see why. A 44-character CESR SAID comes back untouched, so
+        this never fires in practice, which is exactly the condition under which a guard stops
+        being written unless it is written now.
+        So the wrapper asserts that the rendered line ends with the value character for
+        character, and falls back to the bare value when it does not. It falls back the same
+        way when entviz raises, which §5 says it does on an unrecognized value rather than
+        rendering something plausible. Rejected trusting the common case and letting the rare
+        one through, which is the fail-open posture this repo refuses everywhere else.
+        Rejected raising instead of falling back: a recognition cue is decoration on an answer
+        the fold already computed, and losing the decoration must never cost the answer.
