@@ -32,6 +32,7 @@ from utina.substrate import FacadeSubstrate, FoldValues, Substrate
 
 from .law import (
     ACCOUNT_ACTS,
+    CUSTOMER,
     DISPLAY,
     DOMAIN,
     GAID,
@@ -75,6 +76,10 @@ def build(
     # knot, custos-4.2.md:1073-1084, this.i @4b2mmhbf).
     constructor = Constructor.found(substrate, GAID, charter(aids), values=values)
     aids[GAID] = constructor.gaid
+    # The customer's own identifier, learned by doing business rather than incepted
+    # here. Held so the screens can name it; nothing about it enters committed bytes
+    # except where the seal names it, and the seal names the identifier itself.
+    aids[CUSTOMER] = counterparty.gaid
 
     saids: dict[str, str] = {}
 

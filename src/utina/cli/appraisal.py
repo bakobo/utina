@@ -23,12 +23,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from utina.cli.errors import COMMAND_MALFORMED, SAID_PREFIX_AMBIGUOUS
+from utina.fold import diligence as diligence_predicate
 from utina.fold import slots as slot_predicate
 from utina.fold import standing
 from utina.fold.clause import Clause
 from utina.fold.constitution import ACT_CLASS_FIELD, Constitution
 from utina.fold.corpus import Corpus, Event
-from utina.fold.evaluate import ACT_KINDS, evaluate
+from utina.fold.evaluate import ACT_KINDS, evaluate, supported
 from utina.fold.finding import Finding
 from utina.fold.question import Committed, Proposal, Question
 from utina.fold.refusal import Refusal
@@ -37,6 +38,7 @@ from utina.fold.triple import SAID, Position
 
 __all__ = [
     "Appraisal",
+    "Diligence",
     "appraise",
     "held_by",
     "question_from",
@@ -55,6 +57,34 @@ _EVAL_USAGE = (
 
 
 @dataclass(frozen=True)
+class Diligence:
+    """One discharged diligence requirement, with the working behind it.
+
+    Every field is read back off the committed seal and the re-fold, never off the
+    finding: the point of the mechanism is that a reader recomputes rather than trusts,
+    and a screen that printed what the seal *claimed* would be demonstrating the
+    opposite of what the beat is about (``this.i`` @fsbgamvi).
+    """
+
+    counterparty: str
+    """The customer's own governed-domain identifier."""
+    at: Position
+    """The coordinate in the customer's log that was relied on."""
+    head: str
+    """The law head in force there — what makes the coordinate mean one thing."""
+    clause: str
+    """The customer's own clause that answered."""
+    subject: SAID
+    """The customer's committed act."""
+    events: int
+    """How many of the customer's events this domain holds, which is what a stranger
+    re-folds. A count rather than a list: the screen's claim is that the evidence is
+    HERE, and thirty identifiers would not make it more here."""
+    outcome: Finding | Refusal
+    """What re-folding that evidence says, computed now."""
+
+
+@dataclass(frozen=True)
 class Appraisal:
     """One question, its answer, and the working behind the answer."""
 
@@ -68,6 +98,11 @@ class Appraisal:
     act: str | None
     subject: SAID | None
     slots: tuple[SlotDisposition, ...]
+    diligence: Diligence | None = None
+    """What this domain checked about a counterparty before acting, where its law
+    obliges it to check anything. ``None`` where the law obliges none — which is every
+    domain but Meridian — and where the obligation stands undischarged, since a
+    requirement the finding already names as outstanding needs no second telling."""
 
 
 def resolve_subject(
@@ -209,6 +244,43 @@ def question_from(
     return Committed(resolve_subject(names, events, str(said)))
 
 
+def diligence_behind(
+    corpus: Corpus, law: Constitution, subject: SAID | None, at: Position
+) -> Diligence | None:
+    """The discharged diligence standing behind an act, re-derived rather than read.
+
+    ``None`` where the law obliges none, where nothing is tabled, or where the seal
+    does not hold up — in that last case the finding is already PENDING and names the
+    requirement, so a screen repeating it would be saying the same thing twice.
+
+    Whether it holds up is asked of :func:`~utina.fold.evaluate.supported`, which is the
+    function the evaluator itself calls. Deciding it here instead would be a second path
+    to a governance-relevant fact, and it diverged the first time it was written.
+    """
+    if law.diligence is None or subject is None:
+        return None
+    sealed = diligence_predicate.sealing(corpus, subject, at, law.diligence)
+    # The evaluator's own predicate, not a second one. A seal that does not hold up
+    # shows no block: the finding beside it is already PENDING and names the
+    # requirement, so a block here would report a failed check as though it had worked.
+    if sealed is None or not supported(sealed):
+        return None
+    recomputed = diligence_predicate.recomputable(sealed)
+    assert recomputed is not None  # ``supported`` read it, so it reads
+    theirs, their_subject, their_at, their_clause, their_head = recomputed
+    seal = sealed.body[diligence_predicate.SEAL_FIELD]
+    assert isinstance(seal, Mapping)  # ``recomputable`` read it as one already
+    return Diligence(
+        counterparty=str(seal[diligence_predicate.DOMAIN_FIELD]),
+        at=their_at,
+        head=their_head,
+        clause=their_clause,
+        subject=their_subject,
+        events=len(theirs.upto(their_at)),
+        outcome=evaluate(theirs, Committed(their_subject), at=their_at),
+    )
+
+
 def appraise(
     corpus: Corpus, question: Question, *, at: Position, label: str, domain: str
 ) -> Appraisal:
@@ -236,6 +308,7 @@ def appraise(
         act=act,
         subject=subject,
         slots=slots,
+        diligence=diligence_behind(corpus, law, subject, at),
     )
 
 

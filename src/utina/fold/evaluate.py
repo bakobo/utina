@@ -540,7 +540,7 @@ def _undiligent(
     if not subject.said:  # pragma: no cover - a satisfied threshold implies a subject
         return None
     sealed = diligence.sealing(corpus, subject.said, at, schema)
-    if sealed is not None and _supported(sealed):
+    if sealed is not None and supported(sealed):
         return None
     committer = _committer(corpus, subject)
     if not committer:  # pragma: no cover - a satisfied threshold implies a committer
@@ -553,12 +553,20 @@ def _undiligent(
     )
 
 
-def _supported(sealed: Event) -> bool:
+def supported(sealed: Event) -> bool:
     """Whether re-folding this seal's own evidence produces the answer it points at.
 
     The recursion is here rather than in ``fold/diligence.py`` so the import stays one
     way: the evaluator reaches for the seal's parts, and the seal's module never reaches
     back for the evaluator.
+
+    **Public because the display plane has to ask the identical question.** The eval
+    screen shows what a domain checked, and a screen deciding for itself whether a seal
+    holds up would be a second path to a governance-relevant fact — which diverged the
+    first time it was written, printing "refolds to AFFIRMED" for a seal whose forged
+    law head the finding beside it had already rejected (@clxchk, and the same rule that
+    makes ``utina.cli.appraisal`` import the evaluator's constants rather than restate
+    them).
     """
     recomputable = diligence.recomputable(sealed)
     if recomputable is None:

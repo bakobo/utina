@@ -34,7 +34,7 @@ from fractions import Fraction
 from typing import cast
 
 from utina.cli.aliases import Aliases
-from utina.cli.appraisal import Appraisal
+from utina.cli.appraisal import Appraisal, Diligence
 from utina.cli.pill import posture
 from utina.cli.style import (
     AWAITING,
@@ -468,6 +468,7 @@ def _finding_lines(
         *_arithmetic(appraisal, clause, aliases, style),
         "",
         *ground_of(finding, aliases, style),
+        *_diligence(appraisal.diligence, aliases, style),
     ]
 
 
@@ -521,6 +522,59 @@ def _arithmetic(
         )
     )
     return lines
+
+
+def _diligence(done: Diligence | None, aliases: Aliases, style: Style) -> list[str]:
+    """What this domain checked about its counterparty, and what the check says now.
+
+    Absent from almost every screen, because almost no law obliges any. Where one does,
+    an affirmation that rests on it and did not show it was under-reporting: the ground
+    named this domain's own clause and its own endorsements, and the entire composition
+    — another organization, another constitution, another log — was invisible on the
+    one screen built to display it.
+
+    **The last line is the beat.** Everything above it is what the seal COMMITTED; the
+    outcome is what re-folding the committed evidence says right now, here, in front of
+    the room. The two are separate on purpose, because the claim is not "the bank says
+    Acme approved it" but "the bank kept Acme's log and you can check it yourself"
+    (``this.i`` @fsbgamvi). A screen that printed the seal's own word for the answer
+    would demonstrate the opposite of what this is for — which is also why the seal
+    carries no verdict for it to print (@gsli4bea).
+    """
+    if done is None:
+        return []
+    # Unpainted, and that is not an oversight. The six colours each name one health
+    # state of THIS domain's question (``this.i`` @w6bpgbwi), and this line answers a
+    # different domain's. Painting it green would put a claim about Acme into Meridian's
+    # palette, where a reader would take it for a claim about Meridian.
+    verdict = verdict_word(done.outcome)
+    # ``counterparty`` is exactly the default column width, so the value would begin
+    # where the label ends with nothing between them. This block gets two more columns
+    # rather than a shorter word: the labels are the only place the screen says whose
+    # side of the table each line is about, and "their act" reads wrong beside "party".
+    wide = FIELD + 2
+    return [
+        "",
+        MARGIN + style.strong("diligence - what this domain checked before acting"),
+        field(style, "counterparty", aliases.full(done.counterparty), indent=4, width=wide),
+        field(style, "their act", abbrev(done.subject), indent=4, width=wide),
+        field(
+            style,
+            "at",
+            f"their seq {done.at.seq}, under their clause {done.clause}",
+            indent=4,
+            width=wide,
+        ),
+        field(style, "their law", abbrev(done.head, 16), indent=4, width=wide),
+        field(
+            style,
+            "we hold",
+            f"{done.events} of their committed events, and their key log",
+            indent=4,
+            width=wide,
+        ),
+        field(style, "refolds to", verdict, indent=4, width=wide),
+    ]
 
 
 def ground_of(finding: Finding, aliases: Aliases, style: Style) -> list[str]:

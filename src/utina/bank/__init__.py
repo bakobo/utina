@@ -15,6 +15,7 @@ over committed inputs, which is what keeps this clear of the portable clause lan
 from .build import CUSTOMER_ACT, CUSTOMER_COORDINATE, build
 from .law import (
     ACCOUNT_ACTS,
+    CUSTOMER,
     DILIGENCE_FIELD,
     DISPLAY,
     DOMAIN,
@@ -29,6 +30,7 @@ from .law import (
 
 __all__ = [
     "ACCOUNT_ACTS",
+    "CUSTOMER",
     "CUSTOMER_ACT",
     "CUSTOMER_COORDINATE",
     "DILIGENCE_FIELD",

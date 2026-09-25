@@ -123,6 +123,11 @@ BANK_PARTIES: Mapping[str, Party] = {
     bank.GAID: Party("Meridian", "governed domain", scope=""),
     bank.PRIYA: Party("Priya", "officer"),
     bank.TOMAS: Party("Tomas", "officer"),
+    # Meridian's own nickname for a domain it does business with, which is exactly what
+    # COIA says an alias is: creator-local, carrying no claim anybody else has to
+    # accept. Acme calls the same identifier "Acme, governed domain"; Meridian calls it
+    # "Acme, our customer". Both are true and neither is the identifier.
+    bank.CUSTOMER: Party("Acme", "customer", scope=""),
 }
 
 

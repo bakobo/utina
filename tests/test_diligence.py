@@ -22,6 +22,7 @@ import pytest
 from bakobo.errors import BakoboError
 
 from utina import bank
+from utina.cli.appraisal import diligence_behind
 from utina.cli.world import world
 from utina.fold import diligence
 from utina.fold.constitution import Constitution
@@ -326,3 +327,57 @@ def test_the_key_log_slice_keeps_everything_when_nothing_seals_that_far() -> Non
     assert _kel_upto([unsealed, sealing], 99) == (unsealed, sealing)
     assert _kel_upto([sealing], 1) == (sealing,)
     assert _kel_upto([malformed], 0) == (malformed,)
+
+
+# --- the screen -----------------------------------------------------------------
+
+
+def test_the_affirmed_screen_shows_what_was_checked_and_what_it_refolds_to() -> None:
+    """The composition has to be visible on the screen built to display it.
+
+    Before this block the affirmation named Meridian's own clause and its own two
+    endorsements and nothing else, so a room looking at the one screen where two
+    organizations meet saw no trace of the second one.
+    """
+    out = _screen("eval", bank.OPEN_ACCOUNT, "--domain", bank.DOMAIN, "--at", "5")
+    assert "diligence - what this domain checked before acting" in out
+    assert "acme-customer,6" in out
+    assert "under their clause A1" in out
+    assert "of their committed events, and their key log" in out
+    assert "refolds to    AFFIRMED" in out
+
+
+def test_the_screen_recomputes_rather_than_printing_what_the_seal_claimed(
+    meridian,
+) -> None:
+    """A seal whose own terms do not hold up shows no block at all.
+
+    Nothing is said twice: the finding is already PENDING and names the requirement, so
+    a screen that also printed a diligence block would be reporting a check that did
+    not pass as though it were working. And it cannot print the seal's claim instead,
+    because the seal makes none (@gsli4bea).
+    """
+    corpus = resealed(meridian, **{diligence.HEAD_FIELD: "0" * 64})
+    law = Constitution.at(corpus, meridian.values.position(meridian.last))
+    subject = meridian.events[SEAL_AT].body[diligence.SUPPORTS_FIELD]
+    behind = diligence_behind(
+        corpus, law, subject, meridian.values.position(meridian.last)
+    )
+    assert behind is None
+
+
+def test_a_domain_that_owes_no_diligence_shows_no_block() -> None:
+    """Which is every domain but Meridian, so this is most screens."""
+    out = _screen("eval", "--said", "open-bank-account", "--at", "d1")
+    assert "AFFIRMED" in out
+    assert "diligence" not in out
+
+
+def _screen(*argv: str) -> str:
+    from io import StringIO
+
+    from utina.cli import Console, run
+
+    out = StringIO()
+    run(argv, Console(out=out, err=StringIO()))
+    return out.getvalue()

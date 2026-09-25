@@ -35,6 +35,7 @@ from utina.substrate import CERTIFICATION_SCHEMA, EVALUATION_SCHEMA
 
 __all__ = [
     "ACCOUNT_ACTS",
+    "CUSTOMER",
     "DILIGENCE_FIELD",
     "DISPLAY",
     "DOMAIN",
@@ -66,6 +67,13 @@ PRIYA = "bank:priya"
 TOMAS = "bank:tomas"
 
 OFFICERS = (PRIYA, TOMAS)
+
+#: What Meridian calls the customer whose record it holds. Not a party Meridian
+#: incepted — the identifier is the customer's own gAID, and Meridian learns it by
+#: doing business — but a party Meridian's screens name, which is the only thing an
+#: alias ever is (this.i @cldspl). Without it the counterparty renders as a raw
+#: identifier on the one screen built to show the two domains meeting.
+CUSTOMER = "bank:customer"
 
 #: The one act Meridian's law rules: opening an account for a customer. Named from
 #: Meridian's side of the table, because that is whose act it is — Acme's own act, at
