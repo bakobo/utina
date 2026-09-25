@@ -1823,6 +1823,41 @@ Make Custos's replayable governance useful to a real organization = goal:
         is the one that certifies and the diagram's most surprising message is the one
         that goes to it and comes back.
 
+    The false certification is an INFLATED weight, and it needs no escape hatch = decision:
+      id: t3kuqli6
+      why: >
+        M10, and it turned out smaller than @7shpbven predicted. That node said the beat
+        would need "a deliberate escape hatch in the constructor", because `enact.certify`
+        refuses a tally whose edges fall short. It does not need one: the constructor's
+        check is that the CITED WEIGHTS sum to unity, and a sponsor who cites one
+        endorsement at 1/1 instead of the 1/2 its slot commits passes that check exactly.
+        The dossier is well-formed, the domain admits it, and the record refutes it. So
+        the builder stays incapable of emitting a tally it knows to be short, which is
+        the property worth keeping (a builder that can lie by accident is worse than one
+        that cannot lie at all), and the beat is committed by an honest verb.
+        THAT IS ALSO THE BETTER STORY. The domain's admission check is the floor — edges
+        sum to unity — and the domain does not re-fold its own record before admitting.
+        The beat is therefore not "somebody bypassed a check" but "the check that exists
+        is not the check that matters", and the fold is what makes the sponsor
+        accountable afterwards. Marta, sponsoring, cites her own endorsement at full
+        weight and omits Dev's signed no; any reader who folds the record convicts her on
+        her own signature, which is @epztz4wd's whole argument on screen.
+        WHERE IT SITS, and every part of this is forced. It is the LAST act in the record,
+        after the duplicity observation, so no existing coordinate moves and beat 22's
+        dependence on that observation being last is untouched. It is a second tabling of
+        the founders' equity act, under clause A3, because A3 is the one clause neither
+        amendment moves: under the LOWERED B1 every slot is worth unity on its own, so a
+        single endorsement would make the certification SOUND and there would be no lie
+        to show. And it involves seat 3 nowhere, because a convicted cited party fires
+        the taint succession instead and the beat would show beat 20's screen twice.
+        DEV'S DECLINATION IS WHAT POPULATES THE PROOF PAIR. Without it the contradiction
+        is internal and the package stands alone; with it the finding names both halves,
+        which is the screen worth having — a reader sees the certification and the
+        declination it was written around, side by side.
+        IT IS NOT IN `CUT_ORDER`. The cut list is what to drop when the clock runs out,
+        and this beat restores the fourth verdict that removing the declaration duty took
+        off the demo (@ow6dzro4). Cutting it costs a quarter of the codomain.
+
     The law creates a seat; a credential fills it = decision:
       id: ftjpdph5
       why: >
