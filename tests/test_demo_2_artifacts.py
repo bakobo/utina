@@ -91,7 +91,7 @@ def test_every_live_beat_appears_in_the_transcript_and_the_cue_card():
 
     transcript = (DOCS / "demo-2-live.txt").read_text(encoding="utf-8")
     card = (DOCS / RENDERER.CUE_CARD).read_text(encoding="utf-8")
-    assert len(LIVE) == 13
+    assert len(LIVE) == 14
     for beat in LIVE:
         assert f"BEAT {beat.id}" in transcript, f"beat {beat.id} is not in the transcript"
         assert f"**Beat {beat.id}**" in card, f"beat {beat.id} is not on the cue card"

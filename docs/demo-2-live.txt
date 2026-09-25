@@ -453,3 +453,52 @@ ERROR  e.proof.edge-unvalidated.f
   endorsements it was waiting for can no longer discharge it. An act whose own clause
   the amendment left alone is untouched, which is what keeps this from being a way to
   kill an inconvenient matter by amending something irrelevant.
+
+
+
+  ------------------------------------------------------------------------------------
+  KERNEL  A certification that lies
+  expects: a decision is authorized when the votes add up
+  happens: it is authorized when the domain CERTIFIES that they did — and a
+    certification the record refutes convicts the sponsor on their own signature
+  MEANWHILE, between b23 and b26
+  ------------------------------------------------------------------------------------
+
+  5 committed events, of which 1 certification.
+
+  seq  kind          identifier         what it commits
+   48  duplicity     EJFsGa7HjFS_...    duplicity observed at nina-board-seat-3,6
+   49  act           EM0YPtJoDXTA...    an act of the class release-escrowed-equity
+   50  endorsement   EcZ8rhpFYT1P...    marta-founder,6 endorses EM0YPtJoDXTA...
+   51  endorsement   EGiHD3Xz6gHb...    dev-founder,6 declines EM0YPtJoDXTA...
+   52  certification ERRRAUt0KgnU...    the domain certifies EM0YPtJoDXTA...
+
+  labels      b23 and b26 are this demo's names for coordinates and are committed
+              nowhere. The record has sequence numbers, which is what the seq column
+              above shows and what a stranger folding the same log would address it by.
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 26    Marta certifies an act that never carried
+  The founders table the equity release again. Marta endorses, Dev signs a no, and Marta
+  — sponsoring the tally — cites her own endorsement at full weight and leaves the no
+  out. The domain admits it, because what the domain checks is that the cited weights
+  add to one, and they do. What it does not do is re-fold its own record first. So the
+  lie is well formed and it is on the record, and the fold convicts it on the bytes
+  Marta signed: the proof names the certification and the declination it was written
+  around, and any stranger holding the log recomputes it. This is the fourth verdict,
+  and it is a governance failure rather than a lost key.
+
+  $ utina eval --said equity-retabled --at b26 --brief
+
+  SELF-CONVICTED  was the committed act EM0YPtJoDXTAsDtMg-GolXR86MnzebU-jno5rdE6QPAQ lawful?
+  ------------------------------------------------------------------------------------
+  b26 (seq 52), clause A3 (MxN), unity 1, law head e13bba131d22...
+
+  marta-founder,6        1/2   endorsed      EcZ8rhpFYT1P...
+  dev-founder,6          1/2   declined      EGiHD3Xz6gHb...
+  endorsed 1/2 of 1, not reached; reachable 1/2, unreachable
+
+  ground      self-convicted on its own bytes: ERRRAUt0KgnUtVFg... contradicts
+              EGiHD3Xz6gHb3Wg5...

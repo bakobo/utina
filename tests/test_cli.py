@@ -730,7 +730,7 @@ def test_a_defeat_with_no_declination_still_carries_its_ground():
 def test_log_shows_every_committed_event_in_canonical_order():
     out = screen("log")
     assert "COMMITTED LOG AT the end of the record" in out
-    assert "49 events" in out
+    assert "53 events" in out
     assert "Arrival order is not consulted" in out
     seqs = [
         int(line.split()[0])
@@ -1416,20 +1416,20 @@ def test_the_demo2_beats_are_the_scripts_beats_in_the_scripts_order():
 
     assert [beat.id for beat in OPENER] == ["1", "2", "3", "4", "5", "6"]
     assert [beat.id for beat in LIVE] == [
-        "7", "9", "10", "13", "8", "12", "14", "16", "17", "19", "20", "22", "23"
+        "7", "9", "10", "13", "8", "12", "14", "16", "17", "19", "20", "22", "23", "26"
     ]
     assert [beat.id for beat in LEAVE_BEHIND] == ["11", "15", "18", "21", "24", "25"]
-    assert len(KERNELS) == 6, "six kernels, not five"
-    assert sum(len(kernel.beats) for kernel in KERNELS) == 13, "thirteen live beats"
+    assert len(KERNELS) == 7, "seven kernels: beat 26's is the fourth verdict's own"
+    assert sum(len(kernel.beats) for kernel in KERNELS) == 14, "fourteen live beats"
 
 
 def test_every_beat_of_the_script_appears_exactly_once():
-    """Twenty-five beats, and no beat in two parts. A beat that ran twice would
+    """Twenty-six beats, and no beat in two parts. A beat that ran twice would
     make the leave-behind disagree with what the room was shown."""
     from utina.cli.demo2 import LEAVE_BEHIND, LIVE, OPENER
 
     everything = [beat.id for beat in OPENER + LIVE + LEAVE_BEHIND]
-    assert sorted(everything, key=int) == [str(n) for n in range(1, 26)]
+    assert sorted(everything, key=int) == [str(n) for n in range(1, 27)]
     assert len(everything) == len(set(everything))
 
 

@@ -60,6 +60,7 @@ ORACLE_LABELS = {
     "b16",
     "b17",
     "b20",
+    "b26",
     "b21",
     "b22",
     "b23",
@@ -330,30 +331,37 @@ def subject_of(event):
     return acdc["a"].get("said") if isinstance(acdc, dict) else None
 
 
-def test_dev_declines_three_times_and_each_is_a_signed_committed_act(acme_double):
-    """A no is never a silence, and three nos are three events.
+def test_dev_declines_four_times_and_each_is_a_signed_committed_act(acme_double):
+    """A no is never a silence, and four nos are four events.
 
-    D3's office lease, D6's retabled budget, and beat 13's Q2 forecast. The
-    third is the same signed no as the first two and the fold draws a different
-    consequence from it, which is what beats 13 and 15 are for.
+    D3's office lease, D6's retabled budget, beat 13's Q2 forecast, and beat 26's
+    retabled equity release. The third is the same signed no as the first two and the
+    fold draws a different consequence from it, which is what beats 13 and 15 are for.
+    The fourth is the one a sponsor's tally leaves out, which is what beat 26 is for
+    (``this.i`` @t3kuqli6) — and it is a committed event whether the tally cites it or
+    not, which is exactly why citing around it convicts.
     """
     declinations = [
         event
         for event in acme_double.events
         if disp(event) == "decline" and event.body["i"] == DEV
     ]
-    assert len(declinations) == 3
+    assert len(declinations) == 4
     for event in declinations:
         assert acme_double.substrate.verify(DEV, event.body, event.body["sig"])
 
 
 def test_the_seat_declines_the_amendment(acme_double):
-    """Beat D7: the retained bar bites because the seated organ signs a no."""
+    """Beat D7: the retained bar bites because the seated organ signs a no.
+
+    Asserted as the whole sequence of declinations rather than as one, so a no added or
+    reordered anywhere shows up here. The last is beat 26's, which Marta's tally omits.
+    """
     assert [
         event.body["i"]
         for event in acme_double.events
         if disp(event) == "decline"
-    ] == [DEV, DEV, SEAT, DEV]
+    ] == [DEV, DEV, SEAT, DEV, DEV]
 
 
 # --- The position labels the oracle addresses the log through -----------------

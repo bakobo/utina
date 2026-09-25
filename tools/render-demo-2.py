@@ -113,6 +113,12 @@ ARROWS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("Acme", "Acme", "certify"),
     ),
     "23": (("Acme", "Acme", "compute which acts in flight the amendment ended"),),
+    "26": (
+        ("Marta", "Acme", "endorse the equity release, tabled again"),
+        ("Dev", "Acme", "decline"),
+        ("Marta", "Acme", "certify, citing her own half at full weight"),
+        ("Acme", "Acme", "admit it: the cited weights do add to one"),
+    ),
     # The leave-behind four. Beat 15 is the only place the device speaks, which is why
     # the diagram carries them rather than stopping at the live thirteen: a reader who
     # was not in the room is exactly the reader the leave-behind is for.

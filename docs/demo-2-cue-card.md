@@ -147,6 +147,17 @@ Each kernel carries what the room expects, because the beats were chosen on one 
    utina disturbance lower-the-bar --at b23
    ```
 
+### A certification that lies
+
+- the room expects: a decision is authorized when the votes add up
+- what happens: it is authorized when the domain CERTIFIES that they did — and a certification the record refutes convicts the sponsor on their own signature
+
+14. **Beat 26** — Marta certifies an act that never carried
+
+   ```
+   utina eval --said equity-retabled --at b26 --brief
+   ```
+
 
 ## If the clock runs out, drop in this order
 

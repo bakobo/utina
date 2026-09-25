@@ -312,6 +312,29 @@ KERNELS = (
             ),
         ),
     ),
+    Kernel(
+        "A certification that lies",
+        "a decision is authorized when the votes add up",
+        "it is authorized when the domain CERTIFIES that they did — and a certification "
+        "the record refutes convicts the sponsor on their own signature",
+        (
+            Beat(
+                "26",
+                "Marta certifies an act that never carried",
+                "The founders table the equity release again. Marta endorses, Dev signs a "
+                "no, and Marta — sponsoring the tally — cites her own endorsement at full "
+                "weight and leaves the no out. The domain admits it, because what the "
+                "domain checks is that the cited weights add to one, and they do. What it "
+                "does not do is re-fold its own record first. So the lie is well formed "
+                "and it is on the record, and the fold convicts it on the bytes Marta "
+                "signed: the proof names the certification and the declination it was "
+                "written around, and any stranger holding the log recomputes it. This is "
+                "the fourth verdict, and it is a governance failure rather than a lost "
+                "key.",
+                ("eval", "--said", "equity-retabled", "--at", "b26", "--brief"),
+            ),
+        ),
+    ),
 )
 
 LIVE = tuple(beat for kernel in KERNELS for beat in kernel.beats)

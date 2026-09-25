@@ -347,6 +347,27 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # was supposed to say "lawful and unanimous" said the opposite.
     mark("b20", constructor.observe_duplicity(seat3, [f"{seat3}-kel-2a", f"{seat3}-kel-2b"]))
 
+    # Beat 26 — a certification that lies, and self-convicts on its sponsor's own
+    # signature (this.i @t3kuqli6). Marta tables the equity release a second time,
+    # endorses it, Dev declines, and then Marta — sponsoring — assembles a tally citing
+    # her own endorsement at FULL weight, omitting the signed no entirely.
+    #
+    # The domain admits it, and that is the beat rather than a bug: `certify` checks that
+    # the cited weights sum to unity, and 1/1 does. What the domain does not do is re-fold
+    # its own record before admitting, so the lie is well-formed and passes. The fold is
+    # what catches it, and it catches it on bytes Marta signed.
+    #
+    # **Last in the record, under A3, and nowhere near seat 3** — all three forced. Last,
+    # so no existing coordinate moves and beat 20's observation stays after seat 3's
+    # endorsement above. Under A3, because it is the one clause neither amendment touches:
+    # under the lowered B1 a single endorsement reaches unity on its own and the tally
+    # would be honest. And clear of seat 3, or a convicted cited party would fire the
+    # taint succession and the beat would show beat 20's screen a second time.
+    liar = name("equity-retabled", constructor.propose(EQUITY))
+    claimed = constructor.endorse(marta, liar)
+    name("equity-retabled-declined", constructor.decline(dev, liar))
+    mark("b26", certify(f"{EQUITY}-falsely-certified", liar, (claimed, Fraction(1, 1))))
+
     events = constructor.emitted
     kel = constructor.key_events
     return Acme(

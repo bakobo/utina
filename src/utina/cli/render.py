@@ -414,7 +414,17 @@ def _brief_ground(finding: Finding, aliases: Aliases) -> str:
             + f" - {first.kind} under clause {first.clause}, {first.species.value[1]}"
         )
     convicted = cast(SelfConvicted, finding)
-    return f"self-convicted on its own bytes, proof {abbrev(convicted.proof.package, 16)}"
+    package = abbrev(convicted.proof.package, 16)
+    if not convicted.proof.pair:
+        return f"self-convicted on its own bytes, proof {package}"
+    # The brief form carries the PAIR where there is one, because on beat 26 the pair is
+    # the whole content: a certification, and the declination it was written around. A
+    # brief screen that showed only the package would make the room ask what contradicted
+    # what and then wait while somebody fetched it.
+    contradicted = ", ".join(
+        abbrev(said, 16) for said in convicted.proof.pair if said != convicted.proof.package
+    )
+    return f"self-convicted on its own bytes: {package} contradicts {contradicted}"
 
 
 def _finding_lines(
