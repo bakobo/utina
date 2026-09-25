@@ -49,7 +49,7 @@ import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from utina.fold import bearing, certification, disturbance, semantics
+from utina.fold import bearing, certification, diligence, disturbance, semantics
 from utina.fold.clause import Clause
 from utina.fold.constitution import ACT_CLASS_FIELD, Constitution
 from utina.fold.corpus import Corpus, Event
@@ -228,6 +228,14 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
         # votes cast are not a result until they are tabulated (this.i @2e2dncfe).
         if uncertified is not None:
             return Pending(requirement=(uncertified,))
+        # And where the law obliges the domain to have LOOKED before it transacts. A
+        # certification says this domain's own threshold was met; diligence says the
+        # counterparty's was, recomputed here from evidence this domain committed
+        # (this.i @rc5fibel). Second, because a domain that has not tabulated its own
+        # vote has nothing yet to be diligent about.
+        undiligent = _undiligent(corpus, law, subject, clause, at)
+        if undiligent is not None:
+            return Pending(requirement=(undiligent,))
         return Affirmed(
             clauses=(clause.id,),
             endorsements=endorsements(classified),
@@ -500,6 +508,73 @@ def _uncertified(
         schema=schema,
         kind=certification.CERTIFICATION_KIND,
     )
+
+
+def _undiligent(
+    corpus: Corpus,
+    law: Constitution,
+    subject: _Subject,
+    clause: Clause,
+    at: Position,
+) -> RequirementElement | None:
+    """What is outstanding when a law obliges diligence and has not got it yet.
+
+    ``None`` where the edition obliges none, and ``None`` where a seal stands whose own
+    inputs, re-folded here and now, produce the answer it points at.
+
+    **The answer is recomputed, never retrieved** (``this.i`` @fsbgamvi). The seal
+    commits the counterparty's gAID, coordinate, law head, clause and subject and no
+    verdict at all (@gsli4bea, and ``custos-4.2.md:2067``: "commit predicates, never
+    verdicts"), so there is nothing here to read off — the evidence is re-folded, the
+    named coordinate is evaluated, and the named law head and clause are checked to be
+    the ones that produce it. A seal naming inputs that do not support it leaves the
+    requirement outstanding, which is fail-closed: the effect does not land.
+
+    Checking the head and the clause is what keeps the seal a commitment rather than a
+    gesture. Without them a seal could point at a coordinate whose law had moved, and
+    the recomputation would answer a different question than the one sealed.
+    """
+    schema = law.diligence
+    if schema is None:
+        return None
+    if not subject.said:  # pragma: no cover - a satisfied threshold implies a subject
+        return None
+    sealed = diligence.sealing(corpus, subject.said, at, schema)
+    if sealed is not None and _supported(sealed):
+        return None
+    committer = _committer(corpus, subject)
+    if not committer:  # pragma: no cover - a satisfied threshold implies a committer
+        return None
+    return RequirementElement(
+        endorser=committer,
+        clause=clause.id,
+        schema=schema,
+        kind=diligence.DILIGENCE_KIND,
+    )
+
+
+def _supported(sealed: Event) -> bool:
+    """Whether re-folding this seal's own evidence produces the answer it points at.
+
+    The recursion is here rather than in ``fold/diligence.py`` so the import stays one
+    way: the evaluator reaches for the seal's parts, and the seal's module never reaches
+    back for the evaluator.
+    """
+    recomputable = diligence.recomputable(sealed)
+    if recomputable is None:
+        return False
+    corpus, subject, at, clause, head = recomputable
+    if Constitution.at(corpus, at).law_head.said != head:
+        return False
+    outcome = evaluate(corpus, Committed(subject), at=at)
+    # The named clause has to be the one that DID the work, not merely one the law
+    # happens to contain. Checking only that it exists let a seal name any clause of
+    # the counterparty's edition — caught by probe on 2026-09-25, where a seal over
+    # Acme's bank account renamed to clause A2 still affirmed, because A2 is a real
+    # clause of that edition and nothing tied it to the subject. A seal names the
+    # question it claims to have asked; if the answer came from elsewhere it named the
+    # wrong question, and that is a fail-closed miss rather than a detail.
+    return isinstance(outcome, Affirmed) and clause in outcome.clauses
 
 
 def _tainted(

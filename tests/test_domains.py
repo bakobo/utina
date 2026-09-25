@@ -213,7 +213,7 @@ def test_the_meanwhile_card_discloses_only_the_coordinates_that_are_labels() -> 
     _, one, _ = shell("meanwhile", "--from", "d1", "--to", "12")
     assert "d1 is this demo's name for a coordinate" in one
 
-    _, neither, _ = shell("meanwhile", "--domain", "bank", "--from", "0", "--to", "6")
+    _, neither, _ = shell("meanwhile", "--domain", "bank", "--from", "0", "--to", "5")
     assert neither.strip(), "the card itself still renders"
     assert "this demo's name" not in neither
 
@@ -222,23 +222,24 @@ def test_the_meanwhile_card_discloses_only_the_coordinates_that_are_labels() -> 
 
 
 def test_the_bank_answers_both_verdicts_over_its_own_law() -> None:
-    """Affirmed on a certified act, pending on one officer's silence.
+    """Pending until the diligence lands, affirmed once it has.
 
-    Not new engine behaviour, and that is the point: it is Acme's machinery answering
-    about a record Acme's fixture did not write.
+    Not new engine behaviour on the arithmetic, and that is the point: it is Acme's
+    machinery answering about a record Acme's fixture did not write. What IS new is
+    the requirement the count cannot discharge on its own.
     """
     with world(domain=bank.DOMAIN) as record:
-        end = str(record.last)
-        _, affirmed, _ = shell(
-            "eval", "--said", record.said(bank.CREDIT_ACTS[0]),
-            "--domain", bank.DOMAIN, "--at", end,
-        )
+        before = str(record.last - 1)
+        after = str(record.last)
         _, pending, _ = shell(
-            "eval", bank.CREDIT_ACTS[0], "--domain", bank.DOMAIN, "--at", end
+            "eval", bank.OPEN_ACCOUNT, "--domain", bank.DOMAIN, "--at", before
         )
-    assert "AFFIRMED" in affirmed
+        _, affirmed, _ = shell(
+            "eval", bank.OPEN_ACCOUNT, "--domain", bank.DOMAIN, "--at", after
+        )
     assert "PENDING" in pending
-    assert "tomas-officer,6" in pending
+    assert "diligence" in pending
+    assert "AFFIRMED" in affirmed
 
 
 def test_the_banks_law_is_folded_from_its_own_committed_bytes() -> None:
@@ -247,10 +248,12 @@ def test_the_banks_law_is_folded_from_its_own_committed_bytes() -> None:
         law = Constitution.at(record.corpus, record.at(str(record.last)))
         assert [one.id for one in law.clauses] == ["M1"]
         assert len(law.clause("M1").group.slots) == 2
-        assert law.clause("M1").governs == bank.CREDIT_ACTS
+        assert law.clause("M1").governs == bank.ACCOUNT_ACTS
         # A certifying domain leaves an act at unity PENDING until it admits a tally,
         # so the affirmation above rests on the certification and not the arithmetic.
         assert law.certification is not None
+        # And Meridian obliges itself to look before it transacts, which Acme does not.
+        assert law.diligence is not None
 
 
 def test_the_bank_is_deterministic_in_its_own_committed_bytes() -> None:

@@ -55,6 +55,15 @@ GCD_SCHEMA = "EAqOeo_YMHDEMZ-dIJTYd72nsoUS-C1RdXtOdfAj7ZxR"
 #: rather than a recomputed pin (tick 5psg holds the wider conformance work).
 CERTIFICATION_SCHEMA = "EAcertification0dossier0schema0placeholder00"
 
+#: The schema an evaluation seal satisfies — the shape a domain commits when it records
+#: that it checked a counterparty's own governance before transacting. Custos NAMES this
+#: seal kind and DEFERS it (``custos-4.2.md:2057``), so there is no document to recompute
+#: a pin from and this is a placeholder in the strongest sense: it identifies a shape
+#: utina invented for a construct the standard has not yet designed. utina is a fixture
+#: for the deferral rather than an implementation of a ratified thing, and every surface
+#: that mentions it says so (this.i @gsli4bea).
+EVALUATION_SCHEMA = "EAevaluation0seal0schema0placeholder0000000"
+
 #: The governance framework a GCD is issued under, named by its ruleset's own
 #: identifier because "the act of issuing or receiving a GCD credential
 #: constitutes binding acceptance of the rules". Committed in the compact form —

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 
 from utina import acme, bank
@@ -29,12 +30,28 @@ from utina.substrate import FACADE, substrate_named
 
 __all__ = ["DEFAULT_DOMAIN", "DOMAINS", "RealValues", "world"]
 
+@dataclass(frozen=True)
+class Fixture:
+    """One domain's builder, and whose record it has to be handed first.
+
+    ``counterparty`` exists because governance composes: Meridian cannot do diligence
+    on a customer it has never seen, so the composition root builds the customer first
+    and hands the record over (``this.i`` @rc5fibel). Deciding that here rather than
+    inside the fixture is the point — which domains exist and in what order is the
+    root's question, and a fixture that constructed another one would be answering it
+    for everybody. The counterparty is read and never written to.
+    """
+
+    build: Callable[..., Record]
+    counterparty: str | None = None
+
+
 #: Every governed domain a command can be pointed at, by the name ``--domain`` takes.
 #: Acme is first because it is the demo's, and a mapping preserves insertion order, so
 #: the help text lists it first without anybody sorting for that.
-DOMAINS: Mapping[str, Callable[..., Record]] = {
-    acme.DOMAIN: acme.build,
-    bank.DOMAIN: bank.build,
+DOMAINS: Mapping[str, Fixture] = {
+    acme.DOMAIN: Fixture(build=acme.build),
+    bank.DOMAIN: Fixture(build=bank.build, counterparty=acme.DOMAIN),
 }
 
 #: What ``--domain`` means when nobody says. Acme, because every beat of both demo
@@ -91,6 +108,15 @@ def world(
     one of :data:`DOMAINS` fails with nothing to close — though the CLI offers these
     names as argparse choices and refuses an unknown one a layer earlier.
     """
-    builder = DOMAINS[domain]
+    fixture = DOMAINS[domain]
     with substrate_named(substrate, store=store) as backend:
-        yield builder(values=RealValues(), substrate=backend)
+        values = RealValues()
+        if fixture.counterparty is None:
+            yield fixture.build(values=values, substrate=backend)
+            return
+        # One substrate for both, and the counterparty first. Under keripy each party's
+        # keys derive from the pinned salt by a sequentially assigned index, so a
+        # domain built second must incept second or every identifier in the first one
+        # moves — the same discipline ``utina.acme.build`` already keeps internally.
+        other = DOMAINS[fixture.counterparty].build(values=values, substrate=backend)
+        yield fixture.build(values=values, substrate=backend, counterparty=other)

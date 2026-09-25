@@ -153,7 +153,7 @@ def test_a_screen_with_nothing_tabled_says_so_rather_than_drawing_a_cue() -> Non
 def test_the_cue_reaches_a_second_domain_without_being_told_about_it() -> None:
     """It is a function of the value, so it is domain-agnostic for free."""
     line = subject_line(
-        screen("eval", "approve-credit-line", "--domain", "bank", "--at", "6")
+        screen("eval", "open-customer-account", "--domain", "bank", "--at", "5")
     )
     assert GLYPHS.search(line)
 

@@ -1,36 +1,43 @@
-"""Meridian Bank — the second governed domain, and the one that makes ``--domain`` true.
+"""Meridian Bank — the second governed domain, and the one that makes governance compose.
 
-A flag that resolves one value is not a flag. This fixture exists so the fold can be
-shown folding a record it was not written around, and so that a domain committing **no
-position labels** is a case the suite covers rather than a case the prose asserts
-(``this.i`` @qprzacju).
+A second governed domain is pointless unless it intersects the first, because
+composability is the point of having one (``this.i`` @rc5fibel). Acme approves opening a
+bank account under its own governance — already beat D1, certified. Meridian's own law
+obliges it to confirm that a prospective customer could lawfully take that action, so it
+folds Acme's log, commits what it relied on and what it checked, and only then does its
+own arithmetic carry.
 
-Deliberately minimal, and deliberately **not** the two-constitution bank beat: that beat
-needs cross-domain ground, an evaluation-seal credential and Meridian folding Acme's GEL,
-its design is agreed and unbuilt, and the session that builds it should read everything
-here as scaffolding rather than as settled.
+Neither domain reads the other's law. What crosses the boundary is a certified result
+over committed inputs, which is what keeps this clear of the portable clause language
+``custos-4.2.md:2044`` defers.
 """
 
-from .build import build
+from .build import CUSTOMER_ACT, CUSTOMER_COORDINATE, build
 from .law import (
-    CREDIT_ACTS,
+    ACCOUNT_ACTS,
+    DILIGENCE_FIELD,
     DISPLAY,
     DOMAIN,
     GAID,
     GOVERNANCE_REGISTRY,
     OFFICERS,
+    OPEN_ACCOUNT,
     PRIYA,
     TOMAS,
     charter,
 )
 
 __all__ = [
-    "CREDIT_ACTS",
+    "ACCOUNT_ACTS",
+    "CUSTOMER_ACT",
+    "CUSTOMER_COORDINATE",
+    "DILIGENCE_FIELD",
     "DISPLAY",
     "DOMAIN",
     "GAID",
     "GOVERNANCE_REGISTRY",
     "OFFICERS",
+    "OPEN_ACCOUNT",
     "PRIYA",
     "TOMAS",
     "build",

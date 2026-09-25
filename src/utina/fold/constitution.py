@@ -54,7 +54,7 @@ from dataclasses import dataclass
 
 from bakobo.errors import ErrorCode  # type: ignore[import-untyped]
 
-from utina.fold import certification, semantics
+from utina.fold import certification, diligence, semantics
 from utina.fold.clause import MALFORMED_LAW, Clause
 from utina.fold.corpus import Corpus, Event
 from utina.fold.slots import dispositions
@@ -303,13 +303,14 @@ def _governing(clauses: tuple[Clause, ...], act: str) -> Clause | None:
 
 def _edition_committed_by(
     event: Event,
-) -> tuple[tuple[Clause, ...], str | None, str | None]:
-    """The clause set a law event commits, the semantics it pins, and what it certifies by.
+) -> tuple[tuple[Clause, ...], str | None, str | None, str | None]:
+    """What a law event commits: clauses, semantics, certification, diligence.
 
-    All three come out of one envelope because they are one commitment: a clause
-    set, the lens it is to be read through, and whether a decision under it needs
-    certifying are not separable claims, and an edition that carried some without
-    the others would be law nobody can apply (``fold/semantics.py``, axiom 4).
+    All four come out of one envelope because they are one commitment: a clause set,
+    the lens it is to be read through, whether a decision under it needs certifying,
+    and whether it needs checking against a counterparty's own governance are not
+    separable claims, and an edition that carried some without the others would be law
+    nobody can apply (``fold/semantics.py``, axiom 4).
     """
     law = event.body.get(LAW_FIELD)
     if not isinstance(law, Mapping):
@@ -331,10 +332,23 @@ def _edition_committed_by(
                 "or the field absent where it requires none"
             ),
         )
+    # The same wall one field along (``this.i`` @rc5fibel). A diligence requirement
+    # that is present and unreadable refuses the edition rather than exempting it: a
+    # domain that could switch off its own obligation to look at a counterparty with a
+    # typo has an obligation in name only.
+    if diligence.unreadable_in(law):
+        raise MALFORMED_LAW(
+            field=diligence.REQUIRES_FIELD,
+            expected=(
+                "the identifier of the schema this domain's evaluation seals must "
+                "satisfy, or the field absent where it requires no diligence"
+            ),
+        )
     return (
         Clause.edition_from_committed(law.get(CLAUSES_FIELD)),
         semantics.declared(law),
         certification.required_by(law),
+        diligence.required_by(law),
     )
 
 
@@ -372,6 +386,14 @@ class Constitution:
     (``custos-4.2.md:1946-1951``): a requirement that could not say which evidence it
     wanted would be satisfiable by the wrong one. See ``fold/certification.py``."""
 
+    diligence: SAID | None = None
+    """The schema this domain's evaluation seals must satisfy, or ``None`` where the
+    edition obliges no diligence. A domain may require itself to confirm that a
+    counterparty's own governance approved an act before transacting on it; whether it
+    does is a governance choice and its law is where the answer belongs. Named rather
+    than assumed for the reason the certification schema is named, and read by
+    ``fold/diligence.py``."""
+
     source: SAID = ""
     """The identifier of the law event whose edition this is — the inception, or
     the enactment that took force. Carried because a finding that says a cure
@@ -399,9 +421,10 @@ class Constitution:
         source = ""
         pinned: str | None = None
         certifies_by: str | None = None
+        diligent_by: str | None = None
         chain = _chain(corpus, position)
         if chain is not None:
-            edition, pinned, certifies_by = _edition_committed_by(chain[0])
+            edition, pinned, certifies_by, diligent_by = _edition_committed_by(chain[0])
             source = chain[0].said
         _refuse_a_contradictory_edition(edition)
         head = hashlib.sha256(_canonical_bytes(edition)).hexdigest()
@@ -411,6 +434,7 @@ class Constitution:
             source=source,
             semantics=pinned,
             certification=certifies_by,
+            diligence=diligent_by,
         )
         corpus.memo[key] = constitution
         return constitution
