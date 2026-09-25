@@ -145,3 +145,19 @@ PREDECESSOR_UNKNOWN = ErrorCode(
     args=("gaid", "prior"),
     hint="Cite the identifier of the inception or enactment whose law this amends.",
 )
+
+EVIDENCE_UNVERIFIED = ErrorCode(
+    code="e.proof.evidence-unverified.f",
+    title="A counterparty's committed event does not carry a signature that stands up.",
+    detail=(
+        "The event {said} at sequence {seq}, admitted as {domain}'s own committed record, "
+        "was signed by {signer} and that signature does not verify against the key log "
+        "presented with it. A domain may not commit an evaluation seal over evidence it "
+        "has not checked."
+    ),
+    args=("domain", "said", "seq", "signer"),
+    hint=(
+        "Ingest the counterparty's key log before sealing an evaluation over their "
+        "record, and seal only over events that verify under it."
+    ),
+)

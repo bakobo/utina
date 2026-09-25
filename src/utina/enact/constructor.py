@@ -39,6 +39,7 @@ from .errors import (
     DOMAIN_INCEPTED,
     DOMAIN_UNINCEPTED,
     EDGE_UNVALIDATED,
+    EVIDENCE_UNVERIFIED,
     PREDECESSOR_UNKNOWN,
     RECORD_UNRESUMABLE,
     REGISTRY_UNOPENED,
@@ -544,6 +545,7 @@ class Constructor:
         a stranger with no copy of this package (``fold/diligence.py`` rebuilds them).
         """
         self._require_founded()
+        self._require_verified(counterparty, events)
         # The field names are spelled rather than imported from ``utina.fold``. The
         # writing plane does not import the fold (this.i @tvaq2s) — ``certify`` writes
         # its own "certifies" for the same reason — so the seam is a committed byte
@@ -569,6 +571,55 @@ class Constructor:
             {"t": "evl", "for": subject, "seal": seal, "evidence": evidence},
             self.gaid,
         )
+
+    def _require_verified(self, domain: AID, events: Sequence[Event]) -> None:
+        """Refuse to seal over a counterparty event whose signature does not stand up.
+
+        **This is the ingestion boundary, and it is the answer to a cross-model
+        review's first finding.** The fold cannot perform this check: no plane above
+        the substrate may import a KERI library (Custos section 1.4 axiom 2), and the
+        two substrates do not even compute an identifier the same way — the facade
+        takes SHA-256 over canonical JSON and keripy takes BLAKE3 through ``Saider``.
+        So before this existed, a domain could commit a fabricated record attributed to
+        a counterparty's gAID, with every signature stripped or replaced by zeros, and
+        the fold would re-fold it and answer AFFIRMED.
+
+        The writing plane can perform it, because ``Substrate.verify`` reads the
+        signer's establishment event out of the **key log** rather than out of a
+        keystore, so it verifies a party this domain does not control provided that
+        party's key events have been ingested. That is the real-world shape rather than
+        a fixture's convenience: to check a counterparty you take their key log, which
+        is the very thing this seal admits anyway.
+
+        This restores parity rather than inventing a rule. ``_emit`` has always verified
+        an event's own signature before recording it, on the ground that an event whose
+        signature does not stand up confers no authority and must not reach the record.
+        Evidence admitted out of somebody else's record was the first thing to reach it
+        without passing that check, and now it does not.
+
+        **What this does not do**, said plainly because the beat's narration implies
+        otherwise: a later reader re-folding this record cannot repeat the check. That
+        is already true of every event in every record here — the fold reads committed
+        values and never a signature (``this.i`` @yrkrqj) — so diligence is no weaker
+        than the rest of the engine. It is not as strong as "any stranger recomputes"
+        sounds, and that gap is the counterparty's own log to close.
+        """
+        for event in events:
+            signer = event.body.get("i")
+            signature = event.body.get("sig")
+            unsigned = {key: value for key, value in event.body.items() if key != "sig"}
+            if (
+                isinstance(signer, str)
+                and isinstance(signature, str)
+                and self.substrate.verify(signer, unsigned, signature)
+            ):
+                continue
+            raise EVIDENCE_UNVERIFIED(
+                domain=domain,
+                said=event.said,
+                seq=event.position.seq,
+                signer=str(signer),
+            )
 
     def certify(
         self,

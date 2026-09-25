@@ -657,3 +657,76 @@ def test_an_amendment_under_a_law_owing_diligence_does_not_take_force_without_it
         [replace(events[0], body={"law": {"clauses": edition}}), *events[1:]]
     )
     assert Law.at(free, later).law_head != Law.at(free, Position(0)).law_head
+
+
+# --- the ingestion boundary ---------------------------------------------------------
+
+
+def _reseal(record, events):
+    """Ask Meridian to commit its diligence again, over ``events``.
+
+    Every other argument is read back off the seal the fixture already built, so what
+    varies between the cases below is the evidence and nothing else.
+    """
+    from utina.enact import Constructor
+
+    seal = record.events[SEAL_AT].body[diligence.SEAL_FIELD]
+    kel = record.events[SEAL_AT].body[diligence.EVIDENCE_FIELD][diligence.KEL_FIELD]
+    constructor = Constructor.resume(
+        record.substrate, record.gaid, values=record.values, events=record.events
+    )
+    return constructor.seal_evaluation(
+        record.events[SEAL_AT].body[diligence.SUPPORTS_FIELD],
+        counterparty=str(seal[diligence.DOMAIN_FIELD]),
+        clause=str(seal[diligence.CLAUSE_FIELD]),
+        on=str(seal[diligence.SUBJECT_FIELD]),
+        at=int(seal[diligence.COORDINATE_FIELD]),
+        head=str(seal[diligence.HEAD_FIELD]),
+        events=events,
+        kel=list(kel),
+    )
+
+
+def _admitted(record):
+    """The counterparty events this record already holds, as Event objects."""
+    corpus = diligence.evidence_of(record.events[SEAL_AT])
+    assert corpus is not None
+    return list(corpus.upto(Position(seq=record.events[SEAL_AT].body[
+        diligence.SEAL_FIELD][diligence.COORDINATE_FIELD])))
+
+
+@pytest.mark.parametrize(
+    ("what", "mutate"),
+    [
+        ("removed", lambda body: {k: v for k, v in body.items() if k != "sig"}),
+        ("replaced with zeros", lambda body: {**body, "sig": "0" * 88}),
+        ("attributed to a stranger", lambda body: {**body, "i": "nobody-who-ever-signed"}),
+    ],
+    ids=["removed", "zeroed", "misattributed"],
+)
+def test_a_seal_may_not_be_committed_over_evidence_that_does_not_verify(
+    meridian, what, mutate
+) -> None:
+    """The critical finding, closed where it can be closed.
+
+    The fold cannot check this — no plane above the substrate may import a KERI
+    library, and the two substrates do not compute an identifier the same way. The
+    writing plane can, because ``Substrate.verify`` reads the signer's establishment
+    event out of the key log rather than out of a keystore, so it verifies a party
+    this domain does not control.
+
+    Before this guard, all three of these committed without complaint and the fold
+    then answered AFFIRMED over them.
+    """
+    tampered = [replace(one, body=mutate(one.body)) for one in _admitted(meridian)]
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, tampered)
+    assert caught.value.code == "e.proof.evidence-unverified.f"
+    assert not caught.value.retryable, f"a signature {what} does not fix itself"
+
+
+def test_the_honest_evidence_verifies_so_the_guard_is_not_vacuous(meridian) -> None:
+    """A guard that refused everything would pass the three cases above and ship
+    nothing. This is the same call with the evidence left alone."""
+    sealed = _reseal(meridian, _admitted(meridian))
+    assert sealed.kind == diligence.EVALUATION_KIND

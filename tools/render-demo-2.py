@@ -272,13 +272,19 @@ def sequence() -> str:
     from utina.bank import build as bank_build
     from utina.cli.aliases import aliases_over
     from utina.cli.world import RealValues
+    from utina.substrate import FacadeSubstrate
 
     values = RealValues()
-    record = build(values=values)
-    # Act VI's lifelines belong to a second domain, so the diagram resolves each one
-    # against whichever record owns it. Built over the same values and in the same
-    # order the CLI builds them, so the identifiers are the ones a reader would see.
-    meridian = bank_build(values=values, counterparty=record)
+    # ONE substrate for both domains, and the customer first — the same arrangement
+    # ``utina.cli.world`` makes, and load-bearing rather than tidy. A second domain
+    # given its own substrate cannot verify the first one's signatures, because
+    # ``Substrate.verify`` reads the signer's establishment event out of the key log
+    # it holds; Meridian's ingestion boundary then refuses to seal over evidence it
+    # cannot check, which is exactly what it is for. This generator built two
+    # substrates until that boundary existed and the difference was invisible.
+    substrate = FacadeSubstrate()
+    record = build(values=values, substrate=substrate)
+    meridian = bank_build(values=values, substrate=substrate, counterparty=record)
     casts = [
         (one, aliases_over(one.aids, one.name)) for one in (record, meridian)
     ]
