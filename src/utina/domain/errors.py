@@ -23,7 +23,7 @@ LABEL_UNKNOWN = ErrorCode(
     code="e.state.label-unknown.f",
     title="This domain's log has no position by that label.",
     detail=(
-        "The position {label} was asked for in {domain}'s record, and the labels it commits "
+        "The position {label} was asked for in {domain}'s record, and its demo labels "
         "are {known}. A label names a beat of a demo script, so an unknown one is either a "
         "typo or a beat this record does not tell."
     ),

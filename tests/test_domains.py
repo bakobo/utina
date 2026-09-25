@@ -266,7 +266,11 @@ def test_the_bank_record_holds_a_registry_rather_than_the_string_none() -> None:
     """An identifier is what the registry screen's field is for (this.i @qprzacju)."""
     with world(domain=bank.DOMAIN) as record:
         assert record.registry
-    _, out, _ = shell("registry", "--domain", "bank", "--at", "6")
+    # Seq 5 is the record's last event; 6 was past the end, so the command refused and
+    # printed nothing, and "None" not in nothing could never fail (ds and glm, #10).
+    status, out, _ = shell("registry", "--domain", "bank", "--at", "5")
+    assert status == 0
+    assert "REGISTRY E" in out
     assert "None" not in out
 
 

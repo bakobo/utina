@@ -47,7 +47,10 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Sequence
+from contextvars import ContextVar
 from dataclasses import dataclass
+
+from bakobo.errors import BakoboError  # type: ignore[import-untyped]
 
 from utina.fold import bearing, certification, diligence, disturbance, semantics
 from utina.fold.clause import Clause
@@ -542,15 +545,22 @@ def _undiligent(
     sealed = diligence.sealing(corpus, subject.said, at, schema)
     if sealed is not None and supported(sealed):
         return None
-    committer = _committer(corpus, subject)
-    if not committer:  # pragma: no cover - a satisfied threshold implies a committer
-        return None
+    # No early return for an act with no readable committer: that would waive the
+    # diligence the law demands, and fail open on bytes the domain's own writer chose
+    # (glm review of #10). The requirement stands, addressed to nobody in particular.
     return RequirementElement(
-        endorser=committer,
+        endorser=_committer(corpus, subject),
         clause=clause.id,
         schema=schema,
         kind=diligence.DILIGENCE_KIND,
     )
+
+
+#: Set while ``supported`` re-folds a counterparty's evidence. Folding that evidence's
+#: law can reach ``supported`` again, through an enactment in it that owes diligence,
+#: before the transitive-diligence refusal below has had a chance to run — so the
+#: refusal is also made here, at the door, rather than only after the re-fold.
+_REFOLDING: ContextVar[bool] = ContextVar("refolding", default=False)
 
 
 def supported(sealed: Event) -> bool:
@@ -568,6 +578,26 @@ def supported(sealed: Event) -> bool:
     makes ``utina.cli.appraisal`` import the evaluator's constants rather than restate
     them).
     """
+    if _REFOLDING.get():
+        # A seal inside a seal's evidence: transitive diligence, refused below for the
+        # reason given there. Refused here too because this is the path that reaches
+        # it without passing that check, one level per nested seal and with no bound
+        # but the recursion limit (glm review of #10, 2026-09-25).
+        return False
+    token = _REFOLDING.set(True)
+    try:
+        return _supported(sealed)
+    except BakoboError:
+        # Evidence is bytes the counterparty chose, and a law in it that will not read
+        # raised out of the host's own appraisal. Evidence that does not fold supports
+        # nothing, which is what ``diligence.evidence_of`` already promises for
+        # evidence that does not reconstruct (ds and glm review of #10, 2026-09-25).
+        return False
+    finally:
+        _REFOLDING.reset(token)
+
+
+def _supported(sealed: Event) -> bool:
     recomputable = diligence.recomputable(sealed)
     if recomputable is None:
         return False

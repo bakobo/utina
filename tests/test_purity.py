@@ -160,7 +160,7 @@ DISPLAY_ONLY = ("utina.coia",)
 
 #: The planes an alias may not reach. utina.cli is absent on purpose: it is the
 #: display plane, and it is the one that is supposed to import this.
-ALIAS_QUARANTINED = ("fold", "enact", "domain", "acme", "bank")
+ALIAS_QUARANTINED = ("fold", "enact", "domain", "acme", "bank", "replay", "substrate")
 
 
 def alias_quarantined_modules() -> list[pathlib.Path]:

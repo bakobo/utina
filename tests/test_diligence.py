@@ -504,6 +504,37 @@ def test_more_admitted_events_than_the_bound_allows_are_refused(meridian) -> Non
     )
 
 
+def test_a_seal_inside_a_seals_evidence_is_refused_at_the_door(meridian) -> None:
+    """Folding a counterparty's law can reach ``supported`` again through an enactment
+    that owes diligence, before the transitive refusal after the re-fold runs. The
+    re-entry is refused outright, so nesting has no depth to recurse through (glm
+    review of #10, 2026-09-25)."""
+    from utina.fold.evaluate import _REFOLDING, supported
+
+    seal = meridian.events[SEAL_AT]
+    assert supported(seal), "the seal stands when asked at the top level"
+    token = _REFOLDING.set(True)
+    try:
+        assert not supported(seal)
+    finally:
+        _REFOLDING.reset(token)
+
+
+def test_evidence_whose_law_will_not_read_supports_nothing_rather_than_raising(
+    meridian,
+) -> None:
+    """A law in the admitted evidence that will not read raised ``e.input.malformed.law.f``
+    out of the host's own appraisal — an error in the question somebody asked, over
+    bytes the counterparty chose (ds and glm review of #10, 2026-09-25)."""
+    admitted = meridian.events[SEAL_AT].body[diligence.EVIDENCE_FIELD]
+    events = [dict(one) for one in admitted[diligence.EVENTS_FIELD]]
+    first = events[0]
+    law = {**first["body"]["law"], diligence.REQUIRES_FIELD: {"schema": "not-a-string"}}
+    events[0] = {**first, "body": {**first["body"], "law": law}}
+    corpus = _with_evidence(meridian, **{diligence.EVENTS_FIELD: events})
+    assert verdict(corpus, meridian) == "Pending"
+
+
 def test_a_counterparty_who_owes_diligence_of_their_own_is_refused(meridian) -> None:
     """Transitive diligence is out of scope, and refused rather than followed.
 
@@ -562,6 +593,18 @@ def test_an_amendment_under_a_law_owing_diligence_does_not_take_force_without_it
     from utina.fold.constitution import Constitution as Law
 
     amend, endorser = "amend-the-agreement", "party:one"
+    successor = [
+        {
+            "id": "B1",
+            "governs": (amend,),
+            "group": {
+                "operator": "MxN",
+                "slots": (
+                    {"endorser": endorser, "weight": "1/1", "schema": ENDORSEMENT_SCHEMA},
+                ),
+            },
+        }
+    ]
     edition = [
         {
             "id": "A1",
@@ -582,7 +625,7 @@ def test_an_amendment_under_a_law_owing_diligence_does_not_take_force_without_it
             said="E1",
             kind="enactment",
             position=Position(1),
-            body={"act": amend, "law": {"clauses": edition}},
+            body={"act": amend, "law": {"clauses": successor}},
         ),
         Event(
             said="E2",
@@ -606,3 +649,11 @@ def test_an_amendment_under_a_law_owing_diligence_does_not_take_force_without_it
     assert Law.at(record, later).law_head == Law.at(record, Position(0)).law_head, (
         "the successor took force with no evaluation seal anywhere in the record"
     )
+
+    # The positive control, without which the assertion above would also pass if unity
+    # were never reached and the diligence branch never ran (glm review of #10): the
+    # same record under a law that owes no diligence does move to the successor.
+    free = Corpus.load(
+        [replace(events[0], body={"law": {"clauses": edition}}), *events[1:]]
+    )
+    assert Law.at(free, later).law_head != Law.at(free, Position(0)).law_head
