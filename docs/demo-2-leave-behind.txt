@@ -30,7 +30,7 @@
                                                         MEANWHILE, between b11 and b15
   ------------------------------------------------------------------------------------
 
-  18 committed events, of which 2 certifications.
+  18 committed events, of which 2 are certifications.
 
   seq  kind          identifier         what it commits
    19  act           E3CkC7KlYyV8...    an act of the class approve-budget
@@ -121,7 +121,7 @@
                                                          MEANWHILE, between d5 and b21
   ------------------------------------------------------------------------------------
 
-  19 committed events, of which 1 certification.
+  19 committed events, of which 1 is a certification.
 
   seq  kind          identifier         what it commits
    23  act           EGjUl5wf-EgX...    an act of the class approve-budget

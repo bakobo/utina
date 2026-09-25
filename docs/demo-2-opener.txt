@@ -41,7 +41,7 @@
                                                    MEANWHILE, between inception and d1
   ------------------------------------------------------------------------------------
 
-  4 committed events, of which 1 certification.
+  4 committed events, of which 1 is a certification.
 
   seq  kind          identifier         what it commits
     1  act           EHuYkhcEsw6M...    an act of the class open-bank-account
@@ -214,7 +214,7 @@
                                                           MEANWHILE, between b5 and d8
   ------------------------------------------------------------------------------------
 
-  19 committed events, of which 3 certifications.
+  19 committed events, of which 3 are certifications.
 
   seq  kind          identifier         what it commits
    12  enactment     EFu0R4h76rY2...    a successor law, enacted as amend-operating-agreement

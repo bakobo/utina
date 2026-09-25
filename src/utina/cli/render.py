@@ -800,7 +800,7 @@ def _tally(events: int, certifications: int) -> str:
     what = "event" if events == 1 else "events"
     if not certifications:
         return f"{events} committed {what}, and no certification among them."
-    which = "certification" if certifications == 1 else "certifications"
+    which = "is a certification" if certifications == 1 else "are certifications"
     return f"{events} committed {what}, of which {certifications} {which}."
 
 

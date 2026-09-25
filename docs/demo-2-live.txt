@@ -91,7 +91,7 @@
                                                MEANWHILE, between board-seated and b13
   ------------------------------------------------------------------------------------
 
-  18 committed events, of which 2 certifications.
+  18 committed events, of which 2 are certifications.
 
   seq  kind          identifier         what it commits
    16  issuance      Egg_zDGvfCi4...    a credential to nina-board-seat-3,6
@@ -190,7 +190,7 @@
                                                           MEANWHILE, between b8 and d5
   ------------------------------------------------------------------------------------
 
-  6 committed events, of which 2 certifications.
+  6 committed events, of which 2 are certifications.
 
   seq  kind          identifier         what it commits
    17  endorsement   EQfnCxJn58wc...    dev-founder,6 endorses Efx7xD35Qc6n...
@@ -261,7 +261,7 @@ ERROR  e.proof.edge-unvalidated.f
                                                          MEANWHILE, between d5 and b16
   ------------------------------------------------------------------------------------
 
-  15 committed events, of which 1 certification.
+  15 committed events, of which 1 is a certification.
 
   seq  kind          identifier         what it commits
    23  act           EGjUl5wf-EgX...    an act of the class approve-budget
@@ -369,7 +369,7 @@ ERROR  e.proof.edge-unvalidated.f
                                                         MEANWHILE, between b17 and b20
   ------------------------------------------------------------------------------------
 
-  9 committed events, of which 1 certification.
+  9 committed events, of which 1 is a certification.
 
   seq  kind          identifier         what it commits
    40  act           E2G9oY2qa45h...    an act of the class approve-budget
@@ -484,7 +484,7 @@ ERROR  e.proof.edge-unvalidated.f
                                                         MEANWHILE, between b23 and b26
   ------------------------------------------------------------------------------------
 
-  5 committed events, of which 1 certification.
+  5 committed events, of which 1 is a certification.
 
   seq  kind          identifier         what it commits
    48  duplicity     EJFsGa7HjFS_...    duplicity observed at nina-board-seat-3,6

@@ -1566,7 +1566,7 @@ def test_the_meanwhile_card_counts_exactly_what_the_log_counts_over_the_span():
         certifications = [one for one in span if one.kind == "certification"]
 
     assert f"{len(span)} committed events" in out
-    assert f"of which {len(certifications)} certification" in out
+    assert f"of which {len(certifications)} are certifications" in out
     # And every event in the span is on the card, addressed by its own sequence number.
     for event in span:
         assert f"{event.position.seq:>3}  " in out
