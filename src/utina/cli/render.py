@@ -296,6 +296,32 @@ def eval_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
     return _screen(_finding_lines(appraisal, outcome, aliases, style))
 
 
+def _brief_diligence(done: Diligence | None, aliases: Aliases, style: Style) -> list[str]:
+    """The six-line block collapsed to one, for the screen the live run plays.
+
+    Absent from every beat but one, so it costs the other screens nothing. It survives
+    the cut at all — where the subject identifier and the column header did not —
+    because on the beat that carries it, it IS the beat: a line saying "we hold their
+    record and re-folding it here says this" is the whole claim, and a brief screen
+    that dropped it would play the beat without its point.
+
+    What is dropped from the full form is their law head and the count of events held.
+    Both are checkable on the full screen the follow-up carries, and neither is what a
+    room reads in the six seconds this line gets.
+    """
+    if done is None:
+        return []
+    return [
+        *wrapped(
+            style,
+            "diligence",
+            f"{aliases.full(done.counterparty)} at their seq {done.at.seq} under their "
+            f"clause {done.clause}, refolded here from their own committed record: "
+            f"{verdict_word(done.outcome)}",
+        ),
+    ]
+
+
 def brief_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
     """The same appraisal in eight to ten lines, for a beat that has to be held.
 
@@ -367,6 +393,7 @@ def brief_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
                 REACHED if reachable else SPENT,
             ),
             "",
+            *_brief_diligence(appraisal.diligence, aliases, style),
             *wrapped(
                 style,
                 "ground",
@@ -708,6 +735,36 @@ def _refusal_lines(
 # --- utina law ----------------------------------------------------------------
 
 
+def _requires(law: Constitution, style: Style) -> list[str]:
+    """What this edition asks of an act beyond the arithmetic of its clauses.
+
+    A law is not only its clauses. An edition may say that a decision is consequential
+    only once the domain certifies the tally (``fold/certification.py``), and it may say
+    that acting on a counterparty requires having folded the counterparty's own record
+    (``fold/diligence.py``). Both are committed terms of the law, and a screen calling
+    itself "the law in force" that showed neither was showing part of a law and naming
+    it the whole.
+
+    It was missing for certification long before diligence existed, which is how it
+    came to be noticed: Act VI's narration says "beside the clause, a term saying that
+    opening an account requires confirming the customer could lawfully act", and a
+    narrator would have said that over a screen that did not contain it. A demo where
+    the words and the screen disagree is the one failure this whole arrangement exists
+    to prevent.
+
+    Absent where the edition names neither, which keeps the line off every screen whose
+    law has nothing extra to say.
+    """
+    asked = []
+    if law.certification is not None:
+        asked.append("a certification of the tally, by the domain itself")
+    if law.diligence is not None:
+        asked.append("diligence: the counterparty's own governance, folded and sealed")
+    if not asked:
+        return []
+    return list(wrapped(style, "requires", "; ".join(asked)))
+
+
 def law_screen(
     law: Constitution, label: str, position: Position, aliases: Aliases, style: Style
 ) -> str:
@@ -753,6 +810,7 @@ def law_screen(
             f"lists below drop the shared 'at {aliases.scope.lower()}'. Run utina whois "
             "<alias> for the identifier behind one.",
         ),
+        *_requires(law, style),
     ]
     for clause in law.clauses:
         total = sum((slot.weight for slot in clause.group.slots), Fraction(0))

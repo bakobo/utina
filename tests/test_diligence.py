@@ -381,3 +381,47 @@ def _screen(*argv: str) -> str:
     out = StringIO()
     run(argv, Console(out=out, err=StringIO()))
     return out.getvalue()
+
+
+# --- the law screen ---------------------------------------------------------------
+
+
+def test_the_law_screen_names_the_terms_the_edition_commits() -> None:
+    """A law is not only its clauses, and a screen calling itself "the law in force"
+    that showed only clauses was showing part of a law and naming it the whole.
+
+    Missing for certification since certification existed. It surfaced only when Act
+    VI's narration promised a term the screen did not contain — a demo where the words
+    and the screen disagree being the one failure the generated-and-pinned arrangement
+    exists to prevent.
+    """
+    theirs = _screen("law", "--domain", "bank", "--at", "5")
+    assert "a certification of the tally, by the domain itself" in theirs
+    assert "diligence" in theirs
+
+    ours = _screen("law", "--at", "inception")
+    assert "a certification of the tally, by the domain itself" in ours
+    assert "diligence" not in ours, "Acme owes none, and the screen should not imply it"
+
+
+def test_an_edition_that_asks_for_neither_shows_no_terms_line() -> None:
+    """Which keeps the line off every screen whose law has nothing extra to say."""
+    from utina.cli.aliases import aliases_over
+    from utina.cli.render import law_screen
+    from utina.cli.style import Style
+
+    # A real edition with both terms stripped, rather than a hand-built empty one: the
+    # screen is exercised over a law that has clauses to draw, so what this asserts is
+    # the absence of the line and not the absence of everything.
+    with world(domain=bank.DOMAIN) as record:
+        law = Constitution.at(record.corpus, record.values.position(record.last))
+        bare = replace(law, certification=None, diligence=None)
+        drawn = law_screen(
+            bare,
+            "5",
+            record.values.position(record.last),
+            aliases_over(record.aids, record.name),
+            Style(False),
+        )
+    assert "clause M1" in drawn, "the screen still drew the law"
+    assert "requires" not in drawn

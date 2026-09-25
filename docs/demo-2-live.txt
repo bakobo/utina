@@ -502,3 +502,93 @@ ERROR  e.proof.edge-unvalidated.f
 
   ground      self-convicted on its own bytes: ERRRAUt0KgnUtVFg... contradicts
               EGiHD3Xz6gHb3Wg5...
+
+
+
+  ------------------------------------------------------------------------------------
+  KERNEL  Governance that composes
+  expects: a governance engine is something each organization runs for itself
+  happens: two organizations transact, neither reads the other's constitution, and both
+    get an answer the room can check
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 27    Meridian Bank's law obliges it to look
+  A second governed domain, and nothing about it is Acme's. Two officers, one clause,
+  one act — and beside the clause, a term saying that opening an account for a customer
+  requires confirming the customer could lawfully take the action. That obligation is
+  Meridian's own, written in Meridian's own law. It names no clause of Acme's, no
+  identifier of Acme's, and no act class of Acme's, because a domain that had to read
+  another domain's constitution to transact with it would not compose; it would merge.
+
+  $ utina law --domain bank --at 5
+
+  LAW IN FORCE AT 5 (seq 5)
+  ------------------------------------------------------------------------------------
+
+  semantics   08fd67445b6f1a96...   the dossier specification, pinned
+  head        0a346343963c...          over 1 clauses, ordered by clause SAID
+  bytes       182 canonical bytes, digested SHA-256
+  parties     acme-customer,6, meridian-governed-domain,6, priya-officer-meridian,6,
+              tomas-officer-meridian,6
+  aliases     Display names, not identifiers, and local to Meridian. The slot lists
+              below drop the shared 'at meridian'. Run utina whois <alias> for the
+              identifier behind one.
+  requires    a certification of the tally, by the domain itself; diligence: the
+              counterparty's own governance, folded and sealed
+
+  clause M1   MxN, unity 1                          0a346343963c...
+    governs   open-customer-account
+    slots     priya-officer,6 1/2, tomas-officer,6 1/2
+    weights   the slots sum to 1, so every slot is required
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 28    Both officers sign, and it is still not enough
+  Unity is reached and the domain has certified the tally, so by beat 12's rule this act
+  is authorized. It is not. Meridian asked more of itself than a count, and the screen
+  names exactly what is outstanding: diligence, under Meridian's own clause, absent. A
+  bank that has not yet looked at the customer's file has not finished, and the record
+  says so rather than the compliance officer saying so.
+
+  $ utina eval open-customer-account --domain bank --at 4 --brief
+
+  PENDING     may Meridian Bank perform an act of the class open-customer-account?
+  ------------------------------------------------------------------------------------
+  4 (seq 4), clause M1 (MxN), unity 1, law head 0a346343963c...
+
+  priya-officer,6        1/2   endorsed      ECf8hE2IFZNL...
+  tomas-officer,6        1/2   endorsed      Elpu5_1Zn7bY...
+  endorsed 1 of 1, unity reached; reachable 1, still reachable
+
+  ground      meridian-governed-domain,6 - diligence under clause M1, absent
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 29    Meridian folds Acme's log, and shows you the fold
+  Back at beat 2 you watched Acme approve opening a bank account under its own
+  governance. Meridian now holds a copy of Acme's record up to that coordinate and has
+  committed what it checked: whose domain, which coordinate, which law was in force
+  there, which clause, over which act. It committed no verdict — the standard forbids
+  one, because a sealed answer a stranger cannot recompute is authority smuggled in as
+  evidence. So the last line of this screen is not something Meridian is telling you. It
+  is what Acme's log says when this engine folds it again, now, in front of you, out of
+  Meridian's own record. You do not have to take Acme's word for it, Meridian did not,
+  and you do not have to take Meridian's either.
+
+  $ utina eval open-customer-account --domain bank --at 5 --brief
+
+  AFFIRMED    may Meridian Bank perform an act of the class open-customer-account?
+  ------------------------------------------------------------------------------------
+  5 (seq 5), clause M1 (MxN), unity 1, law head 0a346343963c...
+
+  priya-officer,6        1/2   endorsed      ECf8hE2IFZNL...
+  tomas-officer,6        1/2   endorsed      Elpu5_1Zn7bY...
+  endorsed 1 of 1, unity reached; reachable 1, still reachable
+
+  diligence   acme-customer,6 at their seq 4 under their clause A1, refolded here from
+              their own committed record: AFFIRMED
+  ground      clause M1, reached by ECf8hE2IFZNL..., Elpu5_1Zn7bY...

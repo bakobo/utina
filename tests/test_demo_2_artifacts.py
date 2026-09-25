@@ -81,7 +81,7 @@ def test_the_check_mode_agrees_with_the_files_on_disk():
 
 
 def test_every_live_beat_appears_in_the_transcript_and_the_cue_card():
-    """The two artifacts a narrator holds have to name the same thirteen beats.
+    """The two artifacts a narrator holds have to name the same seventeen beats.
 
     A cue card that dropped a beat the transcript still shows would send somebody to
     the lectern with an incomplete list, which is the failure a generated card exists
@@ -91,7 +91,7 @@ def test_every_live_beat_appears_in_the_transcript_and_the_cue_card():
 
     transcript = (DOCS / "demo-2-live.txt").read_text(encoding="utf-8")
     card = (DOCS / RENDERER.CUE_CARD).read_text(encoding="utf-8")
-    assert len(LIVE) == 14
+    assert len(LIVE) == 17
     for beat in LIVE:
         assert f"BEAT {beat.id}" in transcript, f"beat {beat.id} is not in the transcript"
         assert f"**Beat {beat.id}**" in card, f"beat {beat.id} is not on the cue card"

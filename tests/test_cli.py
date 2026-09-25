@@ -1458,20 +1458,21 @@ def test_the_demo2_beats_are_the_scripts_beats_in_the_scripts_order():
 
     assert [beat.id for beat in OPENER] == ["1", "2", "3", "4", "5", "6"]
     assert [beat.id for beat in LIVE] == [
-        "7", "9", "10", "13", "8", "12", "14", "16", "17", "19", "20", "22", "23", "26"
+        "7", "9", "10", "13", "8", "12", "14", "16", "17", "19", "20", "22", "23", "26",
+        "27", "28", "29",
     ]
     assert [beat.id for beat in LEAVE_BEHIND] == ["11", "15", "18", "21", "24", "25"]
-    assert len(KERNELS) == 7, "seven kernels: beat 26's is the fourth verdict's own"
-    assert sum(len(kernel.beats) for kernel in KERNELS) == 14, "fourteen live beats"
+    assert len(KERNELS) == 8, "eight kernels: Act VI's composition beats are their own"
+    assert sum(len(kernel.beats) for kernel in KERNELS) == 17, "seventeen live beats"
 
 
 def test_every_beat_of_the_script_appears_exactly_once():
-    """Twenty-six beats, and no beat in two parts. A beat that ran twice would
+    """Twenty-nine beats, and no beat in two parts. A beat that ran twice would
     make the leave-behind disagree with what the room was shown."""
     from utina.cli.demo2 import LEAVE_BEHIND, LIVE, OPENER
 
     everything = [beat.id for beat in OPENER + LIVE + LEAVE_BEHIND]
-    assert sorted(everything, key=int) == [str(n) for n in range(1, 27)]
+    assert sorted(everything, key=int) == [str(n) for n in range(1, 30)]
     assert len(everything) == len(set(everything))
 
 
@@ -1480,7 +1481,7 @@ def test_the_demo2_live_part_runs_end_to_end_and_exits_zero():
     its exit status as failure would report the demo broken when it worked."""
     out = screen("demo2", "--part", "live", "--no-pause")
 
-    assert "BEAT 7" in out and "BEAT 23" in out
+    assert "BEAT 7" in out and "BEAT 23" in out and "BEAT 29" in out
     assert "e.proof.edge-unvalidated.f" in out, "beat 14's refusal, in the transcript"
 
 

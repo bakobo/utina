@@ -21,6 +21,7 @@
   aliases     Display names, not identifiers, and local to Acme. The slot lists below
               drop the shared 'at acme'. Run utina whois <alias> for the identifier
               behind one.
+  requires    a certification of the tally, by the domain itself
 
   clause A1   MxN, unity 1                          d5a7c7eefcc7...
     governs   open-bank-account, hire-vp-sales, sign-office-lease, approve-budget

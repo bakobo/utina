@@ -167,6 +167,26 @@ Beats 3 and 5 are deliberately left pending. They are Act II's material.
 
 **Not in the cut list.** Beat 26 is the only place the fourth verdict appears. Cutting it for time costs a quarter of the codomain.
 
+### Act VI — governance that composes
+
+**Live: 27, 28, 29.** Everything before this shows one organization governed by computable law. This shows two of them transacting, and it is the step from "a governance engine" to "governance that composes" — which is the thing a customer with counterparties actually needs. Ruled by Daniel on 2026-09-25: a second governed domain is pointless unless it intersects the first, because composability is the whole point of introducing one.
+
+The narrative is the one the record already set up. At beat 2 Acme approved opening a bank account under its own governance. Meridian Bank's own law obliges it to confirm that a prospective customer could lawfully take an action before it transacts, so Meridian folds Acme's log, commits what it relied on and what it checked, and only then does its own arithmetic carry.
+
+| # | Question | Clause | Slots | Sum | Expected | Ground it must carry |
+|---|---|---|---|---|---|---|
+| 27 | What Meridian's own law requires of it | M1 | — | — | **the law, with its diligence term** | the clause, and the committed field naming the schema an evaluation seal must satisfy. Nothing of Acme's appears in it |
+| 28 | May Meridian open the account, before it has looked? | M1 | Priya E, Tomas E | 1.0 | **pending** | diligence under clause M1, absent — a requirement unity does not discharge |
+| 29 | And once it has looked | M1 | Priya E, Tomas E | 1.0 | **affirmed** | the seal's five committed terms, and what re-folding Acme's admitted record says *now* |
+
+**Neither domain reads the other's constitution**, and that is what makes it buildable rather than a merge. Meridian's clause says "the counterparty's domain approved this act"; it names no clause, identifier or act class of Acme's, and Acme names nothing of Meridian's. What crosses the boundary is a certified result over committed inputs. `custos-4.2.md:2044` defers a portable clause language — "sealing a subject to another domain's law ... is chartered to the encoding round and not designed here" — and this is deliberately not one.
+
+**The seal commits no verdict, and beat 29's last line is why.** `custos-4.2.md:2057` names the evaluation seal, defers it, and ships its admissibility rule anyway so the deferral "cannot drift into silent adoption": admissible only over verifiable algorithms, and "commit predicates, never verdicts. A sealed verdict a stranger cannot recompute is smuggled authority." So Meridian commits whose domain, which coordinate, which law head, which clause and which act — and the answer is recomputed in front of the room, from Meridian's own record, every time anybody asks. The room does not have to take Acme's word for it; Meridian did not; and the room does not have to take Meridian's either.
+
+**Not in the cut list.** Cutting Act VI costs the only demonstration that any of this composes, which is the part a prospect with counterparties came to see.
+
+**What this pins, and it is a deferral.** Custos says of the evaluation seal that "no discriminating fixture exists". This is one. utina is a fixture for a construct the standard has not designed, and must say so wherever it says anything — the seal here is not a ratified artifact and the schema identifier is a placeholder, not a recomputed pin. Filed as Q37.
+
 ### Coda
 
 **Leave-behind, both.** They are the cheapest beats in the document and the least surprising to this audience, which is exactly the combination that loses to a question.

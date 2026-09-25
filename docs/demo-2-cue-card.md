@@ -29,7 +29,7 @@ utina demo2 --part opener --no-pause
 - **6.** May the board declare a dividend?
   `utina eval declare-dividend --at d8 --substrate keripy`
 
-## Live — fourteen beats in seven kernels
+## Live — seventeen beats in eight kernels
 
 ```
 utina demo2 --part live
@@ -156,6 +156,29 @@ Each kernel carries what the room expects, because the beats were chosen on one 
 
    ```
    utina eval --said equity-retabled --at b26 --brief
+   ```
+
+### Governance that composes
+
+- the room expects: a governance engine is something each organization runs for itself
+- what happens: two organizations transact, neither reads the other's constitution, and both get an answer the room can check
+
+15. **Beat 27** — Meridian Bank's law obliges it to look
+
+   ```
+   utina law --domain bank --at 5
+   ```
+
+16. **Beat 28** — Both officers sign, and it is still not enough
+
+   ```
+   utina eval open-customer-account --domain bank --at 4 --brief
+   ```
+
+17. **Beat 29** — Meridian folds Acme's log, and shows you the fold
+
+   ```
+   utina eval open-customer-account --domain bank --at 5 --brief
    ```
 
 
