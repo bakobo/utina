@@ -894,6 +894,21 @@ Make Custos's replayable governance useful to a real organization = goal:
         light terminal amber 220 is 1.4:1 and the sums row is unreadable. The previous SGR scheme
         assumed dark too; this only makes the assumption legible enough to be argued with.
 
+    The subject field prints the committed identifier whole, and utina carries no value visualization = decision:
+      id: ombrfjmh
+      why: >
+        M8 drew the eval screen's `subject` as an entviz pill, a nineteen-column recognition cue. Daniel
+        replaced it with the plain 44-character identifier for the 2026-09-25 demo and then ruled it
+        out of utina altogether. The pill was the only line on any screen where stripping the escapes
+        from the painted form did not yield the plain form, so `tests/test_cli.py` had to drop that
+        line before asserting the colour invariant, and whether the invariant should survive was left
+        open as Q-PX2Q. With the pill gone the invariant holds on every line again and the question is
+        moot. Removing it also drops the `entviz` dependency and its unconditional `lxml`, and takes
+        `entviz` out of the display-only quarantine list in `tests/test_purity.py`, since nothing is
+        left to quarantine. Every other identifier on the screens is still abbreviated to twelve
+        characters; the subject is the one printed in full, which costs width the 100-column layout
+        already budgets for.
+
     Demo 2's transcripts and cue card are tracked, generated, and pinned = decision:
       id: gizauc3r
       why: >
