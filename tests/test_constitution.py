@@ -114,6 +114,9 @@ SCHEMA = ENDORSEMENT_SCHEMA
 #: The act class Acme's amendment clause governs, in both editions.
 AMEND = "amend-operating-agreement"
 
+#: What a certifying domain names as the schema its tallies must satisfy.
+CERT_SCHEMA = "Ecertification-schema-said"
+
 #: What the ordinary-acts clause governs once the board is seated.
 ORDINARY = ["open-bank-account", "hire-vp-sales", "approve-budget"]
 
@@ -300,6 +303,93 @@ def test_an_enactment_no_clause_governs_never_takes_force():
     """
     ungoverned = amended_by(enactment(SEAT_BOARD, AMENDMENT, STATE_TWO, "declare-dividend"))
     assert ids(Constitution.at(ungoverned, LATER)) == ["A1", "A2"]
+
+
+# --- where the domain certifies (this.i @pv7a6dhc) ----------------------------
+#
+# An enactment is an act, so in a domain that requires certification it is pending
+# until the domain admits a tally for it — and an edition taking force on the
+# arithmetic alone would bind the whole domain on a judgment the evaluator reports
+# as unauthorized. These four cases are that sentence.
+
+
+def certifies(said, position, subject, counted=()):
+    """The domain admitting a tally for ``subject``, citing ``counted``.
+
+    Spelled out at every call site rather than derived from the record, because what
+    a certification claims is the thing under test here as much as in the evaluator's
+    own cases.
+    """
+    members = {"o": "MxN"}
+    for index, (node, weight) in enumerate(counted):
+        members[f"e{index}"] = {"n": node, "s": ENDORSEMENT_SCHEMA, "w": weight}
+    return Event(
+        said=said,
+        kind="certification",
+        position=position,
+        body={
+            "i": GAID,
+            "certifies": subject,
+            "acdc": {
+                "i": GAID,
+                "s": CERT_SCHEMA,
+                "a": {"said": subject, "act": "issue"},
+                "e": {"endorsements": members},
+            },
+        },
+    )
+
+
+def certifying_record(*admitted):
+    """The standard record under a founding law that requires its tallies certified."""
+    founding = Event(
+        said="E0-inception",
+        kind="inception",
+        position=INCEPTION,
+        body={"law": {"clauses": STATE_ONE, "certification": CERT_SCHEMA}},
+    )
+    return Corpus.load([founding, *EVENTS[1:], *admitted])
+
+
+#: The tally a sound certification of the board amendment cites: both founders'
+#: committed endorsements, each worth the half A2 slots them at.
+SOUND = (("E5-marta-endorses", "1/2"), ("E6-dev-endorses", "1/2"))
+
+
+def test_an_enactment_at_unity_takes_force_uncertified_where_the_law_wants_none():
+    """The unchanged case, stated so the two paths can be told apart below."""
+    assert ids(Constitution.at(corpus(), LATER)) == ["B1", "B2"]
+
+
+def test_an_enactment_at_unity_does_not_take_force_until_its_tally_is_admitted():
+    """Both founders endorsed and the arithmetic reaches unity. The law has not moved.
+
+    Binding the domain here would put the law fold and the evaluator at odds about one
+    event: the evaluator reports the amendment pending, and the edition it commits
+    would already be governing every question asked after it.
+    """
+    assert ids(Constitution.at(certifying_record(), LATER)) == ["A1", "A2"]
+
+
+def test_the_edition_takes_force_at_the_coordinate_the_tally_is_admitted():
+    """And not before it — the certification is the moment, exactly as for any act."""
+    record = certifying_record(certifies("E7-cert", LATER, SEAT_BOARD, SOUND))
+
+    assert ids(Constitution.at(record, AFFIRMED)) == ["A1", "A2"]
+    assert ids(Constitution.at(record, LATER)) == ["B1", "B2"]
+
+
+def test_an_edition_never_takes_force_on_a_certification_the_record_refutes():
+    """Worse than binding on a pending enactment: this one binds on a convicted one.
+
+    The tally cites nothing and claims unity, so it contradicts itself on bytes its own
+    domain admitted. The predicate is the evaluator's, called rather than reimplemented,
+    so the law fold and the evaluator cannot disagree about whether this amendment was
+    ever authorized.
+    """
+    record = certifying_record(certifies("E7-cert", LATER, SEAT_BOARD))
+
+    assert ids(Constitution.at(record, LATER)) == ["A1", "A2"]
 
 
 def test_an_amendment_that_carried_stays_in_force_when_its_endorser_withdraws():
@@ -660,3 +750,45 @@ def test_many_unratified_enactments_do_not_make_the_law_fold_explode():
     started = time.monotonic()
     assert sorted_ids(Constitution.at(Corpus.load(events), Position(39))) == ["A1", "A2"]
     assert time.monotonic() - started < 5
+
+
+def test_a_law_whose_certification_field_is_unreadable_refuses_the_edition():
+    """The fail-open a substitute reviewer reproduced: a typo disabling the requirement.
+
+    Reading a present-but-unreadable field as ABSENT meant a domain could switch off its
+    own certification requirement with a malformed value and have every act affirmed on
+    arithmetic alone. Axiom 4's posture one field along: an unreadable external semantics
+    refuses rather than being assumed away, and the clause level already inherited rather
+    than exempting (``this.i`` @2e2dncfe, ``fold/semantics.py``).
+    """
+    founding = Event(
+        said="E0-inception",
+        kind="inception",
+        position=INCEPTION,
+        body={"law": {"clauses": STATE_ONE, "certification": {"schema": "Erequired"}}},
+    )
+    record = Corpus.load([founding, *EVENTS[1:]])
+
+    with pytest.raises(BakoboError) as raised:
+        Constitution.at(record, LATER)
+
+    assert raised.value.code == "e.input.malformed.law.f"
+    assert "certification" in raised.value.detail
+
+
+def test_a_law_naming_no_certification_schema_at_all_is_not_unreadable():
+    """Absent is a governance choice Custos delegates (``:1924``), not a defect."""
+    assert ids(Constitution.at(corpus(), LATER)) == ["B1", "B2"]
+
+
+def test_a_law_saying_its_acts_stand_on_their_arithmetic_is_read_rather_than_refused():
+    """``False`` is the committed way a clause says so; a law carrying it means the same."""
+    founding = Event(
+        said="E0-inception",
+        kind="inception",
+        position=INCEPTION,
+        body={"law": {"clauses": STATE_ONE, "certification": False}},
+    )
+    record = Corpus.load([founding, *EVENTS[1:]])
+
+    assert ids(Constitution.at(record, LATER)) == ["B1", "B2"]

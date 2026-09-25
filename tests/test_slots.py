@@ -894,12 +894,39 @@ def seated_office() -> Group:
 
 
 def test_an_office_slot_is_filled_by_whoever_holds_its_credential():
-    """The law never names Nina, and her endorsement fills the seat anyway."""
+    """The law never names Nina, and her endorsement fills the seat anyway.
+
+    The mapping is addressed by the SEAT and the classification reports the party in
+    it, which are two different questions (``this.i`` @qjjlkrxt). An earlier version
+    of this case asserted ``dispositions(...)[NINA]`` — the holder as the key — and
+    it passed while the slot contributed no weight to any threshold, because
+    ``Group._where`` was looking the same slot up under the empty string.
+    """
     events = [seating(), signed("EAct1", NINA)]
 
-    assert slots.dispositions(seated_office(), events, SUBJECT)[NINA] is (
+    assert slots.dispositions(seated_office(), events, SUBJECT)[OFFICE] is (
         Disposition.ENDORSED
     )
+    classified = slots.classify(seated_office(), events, SUBJECT)
+    filled = [one for one in classified if one.key == OFFICE]
+    assert [one.endorser for one in filled] == [NINA], "the row names who is in the seat"
+
+
+def test_a_filled_office_slot_carries_its_weight():
+    """The assertion M2 owed and did not make, and the whole of ``this.i`` @qjjlkrxt.
+
+    Testing that an office is FILLED is a claim about the slot predicate. Whether the
+    group then counts it is a different claim, and for as long as nothing asserted it
+    the office machinery was arithmetically inert: every office slot read pending in
+    ``satisfied``, ``reachable`` and ``outstanding`` however the record stood.
+    """
+    group = seated_office()
+    events = [seating(), signed("EAct1", MARTA), signed("EAct2", NINA)]
+
+    held = slots.dispositions(group, events, SUBJECT)
+
+    assert group.endorsed_weight(held) == HALF + HALF
+    assert group.satisfied(held), "Marta's half and the seat's half reach unity"
 
 
 def test_a_vacant_office_is_pending_under_its_own_name():
@@ -914,17 +941,42 @@ def test_a_vacant_office_is_pending_under_its_own_name():
     assert NINA not in held, "an endorsement from an unseated party fills nothing"
 
 
-def test_revoking_the_seating_empties_the_office_without_touching_the_law():
-    """The whole point of the separation: personnel is not constitutional law."""
+def test_revoking_the_seating_empties_the_office_for_anything_asked_after_it():
+    """The whole point of the separation: personnel is not constitutional law.
+
+    The revocation bites the NEXT question and never a settled one. Nina's endorsement
+    was made while she held the seat, so it still counts afterwards; a question tabled
+    over a bundle the revocation is already in finds the office empty.
+    """
     before = [seating(), signed("EAct1", NINA)]
     after = [*before, revoked("ERevoke", "ESeat-credential", registry="EAcmeRegistry")]
 
-    assert slots.dispositions(seated_office(), before, SUBJECT)[NINA] is (
+    assert slots.dispositions(seated_office(), before, SUBJECT)[OFFICE] is (
         Disposition.ENDORSED
     )
-    assert slots.dispositions(seated_office(), after, SUBJECT)[OFFICE] is (
+    assert slots.dispositions(seated_office(), after, OTHER_SUBJECT)[OFFICE] is (
         Disposition.PENDING
     )
+
+
+def test_a_revocation_does_not_un_count_an_endorsement_that_already_stood():
+    """"What was affirmed above stands at its coordinate forever" (``:1805``).
+
+    The defect this replaced (``this.i`` @djyj2bc2) resolved the office once, against
+    the whole bundle, so a revocation reached backwards and deleted every endorsement
+    the seat had ever made. It is the same reversal ``:1741`` forbids — the revocation
+    is a new fact and never a rewrite — and it is the demo's answer to the sharpest
+    objection the 4.1 KERI panel raised.
+    """
+    events = [seating(), signed("EAct1", NINA)]
+    revoked_after = [*events, revoked("ERevoke", "ESeat-credential", registry="EAcmeRegistry")]
+
+    settled = slots.classify(seated_office(), revoked_after, SUBJECT)
+    seat = [one for one in settled if one.key == OFFICE]
+
+    assert [one.disposition for one in seat] == [Disposition.ENDORSED]
+    assert [one.endorser for one in seat] == [NINA], "the party who held the seat then"
+    assert [one.said for one in seat] == ["EAct1"]
 
 
 def test_two_standing_seatings_of_one_office_are_reported_as_ambiguous():
@@ -955,9 +1007,12 @@ def test_a_revoked_seating_does_not_count_towards_ambiguity():
     assert slots.seating_is_ambiguous(seated_office(), events) is None
 
     # And the office is Dev's now, which is what a succession looks like: the seat
-    # never moved in the law, only who is standing in it.
-    held = slots.dispositions(seated_office(), events, SUBJECT)
-    assert DEV in held and OFFICE not in held
+    # never moved in the law, only who is standing in it. So the key is the office
+    # in both states — that is what makes it stable across a change of holder — and
+    # it is the classification's endorser that moved.
+    classified = slots.classify(seated_office(), events, SUBJECT)
+    seat = [one for one in classified if one.key == OFFICE]
+    assert [one.endorser for one in seat] == [DEV]
 
 
 def test_a_slot_naming_a_party_is_unaffected_by_any_of_this():
@@ -994,3 +1049,48 @@ def test_a_grant_naming_the_same_holder_twice_counts_them_once():
         events, schema=slots.GCD_SCHEMA, issuer=DOMAIN, office=OFFICE
     ) == (NINA,)
     assert slots.seating_is_ambiguous(seated_office(), events) is None
+
+
+def test_a_slot_disposition_keys_itself_by_its_endorser_when_given_no_seat():
+    """The shape an outside caller gets, and why the default is the endorser.
+
+    ``classify`` always passes the key explicitly. For a slot the law entitles directly
+    the seat and its occupant are the same identifier, so a two-argument construction
+    still means what it did before the key existed (``this.i`` @qjjlkrxt).
+    """
+    direct = slots.SlotDisposition(MARTA, Disposition.ENDORSED, "EAct1")
+    seated = slots.SlotDisposition(NINA, Disposition.ENDORSED, "EAct1", key=OFFICE)
+
+    assert direct.key == MARTA
+    assert (seated.key, seated.endorser) == (OFFICE, NINA)
+
+
+def test_a_contested_office_fills_nothing_at_the_coordinate_it_was_contested():
+    """The reachability a substitute reviewer found, and it was mine to create.
+
+    ``seating_is_ambiguous`` refuses where the office is contested at the coordinate the
+    QUESTION is asked from, and that was the only coordinate ``_holder`` was ever called
+    at until ``this.i`` @djyj2bc2 made it per-act. After that there were coordinates the
+    refusal cannot see: a seating contested when an endorsement was made and resolved by
+    a revocation before the question is asked. That endorsement would have counted on a
+    first-of-two guess. @djyj2bc2's own note claimed the gap had not been widened, and it
+    had.
+    """
+    contested = [
+        seating(),
+        grant("ESeat2", issuer=DOMAIN, issuee=DEV),
+        signed("EAct1", NINA),
+    ]
+    # The contest resolves in Dev's favour, so afterwards the office has exactly one
+    # holder and nothing refuses. Nina's endorsement was made while it was contested.
+    settled = [*contested, revoked("ERevoke", "ESeat-credential", registry="EAcmeRegistry")]
+
+    # Asked over the contested bundle, the fold refuses the whole question.
+    assert slots.seating_is_ambiguous(seated_office(), contested) == OFFICE
+
+    # Asked after the contest is resolved, it does not refuse — and the endorsement made
+    # while the office was contested must still count for nothing.
+    assert slots.seating_is_ambiguous(seated_office(), settled) is None
+    assert slots.dispositions(seated_office(), settled, SUBJECT)[OFFICE] is (
+        Disposition.PENDING
+    )

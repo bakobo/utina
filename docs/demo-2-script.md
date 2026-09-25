@@ -16,7 +16,7 @@ That yields three artifacts of decreasing liveness and increasing depth.
 
 **Recorded opener, ~4 minutes, played first.** Beats 1–6 under `--substrate keripy`, with real prefixes, closing on `tools/read-keri-log.py` reading Acme's key log with keripy alone and no utina code. This establishes both the ground and the this-is-really-KERI claim, so the live part never has to argue either, and it leaves beats 3 and 5 pending as the live part's setup. Recorded rather than live because it is recap for this audience, and because a pre-baked segment is the right place to spend the fragile minutes.
 
-**Live, ~18 minutes, 12 beats in five kernels.** Chosen on one test: the beats where this audience's own intuition is wrong. Ordered so that the amendment is the hinge — everything after it uses the board it creates, and the act ends with an amendment being convicted, which rhymes with the amendment that opened it.
+**Live, ~18 minutes.** The beats and the kernels are counted once, in the overview below, so a beat added or cut moves one number and not four. Chosen on one test: the beats where this audience's own intuition is wrong. Ordered so that the amendment is the hinge — everything after it uses the board it creates, and the act ends with an amendment being convicted, which rhymes with the amendment that opened it.
 
 | Kernel | Beats | What the audience expects | What happens |
 |---|---|---|---|
@@ -26,10 +26,11 @@ That yields three artifacts of decreasing liveness and increasing depth.
 | 4. Two currents, unmerged | 8, 12, 14 | the credential check *is* the answer | the toolchain rejects an unseated endorser before any fold runs, and the fold answers separately |
 | 5. Revocation, and what it cannot do | 16, 17, 19, 20 | revoking undoes the decision | it changes the next answer and not the last one — and then duplicity, where the answer does move |
 | 6. The amendment that lies | 22, 23 | law is a document | a document cannot be convicted of lying about itself; this one is, on its own bytes |
+| 7. A certification that lies | 26 | a decision is authorized when the votes add up | it is authorized when the domain *certifies* that they did, and a certification the record refutes convicts its sponsor on their own signature |
 
-Six kernels, not five — kernel 3 is one beat and rides on the recorded opener's beat 4, which costs a single sentence of recap. Thirteen live beats, of which 8 and 16 are screens rather than evaluations and run in well under a minute, so the realistic live total is 17 to 19 minutes. With the opener and an introduction that leaves five or six minutes of questions inside the half hour, and questions from this room are worth more than a fourteenth beat.
+Seven kernels — kernel 3 is one beat and rides on the recorded opener's beat 4, which costs a single sentence of recap, and Act V's is one beat too. Fourteen live beats, of which 8 and 16 are screens rather than evaluations and run in well under a minute, so the realistic live total is 17 to 19 minutes. With the opener and an introduction that leaves five or six minutes of questions inside the half hour, and questions from this room are worth more than a fifteenth beat.
 
-**Leave-behind: the full 25-beat run, recorded, sent with the follow-up.** Not played in the room. This is where beats 5→11's cure, 15's third delegation stratum, 18, 21, 24 and 25 live, at full screen density. The most likely thing this audience does next is try to read the spec, so the leave-behind travels with the readable 4.3 draft and not on its own.
+**Leave-behind: the full run, every beat, recorded and sent with the follow-up.** Not played in the room. This is where beats 5→11's cure, 15's third delegation stratum, 18, 21, 24 and 25 live, at full screen density. The most likely thing this audience does next is try to read the spec, so the leave-behind travels with the readable 4.3 draft and not on its own.
 
 **Substrate: run live under `--substrate keripy`.** It costs 1.3 s for the whole record, so there is no speed argument for the facade, and every identifier on screen being a real prefix is worth more than it costs. Keep `--substrate facade` as the in-room fallback if anything hangs, and say plainly what changed if you use it.
 
@@ -99,6 +100,8 @@ Every amending enactment carries a declared **disturbance set**: the pending que
 
 E = Endorsed, P = Pending, D = Declined. "Ground it must carry" is asserted by the oracle, not just the verdict — a finding that reaches the right value without its ground fails the row (`this.i` @cl1grd, @ppnadi).
 
+**Every beat coordinate below is a certification's, not an endorsement's.** Acme's law names a certification schema from inception, so an act at unity is *pending* until the domain admits a tally for it (`this.i` @2e2dncfe). The beat labels therefore mark the moment each decision became consequential rather than the moment its last vote was cast — which is what the beats were always about, and is now what the record says.
+
 ### Act I — law is computed, not asserted
 
 **All six beats are the recorded opener.** Full screen density, `--substrate keripy`, and it closes on `tools/read-keri-log.py`.
@@ -106,7 +109,7 @@ E = Endorsed, P = Pending, D = Declined. "Ground it must carry" is asserted by t
 | # | Question | Clause | Slots | Sum | Expected | Ground it must carry | demo-1 |
 |---|---|---|---|---|---|---|---|
 | 1 | `law --at inception` | — | — | — | **the Constitution** | three clauses with their SAIDs, their operators, their slots and weights; the pinned dossier-semantics digest | prologue |
-| 2 | Open a bank account | A1 | Marta E, Dev E | 1.0 | **affirmed** | clause A1 + both endorsement SAIDs | D1 |
+| 2 | Open a bank account | A1 | Marta E, Dev E | 1.0 | **affirmed** | clause A1 + both endorsement SAIDs, and the domain's certification admitting the tally — the coordinate D1 names is the certification's, not Dev's endorsement | D1 |
 | 3 | Hire a VP of Sales | A1 | Marta E, Dev P | 0.5 | **pending** | typed requirement naming Dev's slot: required schema, expected issuer, citing clause. Species `absent` | D2 |
 | 4 | Sign the office lease | A1 | Marta E, Dev **D** | 0.5 | **defeated** | Dev's declination SAID + clause A1; unity unreachable | D3 |
 | 5 | Release escrowed founder equity | A3 | Marta E, Dev P | 0.5 | **pending** | typed requirement naming Dev's slot under A3. Species `absent` | new |
@@ -120,15 +123,15 @@ Beats 3 and 5 are deliberately left pending. They are Act II's material.
 
 | # | Question | Clause | Slots | Sum | Expected | Ground it must carry |
 |---|---|---|---|---|---|---|
-| 7 | Seat the board (the amendment itself) | **A2** | Marta E, Dev E | 1.0 | **affirmed** | judged under the law it replaces; the delegating seal's coordinate in Acme's KEL; the `dip` in seat 3's KEL; the seat credential's issuance event in Acme's registry; the declared disturbance set `{hire-vp-sales}` |
+| 7 | Seat the board (the amendment itself) | **A2** | Marta E, Dev E | 1.0 | **affirmed** | judged under the law it replaces; the certification that admitted its tally, which is also where the board law TAKES FORCE (`this.i` @pv7a6dhc); the delegating seal's coordinate in Acme's KEL; the `dip` in seat 3's KEL; the seat credential's issuance event in Acme's registry; the declared disturbance set `{hire-vp-sales}` |
 | 8 | `seat nina-board-seat-3,6` | — | — | — | **two bindings** | KERI: Acme's delegating seal + seat 3's `dip` naming Acme in `di`. ACDC: the seat credential, issuee = seat 3, issued under Acme's registry, registry state `issued` |
 | 9 | Hire a VP of Sales, re-asked after the amendment | A1 **repealed** | — | — | **pending** | species `expired/abandoned`; ground is **the amending enactment's SAID**; cure is re-presentation |
 | 10 | Release escrowed founder equity, re-asked after the amendment | A3 | Marta E, Dev P | 0.5 | **pending** | species `absent`, same requirement as beat 5; the three-part stability check shown: same clause SAID, same requirement space, same pinned lens |
-| 11 | Release escrowed founder equity, after Dev endorses it | A3 | Marta E, Dev E | 1.0 | **affirmed** | clause A3 + both endorsement SAIDs — cured across an amendment, under the clause that never moved |
-| 12 | Approve the annual budget | B1 | Marta E, seat 3 E, Dev P | 1.0 | **affirmed** | unity reached though one party never acted; seat 3's endorsement carries its DI2I edge to the seat credential |
+| 11 | Release escrowed founder equity, after Dev endorses it | A3 | Marta E, Dev E | 1.0 | **affirmed** | clause A3 + both endorsement SAIDs and the certification — cured across an amendment, under the clause that never moved |
+| 12 | Approve the annual budget | B1 | Marta E, seat 3 E, Dev P | 1.0 | **affirmed** | unity reached though one party never acted, and certified; seat 3's endorsement carries its DI2I edge to the seat credential |
 | 13 | Approve the Q2 forecast, after Dev declines | B1 | Marta E, Dev **D**, seat 3 P | 0.5 | **pending** | seat 3's slot still reachable |
 | 14 | Quinn endorses the Q2 forecast without a seat | B1 | — | — | **credential verification fails** | the DI2I edge names a seat credential whose issuee Quinn is not; rejected by edge validation *before any fold runs*. The fold's answer to beat 13's question is then recomputed and is unchanged |
-| 15 | Nina endorses from her delegated device | B1 | Marta E, Dev **D**, seat 3 **E** via device | 1.0 | **affirmed** | DI2I validates: the issuer is a delegated AID of the issuee. Same slot, different key, no law change |
+| 15 | Nina endorses from her delegated device | B1 | Marta E, Dev **D**, seat 3 **E** via device | 1.0 | **affirmed** | DI2I validates: the issuer is a delegated AID of the issuee. Same slot, different key, no law change. Certified at the coordinate it carried |
 
 ### Act III — revocation, and what it cannot do
 
@@ -137,7 +140,7 @@ Beats 3 and 5 are deliberately left pending. They are Act II's material.
 | # | Question | Clause | Slots | Sum | Expected | Ground it must carry |
 |---|---|---|---|---|---|---|
 | 16 | `registry --at revocation` | — | — | — | **registry state** | a `rev` event in Acme's governance registry against the seat credential; seat 3's KEL untouched and its keys still valid |
-| 17 | Approve the Q3 budget (a new question, after the revocation) | B1 | Marta E, seat 3 **unfilled**, Dev P | 0.5 | **pending** | typed requirement naming seat 3's slot: required schema, expected issuer, citing clause |
+| 17 | Approve the Q3 budget (a new question, after the revocation) | B1 | Marta E, seat 3 **unfilled**, Dev P | 0.5 | **pending** | typed requirement naming the OFFICE `board-seat-3` rather than any identifier, since the law slots a seat and a credential fills it (`this.i` @ftjpdph5): required schema, expected issuer, citing clause |
 | 18 | Re-ask beat 12's question at beat 12's position | B1 | as beat 12 | 1.0 | **affirmed** | byte-identical to beat 12's finding, ground included |
 | 19 | Re-ask beat 12's question at a position **after** the revocation | B1 | as beat 12 | 1.0 | **affirmed** | the credential stood at that position; prospective revocation falsifies no cited ground |
 | 20 | Re-ask beat 12's question over a bundle containing duplicity at seat 3's signing position | B1 | — | — | **pending**, species `unresolved-conflict` | the observation that poisoned the voice, and the cure only an owned act of seat 3's discharges. Ruled 2026-09-15 (`this.i` @f3pmxu3x): the convict's role dispatches the edge (`:1689-1694`), and seat 3 is a **cited third party** here — the subject is the budget act, committed by the gAID — so the taint succession fires rather than self-conviction |
@@ -149,8 +152,20 @@ Beats 3 and 5 are deliberately left pending. They are Act II's material.
 | # | Question | Clause | Slots | Sum | Expected | Ground it must carry |
 |---|---|---|---|---|---|---|
 | 21 | Approve the capital plan | B1 | Marta E, Dev P, seat 3 P | 0.5 | **pending** | a second question pending under B1, alongside beat 17's |
-| 22 | Lower the ordinary-acts bar (the second amendment) | B2 | Marta E, Dev E, seat 3 E | 1.0 | **affirmed** | unanimous and entirely lawful, which is the setup: the cost in beat 23 is the cost of a *good* amendment, not of anyone cheating |
+| 22 | Lower the ordinary-acts bar (the second amendment) | B2 | Marta E, Dev E, seat 3 E | 1.0 | **affirmed** | unanimous, certified, and entirely lawful, which is the setup: the cost in beat 23 is the cost of a *good* amendment, not of anyone cheating |
 | 23 | `disturbance <the second amendment>` | — | — | — | *(a report, not a verdict)* | the three acts in flight the amendment ended: the retabled budget, the capital plan, the Q3 budget. Nobody voted them down and none can now finish. Any stranger holding the log computes the same list |
+
+### Act V — a certification that lies
+
+**Live: 26.** One beat, and it restores the fourth verdict. Removing the amender's declaration duty took `self-convicted` off the demo (`this.i` @ow6dzro4); this puts it back on a governance failure rather than on a lost key, which is the better story for this audience.
+
+| # | Question | Clause | Slots | Sum | Expected | Ground it must carry |
+|---|---|---|---|---|---|---|
+| 26 | Marta certifies an act that never carried | A3 | Marta E, Dev **D** | 0.5 | **self-convicted** | the proof package naming the contradictory pair — Marta's certification, and the declination it was written around. The tally cites her own half at full weight; the domain admits it because the cited weights do add to one, and the domain does not re-fold its own record before admitting. Any stranger who folds it convicts her on bytes she signed (`this.i` @t3kuqli6, @epztz4wd) |
+
+**Why A3 and why last.** A3 is the one clause neither amendment moves, and under the lowered B1 a single endorsement reaches unity on its own — so the same tally would be *honest* there and there would be no lie to show. Last in the record, so no earlier coordinate moves and beat 20's observation stays where beat 22 needs it. Clear of seat 3, or a convicted cited party would fire the taint succession and the beat would show beat 20's screen a second time.
+
+**Not in the cut list.** Beat 26 is the only place the fourth verdict appears. Cutting it for time costs a quarter of the codomain.
 
 ### Coda
 
@@ -177,23 +192,29 @@ Beats 9, 10 and 11 are issue #82's rules 1 and 2, side by side, which is the con
 
 **The coda is cheap and binding.** Beat 24 is the utility claim — the past is recomputable under the law in force then. Beat 25 is one command and is normative text.
 
-Cut order inside the live thirteen, if the clock runs out in the room: beat 12 first, since beat 14 recomputes the fold's answer anyway and kernel 4 survives on 8 and 14 alone. Then beat 17, at the cost of the cleanest statement that the *next* answer changes. Then beat 10, which collapses kernel 2 to beat 9 plus a narrated sentence — expensive, because rule 2 is the subtle half and the half nobody guesses. Then beat 13, which is demo 1's centerpiece, and only if desperate.
+Cut order inside the live run, if the clock runs out in the room (beat 26 is not in it — see Act V): beat 12 first, since beat 14 recomputes the fold's answer anyway and kernel 4 survives on 8 and 14 alone. Then beat 17, at the cost of the cleanest statement that the *next* answer changes. Then beat 10, which collapses kernel 2 to beat 9 plus a narrated sentence — expensive, because rule 2 is the subtle half and the half nobody guesses. Then beat 13, which is demo 1's centerpiece, and only if desperate.
 
-**Beats 7, 9, 14, 19, 20 and 23 are never cut.** They are the six rows the argument rests on: the hinge, the cure path that closes, the two currents that stay unmerged, the revocation after which the answer does not move, the undercut after which it does, and the amendment convicted by its own declaration.
+**Beats 7, 9, 14, 19, 20, 23 and 26 are never cut.** They are the rows the argument rests on: the hinge, the cure path that closes, the two currents that stay unmerged, the revocation after which the answer does not move, the undercut after which it does, the amendment whose cost is computed rather than declared, and the certification that lies.
 
 **The build risk is concentrated in beat 20.** A duplicity fixture at seat 3's signing position, and bearing machinery that distinguishes it from revocation without sharing a code path, is the deepest new work in this script and it sits on a never-cut row. If it is going to slip, it will be visible early, and the fallback is to narrate the contrast against a static screen rather than to run it — which costs the beat its force but not its point. Decide that by the halfway mark, not in the last week.
 
 ## Open readings this demo pins
 
-Two rows above rest on readings the ratified text does not settle. Both follow `custos-questions.md`'s discipline: state the span, state the readings, pin one, and file the question against Custos.
+Three rows above rest on readings the ratified text does not settle. All three follow `custos-questions.md`'s discipline: state the span, state the readings, pin one, and file the question against Custos.
 
 **Beat 23 — what does an amendment owe about the acts it ends?** This demo used to answer "a declaration, and a conviction where it is wrong": an amending enactment carried a declared disturbance set, the fold computed the true one, and a mismatch returned **self-convicted**. Daniel removed that on 2026-09-23 (`this.i` @ow6dzro4). The declared set gated nothing — the law changed identically whether it was accurate, wrong or absent — so an obligation that changes no outcome is not one governance should impose, and the duty could not always be discharged honestly anyway, since the truth is computed at effectuation while the declaration was made at commitment. What survives is the computation, which was always the part doing the work: beat 23 reports which acts in flight the amendment ended, and convicts nobody. None of this was ratified — "disturb" appears nowhere in `custos-4.2.md` — so the question that goes to Custos is now whether an amendment owes anything at all about its casualties.
 
 **Beat 9 — is `expired/abandoned` reachable at all today?** `PendingSpecies.EXPIRED_ABANDONED` exists in utina's type and is currently unreachable under the shipped `UNREACHABLE_YIELDS = Defeated` pin (`this.i` @dozrtx). Beat 9 is a *new producer* of it, on the amendment path, and does not touch that constant. The two must not be conflated in the implementation, and the oracle asserts the species and its ground rather than merely the value.
 
+**Beat 26 — what must a domain check before admitting a tally, and what does a false one produce?** Custos delegates to the domain whether decisions under its law need certifying, in the same breath it delegates expiry semantics (`:1924`), and says nothing about what the domain owes when it admits one. utina pins two readings. The domain's own check is the floor — that the cited weights sum to unity — and it does not re-fold its record first, which is what makes beat 26 possible at all. And a certification the record refutes is **self-convicted** rather than merely impotent, checked against the whole GEL rather than against its own cited edges, because edges prove presence and never absence (`this.i` @qk3kcds6, @epztz4wd, @7shpbven). The limit is structural and named rather than left to be discovered: a disposition the domain never admitted is invisible to this and to everything else in the record, since only the domain can write to its own log. Filed as Q36.
+
 ## Decision notes
 
-**Why the seat is a capacity and not a separate party.** `custos-4.2.md:2145` requires the seat credential to name "the organ's AID as issuee", and an organ's AID is one its holder owns and uses for that role and nothing else. So board seat 3 is Nina's AID in that capacity, which buys what slotting an office was always after — dual-anchored key events, custodial recovery inside KERI's own delegated-recovery rules, delegation strata with KERI's semantics rather than a metaphor — and one thing slotting an abstraction could not: an accountable human. Duplicity at that AID is Nina's, so beat 20 has somebody to be about. Tenure is a credential question rather than a rotation one: a director leaving turns in the badge and the next is issued their own, because rotating the seat to a newcomer would leave them controlling a history somebody else signed. Demo 1's screens slotted a person in *every* capacity, which is the thing to avoid; slotting an abstraction was an overcorrection.
+**Why the seat is a capacity and not a separate party.** The law slots the **office** `board-seat-3` and commits no identifier for it at all (`this.i` @ftjpdph5, @qjjlkrxt). Who fills it is read off the record, as whoever holds a standing seating credential for it — so appointing a director is an issuance, removing one is a revocation, and neither moves a clause or the law head. That is what slotting an office was always after: a change of director stops being a constitutional matter.
+
+Demo 1's screens slotted a *person* in every capacity, which is the thing to avoid. An earlier correction to that slotted the seat's own AID in the clause, which was an overcorrection in one direction and still welded personnel to law one step removed — seating a different director would have moved a clause.
+
+**Board seat 3's AID is a delegated identifier of Acme's gAID**, and the accountability the demo needs does not depend on changing that. `custos-4.2.md:2139` says a seated organ SHOULD be delegated from the gAID, and gives the reason: it places custodial recovery of a compromised organ inside KERI's own delegated-recovery rules. Beat 20 *is* a compromised organ, so that is this demo's own story and not an abstraction. Note the direction, because it is easy to get backwards: dual-anchoring and custodial recovery are what delegating from **Acme** buys, not what delegating from Nina would. Nina's accountability comes from elsewhere — a delegated AID signs with its own keys and the delegator only seals establishment events, so the seat's signer is hers either way, and duplicity at that AID is hers. Whether the delegator should move to Nina anyway is deferred and tracked as tick `23su`.
 
 **Why revocation is a registry operation and an `RMxN` operator in the law, and not a field on the credential.** This is already the ruling of record in tick `56js`: the dossier's Endorsed predicate is signed + `disp` + `act` + expected issuer + anchored, with revocation not a term in it and no registry field in the normative schema. The seat credential is registry-bound because `custos-4.2.md:1420-1422` requires a standing-conferring credential to be revocable through its registry; the endorsements stay registry-less because nothing in their predicate reaches for one. Two credential kinds with different obligations, and the demo shows both.
 

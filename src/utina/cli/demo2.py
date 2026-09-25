@@ -1,4 +1,4 @@
-"""Demo 2's run-of-show: an opener, thirteen live beats in six kernels, a coda.
+"""Demo 2's run-of-show: an opener, the live beats in their kernels, a coda.
 
 Like ``demo.py`` this module computes nothing. A beat is a title, a line of
 narration and the argv of a command a person could have typed, and the walk
@@ -15,12 +15,22 @@ The three parts are separate commands rather than one long walk because they are
 played differently. The opener is recorded and runs at full screen density under
 keripy, with real prefixes, so the room sees this is really KERI once and the
 live part never argues it again. The live part is brief-screened and paced for
-narration. The leave-behind is the whole twenty-five, recorded, sent afterwards.
+narration. The leave-behind is the whole run, every beat at full screen density,
+recorded and sent afterwards.
 
 **Timing.** Compute is free — demo 1's ten beats execute in 0.22 s on the facade
-and 1.30 s under keripy — so every minute in the room is narration. The live
-thirteen are budgeted at 17 to 19 minutes, of which beats 8 and 16 are screens
-rather than evaluations and run in well under a minute each.
+and 1.30 s under keripy — so every minute in the room is narration. The live run
+is budgeted at 17 to 19 minutes, of which beats 8 and 16 are screens rather than
+evaluations and run in well under a minute each, and beat 26 adds one more.
+
+**No count of anything is written down here, and that is load-bearing rather than
+tidy.** ``OPENER``, ``KERNELS`` and ``LEAVE_BEHIND`` below are the counts, and every
+operator-facing surface derives from them — the cue card's heading, the sequence
+diagram's prose. Beat 26 went in and left four separate literals saying "thirteen"
+behind it; the fix for those then walked past four more, including one in this very
+docstring that the sentence you are reading would have contradicted. Both rounds are
+``this.i`` @45pjebk4, and the lesson is that a count written in prose is a count
+nobody will remember to move.
 """
 
 from __future__ import annotations
@@ -38,7 +48,17 @@ from utina.substrate import FACADE, KERIPY
 if TYPE_CHECKING:  # pragma: no cover - the import exists only for the annotation
     from utina.cli.app import Console
 
-__all__ = ["CUT_ORDER", "KERNELS", "LEAVE_BEHIND", "LIVE", "OPENER", "Beat", "Kernel", "walk2"]
+__all__ = [
+    "CUT_ORDER",
+    "KERNELS",
+    "LEAVE_BEHIND",
+    "LIVE",
+    "OPENER",
+    "Beat",
+    "Kernel",
+    "coordinate_of",
+    "walk2",
+]
 
 
 @dataclass(frozen=True)
@@ -302,11 +322,34 @@ KERNELS = (
             ),
         ),
     ),
+    Kernel(
+        "A certification that lies",
+        "a decision is authorized when the votes add up",
+        "it is authorized when the domain CERTIFIES that they did — and a certification "
+        "the record refutes convicts the sponsor on their own signature",
+        (
+            Beat(
+                "26",
+                "Marta certifies an act that never carried",
+                "The founders table the equity release again. Marta endorses, Dev signs a "
+                "no, and Marta — sponsoring the tally — cites her own endorsement at full "
+                "weight and leaves the no out. The domain admits it, because what the "
+                "domain checks is that the cited weights add to one, and they do. What it "
+                "does not do is re-fold its own record first. So the lie is well formed "
+                "and it is on the record, and the fold convicts it on the bytes Marta "
+                "signed: the proof names the certification and the declination it was "
+                "written around, and any stranger holding the log recomputes it. This is "
+                "the fourth verdict, and it is a governance failure rather than a lost "
+                "key.",
+                ("eval", "--said", "equity-retabled", "--at", "b26", "--brief"),
+            ),
+        ),
+    ),
 )
 
 LIVE = tuple(beat for kernel in KERNELS for beat in kernel.beats)
 
-#: The beats the opener and the live thirteen leave out, at full screen density.
+#: The beats the opener and the live run leave out, at full screen density.
 #: Sent with the follow-up rather than played, because the likeliest thing this
 #: audience does next is try to read the specification.
 LEAVE_BEHIND = (
@@ -416,11 +459,21 @@ def walk2(
     backend = KERIPY if part == "opener" and substrate == FACADE else substrate
     sequence = _sequence(part) if beat is None else (_named(beat),)
     status = 0
+    since = ""
     for index, one in enumerate(sequence):
         kernel = _kernel_of(one)
         if kernel is not None:
             for line in _kernel_card(kernel, console.style):
                 console.out.write(line + "\n")
+        # What the record committed while nobody was looking, before the beat that
+        # arrives at the far end of it. A command like any other, because this module
+        # computes nothing (this.i @cldemo, @eelnh6dn) — so the span is read off the
+        # beats' own argv and handed to `utina meanwhile` to answer.
+        upto = coordinate_of(one)
+        if since and upto and since != upto:
+            span = ("meanwhile", "--from", since, "--to", upto)
+            status = max(status, run(span + _backend_argv(backend, store), console))
+        since = upto or since
         argv = one.argv + _backend_argv(backend, store)
         for line in _announce(one, argv, console.style):
             console.out.write(line + "\n")
@@ -434,6 +487,24 @@ def walk2(
         if pause and index < len(sequence) - 1:
             console.pause()
     return status
+
+
+def coordinate_of(beat: Beat) -> str:
+    """The label this beat asks its question at, or ``""`` where it asks at none.
+
+    Read off the beat's own ``argv`` rather than held in a second field beside it. A
+    ``--at`` duplicated into a ``Beat.at`` would be two literals free to disagree, and
+    the failure that buys is a meanwhile card describing a span the beat is not asked
+    at (``this.i`` @eelnh6dn).
+
+    Beat 14 is the one with no coordinate: an endorsement the toolchain refuses is not
+    asked anywhere, so the span carries the previous beat's coordinate forward rather
+    than resetting — which is right, because nothing on that beat moved the record.
+    """
+    argv = beat.argv
+    if "--at" not in argv:
+        return ""
+    return argv[argv.index("--at") + 1]
 
 
 def _backend_argv(substrate: str, store: Path | None) -> tuple[str, ...]:

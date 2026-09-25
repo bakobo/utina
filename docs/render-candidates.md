@@ -45,13 +45,13 @@ utina eval sign-office-lease --at d3
   DEFEATED    may Acme perform an act of the class sign-office-lease?
   ------------------------------------------------------------------------------------
 
-  position    d3 (seq 8)
+  position    d3 (seq 9)
   law head    f3bd6baa1af2...          clause A1 (MxN), unity 1
-  subject     EijCMIuLxgp_fVyn7QswUxykLRJBUsD3vDVjS6K-LbM8
+  subject     EzuILyeC7motQnTOaC5pgoFhs_7LRf68Ik1kV3C0Ibak
 
   slot                weight   disposition   committed act
-  marta-founder,6        1/2   endorsed      EMD5n3lW7eG5...
-  dev-founder,6          1/2   declined      EboFtM84Xdhk...
+  marta-founder,6        1/2   endorsed      E_amgq1fOhOk...
+  dev-founder,6          1/2   declined      EHhTweOdi1Vt...
                       ------
   endorsed               1/2   of 1          unity not reached
   reachable              1/2   of 1          unity unreachable: a declined slot is spent
@@ -60,7 +60,7 @@ utina eval sign-office-lease --at d3
     clause      A1
     defeater    authority (the actor lacked the invoked power)
     subcode     dev-founder-acme,6
-    citation    the declination EboFtM84Xdhk... committed by dev-founder-acme,6
+    citation    the declination EHhTweOdi1Vt... committed by dev-founder-acme,6
     reason      Unity is unreachable under clause A1: dev-founder-acme,6 committed a
                 signed declination, which spends that slot's weight, and the weight that
                 can still arrive no longer reaches unity.

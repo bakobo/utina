@@ -13,6 +13,8 @@ second budget vote is a second committed act (this.i @w5yqab).
 
 from __future__ import annotations
 
+from fractions import Fraction
+
 from utina.enact import Constructor
 from utina.substrate import FacadeSubstrate, FoldValues, Substrate
 
@@ -46,6 +48,11 @@ BANK_ACCOUNT, HIRE, LEASE, BUDGET = ORDINARY_ACTS
 AMEND = AMENDMENT_ACTS[0]
 EQUITY = EQUITY_ACTS[0]
 
+#: The two slot weights Acme's law uses. Named here because every certification
+#: below states what it counted each disposition as worth, and a tally is proof
+#: rather than assertion — a verifier walks the edges and recomputes the sum.
+HALF, THIRD = Fraction(1, 2), Fraction(1, 3)
+
 
 def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     """Drive Acme's whole story and return the record it produced.
@@ -65,14 +72,20 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # (the genesis knot, custos-4.2.md:1073-1084, this.i @4b2mmhbf).
     constructor = Constructor.found(substrate, GAID, founding_law(aids), values=values)
     aids[GAID] = constructor.gaid
-    # Nina is incepted and aliased and commits no act. She holds board seat 3's
-    # keys in the story; in the record the seat signs, because the law slots the
-    # office and the substrate holds every party's keys anyway (@z373ew7j).
+    # Nina is not incepted and commits no act. She holds board seat 3's keys in the
+    # story; in the record the seat signs, because the law slots the OFFICE and the
+    # substrate holds every party's keys anyway (@z373ew7j, @ftjpdph5).
 
-    # Board seat 3 is an office, not a person: a delegated identifier of the
-    # domain, whose keys Nina holds (custos-4.2.md:2139-2148, this.i @2a25xudi).
-    # It is delegated after the four self-incepted parties so that their key
-    # material, derived from the pinned salt by index, does not move.
+    # Board seat 3 is an office, not a person: a delegated identifier of the domain,
+    # whose keys Nina holds (custos-4.2.md:2139-2148, this.i @2a25xudi). Delegated
+    # after the self-incepted parties so their key material, derived from the pinned
+    # salt by index, does not move.
+    #
+    # ~23su — the certification plan ruled that this should delegate from NINA rather
+    # than from the domain. Deferred by Daniel on 2026-09-25 and left here on purpose:
+    # :2139 says a seated organ SHOULD be a delegated identifier of the gAID, and its
+    # reason is custodial recovery of a compromised organ, which is beat 20's whole
+    # situation. The tick carries the argument both ways.
     seat3 = aids[SEAT] = substrate.delegate(aids[GAID], SEAT)
 
     # Beat 15's device: delegated from the SEAT, not from Nina and not from the
@@ -96,14 +109,49 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     def mark(label: str, event: object) -> None:
         labels[label] = event.position.seq  # type: ignore[attr-defined]
 
+    def certify(key: str, subject: str, *counted: tuple[object, Fraction]) -> object:
+        """Marta assembles a tally for ``subject`` and the domain admits it.
+
+        **Every act that carries is certified at the coordinate it carried**, never
+        in a batch at the end, and that is a constraint rather than a style: once
+        Acme's law names a certification schema, an act at unity is PENDING until
+        the domain admits a tally, so a certification that landed later would leave
+        every question asked in between answering differently than the script says.
+        Beat 19 re-asks beat 12's question from b17; certify the budget after b17 and
+        beat 19 silently flips from affirmed to pending.
+
+        Marta sponsors throughout. A sponsor is whoever did the legwork of gathering
+        the dispositions and is willing to stake their own signature on the count —
+        it confers no authority and needs none, since only the domain's admission
+        makes the tally consequential (this.i @2e2dncfe). One sponsor across the
+        record keeps the screens from implying that who counted is a governance fact.
+
+        The weights are written here rather than computed, for the reason the
+        constructor refuses to compute them: which dispositions a clause counts and
+        what each is worth is the fold's question, and the writing plane may not ask
+        it (``tests/test_purity.py``). So this states what the sponsor CLAIMS, and
+        the fold checks the claim against the record.
+        """
+        event = constructor.certify(
+            subject,
+            sponsor=marta,
+            counted=[(one.said, weight) for one, weight in counted],  # type: ignore[attr-defined]
+        )
+        name(key, event)
+        return event
+
     # Inception. The founding law commits A1, A2 and A3, all three unanimous.
     mark("inception", constructor.emitted[0])
     name("inception", constructor.emitted[0])
 
-    # D1 — both founders endorse opening a bank account.
+    # D1 — both founders endorse opening a bank account, and the domain certifies.
+    # The label is on the CERTIFICATION and not on Dev's endorsement, because that
+    # is where the act became consequential: the votes were cast a coordinate
+    # earlier and a question asked there is pending, not affirmed.
     bank = name(BANK_ACCOUNT, constructor.propose(BANK_ACCOUNT))
-    constructor.endorse(marta, bank)
-    mark("d1", constructor.endorse(dev, bank))
+    marta_bank = constructor.endorse(marta, bank)
+    dev_bank = constructor.endorse(dev, bank)
+    mark("d1", certify(f"{BANK_ACCOUNT}-certified", bank, (marta_bank, HALF), (dev_bank, HALF)))
 
     # D2 — Marta endorses the hire and nobody else acts on it, ever. It is left
     # pending on purpose: it is the act whose governing clause the amendment
@@ -124,7 +172,8 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # act that has to still be pending when the amendment lands, so that beat 10
     # can show a cure path staying open under a clause the amendment did not move.
     equity = name(EQUITY, constructor.propose(EQUITY))
-    mark("b5", constructor.endorse(marta, equity))
+    marta_equity = constructor.endorse(marta, equity)
+    mark("b5", marta_equity)
 
     # D4 — the amendment that seats the board, judged under the law it replaces
     # and anchored in an establishment event (custos-4.2.md:2085-2087).
@@ -137,8 +186,13 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
         "seat-the-board",
         constructor.enact_amendment(board_law(aids), act=AMEND, prior=saids["inception"]),
     )
-    constructor.endorse(marta, seat)
-    seated = constructor.endorse(dev, seat)
+    # Its certification is where the board law TAKES FORCE, not Dev's endorsement:
+    # an enactment is an act, and an act in a certifying domain is pending until the
+    # domain admits a tally for it, so an edition may not bind on the arithmetic
+    # alone (this.i @pv7a6dhc). Beats 9 and 10 are asked from here.
+    marta_seat = constructor.endorse(marta, seat)
+    dev_seat = constructor.endorse(dev, seat)
+    seated = certify("seat-the-board-certified", seat, (marta_seat, HALF), (dev_seat, HALF))
     mark("d4", seated)
     mark("board-seated", seated)
 
@@ -156,7 +210,9 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # amendment, curing it under the same clause A3 it was tabled under. Beat 10
     # is asked at board-seated, between this event and Marta's, and needs no
     # event of its own.
-    mark("b11", constructor.endorse(dev, equity))
+    dev_equity = constructor.endorse(dev, equity)
+    cured = certify(f"{EQUITY}-certified", equity, (marta_equity, HALF), (dev_equity, HALF))
+    mark("b11", cured)
 
     # D5 — the budget carries on Marta and the seat, with Dev never acting. The
     # organ signs: the seat is what the law slots, and Nina holds its keys in the
@@ -164,8 +220,11 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # cites its own seat credential, so the DI2I edge is checked by the existing
     # toolchain before the endorsement is committed at all (@x7crwavm).
     budget = name(BUDGET, constructor.propose(BUDGET))
-    constructor.endorse(marta, budget)
-    mark("d5", constructor.endorse(seat3, budget, qualification=seat_credential))
+    marta_budget = constructor.endorse(marta, budget)
+    seat_budget = constructor.endorse(seat3, budget, qualification=seat_credential)
+    name("seat-endorses-budget", seat_budget)
+    tallied = certify(f"{BUDGET}-certified", budget, (marta_budget, HALF), (seat_budget, HALF))
+    mark("d5", tallied)
 
     # D6 — the budget is tabled again and Dev declines it. Same signed no as
     # D3, three slots instead of two, and the fold draws the difference.
@@ -191,7 +250,7 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # same signed no as D3 and D6, and with three slots it delays rather than
     # defeats, because seat 3's slot is still reachable.
     forecast = name(Q2_FORECAST, constructor.propose(BUDGET))
-    constructor.endorse(marta, forecast)
+    marta_forecast = constructor.endorse(marta, forecast)
     mark("b13", constructor.decline(dev, forecast))
 
     # The seat opens its OWN registry. A transaction log accepts issuances only
@@ -212,7 +271,12 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # following a citation, and the seat credential the endorsement cites, which
     # is what DI2I resolves against. Revoke either and the device stops filling
     # the slot at the next coordinate.
-    mark("b15", constructor.endorse(device, forecast, qualification=seat_credential))
+    signed = constructor.endorse(device, forecast, qualification=seat_credential)
+    name("device-endorses-forecast", signed)
+    counted = certify(
+        f"{Q2_FORECAST}-certified", forecast, (marta_forecast, HALF), (signed, HALF)
+    )
+    mark("b15", counted)
 
     # Beat 16 — Acme revokes the seat credential in its own registry. Seat 3's
     # key log is untouched and its keys are still valid: what moved is what the
@@ -255,9 +319,16 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     lowered = name("lower-the-bar", constructor.enact_amendment(
         lowered_law(aids), act=AMEND, prior=saids["seat-the-board"]
     ))
-    constructor.endorse(marta, lowered)
-    constructor.endorse(dev, lowered)
-    carried = constructor.endorse(seat3, lowered, qualification=reissued)
+    marta_lowered = constructor.endorse(marta, lowered)
+    dev_lowered = constructor.endorse(dev, lowered)
+    seat_lowered = constructor.endorse(seat3, lowered, qualification=reissued)
+    carried = certify(
+        "lower-the-bar-certified",
+        lowered,
+        (marta_lowered, THIRD),
+        (dev_lowered, THIRD),
+        (seat_lowered, THIRD),
+    )
     mark("b22", carried)
     mark("b23", carried)
 
@@ -275,6 +346,28 @@ def build(*, values: FoldValues, substrate: Substrate | None = None) -> Acme:
     # itself shows — so the demo made the same point twice and the beat that
     # was supposed to say "lawful and unanimous" said the opposite.
     mark("b20", constructor.observe_duplicity(seat3, [f"{seat3}-kel-2a", f"{seat3}-kel-2b"]))
+
+    # Beat 26 — a certification that lies, and self-convicts on its sponsor's own
+    # signature (this.i @t3kuqli6). Marta tables the equity release a second time,
+    # endorses it, Dev declines, and then Marta — sponsoring — assembles a tally citing
+    # her own endorsement at FULL weight, omitting the signed no entirely.
+    #
+    # The domain admits it, and that is the beat rather than a bug: `certify` checks that
+    # the cited weights sum to unity, and 1/1 does. What the domain does not do is re-fold
+    # its own record before admitting, so the lie is well-formed and passes. The fold is
+    # what catches it, and it catches it on bytes Marta signed.
+    #
+    # **Last in the record, under A3, and nowhere near seat 3** — all three forced. Last,
+    # so no existing coordinate moves and beat 20's observation stays after seat 3's
+    # endorsement above. Under A3, because it is the one clause neither amendment touches:
+    # under the lowered B1 a single endorsement reaches unity on its own and the tally
+    # would be honest. And clear of seat 3, or a convicted cited party would fire the
+    # taint succession and the beat would show beat 20's screen a second time.
+    liar = name("equity-retabled", constructor.propose(EQUITY))
+    claimed = constructor.endorse(marta, liar)
+    name("marta-endorses-retabled-equity", claimed)
+    name("equity-retabled-declined", constructor.decline(dev, liar))
+    mark("b26", certify(f"{EQUITY}-falsely-certified", liar, (claimed, Fraction(1, 1))))
 
     events = constructor.emitted
     kel = constructor.key_events

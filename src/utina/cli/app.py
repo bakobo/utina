@@ -47,6 +47,7 @@ from utina.cli.render import (
     eval_screen,
     law_screen,
     log_screen,
+    meanwhile_screen,
     registry_screen,
     replay_screen,
     seat_screen,
@@ -233,6 +234,13 @@ def build_parser(console: Console) -> _Parser:
     )
     log.add_argument("--at", metavar="POSITION")
 
+    meanwhile = commands.add_parser(
+        "meanwhile", out=console.out, parents=[backend],
+        help="what the record committed between two marked coordinates",
+    )
+    meanwhile.add_argument("--from", dest="since", required=True, metavar="POSITION")
+    meanwhile.add_argument("--to", dest="upto", required=True, metavar="POSITION")
+
     replay = commands.add_parser(
         "replay", out=console.out, parents=[backend],
         help="refold the log and print the canonical digest",
@@ -285,7 +293,7 @@ def build_parser(console: Console) -> _Parser:
 
     demo2 = commands.add_parser(
         "demo2", out=console.out, parents=[backend],
-        help="walk docs/demo-2-script.md: the opener, the live thirteen, or all of it",
+        help="walk docs/demo-2-script.md: the opener, the live run, or all of it",
     )
     demo2.add_argument("--part", choices=PARTS, default="live")
     demo2.add_argument("--no-pause", dest="no_pause", action="store_true")
@@ -361,6 +369,35 @@ def log_command(args: argparse.Namespace, console: Console) -> int:
                 position,
                 _aliases(record),
                 console.style,
+            )
+        )
+    return 0
+
+
+def meanwhile_command(args: argparse.Namespace, console: Console) -> int:
+    """The span between two marked beats, which the room otherwise never sees.
+
+    Exclusive of ``--from`` and inclusive of ``--to``: the previous beat's own event was
+    on screen at that beat, and the arriving beat's is about to be. What is left is
+    exactly what happened while nobody was looking (``this.i`` @eelnh6dn).
+
+    **An empty span prints nothing at all**, and that is what makes this safe to put
+    between every pair of beats. The demo's play order is not the record's: beat 8 is
+    asked at seq 16 and follows beat 13 at seq 33, and beat 22 sits one coordinate
+    before beat 20. Going back there is nothing that happened while nobody was looking,
+    so there is nothing to show — and a card saying "nothing was committed" would be
+    false as well as noisy, since plenty was committed and the room has already seen it.
+    Deciding this here rather than in the driver keeps ``utina.cli.demo2`` free of any
+    reading of the record (@cldemo): it hands over two labels and this answers.
+    """
+    with _world(args) as record:
+        since, upto = record.at(args.since), record.at(args.upto)
+        events = tuple(one for one in record.corpus.upto(upto) if since < one.position)
+        if not events:
+            return 0
+        console.out.write(
+            meanwhile_screen(
+                events, args.since, args.upto, _aliases(record), console.style
             )
         )
     return 0
@@ -538,6 +575,7 @@ COMMANDS: Mapping[str, Callable[[argparse.Namespace, Console], int]] = {
     "law": law_command,
     "eval": eval_command,
     "log": log_command,
+    "meanwhile": meanwhile_command,
     "replay": replay_command,
     "whois": whois_command,
     "enact": enact_command,

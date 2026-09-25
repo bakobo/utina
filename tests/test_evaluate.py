@@ -19,6 +19,7 @@ The order is ``docs/interfaces.md``'s and it is not an implementation detail:
 from __future__ import annotations
 
 import importlib
+from collections.abc import Sequence
 from fractions import Fraction
 
 import pytest
@@ -54,6 +55,11 @@ GAID = "acme:gaid"
 
 #: What every slot below names as the schema its evidence must satisfy.
 SCHEMA = ENDORSEMENT_SCHEMA
+
+#: What a certifying domain names as the schema its tallies must satisfy, and one
+#: other, so that a clause pinning its own can be told from a clause inheriting.
+CERT_SCHEMA = "Ecertification-schema-said"
+OTHER_SCHEMA = "Eanother-certification-schema"
 
 
 # --- a committed log, built by hand -------------------------------------------
@@ -142,11 +148,50 @@ class Log:
             },
         )
 
-    def certify(self, name: str, subject: str) -> str:
-        """The domain admitting a tally: the act becomes consequential here."""
+    def certify(
+        self,
+        name: str,
+        subject: str,
+        counted: Sequence[tuple[str, str]] = (),
+        schema: str | None = None,
+    ) -> str:
+        """The domain admitting a tally: the act becomes consequential here.
+
+        ``schema`` is what the dossier claims to satisfy, defaulting to the one a
+        certifying domain requires. It is a parameter because a tally issued against
+        ANOTHER schema must discharge nothing, and that used to pass (``this.i``
+        @2e2dncfe's field, ``custos-4.2.md:1946-1951``).
+
+        ``counted`` is what the sponsor's dossier cites, one edge per disposition with
+        the weight claimed for it. It is spelled out at every call site rather than
+        derived from the log, because a certification is proof and what it claims is
+        the thing under test — a helper that computed the right answer would make every
+        certification here honest by construction (``this.i`` @7shpbven).
+        """
+        members: dict[str, object] = {"o": "MxN"}
+        for index, (said, weight) in enumerate(counted):
+            members[f"e{index}"] = {"n": said, "s": ENDORSEMENT_SCHEMA, "w": weight}
         return self._add(
-            name, "certification", {"t": "cert", "i": GAID, "certifies": subject}
+            name,
+            "certification",
+            {
+                "t": "cert",
+                "i": GAID,
+                "certifies": subject,
+                "acdc": {
+                    "d": f"E{name}-credential",
+                    "i": GAID,
+                    "s": CERT_SCHEMA if schema is None else schema,
+                    "a": {"said": subject, "act": "issue"},
+                    "e": {"endorsements": members},
+                },
+                "acdc_sig": f"E{name}-sig",
+            },
         )
+
+    def tally(self, *pairs: tuple[str, str]) -> list[tuple[str, str]]:
+        """The edges a certification cites: each party's committed endorsement, weighted."""
+        return [(self.said(f"endorse-{who}"), weight) for who, weight in pairs]
 
     def amend(self, name: str, clauses, act: str = "amend") -> str:
         body: dict[str, object] = {
@@ -833,10 +878,6 @@ def test_a_settled_act_is_not_ended_by_a_later_amendment(founded):
 # that names none authorizes its acts by their arithmetic alone, which is every
 # other test in this file.
 
-CERT_SCHEMA = "Ecertification-schema-said"
-OTHER_SCHEMA = "Eanother-certification-schema"
-
-
 def with_certification(block: dict[str, object], value: object) -> dict[str, object]:
     """A clause block that says something about certifying: a schema, or False."""
     return {**block, "certification": value}
@@ -855,6 +896,12 @@ def unanimous(log: Log) -> str:
     log.endorse(MARTA, tabled)
     log.endorse(DEV, tabled)
     return tabled
+
+
+#: The tally a sound certification of :func:`unanimous`'s act cites: one edge per
+#: founder, each worth the half its slot commits, summing to the unity the
+#: certification claims.
+SOUND = ((MARTA, "1/2"), (DEV, "1/2"))
 
 
 def test_a_threshold_met_but_uncertified_act_is_pending():
@@ -877,7 +924,7 @@ def test_a_threshold_met_but_uncertified_act_is_pending():
 def test_the_same_act_is_affirmed_once_the_domain_certifies_it():
     log = certifying_domain()
     tabled = unanimous(log)
-    log.certify("cert", tabled)
+    log.certify("cert", tabled, log.tally(*SOUND))
 
     finding = evaluate(log.corpus, Committed(tabled), at=log.now)
 
@@ -895,7 +942,12 @@ def test_a_domain_that_requires_no_certification_affirms_on_the_arithmetic():
 
 
 def test_a_certification_of_some_other_act_does_not_authorize_this_one():
-    """The subject is named, so a tally cannot be spent on a decision it never counted."""
+    """The subject is named, so a tally cannot be spent on a decision it never counted.
+
+    Its tally is left empty and that is not an oversight: a certification naming
+    another subject is never examined for this question at all, so what it cites is
+    beside the point and a fixture that pretended otherwise would test nothing.
+    """
     log = certifying_domain()
     tabled = unanimous(log)
     other = log.act("other", "hire")
@@ -920,17 +972,6 @@ def test_certification_is_not_what_is_outstanding_while_the_threshold_is_unmet()
     assert [one.endorser for one in finding.requirement] == [DEV]
 
 
-def test_a_certification_does_not_rescue_an_act_whose_threshold_is_unreachable():
-    """Certifying is recording that a threshold was met, never deciding that it was."""
-    log = certifying_domain()
-    tabled = log.act("hire", "hire")
-    log.endorse(MARTA, tabled)
-    log.decline(DEV, tabled)
-    log.certify("cert", tabled)
-
-    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Defeated)
-
-
 def test_the_certification_is_asked_of_the_coordinate_the_question_is_asked_from():
     """Before the tally is admitted the act is pending; after it, affirmed.
 
@@ -940,7 +981,7 @@ def test_the_certification_is_asked_of_the_coordinate_the_question_is_asked_from
     log = certifying_domain()
     tabled = unanimous(log)
     before = log.now
-    log.certify("cert", tabled)
+    log.certify("cert", tabled, log.tally(*SOUND))
 
     assert isinstance(evaluate(log.corpus, Committed(tabled), at=before), Pending)
     assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)
@@ -1008,6 +1049,153 @@ def test_an_unreadable_certification_field_inherits_rather_than_exempts():
 
     assert isinstance(finding, Pending)
     assert finding.requirement[0].schema == CERT_SCHEMA
+
+
+# --- a false certification convicts (this.i @7shpbven) ------------------------
+#
+# A certification is proof rather than assertion, so one the record refutes has
+# contradicted itself on bytes its sponsor signed and its domain admitted. The
+# two contradictions are independent: against the certification's own edges, and
+# against every disposition the domain had admitted when it admitted the tally.
+
+
+#: Three slots at a half each, so a single endorsement can never reach unity and a
+#: sponsor inflating one edge is telling a lie the record can name.
+BOARD_OF_THREE = [clause("A1", ["hire"], (MARTA, "1/2"), (DEV, "1/2"), (NINA, "1/2"))]
+
+
+def test_a_certification_whose_own_edges_fall_short_convicts():
+    """The first contradiction: the tally claims unity and its edges do not reach it.
+
+    ``utina.enact`` refuses to build this one, so it can only arrive from a foreign
+    corpus — which is exactly why the fold checks rather than trusting that its own
+    constructor wrote the log it is reading.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert", tabled, log.tally((MARTA, "1/2")))
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == log.said("cert")
+    assert finding.proof.pair == (), "the contradiction is internal to the tally"
+
+
+def test_a_certification_citing_around_a_declination_convicts():
+    """The second contradiction, and the one the milestone exists for.
+
+    A declination spends its slot, so omitting one changes the answer and leaves no
+    trace in the certification itself — the sponsor's edges sum to unity and only the
+    record knows better. The proof names both halves so a reader sees what contradicted
+    what without fetching the package.
+    """
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.decline(DEV, tabled)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.pair == (log.said("cert"), log.said(f"decline-{DEV}"))
+
+
+def test_the_omitted_declination_named_is_the_lexicographic_minimum():
+    """Two verifiers holding the same bundle emit the same finding down to the byte.
+
+    Which of several omissions is named may not be a property of the order the walk
+    happened to take, so it is the minimum rather than the first one found
+    (``:1766-1770``'s discipline, applied to a proof pair).
+    """
+    log = Log()
+    log.law("inception", "inception", BOARD_OF_THREE, certification=CERT_SCHEMA)
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.decline(DEV, tabled)
+    log.decline(NINA, tabled)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    omitted = min(log.said(f"decline-{DEV}"), log.said(f"decline-{NINA}"))
+    assert finding.proof.pair == (log.said("cert"), omitted)
+
+
+def test_a_certification_the_record_refutes_with_nothing_omitted_names_no_pair():
+    """Short of votes rather than cited around: there is no omission to name.
+
+    Marta alone has spoken and the sponsor claims her half was worth the whole. The
+    record refutes it, and the proof package stands on its own because no committed
+    declination is being hidden.
+    """
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == log.said("cert")
+    assert finding.proof.pair == ()
+
+
+def test_the_record_is_read_at_the_certifications_coordinate_not_the_questions():
+    """What a certification claims is that the threshold was met when it was admitted.
+
+    Dev's endorsement arrives after the tally. It cures the act going forward and it
+    does not un-say what the domain committed, so the conviction stands at both
+    coordinates rather than being washed out by later evidence.
+    """
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+    at_admission = log.now
+    log.endorse(DEV, tabled)
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=at_admission), SelfConvicted)
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), SelfConvicted)
+
+
+def test_a_false_certification_convicts_over_a_cited_partys_taint():
+    """The precedence Q38's own argument settles, applied across the two machineries.
+
+    A taint at a cited third party returns pending naming a cure — an act owned by
+    the party whose conflict it is. That cure cannot rescue a question whose record
+    contradicts itself, so the conviction outranks it. Taint's own SUBJECT arm still
+    goes first, because a bearing conviction is key-tier and says more about what went
+    wrong (``this.i`` @7shpbven, revised after bakobo:10's argument).
+    """
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+    observed(log, DEV)
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == log.said("cert")
+
+
+def test_a_domain_requiring_no_certification_is_not_convicted_by_a_stray_one():
+    """Where a clause stands on its arithmetic, a tally is not load-bearing.
+
+    An unsupported certification in such a domain is an irrelevant event rather than a
+    contradiction of anything, and the gate is the same one that decides whether an
+    absent certification is outstanding — so the two halves cannot disagree about
+    whether this domain has certifications at all.
+    """
+    log = Log()
+    log.law("inception", "inception", FOUNDERS_LAW)
+    tabled = unanimous(log)
+    log.certify("cert", tabled, log.tally((MARTA, "1/2")))
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)
 
 
 def test_what_a_clause_says_about_certifying_is_in_its_committed_bytes():
@@ -1354,3 +1542,149 @@ def test_an_event_the_record_cannot_attribute_is_nobodys_artifact():
     assert [one.species for one in finding.requirement] == [
         PendingSpecies.UNRESOLVED_CONFLICT
     ]
+
+
+def test_a_certification_against_the_wrong_schema_discharges_nothing():
+    """The fail-open Copilot found on #9, and the reason a law names a schema at all.
+
+    ``custos-4.2.md:1946-1951`` commits a slot's own schema for exactly this reason, and
+    the certification field is the same sentence applied one level out: "a requirement
+    that could not say which evidence it wanted would be satisfiable by the wrong one."
+    Before the fix, ``certifying`` matched on kind and subject and never looked at the
+    credential's schema — so a tally issued against ANY schema cleared the requirement,
+    was accepted as sound, and could effectuate an enactment.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+    wrong = log.certify("cert", tabled, log.tally(*SOUND), schema=OTHER_SCHEMA)
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, Pending), "a tally against another schema is not this one"
+    assert [one.kind for one in finding.requirement] == ["certification"]
+    assert finding.requirement[0].schema == CERT_SCHEMA
+    assert log.corpus.event(wrong) is not None, "the event is committed; it just does not count"
+
+
+def test_a_wrong_schema_certification_is_skipped_rather_than_taken_as_the_first():
+    """The branch that actually discriminates, which the case above does not reach.
+
+    "The first rather than the last" is a rule about two certifications this law would
+    accept: the first already made the act consequential. An event against ANOTHER schema
+    is not a certification under this law at all, so it is skipped and a later valid one
+    still discharges — rather than the wrong one shadowing it by arriving first, which is
+    what a check that stopped at the first kind-and-subject match would have done.
+
+    Asserted because the single-wrong-certification case passes against an implementation
+    that merely ignores the wrong event, there being nothing else to find. Raised by a
+    cross-model review of the fix diff on PR #9.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert-wrong", tabled, log.tally(*SOUND), schema=OTHER_SCHEMA)
+    shadowed = log.now
+    log.certify("cert-right", tabled, log.tally(*SOUND))
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=shadowed), Pending)
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)
+
+
+def test_a_certification_whose_credential_names_no_schema_discharges_nothing():
+    """Fail-closed on an unreadable schema, in the shape the rest of the module uses."""
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert", tabled, log.tally(*SOUND), schema="")
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Pending)
+
+
+def test_a_false_certification_after_a_sound_one_still_convicts():
+    """The hole the round-two review on PR #9 found.
+
+    Authorization takes the FIRST tally and stops, because a later one cannot move the
+    coordinate an act became consequential at. Falsity is a different question, and the
+    check read the first certification only — so a sound tally followed by a short one
+    left the second self-contradiction unexamined, which @7shpbven's own "over every
+    committed certification of the subject" already forbade.
+
+    A lie the domain signed is a lie whether or not it was load-bearing.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert-sound", tabled, log.tally(*SOUND))
+    sound_only = log.now
+    log.certify("cert-short", tabled, log.tally((MARTA, "1/2")))
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=sound_only), Affirmed)
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == log.said("cert-short")
+
+
+def test_the_earliest_contradictory_certification_is_the_one_named():
+    """Two verifiers holding one bundle must name the same contradiction, so it is the
+    earliest rather than whichever the walk reached first."""
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert-short", tabled, log.tally((MARTA, "1/2")))
+    log.certify("cert-shorter", tabled, log.tally())
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == log.said("cert-short"), "the earliest, not the worst"
+
+
+# --- the substitute review's findings, PR #9 ----------------------------------
+
+
+def test_a_tally_citing_an_edge_that_does_not_resolve_convicts():
+    """The fail-open a substitute reviewer reproduced: fiction over a sound record.
+
+    The claimed weights sum to unity and the record independently reaches unity, so both
+    of the earlier checks pass — and the tally cites an endorsement that does not exist.
+    ``counted_by``'s docstring had said since the day it was written that a verifier
+    "resolves each one against the record", and nothing did.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert", tabled, [("Enot-a-committed-act", "1/1")])
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.pair == (log.said("cert"), "Enot-a-committed-act")
+
+
+def test_a_tally_citing_a_declination_as_though_it_endorsed_convicts():
+    """An edge has to name an act that ENDORSES the subject, not merely mention it."""
+    log = certifying_domain()
+    tabled = log.act("hire", "hire")
+    log.endorse(MARTA, tabled)
+    log.endorse(DEV, tabled)
+    other = log.act("other", "hire")
+    refused = log.decline(DEV, other)
+
+    log.certify("cert", tabled, [(log.said(f"endorse-{MARTA}"), "1/2"), (refused, "1/2")])
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), SelfConvicted)
+
+
+def test_a_tally_inflating_one_edge_beyond_its_slots_weight_convicts():
+    """A cited edge may not claim more than the slot its endorser holds commits."""
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert", tabled, log.tally((MARTA, "1/1")))
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), SelfConvicted)
+
+
+def test_a_sound_tally_over_a_sound_record_still_affirms():
+    """The control. Resolution is a new refusal and must not convict an honest tally."""
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert", tabled, log.tally(*SOUND))
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)

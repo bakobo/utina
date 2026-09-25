@@ -47,6 +47,7 @@ from utina.cli.style import (
     VERDICT_COLOR,
     Style,
 )
+from utina.fold import bearing, certification
 from utina.fold.clause import Clause
 from utina.fold.constitution import Constitution
 from utina.fold.corpus import Event
@@ -60,9 +61,14 @@ from utina.fold.finding import (
 from utina.fold.refusal import Refusal
 from utina.fold.slots import (
     ACT_FIELD,
+    ATTRIBUTE_ISSUEE_FIELD,
     DISPOSITION_FIELD,
     ENDORSE,
+    ENDORSEMENT_KIND,
+    ISSUANCE_KIND,
     ISSUER_FIELD,
+    REVOCATION_KIND,
+    REVOKES_FIELD,
     SCHEMA_FIELD,
     SUBJECT_FIELD,
     attributes,
@@ -79,6 +85,7 @@ __all__ = [
     "ground_of",
     "law_screen",
     "log_screen",
+    "meanwhile_screen",
     "rational",
     "replay_screen",
     "replay_verdict",
@@ -290,7 +297,7 @@ def eval_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
 def brief_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
     """The same appraisal in eight to ten lines, for a beat that has to be held.
 
-    The live half of demo 2 is thirteen beats in about eighteen minutes, so the
+    The live half of demo 2 is a dozen-odd beats in about eighteen minutes, so the
     binding constraint is not compute — the whole ten-beat demo-1 run executes in
     0.22 seconds — it is how much screen a room can take in while somebody talks
     over it. This drops what a reader can reconstruct and keeps what they came to
@@ -325,7 +332,7 @@ def brief_screen(appraisal: Appraisal, aliases: Aliases, style: Style) -> str:
             ]
         )
     clause = cast(Clause, appraisal.clause)
-    held = {one.endorser: one.disposition for one in appraisal.slots}
+    held = {one.key: one.disposition for one in appraisal.slots}
     word = outcome.verdict.value.upper()
     tint = VERDICT_COLOR[outcome.verdict]
     satisfied = clause.group.satisfied(held)
@@ -412,7 +419,17 @@ def _brief_ground(finding: Finding, aliases: Aliases) -> str:
             + f" - {first.kind} under clause {first.clause}, {first.species.value[1]}"
         )
     convicted = cast(SelfConvicted, finding)
-    return f"self-convicted on its own bytes, proof {abbrev(convicted.proof.package, 16)}"
+    package = abbrev(convicted.proof.package, 16)
+    if not convicted.proof.pair:
+        return f"self-convicted on its own bytes, proof {package}"
+    # The brief form carries the PAIR where there is one, because on beat 26 the pair is
+    # the whole content: a certification, and the declination it was written around. A
+    # brief screen that showed only the package would make the room ask what contradicted
+    # what and then wait while somebody fetched it.
+    contradicted = ", ".join(
+        abbrev(said, 16) for said in convicted.proof.pair if said != convicted.proof.package
+    )
+    return f"self-convicted on its own bytes: {package} contradicts {contradicted}"
 
 
 def _finding_lines(
@@ -454,14 +471,14 @@ def _arithmetic(
     appraisal: Appraisal, clause: Clause, aliases: Aliases, style: Style
 ) -> list[str]:
     """The slots, their weights, what each holds, and both sums against unity."""
-    held = {one.endorser: one.disposition for one in appraisal.slots}
+    held = {one.key: one.disposition for one in appraisal.slots}
     header = f"{'slot':<{SLOT}}{'weight':>6}   {'disposition':<14}committed act"
     lines = [MARGIN + style.label(header)]
     for slot, disposition in zip(clause.group.slots, appraisal.slots, strict=True):
         acted = "-" if disposition.said is None else abbrev(disposition.said)
         lines.append(
             _row(
-                abbrev(aliases.short(slot.endorser), SLOT),
+                abbrev(aliases.short(disposition.endorser), SLOT),
                 rational(slot.weight),
                 disposition.disposition.value,
                 acted,
@@ -692,7 +709,7 @@ def law_screen(
                     style,
                     "slots",
                     ", ".join(
-                        f"{aliases.short(slot.endorser)} {rational(slot.weight)}"
+                        f"{aliases.short(slot.key)} {rational(slot.weight)}"
                         for slot in clause.group.slots
                     ),
                 ),
@@ -718,6 +735,72 @@ def _weight_note(total: Fraction) -> str:
 # --- utina log ----------------------------------------------------------------
 
 
+def meanwhile_screen(
+    events: tuple[Event, ...],
+    since: str,
+    upto: str,
+    aliases: Aliases,
+    style: Style,
+) -> str:
+    """What the record committed between two marked beats, which the room never sees.
+
+    **It shortens the live run.** A room reads a screen faster than it hears a
+    sentence, so the span the narrator used to cover in speech is cheaper on the
+    projector (``this.i`` @eelnh6dn).
+
+    Certifications are counted out separately because after M6 every affirmation rests
+    on one, and a room that never saw them would come away thinking an endorsement
+    authorized something.
+
+    The closing note is the third thing this screen owes, and the least obvious: the
+    beat labels are OURS. ``d1`` and ``b17`` are this demo's names for coordinates and
+    are committed nowhere — the record has sequence numbers. Saying it here costs two
+    lines and is the same disclosure the law screen's alias header already makes about
+    party names.
+    """
+    certifications = sum(1 for one in events if one.kind == certification.CERTIFICATION_KIND)
+    lines = [
+        *headline(style, style.strong(f"MEANWHILE, between {since} and {upto}")),
+        "",
+        f"{MARGIN}{_tally(len(events), certifications)}",
+        "",
+        MARGIN + style.label(f"{'seq':>3}  {'kind':<13} {'identifier':<18} what it commits"),
+    ]
+    for event in events:
+        lines.append(
+            f"{MARGIN}{event.position.seq:>3}  {event.kind:<13} "
+            f"{abbrev(event.said):<18} {_gloss(event, aliases)}"
+        )
+    lines.extend(
+        [
+            "",
+            *wrapped(
+                style,
+                "labels",
+                f"{since} and {upto} are this demo's names for coordinates and are "
+                "committed nowhere. The record has sequence numbers, which is what "
+                "the seq column above shows and what a stranger folding the same log "
+                "would address it by.",
+            ),
+        ]
+    )
+    return _screen(lines)
+
+
+def _tally(events: int, certifications: int) -> str:
+    """The span's size, and how much of it is the domain admitting a tally.
+
+    Never called with an empty span: ``meanwhile_command`` prints nothing at all rather
+    than a screen saying nothing happened, because where the demo's play order steps
+    back the record is not empty — the room has simply already seen it.
+    """
+    what = "event" if events == 1 else "events"
+    if not certifications:
+        return f"{events} committed {what}, and no certification among them."
+    which = "certification" if certifications == 1 else "certifications"
+    return f"{events} committed {what}, of which {certifications} {which}."
+
+
 def log_screen(
     events: tuple[Event, ...],
     label: str,
@@ -733,11 +816,11 @@ def log_screen(
         "key event first, then seal list.",
         f"{MARGIN}Arrival order is not consulted and there is nowhere here to read one from.",
         "",
-        MARGIN + style.label(f"{'seq':>3}  {'kind':<12} {'identifier':<18} what it commits"),
+        MARGIN + style.label(f"{'seq':>3}  {'kind':<13} {'identifier':<18} what it commits"),
     ]
     for event in events:
         lines.append(
-            f"{MARGIN}{event.position.seq:>3}  {event.kind:<12} "
+            f"{MARGIN}{event.position.seq:>3}  {event.kind:<13} "
             f"{abbrev(event.said):<18} {_gloss(event, aliases)}"
         )
     return _screen(lines)
@@ -756,12 +839,51 @@ def _gloss(event: Event, aliases: Aliases) -> str:
         return f"a successor law, enacted as {event.body.get(ACT_FIELD)}"
     if event.kind == "act":
         return f"an act of the class {event.body.get(ACT_FIELD)}"
+    if event.kind == certification.CERTIFICATION_KIND:
+        subject = str(event.body.get(certification.CERTIFIES_FIELD, ""))
+        return f"the domain certifies {abbrev(subject)}"
+    if event.kind == bearing.DUPLICITY_KIND:
+        return f"duplicity observed at {aliases.short(str(bearing.convicted(event)))}"
+    if event.kind == ISSUANCE_KIND:
+        return _issued(event, aliases)
+    if event.kind == REVOCATION_KIND:
+        return f"revokes {abbrev(str(event.body.get(SUBJECT_FIELD, '')))}"
+    if REVOKES_FIELD in event.body:
+        # A retraction, keyed on the field rather than on a kind constant: the fold reads
+        # `revokes` wherever it appears and the substrate commits no dedicated kind for
+        # one (tick 3z6a), so a constant here would be inventing a name for it.
+        who = aliases.short(str(event.body.get(ISSUER_FIELD, "")))
+        return f"{who} withdraws {abbrev(str(event.body.get(REVOKES_FIELD, '')))}"
+    # **Every event kind is named above, and the fall-through is a disposition.** It used
+    # to be the other way round: anything this function had no reading for was rendered
+    # through the disposition path, which put "marta-founder,6 declines …" against a
+    # certification the domain committed, "None declines None" against a duplicity
+    # observation, and "acme-governed-domain,6 declines None" against a credential
+    # issuance — that last one six times over in the tracked transcripts, because an
+    # issuance HAS a non-empty attributes block and an earlier guard on emptiness let it
+    # straight through. A glossary that guesses is worse than one that says nothing, so
+    # an unreadable kind now says so.
     block = attributes(event)
+    if event.kind != ENDORSEMENT_KIND or not block:
+        return "—"
     verb = "endorses" if block.get(DISPOSITION_FIELD) == ENDORSE else "declines"
     return (
         f"{aliases.short(str(credential(event).get(ISSUER_FIELD)))} {verb} "
         f"{abbrev(str(block.get(SUBJECT_FIELD)))}"
     )
+
+
+def _issued(event: Event, aliases: Aliases) -> str:
+    """A credential issuance, named by who holds it.
+
+    The office the credential seats them in is deliberately NOT repeated here, even
+    though the row is about the office being filled: a COIA alias already carries the
+    holder's role, so ``nina-board-seat-3,6`` says the seat in the same breath as the
+    person. Naming it twice pushed this row to 105 columns against the projector's 96
+    (``tests/test_cli.py``), which is a cost paid for no information.
+    """
+    issuee = attributes(event).get(ATTRIBUTE_ISSUEE_FIELD, "")
+    return f"a credential to {aliases.short(str(issuee))}"
 
 
 # --- utina replay -------------------------------------------------------------

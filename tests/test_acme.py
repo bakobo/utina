@@ -60,6 +60,7 @@ ORACLE_LABELS = {
     "b16",
     "b17",
     "b20",
+    "b26",
     "b21",
     "b22",
     "b23",
@@ -82,9 +83,16 @@ def clause(law, clause_id):
 
 
 def weights(law, clause_id):
-    """The clause's weights, parsed. Committed as exact rational strings."""
+    """The clause's weights, parsed, keyed by the SEAT each slot is.
+
+    A slot that seats an office commits no ``endorser`` at all (this.i @ftjpdph5), so
+    the key is the office where there is one — the same seat-not-occupant addressing
+    the fold uses (@qjjlkrxt). Weights commit as exact rational strings.
+    """
     slots = clause(law, clause_id)["group"]["slots"]
-    return {slot["endorser"]: Fraction(slot["weight"]) for slot in slots}
+    return {
+        slot.get("office") or slot["endorser"]: Fraction(slot["weight"]) for slot in slots
+    }
 
 
 # --- The law, in both states -------------------------------------------------
@@ -97,24 +105,31 @@ def test_state_one_gives_each_founder_half_of_both_clauses():
 
 def test_state_two_distributes_ordinary_authority_but_not_amendment_authority():
     """The retained higher bar at B2 is the point of the whole demo."""
-    assert weights(BOARD_LAW, "B1") == dict.fromkeys((MARTA, DEV, SEAT), Fraction(1, 2))
-    assert weights(BOARD_LAW, "B2") == dict.fromkeys((MARTA, DEV, SEAT), Fraction(1, 3))
+    board = (MARTA, DEV, SEAT_OFFICE)
+    assert weights(BOARD_LAW, "B1") == dict.fromkeys(board, Fraction(1, 2))
+    assert weights(BOARD_LAW, "B2") == dict.fromkeys(board, Fraction(1, 3))
 
 
 def test_the_amendment_seats_the_office_and_not_the_person():
     """@z373ew7j: the law slots board seat 3, which is a capacity and not a person.
 
-    The AID it slots is Nina's, dedicated to that seat — ``custos-4.2.md:2145``
-    requires the seat credential to name "the organ's AID as issuee", and the organ's
-    AID is one its holder owns in that role. So the law does attach to an accountable
-    human, which is the point; what it does NOT attach to is Nina in any other
-    capacity. She has other AIDs for the other facets of her life and none of them
-    appears here, which is what keeps a governance power scoped to the office she
-    holds rather than following her around.
+    The law commits NO identifier for this seat at all (this.i @ftjpdph5). It names
+    the office, and who fills it is read off the record as whoever holds a standing
+    seating credential for it — so appointing a director is an issuance, removing one
+    is a revocation, and neither moves a clause or the law head. Under the previous
+    reading the slot named the seat's own AID, which still welded personnel to law one
+    step removed: seating a different director would have been an amendment.
+
+    The separate ``seats`` field the law used to carry is gone with it. It named an
+    AID, which is the one thing this decision says a law must stop doing, and nothing
+    ever computed over it.
     """
-    assert BOARD_LAW["seats"] == (SEAT,)
-    assert SEAT in weights(BOARD_LAW, "B1")
-    assert SEAT in weights(BOARD_LAW, "B2")
+    assert "seats" not in BOARD_LAW
+    for clause_id in ("B1", "B2"):
+        slots = clause(BOARD_LAW, clause_id)["group"]["slots"]
+        seats = [slot for slot in slots if "office" in slot]
+        assert [slot["office"] for slot in seats] == [SEAT_OFFICE]
+        assert all("endorser" not in slot for slot in seats), "an office slot names no party"
 
 
 def test_every_slot_names_the_schema_its_evidence_must_satisfy():
@@ -316,30 +331,37 @@ def subject_of(event):
     return acdc["a"].get("said") if isinstance(acdc, dict) else None
 
 
-def test_dev_declines_three_times_and_each_is_a_signed_committed_act(acme_double):
-    """A no is never a silence, and three nos are three events.
+def test_dev_declines_four_times_and_each_is_a_signed_committed_act(acme_double):
+    """A no is never a silence, and four nos are four events.
 
-    D3's office lease, D6's retabled budget, and beat 13's Q2 forecast. The
-    third is the same signed no as the first two and the fold draws a different
-    consequence from it, which is what beats 13 and 15 are for.
+    D3's office lease, D6's retabled budget, beat 13's Q2 forecast, and beat 26's
+    retabled equity release. The third is the same signed no as the first two and the
+    fold draws a different consequence from it, which is what beats 13 and 15 are for.
+    The fourth is the one a sponsor's tally leaves out, which is what beat 26 is for
+    (``this.i`` @t3kuqli6) — and it is a committed event whether the tally cites it or
+    not, which is exactly why citing around it convicts.
     """
     declinations = [
         event
         for event in acme_double.events
         if disp(event) == "decline" and event.body["i"] == DEV
     ]
-    assert len(declinations) == 3
+    assert len(declinations) == 4
     for event in declinations:
         assert acme_double.substrate.verify(DEV, event.body, event.body["sig"])
 
 
 def test_the_seat_declines_the_amendment(acme_double):
-    """Beat D7: the retained bar bites because the seated organ signs a no."""
+    """Beat D7: the retained bar bites because the seated organ signs a no.
+
+    Asserted as the whole sequence of declinations rather than as one, so a no added or
+    reordered anywhere shows up here. The last is beat 26's, which Marta's tally omits.
+    """
     assert [
         event.body["i"]
         for event in acme_double.events
         if disp(event) == "decline"
-    ] == [DEV, DEV, SEAT, DEV]
+    ] == [DEV, DEV, SEAT, DEV, DEV]
 
 
 # --- The position labels the oracle addresses the log through -----------------
@@ -364,10 +386,14 @@ def test_the_board_is_seated_at_the_amendment_s_own_beat(acme_double):
     assert acme_double.at("board-seated").seq == acme_double.at("d4").seq
 
 
-def test_d1_is_the_second_founder_s_endorsement_of_the_bank_account(acme_double):
+def test_d1_is_the_domain_certifying_the_bank_account(acme_double):
+    """The beat's coordinate is where the act became CONSEQUENTIAL, not where the
+    last vote was cast (this.i @2e2dncfe). Dev's endorsement is a coordinate earlier
+    and a question asked there is pending; the certification is what affirms it."""
     event = acme_double.events[acme_double.at("d1").seq]
-    assert (event.body["i"], disp(event)) == (DEV, "endorse")
-    assert subject_of(event) == acme_double.said("open-bank-account")
+    assert event.kind == "certification"
+    assert event.body["i"] == GAID, "only the domain can admit a tally to its own log"
+    assert event.body["certifies"] == acme_double.said("open-bank-account")
 
 
 def test_d3_is_dev_s_declination_of_the_office_lease(acme_double):

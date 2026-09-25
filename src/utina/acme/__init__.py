@@ -10,7 +10,6 @@ from .build import build
 from .errors import LABEL_UNKNOWN, NAME_UNKNOWN
 from .law import (
     AMENDMENT_ACTS,
-    BOARD,
     BOARD_LAW,
     CAPITAL_PLAN,
     DEV,
@@ -38,7 +37,6 @@ from .record import Acme
 
 __all__ = [
     "AMENDMENT_ACTS",
-    "BOARD",
     "BOARD_LAW",
     "CAPITAL_PLAN",
     "DEV",

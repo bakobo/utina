@@ -236,6 +236,19 @@ def _effectuation(
     declination is decisive whatever the committed order) and two readings of
     them would drift.
 
+    **Unity is not enough where the domain certifies.** An enactment is an act, and
+    an act in such a domain is pending until the domain admits a tally for it — so an
+    edition taking force on the arithmetic alone would bind the whole domain on a
+    judgment the evaluator itself reports as unauthorized (``this.i`` @pv7a6dhc). A
+    certification the record refutes does not effectuate either, and for a stronger
+    reason: it convicts the enactment (@7shpbven), and an edition binding on a
+    self-convicted enactment would be worse than one binding on a pending one.
+
+    The schema is read off the law in force at the enactment's **own** coordinate —
+    the law it amends, which is the law that judges it — and never off the successor
+    it commits, or an amendment introducing a certification requirement would have to
+    satisfy the requirement it was itself introducing.
+
     ``None`` where the enactment names no act class, where the law in force at
     its own coordinate governs no such class, or where unity is not reached at or
     before ``position``. All three are the same fail-closed answer: nothing
@@ -247,14 +260,37 @@ def _effectuation(
     clause = _governing(judging.clauses, act)
     if clause is None:
         return None
+    schema = certification.schema_for(clause, judging.certification)
     committed = corpus.upto(position)
     for candidate in committed:
         if not enactment.position < candidate.position:
             continue
         bundle = tuple(one for one in committed if not candidate.position < one.position)
-        if clause.group.satisfied(dispositions(clause.group, bundle, enactment.said)):
-            return candidate.position
+        if not clause.group.satisfied(dispositions(clause.group, bundle, enactment.said)):
+            continue
+        if schema is not None and not _certified(
+            corpus, clause, enactment, candidate.position, schema
+        ):
+            continue
+        return candidate.position
     return None
+
+
+def _certified(
+    corpus: Corpus, clause: Clause, enactment: Event, at: Position, schema: SAID
+) -> bool:
+    """Whether a sound certification of ``enactment`` stands at or before ``at``.
+
+    Sound rather than merely present: the same predicate the evaluator convicts on,
+    called from here rather than reimplemented, so the law fold and the evaluator
+    cannot disagree about whether an enactment was authorized.
+    """
+    if certification.certifying(corpus, enactment.said, at, schema) is None:
+        return False
+    found = certification.contradicting(
+        corpus, clause.group, enactment.said, at, schema
+    )
+    return found is None
 
 
 def _governing(clauses: tuple[Clause, ...], act: str) -> Clause | None:
@@ -279,6 +315,21 @@ def _edition_committed_by(
     if not isinstance(law, Mapping):
         raise MALFORMED_LAW(
             field=LAW_FIELD, expected="a mapping carrying the clauses this event commits"
+        )
+    # A certification requirement that is PRESENT and unreadable refuses the edition
+    # rather than exempting it. Reading it as absent let a domain disable its own
+    # certification requirement with a typo, which is the cheapest available attack on
+    # the whole mechanism — reproduced on PR #9 by setting the field to a mapping and
+    # watching an uncertified act come back affirmed. This is axiom 4's posture one field
+    # along: an unreadable external semantics refuses rather than being assumed away
+    # (``fold/semantics.py``), and the clause level already inherited rather than exempted.
+    if certification.unreadable_in(law):
+        raise MALFORMED_LAW(
+            field=certification.REQUIRES_FIELD,
+            expected=(
+                "the identifier of the schema this domain's certifications must satisfy, "
+                "or the field absent where it requires none"
+            ),
         )
     return (
         Clause.edition_from_committed(law.get(CLAUSES_FIELD)),

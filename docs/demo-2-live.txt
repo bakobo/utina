@@ -17,15 +17,15 @@
 
   $ utina eval --said seat-the-board --at d4 --brief
 
-  AFFIRMED    was the committed act ElGvrDtWFElt9YWrtAdnQFvwH6qqXzVQ0UJVVLHqKoTY lawful?
+  AFFIRMED    was the committed act Ekql3BdJ3m74NehJAehqKctvs9mrF4V-YK7xufB2Lu-E lawful?
   ------------------------------------------------------------------------------------
-  d4 (seq 13), clause A2 (MxN), unity 1, law head f3bd6baa1af2...
+  d4 (seq 15), clause A2 (MxN), unity 1, law head f3bd6baa1af2...
 
-  marta-founder,6        1/2   endorsed      EJcW9kSXWW6Z...
-  dev-founder,6          1/2   endorsed      EZBxK735H5C2...
+  marta-founder,6        1/2   endorsed      E5Hz2HbAX_Rf...
+  dev-founder,6          1/2   endorsed      EHYEOkjHGQcp...
   endorsed 1 of 1, unity reached; reachable 1, still reachable
 
-  ground      clause A2, reached by EJcW9kSXWW6Z..., EZBxK735H5C2...
+  ground      clause A2, reached by E5Hz2HbAX_Rf..., EHYEOkjHGQcp...
 
 
 
@@ -47,15 +47,14 @@
 
   PENDING     may Acme perform an act of the class hire-vp-sales?
   ------------------------------------------------------------------------------------
-  board-seated (seq 13), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+  board-seated (seq 15), clause B1 (MxN), unity 1, law head 94ac5bb73b09...
 
-  marta-founder,6        1/2   endorsed      ENzStORRBBmE...
+  marta-founder,6        1/2   endorsed      Em4Qjz9_-1qz...
   dev-founder,6          1/2   pending       -
-  nina-board-seat-3,6    1/2   pending       -
+  board-seat-3           1/2   pending       -
   endorsed 1/2 of 1, not reached; reachable 3/2, still reachable
 
-  ground      dev-founder-acme,6, nina-board-seat-3-acme,6 - endorsement under clause
-              B1, absent
+  ground      dev-founder-acme,6, board-seat-3 - endorsement under clause B1, absent
 
 
 
@@ -70,9 +69,9 @@
 
   PENDING     may Acme perform an act of the class release-escrowed-equity?
   ------------------------------------------------------------------------------------
-  board-seated (seq 13), clause A3 (MxN), unity 1, law head 8191a249fc6b...
+  board-seated (seq 15), clause A3 (MxN), unity 1, law head 94ac5bb73b09...
 
-  marta-founder,6        1/2   endorsed      EgPbNtk_ST_c...
+  marta-founder,6        1/2   endorsed      ETg2KsO0yZ3R...
   dev-founder,6          1/2   pending       -
   endorsed 1/2 of 1, not reached; reachable 1, still reachable
 
@@ -85,6 +84,35 @@
   expects: a "no" means no
   happens: defeat under two slots, pending under three. The Constitution changed; the
     arithmetic did the rest
+  MEANWHILE, between board-seated and b13
+  ------------------------------------------------------------------------------------
+
+  18 committed events, of which 2 certifications.
+
+  seq  kind          identifier         what it commits
+   16  issuance      Egg_zDGvfCi4...    a credential to nina-board-seat-3,6
+   17  endorsement   EQfnCxJn58wc...    dev-founder,6 endorses Efx7xD35Qc6n...
+   18  certification EQ20ITrciOU4...    the domain certifies Efx7xD35Qc6n...
+   19  act           E3CkC7KlYyV8...    an act of the class approve-budget
+   20  endorsement   EdWJdTA6J6Uk...    marta-founder,6 endorses E3CkC7KlYyV8...
+   21  endorsement   EMyOnRplLjSS...    nina-board-seat-3,6 endorses E3CkC7KlYyV8...
+   22  certification EuIxLtEoR1AU...    the domain certifies E3CkC7KlYyV8...
+   23  act           EGjUl5wf-EgX...    an act of the class approve-budget
+   24  endorsement   EUW6tAqZbtUY...    marta-founder,6 endorses EGjUl5wf-EgX...
+   25  endorsement   ExxK_2VcUUGv...    dev-founder,6 declines EGjUl5wf-EgX...
+   26  act           EgI-ZVEjrCWQ...    an act of the class amend-operating-agreement
+   27  endorsement   EA9CR8mNUjZS...    marta-founder,6 endorses EgI-ZVEjrCWQ...
+   28  endorsement   E-J1KRVMWmk6...    dev-founder,6 endorses EgI-ZVEjrCWQ...
+   29  endorsement   EHo6kG2k2fsX...    nina-board-seat-3,6 declines EgI-ZVEjrCWQ...
+   30  act           E6z8GBN0AKLe...    an act of the class declare-dividend
+   31  act           E978XZbiieJi...    an act of the class approve-budget
+   32  endorsement   Eqrox0_SoNlQ...    marta-founder,6 endorses E978XZbiieJi...
+   33  endorsement   E3xAA9ue-EBq...    dev-founder,6 declines E978XZbiieJi...
+
+  labels      board-seated and b13 are this demo's names for coordinates and are
+              committed nowhere. The record has sequence numbers, which is what the seq
+              column above shows and what a stranger folding the same log would address
+              it by.
 
 
 
@@ -98,14 +126,14 @@
 
   PENDING     may Acme perform an act of the class approve-budget?
   ------------------------------------------------------------------------------------
-  b13 (seq 29), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+  b13 (seq 33), clause B1 (MxN), unity 1, law head 94ac5bb73b09...
 
-  marta-founder,6        1/2   endorsed      EjXUr3ahWnmd...
-  dev-founder,6          1/2   declined      ES5LId2ZmlTC...
+  marta-founder,6        1/2   endorsed      Eqrox0_SoNlQ...
+  dev-founder,6          1/2   declined      E3xAA9ue-EBq...
   nina-board-seat-3,6    1/2   pending       -
   endorsed 1/2 of 1, not reached; reachable 1, still reachable
 
-  ground      nina-board-seat-3-acme,6 - endorsement under clause B1, absent
+  ground      board-seat-3 - endorsement under clause B1, absent
 
 
 
@@ -129,7 +157,7 @@
   SEAT nina-board-seat-3-acme,6
   ------------------------------------------------------------------------------------
 
-  position    b8 (seq 14)
+  position    b8 (seq 16)
 
   KERI — a relationship, dual-anchored
     identifier  acme:seat3
@@ -151,6 +179,22 @@
   the office may do is the credential's business, and because it is a credential it can
   be revoked — at which point this slot empties and the office is an office nobody
   holds.
+  MEANWHILE, between b8 and d5
+  ------------------------------------------------------------------------------------
+
+  6 committed events, of which 2 certifications.
+
+  seq  kind          identifier         what it commits
+   17  endorsement   EQfnCxJn58wc...    dev-founder,6 endorses Efx7xD35Qc6n...
+   18  certification EQ20ITrciOU4...    the domain certifies Efx7xD35Qc6n...
+   19  act           E3CkC7KlYyV8...    an act of the class approve-budget
+   20  endorsement   EdWJdTA6J6Uk...    marta-founder,6 endorses E3CkC7KlYyV8...
+   21  endorsement   EMyOnRplLjSS...    nina-board-seat-3,6 endorses E3CkC7KlYyV8...
+   22  certification EuIxLtEoR1AU...    the domain certifies E3CkC7KlYyV8...
+
+  labels      b8 and d5 are this demo's names for coordinates and are committed nowhere.
+              The record has sequence numbers, which is what the seq column above shows
+              and what a stranger folding the same log would address it by.
 
 
 
@@ -164,14 +208,14 @@
 
   AFFIRMED    may Acme perform an act of the class approve-budget?
   ------------------------------------------------------------------------------------
-  d5 (seq 18), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+  d5 (seq 22), clause B1 (MxN), unity 1, law head 94ac5bb73b09...
 
-  marta-founder,6        1/2   endorsed      EqDH_-4f2rNl...
+  marta-founder,6        1/2   endorsed      EdWJdTA6J6Uk...
   dev-founder,6          1/2   pending       -
-  nina-board-seat-3,6    1/2   endorsed      EGwcp9EgsuwT...
+  nina-board-seat-3,6    1/2   endorsed      EMyOnRplLjSS...
   endorsed 1 of 1, unity reached; reachable 3/2, still reachable
 
-  ground      clause B1, reached by EGwcp9EgsuwT..., EqDH_-4f2rNl...
+  ground      clause B1, reached by EMyOnRplLjSS..., EdWJdTA6J6Uk...
 
 
 
@@ -204,6 +248,31 @@ ERROR  e.proof.edge-unvalidated.f
   expects: revoking undoes the decision
   happens: it changes the next answer and not the last one — and then duplicity, which
     does reach back
+  MEANWHILE, between d5 and b16
+  ------------------------------------------------------------------------------------
+
+  15 committed events, of which 1 certification.
+
+  seq  kind          identifier         what it commits
+   23  act           EGjUl5wf-EgX...    an act of the class approve-budget
+   24  endorsement   EUW6tAqZbtUY...    marta-founder,6 endorses EGjUl5wf-EgX...
+   25  endorsement   ExxK_2VcUUGv...    dev-founder,6 declines EGjUl5wf-EgX...
+   26  act           EgI-ZVEjrCWQ...    an act of the class amend-operating-agreement
+   27  endorsement   EA9CR8mNUjZS...    marta-founder,6 endorses EgI-ZVEjrCWQ...
+   28  endorsement   E-J1KRVMWmk6...    dev-founder,6 endorses EgI-ZVEjrCWQ...
+   29  endorsement   EHo6kG2k2fsX...    nina-board-seat-3,6 declines EgI-ZVEjrCWQ...
+   30  act           E6z8GBN0AKLe...    an act of the class declare-dividend
+   31  act           E978XZbiieJi...    an act of the class approve-budget
+   32  endorsement   Eqrox0_SoNlQ...    marta-founder,6 endorses E978XZbiieJi...
+   33  endorsement   E3xAA9ue-EBq...    dev-founder,6 declines E978XZbiieJi...
+   34  issuance      EbjTKtkpqaX7...    a credential to nina-board-seat-3-device,6
+   35  endorsement   EywNRbWKpq7C...    nina-board-seat-3-device,6 endorses E978XZbiieJi...
+   36  certification Eq95lN0TB6dh...    the domain certifies E978XZbiieJi...
+   37  revocation    EYeZoOx5aJ1Y...    revokes E1eY46Jhp41J...
+
+  labels      d5 and b16 are this demo's names for coordinates and are committed
+              nowhere. The record has sequence numbers, which is what the seq column
+              above shows and what a stranger folding the same log would address it by.
 
 
 
@@ -218,17 +287,29 @@ ERROR  e.proof.edge-unvalidated.f
   REGISTRY E-czbRJteLSJXjEH...
   ------------------------------------------------------------------------------------
 
-  position    b16 (seq 32)
+  position    b16 (seq 37)
   controller  acme-governed-domain,6
 
   credential          at seq   state here    moved by
-  E1eY46Jhp41J...         14   revoked       EDF4FOERyYjn...
+  E1eY46Jhp41J...         16   revoked       EYeZoOx5aJ1Y...
 
   Registry state is evidence, and standing is judgment. A revocation moves what this
   registry says about a credential and moves nothing else: the office's key log is
   untouched, its keys still verify, and every finding that cited the credential while it
   stood still stands at its own coordinate. What a revocation reaches is the next act,
   not the last one.
+  MEANWHILE, between b16 and b17
+  ------------------------------------------------------------------------------------
+
+  2 committed events, and no certification among them.
+
+  seq  kind          identifier         what it commits
+   38  act           EZjrmSQI6tfg...    an act of the class approve-budget
+   39  endorsement   E6-OzCA3xGQ8...    marta-founder,6 endorses EZjrmSQI6tfg...
+
+  labels      b16 and b17 are this demo's names for coordinates and are committed
+              nowhere. The record has sequence numbers, which is what the seq column
+              above shows and what a stranger folding the same log would address it by.
 
 
 
@@ -242,15 +323,14 @@ ERROR  e.proof.edge-unvalidated.f
 
   PENDING     may Acme perform an act of the class approve-budget?
   ------------------------------------------------------------------------------------
-  b17 (seq 34), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+  b17 (seq 39), clause B1 (MxN), unity 1, law head 94ac5bb73b09...
 
-  marta-founder,6        1/2   endorsed      E8e6pNo1h2ky...
+  marta-founder,6        1/2   endorsed      E6-OzCA3xGQ8...
   dev-founder,6          1/2   pending       -
-  nina-board-seat-3,6    1/2   pending       -
+  board-seat-3           1/2   pending       -
   endorsed 1/2 of 1, not reached; reachable 3/2, still reachable
 
-  ground      dev-founder-acme,6, nina-board-seat-3-acme,6 - endorsement under clause
-              B1, absent
+  ground      dev-founder-acme,6, board-seat-3 - endorsement under clause B1, absent
 
 
 
@@ -262,16 +342,35 @@ ERROR  e.proof.edge-unvalidated.f
 
   $ utina eval --said approve-budget --at b17 --brief
 
-  AFFIRMED    was the committed act Ebnz13phAfQySQoQ-qxY26rhgItCJgtyZIaouyhvFqQg lawful?
+  AFFIRMED    was the committed act E3CkC7KlYyV8iN1ECSn5YrwP_nTvhz3cQ4JwrEIqfrF0 lawful?
   ------------------------------------------------------------------------------------
-  b17 (seq 34), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+  b17 (seq 39), clause B1 (MxN), unity 1, law head 94ac5bb73b09...
 
-  marta-founder,6        1/2   endorsed      EqDH_-4f2rNl...
+  marta-founder,6        1/2   endorsed      EdWJdTA6J6Uk...
   dev-founder,6          1/2   pending       -
-  nina-board-seat-3,6    1/2   endorsed      EGwcp9EgsuwT...
+  nina-board-seat-3,6    1/2   endorsed      EMyOnRplLjSS...
   endorsed 1 of 1, unity reached; reachable 3/2, still reachable
 
-  ground      clause B1, reached by EGwcp9EgsuwT..., EqDH_-4f2rNl...
+  ground      clause B1, reached by EMyOnRplLjSS..., EdWJdTA6J6Uk...
+  MEANWHILE, between b17 and b20
+  ------------------------------------------------------------------------------------
+
+  9 committed events, of which 1 certification.
+
+  seq  kind          identifier         what it commits
+   40  act           E2G9oY2qa45h...    an act of the class approve-budget
+   41  endorsement   EefYnxLYlvDI...    marta-founder,6 endorses E2G9oY2qa45h...
+   42  issuance      EAuxWOzifE1K...    a credential to nina-board-seat-3,6
+   43  enactment     EtyDXisE5JD0...    a successor law, enacted as amend-operating-agreement
+   44  endorsement   EGUPEbARj1kk...    marta-founder,6 endorses EtyDXisE5JD0...
+   45  endorsement   EwhWVkXbZuyI...    dev-founder,6 endorses EtyDXisE5JD0...
+   46  endorsement   E6ps1wA65K50...    nina-board-seat-3,6 endorses EtyDXisE5JD0...
+   47  certification E6fkmiPbplYG...    the domain certifies EtyDXisE5JD0...
+   48  duplicity     EJFsGa7HjFS_...    duplicity observed at nina-board-seat-3,6
+
+  labels      b17 and b20 are this demo's names for coordinates and are committed
+              nowhere. The record has sequence numbers, which is what the seq column
+              above shows and what a stranger folding the same log would address it by.
 
 
 
@@ -286,13 +385,13 @@ ERROR  e.proof.edge-unvalidated.f
 
   $ utina eval --said approve-budget --at b20 --brief
 
-  PENDING     was the committed act Ebnz13phAfQySQoQ-qxY26rhgItCJgtyZIaouyhvFqQg lawful?
+  PENDING     was the committed act E3CkC7KlYyV8iN1ECSn5YrwP_nTvhz3cQ4JwrEIqfrF0 lawful?
   ------------------------------------------------------------------------------------
-  b20 (seq 42), clause B1 (MxN), unity 1, law head 8191a249fc6b...
+  b20 (seq 48), clause B1 (MxN), unity 1, law head 94ac5bb73b09...
 
-  marta-founder,6        1/2   endorsed      EqDH_-4f2rNl...
+  marta-founder,6        1/2   endorsed      EdWJdTA6J6Uk...
   dev-founder,6          1/2   pending       -
-  nina-board-seat-3,6    1/2   endorsed      EGwcp9EgsuwT...
+  nina-board-seat-3,6    1/2   endorsed      EMyOnRplLjSS...
   endorsed 1 of 1, unity reached; reachable 3/2, still reachable
 
   ground      nina-board-seat-3-acme,6 - endorsement under clause B1,
@@ -314,16 +413,16 @@ ERROR  e.proof.edge-unvalidated.f
 
   $ utina eval --said lower-the-bar --at b22 --brief
 
-  AFFIRMED    was the committed act EHD7i7VlzNdKSGYzUwxM6tWRz_LdHVZUmjqbvpt5xP6U lawful?
+  AFFIRMED    was the committed act EtyDXisE5JD0gvXsjQSm-EIpyb-3D3VCDDdPgaaZugY0 lawful?
   ------------------------------------------------------------------------------------
-  b22 (seq 41), clause B2 (MxN), unity 1, law head 8191a249fc6b...
+  b22 (seq 47), clause B2 (MxN), unity 1, law head 94ac5bb73b09...
 
-  marta-founder,6        1/3   endorsed      EPh3dA3YE9Zc...
-  dev-founder,6          1/3   endorsed      EeHM-Sb7Figv...
-  nina-board-seat-3,6    1/3   endorsed      ETx_cWg3h03Y...
+  marta-founder,6        1/3   endorsed      EGUPEbARj1kk...
+  dev-founder,6          1/3   endorsed      EwhWVkXbZuyI...
+  nina-board-seat-3,6    1/3   endorsed      E6ps1wA65K50...
   endorsed 1 of 1, unity reached; reachable 1, still reachable
 
-  ground      clause B2, reached by EPh3dA3YE9Zc..., ETx_cWg3h03Y..., EeHM-Sb7Figv...
+  ground      clause B2, reached by E6ps1wA65K50..., EGUPEbARj1kk..., EwhWVkXbZuyI...
 
 
 
@@ -338,19 +437,68 @@ ERROR  e.proof.edge-unvalidated.f
 
   $ utina disturbance lower-the-bar --at b23
 
-  DISTURBANCE EHD7i7VlzNdK...
+  DISTURBANCE EtyDXisE5JD0...
   ------------------------------------------------------------------------------------
 
-  position    b23 (seq 41)
+  position    b23 (seq 47)
   ended       3 acts that were in flight
 
   act                       identifier
-  approve-budget-retabled   E3CkC7KlYyV8...
-  approve-capital-plan      E3VUf10ojy8G...
-  approve-q3-budget         EC9k5Z-Ag8Tz...
+  approve-capital-plan      E2G9oY2qa45h...
+  approve-budget-retabled   EGjUl5wf-EgX...
+  approve-q3-budget         EZjrmSQI6tfg...
 
   Each act above was still in flight when this amendment took force, and its cure path
   is shut after it: the clause it was gathering endorsements under is gone, so the
   endorsements it was waiting for can no longer discharge it. An act whose own clause
   the amendment left alone is untouched, which is what keeps this from being a way to
   kill an inconvenient matter by amending something irrelevant.
+
+
+
+  ------------------------------------------------------------------------------------
+  KERNEL  A certification that lies
+  expects: a decision is authorized when the votes add up
+  happens: it is authorized when the domain CERTIFIES that they did — and a
+    certification the record refutes convicts the sponsor on their own signature
+  MEANWHILE, between b23 and b26
+  ------------------------------------------------------------------------------------
+
+  5 committed events, of which 1 certification.
+
+  seq  kind          identifier         what it commits
+   48  duplicity     EJFsGa7HjFS_...    duplicity observed at nina-board-seat-3,6
+   49  act           EM0YPtJoDXTA...    an act of the class release-escrowed-equity
+   50  endorsement   EcZ8rhpFYT1P...    marta-founder,6 endorses EM0YPtJoDXTA...
+   51  endorsement   EGiHD3Xz6gHb...    dev-founder,6 declines EM0YPtJoDXTA...
+   52  certification ERRRAUt0KgnU...    the domain certifies EM0YPtJoDXTA...
+
+  labels      b23 and b26 are this demo's names for coordinates and are committed
+              nowhere. The record has sequence numbers, which is what the seq column
+              above shows and what a stranger folding the same log would address it by.
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 26    Marta certifies an act that never carried
+  The founders table the equity release again. Marta endorses, Dev signs a no, and Marta
+  — sponsoring the tally — cites her own endorsement at full weight and leaves the no
+  out. The domain admits it, because what the domain checks is that the cited weights
+  add to one, and they do. What it does not do is re-fold its own record first. So the
+  lie is well formed and it is on the record, and the fold convicts it on the bytes
+  Marta signed: the proof names the certification and the declination it was written
+  around, and any stranger holding the log recomputes it. This is the fourth verdict,
+  and it is a governance failure rather than a lost key.
+
+  $ utina eval --said equity-retabled --at b26 --brief
+
+  SELF-CONVICTED  was the committed act EM0YPtJoDXTAsDtMg-GolXR86MnzebU-jno5rdE6QPAQ lawful?
+  ------------------------------------------------------------------------------------
+  b26 (seq 52), clause A3 (MxN), unity 1, law head e13bba131d22...
+
+  marta-founder,6        1/2   endorsed      EcZ8rhpFYT1P...
+  dev-founder,6          1/2   declined      EGiHD3Xz6gHb...
+  endorsed 1/2 of 1, not reached; reachable 1/2, unreachable
+
+  ground      self-convicted on its own bytes: ERRRAUt0KgnUtVFg... contradicts
+              EGiHD3Xz6gHb3Wg5...

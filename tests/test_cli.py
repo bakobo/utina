@@ -129,8 +129,10 @@ def test_law_after_the_amendment_shows_the_board_clauses_and_the_retained_bar():
     assert "clause B1" in out and "clause B2" in out
     # A3 is re-committed unchanged, so the edition that seats the board carries it.
     assert "clause A3" in out
-    assert "marta-founder,6 1/2, dev-founder,6 1/2, nina-board-seat-3,6 1/2" in out
-    assert "marta-founder,6 1/3, dev-founder,6 1/3, nina-board-seat-3,6 1/3" in out
+    # The law names the OFFICE and no identifier at all (this.i @ftjpdph5), so the
+    # slot list reads as the seat rather than as whoever is currently in it.
+    assert "marta-founder,6 1/2, dev-founder,6 1/2, board-seat-3 1/2" in out
+    assert "marta-founder,6 1/3, dev-founder,6 1/3, board-seat-3 1/3" in out
     # B1's slots oversum, so unity does not need everyone; B2's do not.
     assert "sum to 3/2" in out
     assert "every slot is required" in out
@@ -179,7 +181,7 @@ def test_a_defeated_screen_carries_the_clause_class_subcode_and_declination():
     assert "DEFEATED" in out
     assert "authority (the actor lacked the invoked power)" in out
     assert "subcode" in out and "dev-founder-acme,6" in out
-    assert "EboFtM84Xdhk" in out
+    assert "EHhTweOdi1Vt" in out
     assert "unity unreachable" in out
 
 
@@ -309,7 +311,7 @@ def test_the_rendered_arithmetic_implies_the_folds_verdict(
             record.corpus, _question(record, argv), at=record.at(label), label=label
         )
         assert appraisal.clause is not None
-        held = {one.endorser: one.disposition for one in appraisal.slots}
+        held = {one.key: one.disposition for one in appraisal.slots}
         satisfied = appraisal.clause.group.satisfied(held)
         reachable = appraisal.clause.group.reachable(held)
 
@@ -618,13 +620,16 @@ def test_a_wrapped_mark_never_splits_an_escape_sequence():
 
 
 def test_the_enact_screens_before_and_after_carry_verdict_colours():
+    """Both sides read PENDING once the domain certifies, so the colour is the same one
+    twice. What the act moved is the arithmetic, and ``unity reached`` carries the
+    colour that says so — the verdict waits on the domain (this.i @2e2dncfe)."""
     from utina.cli.style import AWAITING, REACHED
 
     _, painted, _ = shell(
         "enact", "endorse", "--as", "acme:dev", "--on", "hire-vp-sales", color=True
     )
     assert painted_with(painted, AWAITING, "PENDING")
-    assert painted_with(painted, REACHED, "AFFIRMED")
+    assert painted_with(painted, REACHED, "unity reached")
 
 
 def test_the_replay_result_is_painted_by_whether_the_folds_agree():
@@ -725,7 +730,7 @@ def test_a_defeat_with_no_declination_still_carries_its_ground():
 def test_log_shows_every_committed_event_in_canonical_order():
     out = screen("log")
     assert "COMMITTED LOG AT the end of the record" in out
-    assert "43 events" in out
+    assert "53 events" in out
     assert "Arrival order is not consulted" in out
     seqs = [
         int(line.split()[0])
@@ -737,7 +742,7 @@ def test_log_shows_every_committed_event_in_canonical_order():
 
 def test_log_at_a_position_shows_only_what_was_committed_by_then():
     out = screen("log", "--at", "d1")
-    assert "4 events" in out
+    assert "5 events" in out
     assert "declare-dividend" not in out
 
 
@@ -890,9 +895,14 @@ def test_enact_commits_a_signed_endorsement_and_shows_what_it_changed():
     # The signature is printed whole and therefore wraps, so the sentence beside it is
     # matched against the screen with its line breaks flattened.
     assert "the substrate verified it before recording" in " ".join(out.split())
-    assert "said=E3CkC7KlYyV8..." in out
-    assert "before" in out and "PENDING" in out
-    assert "after" in out and "AFFIRMED" in out
+    # Unity is reached and the act is STILL not authorized, because Acme's law names a
+    # certification schema and only the domain can admit a tally (this.i @2e2dncfe).
+    # A live endorsement therefore moves what is OUTSTANDING rather than the verdict:
+    # the ground stops naming a missing endorsement and starts naming the certification.
+    assert "before" in out and "after" in out
+    assert "unity reached" in out
+    assert "certification under clause B1, absent" in out
+    assert "AFFIRMED" not in out, "no endorsement can authorize an act in a certifying domain"
     assert "nothing here is written to disk" in out
 
 
@@ -1406,20 +1416,20 @@ def test_the_demo2_beats_are_the_scripts_beats_in_the_scripts_order():
 
     assert [beat.id for beat in OPENER] == ["1", "2", "3", "4", "5", "6"]
     assert [beat.id for beat in LIVE] == [
-        "7", "9", "10", "13", "8", "12", "14", "16", "17", "19", "20", "22", "23"
+        "7", "9", "10", "13", "8", "12", "14", "16", "17", "19", "20", "22", "23", "26"
     ]
     assert [beat.id for beat in LEAVE_BEHIND] == ["11", "15", "18", "21", "24", "25"]
-    assert len(KERNELS) == 6, "six kernels, not five"
-    assert sum(len(kernel.beats) for kernel in KERNELS) == 13, "thirteen live beats"
+    assert len(KERNELS) == 7, "seven kernels: beat 26's is the fourth verdict's own"
+    assert sum(len(kernel.beats) for kernel in KERNELS) == 14, "fourteen live beats"
 
 
 def test_every_beat_of_the_script_appears_exactly_once():
-    """Twenty-five beats, and no beat in two parts. A beat that ran twice would
+    """Twenty-six beats, and no beat in two parts. A beat that ran twice would
     make the leave-behind disagree with what the room was shown."""
     from utina.cli.demo2 import LEAVE_BEHIND, LIVE, OPENER
 
     everything = [beat.id for beat in OPENER + LIVE + LEAVE_BEHIND]
-    assert sorted(everything, key=int) == [str(n) for n in range(1, 26)]
+    assert sorted(everything, key=int) == [str(n) for n in range(1, 27)]
     assert len(everything) == len(set(everything))
 
 
@@ -1539,3 +1549,144 @@ def test_the_demo2_walk_pauses_between_beats_and_not_after_the_last():
     walk2(console, part="opener", pause=True, substrate="facade")
 
     assert len(pauses) == len(OPENER) - 1
+
+
+# --- utina meanwhile: the span between two beats (this.i @eelnh6dn) ------------
+
+
+def test_the_meanwhile_card_counts_exactly_what_the_log_counts_over_the_span():
+    """M9's criterion. Two readings of one span that disagreed would make the card a
+    second, unchecked account of the record — which is the thing every screen here is
+    built not to be."""
+
+    out = screen("meanwhile", "--from", "board-seated", "--to", "b13")
+    with world() as record:
+        since, upto = record.at("board-seated"), record.at("b13")
+        span = [one for one in record.corpus.upto(upto) if since < one.position]
+        certifications = [one for one in span if one.kind == "certification"]
+
+    assert f"{len(span)} committed events" in out
+    assert f"of which {len(certifications)} certification" in out
+    # And every event in the span is on the card, addressed by its own sequence number.
+    for event in span:
+        assert f"{event.position.seq:>3}  " in out
+
+
+def test_the_meanwhile_card_says_the_beat_labels_are_ours():
+    """The disclosure the milestone asks for, and the least obvious of its three parts.
+
+    ``d1`` and ``b17`` are this demo's names and are committed nowhere. Saying so on the
+    screen costs two lines and is the same disclosure the law screen's alias header
+    already makes about party names.
+    """
+    # The note wraps, so it is matched against the screen with its breaks flattened.
+    flat = " ".join(screen("meanwhile", "--from", "b16", "--to", "b17").split())
+    assert "b16 and b17 are this demo's names for coordinates" in flat
+    assert "committed nowhere" in flat
+    assert "The record has sequence numbers" in flat
+
+
+def test_a_span_with_no_certification_says_so_rather_than_staying_silent():
+    out = screen("meanwhile", "--from", "b16", "--to", "b17")
+    assert "no certification among them" in out
+
+
+def test_a_backwards_span_prints_nothing_at_all():
+    """The demo's play order is not the record's: beat 8 is asked at seq 16 and follows
+    beat 13 at seq 33. Going back there is nothing that happened while nobody was
+    looking, and a card saying "nothing was committed" would be false as well as noisy —
+    plenty was committed and the room has already seen it."""
+    assert screen("meanwhile", "--from", "b13", "--to", "b8") == ""
+    # The other one the record carries: beat 20's duplicity observation is the LAST
+    # event, one coordinate after the amendment beat 22 asks about, so the live run's
+    # 20-then-22 order steps back by one. The comment at the foot of acme/build.py
+    # explains why the observation has to be last.
+    assert screen("meanwhile", "--from", "b20", "--to", "b22") == ""
+
+
+def test_an_empty_span_between_one_coordinate_and_itself_prints_nothing():
+    assert screen("meanwhile", "--from", "d5", "--to", "d5") == ""
+
+
+def test_the_live_run_carries_a_meanwhile_card_wherever_the_record_advances():
+    """The driver emits one between every pair of beats and the command decides whether
+    there is anything to say, so the driver still reads nothing off the record."""
+    from utina.cli.demo2 import _sequence, coordinate_of
+
+    out = screen("demo2", "--part", "live", "--no-pause")
+
+    # The driver's rule, exactly: between each beat and the one before it that had a
+    # coordinate. Beat 14 has none — an endorsement the toolchain refuses is asked
+    # nowhere — so it carries the previous coordinate forward rather than resetting.
+    with world() as record:
+        previous = ""
+        expected = []
+        for beat in _sequence("live"):
+            label = coordinate_of(beat)
+            if not label:
+                continue
+            if previous and record.at(label).seq > record.at(previous).seq:
+                expected.append(label)
+            previous = label
+
+    assert expected, "the live run has forward spans to describe"
+    assert out.count("MEANWHILE, between") == len(expected)
+    for label in expected:
+        assert f"and {label}" in out
+
+
+# --- what the log says about each event kind (Copilot, #9) ---------------------
+
+
+def _logged(*events) -> str:
+    """One log screen over hand-built events, for the kinds Acme's record has none of."""
+    from utina.cli.aliases import aliases_over
+    from utina.cli.render import log_screen
+    from utina.cli.style import Style
+    from utina.fold.triple import Position
+
+    return log_screen(
+        events, "here", Position(len(events) - 1), aliases_over({}), Style(False)
+    )
+
+
+def test_the_log_names_a_retraction_by_who_withdrew_what():
+    """Keyed on the ``revokes`` field rather than on a kind constant: the substrate
+    commits no dedicated kind for a retraction (tick ``3z6a``), so the fold reads the
+    field wherever it appears and naming a constant here would be inventing one."""
+    from utina.fold.corpus import Event
+    from utina.fold.triple import Position
+
+    withdrawn = Event(
+        said="EWithdraw",
+        kind="retraction",
+        position=Position(0),
+        body={"i": "acme:marta", "revokes": "EEarlier"},
+    )
+
+    out = _logged(withdrawn)
+
+    assert "withdraws EEarlier" in out
+    assert "declines" not in out, "a retraction is not a disposition"
+
+
+def test_the_log_says_nothing_rather_than_guessing_at_a_kind_it_cannot_read():
+    """A glossary that guesses is worse than one that says nothing.
+
+    Every kind the record commits is now named explicitly, and the fall-through used to
+    be the disposition path — which rendered a certification as "marta-founder,6
+    declines ...", a duplicity observation as "None declines None", and a credential
+    issuance as "acme-governed-domain,6 declines None", six times over in the tracked
+    transcripts (Copilot, PR #9).
+    """
+    from utina.fold.corpus import Event
+    from utina.fold.triple import Position
+
+    unknown = Event(
+        said="EMystery", kind="interpretive-dance", position=Position(0), body={}
+    )
+
+    out = _logged(unknown)
+
+    assert "\u2014" in out
+    assert "declines" not in out and "endorses" not in out

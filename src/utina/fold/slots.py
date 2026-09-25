@@ -203,11 +203,28 @@ class SlotDisposition:
     ``said`` is the committed act the disposition rests on, and it is ``None``
     exactly when the disposition is PENDING — because a pending slot is the absence
     of an act, and a ground it does not have is one the finding must not claim.
+
+    ``key`` is which SEAT this is and ``endorser`` is who is in it, and they are two
+    different questions rather than one written twice (``this.i`` @qjjlkrxt). On a
+    slot the law entitles directly they coincide. On a slot that seats an office the
+    key is the office, stable across a change of director, while the endorser is the
+    holder the record resolved — or the office's own name where nobody holds it,
+    because "board-seat-3, pending" tells a reader what to go and do and an empty
+    column does not.
     """
 
     endorser: AID
     disposition: Disposition
     said: SAID | None = None
+    key: str = ""
+
+    def __post_init__(self) -> None:
+        # Defaulting to the endorser keeps a two-argument construction meaning what it
+        # used to for a slot the law entitles directly, where the seat and its occupant
+        # are the same identifier. :func:`classify` always passes the key explicitly, so
+        # this is the shape an outside caller gets rather than a path the fold takes.
+        if not self.key:
+            object.__setattr__(self, "key", self.endorser)
 
 
 def classify(
@@ -234,7 +251,7 @@ def dispositions(
     group: Group, events: Iterable[CommittedEvent], subject: SAID
 ) -> dict[AID, Disposition]:
     """The mapping ``Group.reachable`` and ``Group.satisfied`` consume."""
-    return {one.endorser: one.disposition for one in classify(group, events, subject)}
+    return {one.key: one.disposition for one in classify(group, events, subject)}
 
 
 def endorsements(classified: Iterable[SlotDisposition]) -> tuple[SAID, ...]:
@@ -336,7 +353,7 @@ def _in_flight(
     consult ``UNREACHABLE_YIELDS`` and must not (``this.i`` @dozrtx).
     """
     held = {
-        one.endorser: one.disposition
+        one.key: one.disposition
         for one in (_classify_slot(slot, committed, retracted, subject) for slot in group.slots)
     }
     return group.reachable(held) and not group.satisfied(held)
@@ -348,26 +365,40 @@ def _classify_slot(
     retracted: Mapping[SAID, set[AID]],
     subject: SAID,
 ) -> SlotDisposition:
-    # An office-slot names no party, so who fills it is read off the record here
-    # rather than off the law. An office nobody holds is pending under its own
-    # name: "board-seat-3, nobody" tells a reader more than an empty string would,
-    # and it is the honest answer — the seat exists and is vacant.
-    holder = _holder(slot, committed)
-    if holder is None:
-        return SlotDisposition(slot.office or slot.endorser, Disposition.PENDING)
-    slot = slot if not slot.office else replace(slot, endorser=holder)
+    """What this slot holds over ``committed``, and who was in it when they acted.
+
+    **The occupant is resolved once per candidate act, not once per question**, and
+    that is the whole of ``this.i`` @djyj2bc2. An office slot counts an endorsement
+    whose issuer held the office at the ENDORSEMENT's own coordinate; resolving the
+    office once against the whole bundle let a revocation reach backwards and un-count
+    endorsements that had already stood, which is the one thing ``:1805`` forbids by
+    name — "what was affirmed above stands at its coordinate forever". It is the same
+    "did it stand when it was cited" discipline :func:`_qualified` applies to a cited
+    credential, applied one level out to the seat itself.
+
+    A slot the law entitles directly is unaffected: :func:`_holder` returns its own
+    endorser whatever the bundle, so the per-act resolution is a constant for it.
+    """
     standing = [
-        event
+        (event, who)
         for index, event in enumerate(committed)
-        if _fills(event, slot, subject, committed[: index + 1])
-        and slot.endorser not in retracted.get(event.said, ())
+        for who in (_holder(slot, committed[: index + 1]),)
+        if who is not None
+        and _fills(event, replace(slot, endorser=who), subject, committed[: index + 1])
+        and who not in retracted.get(event.said, ())
         and _qualified(event, committed[: index + 1])
     ]
     for wanted, disposition in _PRECEDENCE:
-        for event in standing:
+        for event, who in standing:
             if attributes(event).get(DISPOSITION_FIELD) == wanted:
-                return SlotDisposition(slot.endorser, disposition, event.said)
-    return SlotDisposition(slot.endorser, Disposition.PENDING)
+                return SlotDisposition(who, disposition, event.said, key=slot.key)
+    # Nothing counts, so the row falls back to who holds the seat *now* — which is the
+    # one place that question is the right one. An office nobody holds is pending under
+    # its own name: "board-seat-3, absent" tells a reader what to go and do, and it is
+    # the honest answer, because the seat exists and is vacant (beat 17's whole screen).
+    return SlotDisposition(
+        _holder(slot, committed) or slot.key, Disposition.PENDING, key=slot.key
+    )
 
 
 def _holder(slot: Slot, asof: Sequence[CommittedEvent]) -> AID | None:
@@ -377,10 +408,22 @@ def _holder(slot: Slot, asof: Sequence[CommittedEvent]) -> AID | None:
     answered by the record, and a vacant office is an ordinary state rather than a
     fault — beat 17's whole content is a seat nobody holds after a revocation.
 
-    Ambiguity is not resolved here. Where two parties hold one office the fold
-    refuses, and that decision belongs to the evaluator rather than to the row: this
-    function reports the first, and :func:`seating_is_ambiguous` is what the caller
-    asks before trusting any of it.
+    **A contested office fills nothing**, and that is fail-closed rather than a
+    refusal because of where this is asked from. ``seating_is_ambiguous`` refuses the
+    whole question where the office is contested at the coordinate the question is
+    asked from, and that used to be the only coordinate this function was ever called
+    at. Since @djyj2bc2 it is called once per candidate act, so there are coordinates
+    the evaluator's refusal never looks at — a seating contested when an endorsement
+    was made, resolved by a revocation before the question is asked, would otherwise
+    have that endorsement counted on a first-of-two guess. Returning ``None`` makes it
+    count for nothing, which is the same direction every other unverifiable thing in
+    this module takes.
+
+    That gap was real before @djyj2bc2 and that node's own note said it had not been
+    widened. The note was wrong: resolving once at the appraisal coordinate meant the
+    refusal covered exactly the coordinate this was asked at, and resolving per act
+    opened coordinates it cannot see. Found by a substitute review on PR #9, which
+    reproduced it.
     """
     if slot.office is None:
         return slot.endorser
@@ -390,7 +433,7 @@ def _holder(slot: Slot, asof: Sequence[CommittedEvent]) -> AID | None:
     seated = holders_of(
         asof, schema=wanted.schema, issuer=wanted.issuer, office=slot.office
     )
-    return seated[0] if seated else None
+    return seated[0] if len(seated) == 1 else None
 
 
 def seating_is_ambiguous(group: Group, asof: Sequence[CommittedEvent]) -> str | None:

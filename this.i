@@ -1614,6 +1614,363 @@ Make Custos's replayable governance useful to a real organization = goal:
         duplicity applied one tier up. Custos has the shape for that at `:2518-2530` and scopes
         it to key state; the governance-tier case has no committed form. Filed as Q36.
 
+    A false certification convicts the question it was supposed to authorize = decision:
+      id: 7shpbven
+      why: >
+        M4's fold half, following @qk3kcds6 and @epztz4wd. A certification is proof rather than
+        assertion, so one the record does not support has contradicted itself on bytes its own
+        sponsor signed and its own domain admitted — "two voices where its constitution demands
+        one" (`:1527-1533`). The finding is self-convicted, carrying a proof package any reader
+        recomputes from committed bytes alone.
+        TWO INDEPENDENT CONTRADICTIONS, checked in a fixed order because a certification can
+        carry both and two verifiers must name the same one. First the certification against
+        ITSELF: its cited edges sum to less than unity while it claims a met threshold. Second
+        the certification against THE RECORD: the clause's own arithmetic over every disposition
+        the domain admitted at or before the certification's coordinate does not reach unity.
+        The first is nearly redundant because `enact` refuses to emit one (@qk3kcds6) and is kept
+        because the fold may not assume its own constructor wrote the log it is reading — a
+        corpus arrives from a substrate, and `Corpus.load` trusts what it is handed (tick 6ofh).
+        The second is the one @epztz4wd ruled and the one the beat is worth showing.
+        THE CHECK CANNOT LIVE IN THE AFFIRMED ARM, which is the discovery this milestone turned
+        on rather than a detail of layout. The dispatch reached the certification path only under
+        `satisfied(held)`, so a certification of an act the record DEFEATS returned defeated and
+        never looked at the certification at all — and an act the record defeats is exactly the
+        case a sponsor citing around a declination produces, since a declination spends its slot.
+        The check therefore runs before the threshold dispatch, over every committed
+        certification of the subject, whatever the arithmetic says.
+        THE PROOF PAIR IS DERIVED, never chosen. Where the record carries a declination that the
+        certification did not cite — bearing on the subject, in a slot the governing clause
+        counts, committed at or before the certification — the pair is the certification and the
+        lexicographic minimum such declination, in the discipline `:1766-1770` applies to
+        defeated citations: two verifiers holding the same bundle emit the same finding down to
+        the byte. Where there is no omitted declination the contradiction is internal and the
+        package alone names it, which is the shape `Proof.pair` was already built to allow.
+        THE ORDER AGAINST TAINT SPLITS THE TWO ARMS, and the split is the answer rather than a
+        compromise. Taint's SUBJECT arm goes first: a bearing conviction is key-tier, decided by
+        KERI's superseding-recovery calculus rather than by anything Acme committed (@yrkrqj's
+        consequence, argued at the duplicity node), and a party convicted of speaking with two
+        voices poisons every artifact they touched including a certification, so naming the
+        duplicity pair is the more informative proof. The false certification goes second.
+        Taint's CITED arm goes LAST, because what it returns is pending with a cure — an act
+        owned by the party whose conflict it is — and no act by anybody cures a record that
+        contradicts itself. Offering that cure path would tell the reader the wrong thing to go
+        and do.
+        This reverses the first draft of this node, which put all of taint first and recorded
+        the cure-path objection as an unexercised rebuttal. The session in bakobo:10 read that
+        rebuttal and pointed out it was not a rebuttal but the argument — by Q38's own reasoning,
+        a conviction outranks a pending whatever tier it came from, and the SUBJECT/CITED split
+        is what lets both claims hold at once. Their own fix landed alongside it: `_tainted`
+        returned on the FIRST convicted party it met, so an earlier cited taint hid a later
+        subject conviction (@zmlvpkhl). Recorded here because the first draft is on the record
+        and a reader of it should know it was argued down rather than drifted from.
+        WHAT THIS DOES NOT BUILD. `enact` still refuses to construct an unsupported
+        certification, so a false one enters only from a hand-built log or a foreign corpus. The
+        fixture beat that shows one (M10) needs a deliberate escape hatch in the constructor, and
+        it is not added here: a builder that can emit a false certification by accident is worse
+        than one that cannot emit one at all.
+
+    An edition takes force where its enactment was certified, not where its votes reached unity = decision:
+      id: pv7a6dhc
+      why: >
+        Forced by @2e2dncfe meeting @xhtvuxnc, and found while scoping M6 rather than designed.
+        An enactment is an act — "a ratification is an enactment, an enactment is judged under
+        the Constitution it amends, and the judgment is a finding like any other" (`:214-215`) —
+        and an act in a domain whose law requires certification is PENDING until the domain
+        admits one. So an edition that took force on a threshold alone would bind the whole
+        domain on a judgment the fold itself reports as not yet authorized. The law fold and the
+        evaluator would be saying different things about the same event.
+        `constitution._effectuation` keyed on `clause.group.satisfied()` alone, which was correct
+        while no domain required certification and silently wrong the moment one did. It now
+        advances only at a candidate coordinate where the threshold is met AND a certification
+        of the enactment has been admitted at or before it.
+        A FALSE certification does not effectuate either, for the same reason and one step
+        further: a certification the record refutes convicts the enactment (@7shpbven), and an
+        edition binding on a self-convicted enactment would be worse than one binding on a
+        pending one. The check is the same predicate the evaluator runs, called from here rather
+        than reimplemented.
+        WHERE THE SCHEMA COMES FROM is the law in force at the enactment's OWN coordinate — the
+        law it amends, which is the law that judges it — and never the successor it commits. An
+        amendment that introduced a certification requirement would otherwise have to satisfy the
+        requirement it was itself introducing. The clause-over-law precedence is `schema_for`,
+        moved out of `evaluate` into `fold/certification.py` so that the law fold and the
+        evaluator cannot drift on the question of whether this domain certifies at all; it takes
+        the clause and the law's default rather than a Constitution, because `constitution`
+        imports `certification` and the reverse would be a cycle.
+        NO ARTIFACT MOVES TODAY. Acme's law requires no certification until M6 commits one, so
+        every existing effectuation coordinate is unchanged and this lands as a fold change with
+        synthetic coverage only. That is deliberate sequencing rather than luck: the rule has to
+        be in place before the fixture can carry a certified amendment at all.
+
+    A slot is addressed by the seat it is, never by the party currently in it = decision:
+      id: qjjlkrxt
+      why: >
+        A REPAIR, and the defect is worth stating before the fix because it says what @ftjpdph5
+        left unfinished. A filled office slot contributed no weight. `Group._where` looked each
+        slot's disposition up under `slot.endorser`, which is the empty string on a slot that
+        seats an office, while `slots.classify` resolved the office to its holder and keyed the
+        mapping by the HOLDER's AID — so the lookup never matched and every office slot read
+        PENDING in `satisfied`, `reachable` and `outstanding` however the record actually stood.
+        The office machinery was arithmetically inert from the day it landed.
+        M2's criterion did not catch it, and that is the lesson rather than the bug. It tested
+        that a slot naming an office is FILLED by a qualifying endorsement and unfilled when none
+        does — a claim about `classify` — and never once asked what the group made of the
+        result. A criterion that stops at the predicate and never reaches the arithmetic can pass
+        over a feature that does nothing, which is exactly what happened; it took M6 putting an
+        office slot into Acme's real law for anything to notice.
+        THE FIX IS THAT A SLOT HAS AN IDENTITY DISTINCT FROM ITS OCCUPANT. `Slot.key` is the
+        office where it seats one and the endorser otherwise, and every disposition mapping is
+        keyed by it. `SlotDisposition` carries that key beside the `endorser` it reports, because
+        the two are genuinely different questions and collapsing them is what caused this: the
+        key is which seat this is, stable across a change of director, and the endorser is who is
+        in it right now, which is what a screen must show — a filled seat renders as
+        `nina-board-seat-3` and a vacant one under the office's own name.
+        Rejected keying the mapping by the office name and letting the display derive it,
+        because a vacant office and a filled one would then be indistinguishable to a caller
+        holding only the mapping, and `outstanding` would name a seat without saying it is empty.
+        Rejected passing the classified sequence to `satisfied` instead of a mapping: it is the
+        better shape and it is a wider change than a repair should make, since `satisfied_by`,
+        the constitution's effectuation walk and two render paths all consume the mapping form.
+        Filed as tick-worthy rather than done here.
+
+    An office slot counts who held the seat when they acted, never who holds it now = decision:
+      id: djyj2bc2
+      why: >
+        The second defect the office-slot model produced, found the same way as @qjjlkrxt —
+        by putting an office slot into Acme's real law and watching Act III die. Revoking a
+        seating retroactively UN-COUNTED every endorsement that seat had ever made.
+        `_classify_slot` resolved an office through `_holder`, which asks who holds it at the
+        QUESTION's position, and when nobody did it returned pending at once without ever
+        looking at whether the seat's committed endorsement had stood when it was made.
+        Measured on Acme before the fix: at d5 the office resolves to the seat and the budget's
+        seat slot is endorsed; at b16 and b17, with the credential revoked, the same slot reads
+        pending and the endorsement is gone.
+        THAT IS THE ONE THING CUSTOS FORBIDS BY NAME. "What was affirmed above stands at its
+        coordinate forever" (`:1805`), and "the reversal is a new fact, not a rewrite"
+        (`:1741`). It also destroys the demo's answer to the 4.1 KERI panel's sharpest
+        objection: beats 18 and 19 exist to show that a prospective revocation falsifies
+        nothing, because the credential DID stand at the position it was cited from, and under
+        the broken reading the revocation reached backwards and unmade the finding.
+        THE RULE is the one issue #82's rule 4 already states for a cited credential, applied
+        one level out to the seat itself: an office slot counts an endorsement whose issuer held
+        the office at the ENDORSEMENT's own coordinate. So the walk resolves the holder per
+        candidate event against the bundle up to that event, rather than once against the whole
+        bundle. This is the same shape as `_qualified`, which is the point — "did it stand when
+        it was cited" is one question the fold should not answer twice differently.
+        WHO-HOLDS-IT-NOW SURVIVES, in the one place it is right. Where no committed act counts,
+        the slot reports whoever holds the office at the question's position, or the office's own
+        name where nobody does — which is beat 17 exactly: a NEW question over a bundle the
+        revocation is already in, pending under the seat's own name. So the revocation still
+        bites forward and no longer bites backward, which is the whole distinction between a
+        revocation and a duplicity taint that the bearing machinery keeps separate elsewhere.
+        NOT WIDENED: `seating_is_ambiguous` still asks at the question's position, so an office
+        contested only in the past is not caught and `_holder` takes the first of two. That gap
+        predates this and is left where it was rather than half-closed here.
+
+    The meanwhile card is a COMMAND, and it shortens the run = decision:
+      id: eelnh6dn
+      why: >
+        M9. Between two marked beats the record commits events the room never sees, and
+        the narrator was covering them in speech — which is the expensive medium. Daniel
+        corrected an earlier reading of this milestone that had it LENGTHENING the live
+        run: the room reads a screen faster than it hears a sentence, so putting the span
+        on screen buys narration time back rather than spending it.
+        IT IS A CLI COMMAND AND NOT A CARD THE DRIVER PRINTS, which is forced rather than
+        chosen. `utina.cli.demo2` computes nothing (@cldemo, and `test_the_demo_driver
+        computes_nothing` enforces it): a beat is a title, a narration and an argv, and
+        the walk dispatches through the same entry point a shell reaches. A card the
+        driver assembled from the corpus would make the driver a second reader of the
+        record, and the demo's own claim is that every screen is one a person could have
+        produced by typing. So `utina meanwhile --from <label> --to <label>` is the
+        screen, and the driver emits its argv between beats like any other command.
+        WHAT IT SAYS, and the third part is the one that is not obvious. The count and
+        the events, so nothing between beats is hidden. The certifications among them
+        named as such, because after M6 every affirmation rests on one and a room that
+        never saw them would think an endorsement authorized something. And that the
+        position labels are OURS: `d1` and `b17` are this demo's names for coordinates
+        and are committed nowhere — the record has sequence numbers. Saying so on the
+        screen is cheaper than saying it once in narration and hoping it is remembered,
+        and it is the same disclosure the alias header already makes about party names.
+        THE SPAN COMES OFF THE BEATS' OWN ARGV rather than from a second field naming it.
+        A `--at` duplicated into a `Beat.at` would be two literals that can disagree, and
+        the failure mode is a meanwhile card describing a span the beat is not asked at.
+        Beats with no `--at` — beat 14's enact, which is a refusal — carry the previous
+        beat's coordinate forward, because no coordinate is where the question is asked.
+
+    The sequence diagram is COLLAPSED, and it is generated rather than drawn = decision:
+      id: y7ytqzyj
+      why: >
+        M11. A reader who was not in the room gets the transcripts and the script, and
+        neither shows the SHAPE of the thing — who spoke to whom, in what order, across
+        four acts. A sequence diagram does that in one screen. Mermaid because GitHub
+        renders it inline, so the artifact is readable where the repo is read and needs
+        no toolchain to view.
+        COLLAPSED AGAINST THE EVENTS, NOT AGAINST THE ACTS. One participant per party, one
+        message per ACT a beat comprises, and the events between beats as notes. The first
+        draft of this node said "one message per MARKED beat", which overstated into a claim
+        the generator does not make and never should: beat 7 is two endorsements and a
+        certification, and flattening those to one arrow would delete the thing a sequence
+        diagram is for. Copilot caught the disagreement between the wording and the code on
+        PR #9 and offered both repairs; the code was the right half to keep. The full-fidelity version was
+        considered and rejected: at one message per committed event it is an arrow per event
+        in the record — fifty-three of them as this is written, and more after the next
+        fixture rebuild, which is exactly why the number is not written here — and that is
+        unreadable on a projector, unreadable in a PR, and says less than the log already
+        says in a table. The value of a diagram is exactly the compression — a
+        reader who wants every event has `utina log`, and a reader who wants the shape
+        has this. A diagram that tried to be both would serve neither.
+        GENERATED BY `tools/render-demo-2.py` AND PINNED, on the reasoning that already
+        governs the other four artifacts: a hand-drawn diagram is a second account of the
+        record that drifts silently, and the last thing this demo needs is a picture that
+        disagrees with the transcripts. Generated from `demo2`'s own KERNELS and the
+        record's labels, so it cannot name a beat the driver does not have or a
+        coordinate the record does not carry.
+        PARTIES ARE ALIASED, never identified, for the reason every screen is (@clcoia):
+        a diagram is read at a glance and a glance is exactly when a truncated identifier
+        does its damage. The domain is a participant like any other, because after M6 it
+        is the one that certifies and the diagram's most surprising message is the one
+        that goes to it and comes back.
+
+    The false certification is an INFLATED weight, and it needs no escape hatch = decision:
+      id: t3kuqli6
+      why: >
+        M10, and it turned out smaller than @7shpbven predicted. That node said the beat
+        would need "a deliberate escape hatch in the constructor", because `enact.certify`
+        refuses a tally whose edges fall short. It does not need one: the constructor's
+        check is that the CITED WEIGHTS sum to unity, and a sponsor who cites one
+        endorsement at 1/1 instead of the 1/2 its slot commits passes that check exactly.
+        The dossier is well-formed, the domain admits it, and the record refutes it. So
+        the builder stays incapable of emitting a tally it knows to be short, which is
+        the property worth keeping (a builder that can lie by accident is worse than one
+        that cannot lie at all), and the beat is committed by an honest verb.
+        THAT IS ALSO THE BETTER STORY. The domain's admission check is the floor — edges
+        sum to unity — and the domain does not re-fold its own record before admitting.
+        The beat is therefore not "somebody bypassed a check" but "the check that exists
+        is not the check that matters", and the fold is what makes the sponsor
+        accountable afterwards. Marta, sponsoring, cites her own endorsement at full
+        weight and omits Dev's signed no; any reader who folds the record convicts her on
+        her own signature, which is @epztz4wd's whole argument on screen.
+        WHERE IT SITS, and every part of this is forced. It is the LAST act in the record,
+        after the duplicity observation, so no existing coordinate moves and beat 22's
+        dependence on that observation being last is untouched. It is a second tabling of
+        the founders' equity act, under clause A3, because A3 is the one clause neither
+        amendment moves: under the LOWERED B1 every slot is worth unity on its own, so a
+        single endorsement would make the certification SOUND and there would be no lie
+        to show. And it involves seat 3 nowhere, because a convicted cited party fires
+        the taint succession instead and the beat would show beat 20's screen twice.
+        DEV'S DECLINATION IS WHAT POPULATES THE PROOF PAIR. Without it the contradiction
+        is internal and the package stands alone; with it the finding names both halves,
+        which is the screen worth having — a reader sees the certification and the
+        declination it was written around, side by side.
+        IT IS NOT IN `CUT_ORDER`. The cut list is what to drop when the clock runs out,
+        and this beat restores the fourth verdict that removing the declaration duty took
+        off the demo (@ow6dzro4). Cutting it costs a quarter of the codomain.
+
+    A law that names a schema is held to it, and a gloss that cannot read a kind says so = decision:
+      id: 45pjebk4
+      why: >
+        Five findings from the review round on PR #9, all five valid, and two of them
+        correctness rather than tidiness. Recorded together because they share one shape:
+        a check or a claim that was written and then not actually applied.
+        THE FAIL-OPEN IS THE ONE THAT MATTERED. `certifying` located a certification by
+        kind and subject and never compared the credential's schema against the one the
+        law names — so a tally issued against ANY schema discharged the requirement, was
+        accepted as sound by the falsity check, and could effectuate an enactment. This
+        module's own docstring cites `:1946-1951` for why a slot commits its schema — "a
+        requirement that could not say which evidence it wanted would be satisfiable by
+        the wrong one" — and then the certification field was read and not checked. The
+        schema is now a required argument at every call site rather than an optional one,
+        because a default would have let the next caller reintroduce exactly this.
+        A WRONG-SCHEMA EVENT IS NOT A LATE CERTIFICATION. "The first rather than the
+        last" is a rule about two tallies this law would accept; an event against another
+        schema is not a certification under this law at all, so it is skipped and a later
+        valid one still discharges. A check that stopped at the first kind-and-subject
+        match would have let a wrong-schema event SHADOW a valid one by arriving first,
+        which is a second fail-open wearing the first one's clothes.
+        THE SEAT COLLISION IS @qjjlkrxt ONE LAYER UP, and it is the same lesson twice in
+        one PR. `Group.__post_init__` deduplicated slots by `endorser`; every office slot
+        names the empty string, so a law with two distinct offices — or one office beside
+        a directly-entitled party — was refused as a duplicate before it could be folded.
+        Acme has a single office, so nothing exercised it, and M7's second domain would
+        have met it immediately. The error is renamed to say seat rather than endorser,
+        because the message a reader gets is part of the fix.
+        A GLOSS THAT GUESSES IS WORSE THAN ONE THAT SAYS NOTHING. The log screen's
+        fall-through rendered any unreadable kind through the disposition path. An earlier
+        pass at this guarded on an EMPTY attributes block, which caught the certification
+        and the duplicity observation and missed the issuance — an issuance has a
+        non-empty block — so `acme-governed-domain,6 declines None` shipped in the tracked
+        transcripts six times over. Now every kind is named explicitly and the
+        fall-through is the em dash. The near-miss is the point: a fix aimed at the
+        symptom rather than the branch left two thirds of the bug on screen.
+        THE ISSUANCE ROW DOES NOT REPEAT THE OFFICE, though the row is about an office
+        being filled. A COIA alias already carries its holder's role, so
+        `nina-board-seat-3,6` names the seat in the same breath as the person; naming it
+        again pushed the row to 105 columns against the projector's 96 for no information.
+        TWO HARD-CODED COUNTS were stale on the day they were written — a docstring saying
+        forty-nine over a record of fifty-three, and "the live thirteen ... the four
+        leave-behind beats" written into a GENERATED artifact that beat 26 contradicted
+        immediately. Both are derived now. Committing a literal count inside the generator
+        is the worst available place for one: the generate-and-pin arrangement exists
+        precisely so a stale number cannot survive a rebuild, and this one was upstream of
+        the mechanism that would have caught it.
+        THE FIX DIFF WAS REVIEWED BY A NON-CLAUDE SEAT before it was committed, and that
+        paid: `ds` accepted four of the five fixes and found the wrong-schema test asserted
+        something weaker than the finding it was meant to pin — it committed one bad
+        certification and asserted pending, which passes against an implementation that
+        merely ignores the bad event, there being nothing else to find. The shadowing case
+        above is that criticism. It also observed that "first" depends on an ordering this
+        function does not itself enforce; it holds because `Corpus` enforces it, and the
+        docstring now says which.
+
+    A tally's edges must resolve, and unreadable law refuses rather than exempts = decision:
+      id: g3qt5r3l
+      why: >
+        Four defects from the substitute review on PR #9, after Copilot stopped returning
+        for the head and Daniel authorised a seat review in its place (`codex` on the whole
+        PR, `qwen` on the unreviewed delta, which came back SOUND). Three of the four were
+        REPRODUCED by running code rather than read off the diff, which is why they are here
+        as decisions rather than as declined suggestions.
+        A TALLY'S EDGES HAVE TO RESOLVE. `counted_by` read what a dossier CLAIMS and its own
+        docstring had said since the day it was written that a verifier "resolves each one
+        against the record" — and nothing did. The two checks in place were "do the claimed
+        weights sum to unity" and "does the record independently reach unity", and both are
+        true of a tally citing one edge that does not exist, at weight 1, over a record that
+        happens to carry the votes anyway. The reviewer emitted exactly that through
+        `Constructor.certify` and got Affirmed. `unresolved` now walks every cited edge: it
+        must name a committed act that ENDORSES this subject, in a slot the clause counts, at
+        no more than that slot's weight.
+        IT GOES LAST OF THE THREE, and the ordering is the decision rather than a detail. An
+        inflated weight is simultaneously a citation that does not stand up and a tally
+        written around a signed no, so resolving first renamed every existing proof pair from
+        the omitted declination to the offending edge. That is a worse answer for a reader:
+        absence is the surprising half and is what @epztz4wd ruled the beat on. Last, it
+        catches precisely what the other two cannot — fiction over a record that genuinely
+        reaches unity — and changes no existing verdict or pair.
+        UNREADABLE LAW REFUSES. `required_by` read a certification field that was present and
+        malformed as ABSENT, so a domain could disable its own certification requirement with
+        a typo and have every act affirmed on arithmetic alone; the reviewer set the field to
+        a mapping and watched it happen. Its docstring called that "fail-closed in the same
+        shape as the semantics block", which had the shape exactly backwards — an unreadable
+        semantics pin REFUSES the question rather than being ignored. `unreadable_in` is the
+        separate question, and `_edition_committed_by` raises on it, which is the pattern a
+        contradictory edition already used. The clause level had been right all along, so the
+        law level was the inconsistent one.
+        A CONTESTED OFFICE FILLS NOTHING, and this one was mine to create. @djyj2bc2 made
+        `_holder` resolve per candidate act instead of once at the appraisal coordinate,
+        which was right — but `seating_is_ambiguous` still refuses only at the coordinate the
+        question is asked from, so there are now coordinates the refusal cannot see. An
+        endorsement made while an office was contested, with the contest resolved by a
+        revocation before the question is asked, counted on a first-of-two guess. @djyj2bc2's
+        own note said the gap "is left where it was rather than half-closed here"; that was
+        wrong, because resolving once meant the refusal covered exactly the coordinate being
+        asked about. `_holder` now returns None where the office has more than one holder.
+        THE LESSON, and it is the third time on this PR: every one of these was a claim
+        written in a docstring and not implemented in the code beside it. The fail-open in
+        round one was the certification schema named by the law and never compared; this
+        round it is edges a docstring said a verifier resolves, and a field a docstring
+        called fail-closed while it failed open. A reviewer who reads the prose against the
+        code finds these and a reviewer who reads the code alone does not, which is an
+        argument for keeping the prose rather than for trimming it.
+
     The law creates a seat; a credential fills it = decision:
       id: ftjpdph5
       why: >

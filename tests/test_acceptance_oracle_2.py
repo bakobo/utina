@@ -21,6 +21,8 @@ lives at the seam (``tests/test_seam.py``) until the row itself can carry it.
 Nothing here is a substitute for that; nothing there is a substitute for this.
 """
 
+from fractions import Fraction
+
 import pytest
 
 pytest.importorskip(
@@ -34,22 +36,24 @@ from utina.acme import (
     CAPITAL_PLAN,
     DEV,
     DEVICE,
+    EQUITY_ACTS,
     GAID,
     MARTA,
     Q2_FORECAST,
     Q3_BUDGET,
     QUINN,
     SEAT,
+    SEAT_OFFICE,
 )
 from utina.cli.aliases import aliases_over
 from utina.cli.appraisal import held_by, registry_holdings
 from utina.cli.render import law_screen, registry_screen, seat_screen
 from utina.cli.style import Style
 from utina.enact import Constructor
-from utina.fold import Constitution, bearing, evaluate, semantics, standing
+from utina.fold import Constitution, bearing, certification, evaluate, semantics, standing
 from utina.fold import slots as slot_predicate
 from utina.fold.evaluate import disturbed_by
-from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies
+from utina.fold.finding import Affirmed, Defeated, Pending, PendingSpecies, SelfConvicted
 from utina.fold.group import Disposition
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal
@@ -82,6 +86,7 @@ AT = {
     23: "b23",
     24: "d9",
     25: "board-seated",
+    26: "b26",
 }
 
 BANK = "open-bank-account"
@@ -98,6 +103,13 @@ SECOND_AMENDMENT = "lower-the-bar"
 #: one beats 18 and 19 re-ask about. Distinct from the act CLASS above: three
 #: acts of one class are tabled, and these rows are about one of them.
 BUDGET_ACT = "approve-budget"
+
+#: Beat 26's three names. The second tabling of the equity release, the declination
+#: Marta's tally was written around, and the tally itself — each addressed by the name
+#: the record files it under, because the row is about which of them contradicts which.
+FALSELY_CERTIFIED = "equity-retabled"
+FALSE_DECLINATION = "equity-retabled-declined"
+FALSE_CERTIFICATION = "release-escrowed-equity-falsely-certified"
 
 
 def owed(*what: str) -> str:
@@ -362,7 +374,7 @@ def test_b12_the_budget_carries_on_two_slots_of_three(acme):
     assert finding.clauses == ("B1",)
     assert len(finding.endorsements) == 2, "two of three slots, and no act of Dev's"
 
-    seats = acme.events[acme.at(AT[12]).seq]
+    seats = acme.corpus.event(acme.said("seat-endorses-budget"))
     assert seats.body["i"] == acme.aid(SEAT)
     assert seats.body["acdc"]["e"]["qp"]["o"] == DI2I
 
@@ -377,7 +389,7 @@ def test_b13_the_same_signed_no_is_only_pending_under_three_slots(acme):
     """
     finding = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[13]))
     assert isinstance(finding, Pending)
-    assert [element.endorser for element in finding.requirement] == [acme.aid(SEAT)]
+    assert [element.endorser for element in finding.requirement] == [SEAT_OFFICE]
     assert [element.clause for element in finding.requirement] == ["B1"]
     assert [element.species for element in finding.requirement] == [PendingSpecies.ABSENT]
 
@@ -418,7 +430,7 @@ def test_b14_an_unseated_endorser_fails_credential_verification_before_any_fold(
     # never heard about it.
     finding = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[13]))
     assert isinstance(finding, Pending)
-    assert [element.endorser for element in finding.requirement] == [acme.aid(SEAT)]
+    assert [element.endorser for element in finding.requirement] == [SEAT_OFFICE]
 
 
 def test_b15_the_delegated_device_fills_the_seats_slot(acme):
@@ -439,7 +451,7 @@ def test_b15_the_delegated_device_fills_the_seats_slot(acme):
     assert isinstance(finding, Affirmed)
     assert finding.clauses == ("B1",)
 
-    acting = acme.events[acme.at(AT[15]).seq]
+    acting = acme.corpus.event(acme.said("device-endorses-forecast"))
     assert acting.body["i"] == acme.aid(DEVICE), "the device signed, not the seat"
     assert acting.body["acdc"]["e"]["qp"]["o"] == DI2I
     seating = acme.events[acme.at("b8").seq]
@@ -575,7 +587,7 @@ def test_b17_a_new_question_after_the_revocation_is_pending(acme):
     finding = evaluate(acme.corpus, Proposal(BUDGET), at=acme.at(AT[17]))
     assert isinstance(finding, Pending)
 
-    seat = next(one for one in finding.requirement if one.endorser == acme.aid(SEAT))
+    seat = next(one for one in finding.requirement if one.endorser == SEAT_OFFICE)
     assert seat.clause == "B1"
     assert seat.schema == ENDORSEMENT_SCHEMA
     assert seat.species is PendingSpecies.ABSENT
@@ -642,6 +654,9 @@ def test_b20_duplicity_at_a_cited_third_party_taints_the_voice(acme):
     assert [one.species for one in finding.requirement] == [
         PendingSpecies.UNRESOLVED_CONFLICT
     ]
+    # The PARTY, not the seat. A taint's cure is an act owned by whoever the conflict
+    # belongs to, and that is an identifier with keys rather than an office — which is
+    # the one place a requirement element names the holder and not the slot it filled.
     assert [one.endorser for one in finding.requirement] == [acme.aid(SEAT)]
     assert finding.requirement[0].ground == acme.events[acme.at(AT[20]).seq].said
 
@@ -703,7 +718,7 @@ def test_b21_a_second_question_is_pending_under_b1(acme):
     finding = evaluate(acme.corpus, Committed(acme.said(CAPITAL_PLAN)), at=acme.at(AT[21]))
     assert isinstance(finding, Pending)
     assert {one.clause for one in finding.requirement} == {"B1"}
-    assert {one.endorser for one in finding.requirement} == {acme.aid(DEV), acme.aid(SEAT)}
+    assert {one.endorser for one in finding.requirement} == {acme.aid(DEV), SEAT_OFFICE}
 
     q3 = evaluate(acme.corpus, Committed(acme.said(Q3_BUDGET)), at=acme.at(AT[21]))
     assert isinstance(q3, Pending), "and beat 17's is still pending beside it"
@@ -770,11 +785,63 @@ def test_b25_permuted_arrival_folds_to_a_byte_identical_constitution(acme):
     assert straight.canonical_bytes() == shuffled.canonical_bytes()
 
 
+# --- Act V — a certification that lies ----------------------------------------
+
+
+def test_b26_a_false_certification_convicts_its_sponsor_on_her_own_signature(acme):
+    """Row 26: the fourth verdict, and a governance failure rather than a lost key.
+
+    Marta tables the equity release again, endorses it, Dev signs a no, and Marta —
+    sponsoring the tally — cites her own endorsement at full weight and omits the no. The
+    domain admits it, because what the domain checks is that the cited weights sum to
+    unity and they do; what it does not do is re-fold its own record first (``this.i``
+    @t3kuqli6). So the lie is well formed and committed, and the fold convicts it on bytes
+    Marta signed.
+
+    The proof carries the PAIR, which is the row's whole content: the certification, and
+    the declination it was written around. A reader recomputes both from committed bytes.
+    """
+    finding = evaluate(acme.corpus, Committed(acme.said(FALSELY_CERTIFIED)), at=acme.at(AT[26]))
+
+    assert isinstance(finding, SelfConvicted)
+    assert finding.proof.package == acme.said(FALSE_CERTIFICATION)
+    assert finding.proof.pair == (
+        acme.said(FALSE_CERTIFICATION),
+        acme.said(FALSE_DECLINATION),
+    )
+
+    # The LIE itself, which the verdict alone does not establish — a different false
+    # tally would satisfy everything above. Raised by the substitute review on PR #9.
+    tally = acme.corpus.event(acme.said(FALSE_CERTIFICATION))
+    assert tally.body["i"] == acme.gaid, "only the domain can admit a tally to its own log"
+    assert slot_predicate.credential(tally)["i"] == acme.aid(MARTA), "Marta sponsored it"
+
+    cited = dict(certification.counted_by(tally))
+    assert cited == {acme.said("marta-endorses-retabled-equity"): Fraction(1, 1)}, (
+        "her own endorsement, cited at the whole of unity where her slot commits a half"
+    )
+    assert acme.said(FALSE_DECLINATION) not in cited, "and Dev's signed no is not in it"
+
+    # And the arithmetic the screen shows beside it: Marta's half, Dev's spent slot, and
+    # a sum that never reached the unity the tally claimed.
+    law = Constitution.at(acme.corpus, acme.corpus.event(acme.said(FALSELY_CERTIFIED)).position)
+    clause = law.governing(EQUITY_ACTS[0])
+    held = slot_predicate.dispositions(
+        clause.group, acme.corpus.upto(acme.at(AT[26])), acme.said(FALSELY_CERTIFIED)
+    )
+    assert clause.id == "A3", "the one clause neither amendment moves"
+    # Equality rather than ``< 1``: the comment above claims Marta's HALF, and a weight
+    # regression to anything in [0, 1) would keep a sub-unity assertion green while
+    # falsifying it. Raised by a cross-model review of this round's fix diff.
+    assert clause.group.endorsed_weight(held) == Fraction(1, 2), "Marta's half, and no more"
+    assert not clause.group.reachable(held), "Dev's no spent the slot that would have cured it"
+
+
 # --- The script's own completeness check --------------------------------------
 
 
 def test_every_beat_of_the_script_has_a_row_here():
-    """Twenty-five beats, twenty-five cases, and the numbering is contiguous.
+    """A case per beat, and the numbering is contiguous.
 
     The failure this guards against is a row of the script with no case at all,
     which is invisible: a missing test does not fail, and an oracle that is
@@ -785,4 +852,4 @@ def test_every_beat_of_the_script_has_a_row_here():
         for name in globals()
         if name.startswith("test_b") and name[6:8].isdigit()
     }
-    assert cases == set(range(1, 26))
+    assert cases == set(range(1, 27))

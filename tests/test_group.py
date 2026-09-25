@@ -14,7 +14,7 @@ from fractions import Fraction
 import pytest
 from bakobo.errors import BakoboError
 
-from utina.fold.group import Disposition, Group, Slot
+from utina.fold.group import Disposition, Group, Qualification, Slot
 
 HALF = Fraction(1, 2)
 THIRD = Fraction(1, 3)
@@ -110,11 +110,44 @@ def test_a_group_with_no_slots_is_refused():
     assert raised.value.code == "e.input.missing.group-slots.f"
 
 
-def test_a_group_may_not_slot_one_endorser_twice():
+def test_a_group_may_not_slot_one_seat_twice():
     with pytest.raises(BakoboError) as raised:
         Group("MxN", (Slot(MARTA, HALF, SCHEMA), Slot(MARTA, HALF, SCHEMA)))
     assert raised.value.code == "e.input.multi.slot-endorser.f"
     assert MARTA in raised.value.detail
+
+
+def test_two_slots_seating_one_office_collide_as_two_naming_one_party_do():
+    seated = Qualification(schema=SCHEMA, issuer="acme:gaid")
+    with pytest.raises(BakoboError) as raised:
+        Group(
+            "MxN",
+            (
+                Slot("", HALF, SCHEMA, seated, office="board-seat-3"),
+                Slot("", HALF, SCHEMA, seated, office="board-seat-3"),
+            ),
+        )
+    assert raised.value.code == "e.input.multi.slot-endorser.f"
+    assert "board-seat-3" in raised.value.detail
+
+
+def test_two_slots_seating_different_offices_do_not_collide_at_all():
+    """The bug Copilot found on #9. Every office slot names the empty string as its
+    endorser, so a uniqueness check keyed on the endorser refused a perfectly valid law
+    with two offices before it could ever be folded — the same defect as ``this.i``
+    @qjjlkrxt one layer up. Acme has a single office, so nothing exercised it; a second
+    domain with a two-seat board would have met it immediately."""
+    seated = Qualification(schema=SCHEMA, issuer="acme:gaid")
+    group = Group(
+        "MxN",
+        (
+            Slot(MARTA, HALF, SCHEMA),
+            Slot("", HALF, SCHEMA, seated, office="board-seat-3"),
+            Slot("", HALF, SCHEMA, seated, office="board-seat-4"),
+        ),
+    )
+
+    assert [slot.key for slot in group.slots] == [MARTA, "board-seat-3", "board-seat-4"]
 
 
 def test_a_group_finds_its_slot_by_endorser_and_admits_when_it_has_none():

@@ -25,6 +25,14 @@ Custos obligation rather than a convenience:
 5. Unity unreachable — see ``UNREACHABLE_YIELDS`` below.
 6. Otherwise pending, naming the outstanding slots in canonical order.
 
+**Two convictions sit between 3 and 4**, and they are there rather than in the
+dispatch because a record that convicts itself is not waiting on arithmetic. An
+observed duplicity converts the question (``fold/bearing.py``), and a certification
+the record does not support convicts it (``fold/certification.py``, ``this.i``
+@7shpbven). The second could not live in the affirmed arm: a certification that
+cites around a declination produces a record whose threshold is *unreachable*, so a
+check reached only under step 4 would never see the case it exists for.
+
 **Which law judges which question** is the other rule here, and it differs by
 constructor. A ``Committed`` question asks whether an act *was* lawful, so it is
 judged under the law in force at that act's own coordinate — which is what makes
@@ -188,11 +196,28 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
     spent = _requirements(
         clause, classified, Disposition.DECLINED, PendingSpecies.EXPIRED_ABANDONED
     )
-    held = {one.endorser: one.disposition for one in classified}
+    held = {one.key: one.disposition for one in classified}
 
     uncertified = _uncertified(corpus, law, subject, clause, at)
 
+    # The two convictions, and one pending, in the order their grounds outrank each
+    # other. A bearing conviction of the SUBJECT is key-tier and decided by KERI's own
+    # superseding-recovery calculus, so it goes first. A false certification goes next.
+    # The taint's PENDING arm goes last, because it names a cure — an act owned by the
+    # party whose conflict it is — and a cure path cannot rescue a question whose own
+    # record convicts it (this.i @7shpbven, revised after bakobo:10's argument).
     tainted = _tainted(corpus, subject, clause, classified, at)
+    if isinstance(tainted, SelfConvicted):
+        return tainted
+
+    # Before the threshold dispatch, and that placement is the whole point. A
+    # certification of an act the record DEFEATS is exactly what citing around a
+    # declination produces — a declination spends its slot — so a check reached only
+    # under ``satisfied`` would never see the case it exists for (this.i @7shpbven).
+    falsified = _falsified(corpus, law, subject, clause, at)
+    if falsified is not None:
+        return falsified
+
     if tainted is not None:
         return tainted
 
@@ -402,18 +427,43 @@ def disturbed_by(corpus: Corpus, enactment: Event, at: Position) -> tuple[SAID, 
     return tuple(sorted(disturbed))
 
 
-def _certification_schema(law: Constitution, clause: Clause) -> SAID | None:
-    """What acts under ``clause`` must be certified against, or ``None`` for nothing.
+def _falsified(
+    corpus: Corpus,
+    law: Constitution,
+    subject: _Subject,
+    clause: Clause,
+    at: Position,
+) -> SelfConvicted | None:
+    """The conviction a certification the record does not support fires, if any.
 
-    The clause decides and the law is the default, because how much ceremony a
-    decision needs is a fact about the KIND of decision: minuting a board resolution
-    and approving a routine purchase are not the same act wearing different clothes.
-    A clause may be silent and inherit, may pin its own schema, or may say its acts
-    stand on their arithmetic (this.i @2e2dncfe).
+    The predicate is ``certification.contradicting``; what is decided here is that a
+    contradiction convicts rather than merely failing to authorize, and what the proof
+    package carries (``this.i`` @7shpbven). A certification claims a met threshold, so
+    one the record refutes is "two voices where its constitution demands one"
+    (``:1527-1533``) — and it is the domain's own admitted bytes on both sides, which
+    is what makes this self-conviction rather than a defeat by somebody else's evidence.
+
+    **Gated on the law wanting one at all.** Where a clause stands on its arithmetic, a
+    certification is not load-bearing and an unsupported one is an irrelevant event
+    rather than a contradiction of anything. The gate is ``certification.schema_for``'s,
+    the same one that decides whether an absent certification is outstanding, so the
+    two halves of certification cannot disagree about whether this domain has any.
+
+    The pair is carried where the record names an omitted declination and left off
+    where it does not, which is the distinction ``Proof.pair`` was built for: a reader
+    holding the finding sees what contradicted what without fetching the package.
     """
-    if clause.exempt_from_certification:
+    schema = certification.schema_for(clause, law.certification)
+    if schema is None:
         return None
-    return clause.certification if clause.certification is not None else law.certification
+    found = certification.contradicting(
+        corpus, clause.group, subject.said, at, schema
+    )
+    if found is None:
+        return None
+    event, omitted = found
+    pair = (event.said, omitted) if omitted is not None else ()
+    return SelfConvicted(proof=Proof(package=event.said, pair=pair))
 
 
 def _uncertified(
@@ -436,10 +486,10 @@ def _uncertified(
     requirement the finding can name. Where no committed act underlies the question
     there is nothing to certify and nothing outstanding.
     """
-    schema = _certification_schema(law, clause)
+    schema = certification.schema_for(clause, law.certification)
     if schema is None:
         return None
-    if certification.certifying(corpus, subject.said, at) is not None:
+    if certification.certifying(corpus, subject.said, at, schema) is not None:
         return None
     committer = _committer(corpus, subject)
     if not committer:  # pragma: no cover - a satisfied threshold implies a subject
@@ -614,16 +664,23 @@ def _requirements(
 
     The walk is over the clause's own slots rather than over the classifications,
     because the schema an element must name lives in the slot and nowhere else
-    (this.i @z373ew7j). The dispositions are read back by endorser, which is
-    exact: a group slots each endorser at most once.
+    (this.i @z373ew7j). The dispositions are read back by :attr:`Slot.key` — the
+    seat rather than its occupant — which is exact: a group has each seat once.
+
+    **An element names the party where the law slots one and the OFFICE where it
+    seats one** (this.i @qjjlkrxt). A slot that seats an office commits no AID, so
+    an element built from ``slot.endorser`` would carry the empty string and the
+    Ground Axiom would refuse the finding — a pending naming nobody has not said
+    what would discharge it. "board-seat-3, absent" is the true and useful answer,
+    and it is what a reader needs whether the seat is vacant or merely silent.
 
     ``ground`` names the committed event that made these elements what they are,
     and is empty for every cure that is simply the arrival of missing evidence.
     """
-    held = {one.endorser: one.disposition for one in classified}
+    held = {one.key: one.disposition for one in classified}
     return canonical_requirement_set(
         RequirementElement(
-            endorser=slot.endorser,
+            endorser=slot.key,
             clause=clause.id,
             schema=slot.schema,
             kind="endorsement",
@@ -631,7 +688,7 @@ def _requirements(
             ground=ground,
         )
         for slot in clause.group.slots
-        if held.get(slot.endorser) is holding
+        if held.get(slot.key) is holding
     )
 
 
