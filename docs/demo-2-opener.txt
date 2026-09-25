@@ -38,8 +38,8 @@
     weights   the slots sum to 1, so every slot is required
 
 
-  MEANWHILE, between inception and d1
-  ------------------------------------------------------------------------------------
+      MEANWHILE, between inception and d1
+      --------------------------------------------------------------------------------
 
   4 committed events, of which 1 certification.
 
@@ -82,8 +82,8 @@
     evidence    7c93128eac3b4353...
 
 
-  MEANWHILE, between d1 and d2
-  ------------------------------------------------------------------------------------
+      MEANWHILE, between d1 and d2
+      --------------------------------------------------------------------------------
 
   2 committed events, and no certification among them.
 
@@ -123,8 +123,8 @@
                        cured by the arrival of the missing evidence
 
 
-  MEANWHILE, between d2 and d3
-  ------------------------------------------------------------------------------------
+      MEANWHILE, between d2 and d3
+      --------------------------------------------------------------------------------
 
   3 committed events, and no certification among them.
 
@@ -170,8 +170,8 @@
                 can still arrive no longer reaches unity.
 
 
-  MEANWHILE, between d3 and b5
-  ------------------------------------------------------------------------------------
+      MEANWHILE, between d3 and b5
+      --------------------------------------------------------------------------------
 
   2 committed events, and no certification among them.
 
@@ -211,8 +211,8 @@
                        cured by the arrival of the missing evidence
 
 
-  MEANWHILE, between b5 and d8
-  ------------------------------------------------------------------------------------
+      MEANWHILE, between b5 and d8
+      --------------------------------------------------------------------------------
 
   19 committed events, of which 3 certifications.
 
