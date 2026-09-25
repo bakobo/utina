@@ -40,7 +40,7 @@ Each kernel carries what the room expects, because the beats were chosen on one 
 ### The amendment as hinge
 
 - the room expects: a document is adopted
-- what happens: a seat AID is delegated, a seat credential is issued, and the enactment declares what it disturbs
+- what happens: a seat AID is delegated, a seat credential is issued, and the amendment is judged under the law it replaces
 
 1. **Beat 7** — Seat the board: the amendment itself
 

@@ -20,7 +20,7 @@ That yields three artifacts of decreasing liveness and increasing depth.
 
 | Kernel | Beats | What the audience expects | What happens |
 |---|---|---|---|
-| 1. The amendment as hinge | 7 | a document is adopted | a seat AID is delegated, a seat credential is issued, and the enactment declares what it disturbs |
+| 1. The amendment as hinge | 7 | a document is adopted | a seat AID is delegated, a seat credential is issued, and the amendment is judged under the law it replaces |
 | 2. What the amendment did to two pending acts | 9, 10 | an amendment changes everything, or nothing | the cure path closes for one and stays open for the other, decided by whether the clause moved |
 | 3. Same signed "no", two answers | 13 | a "no" means no | defeat under two slots, pending under three. The Constitution changed; the arithmetic did the rest |
 | 4. Two currents, unmerged | 8, 12, 14 | the credential check *is* the answer | the toolchain rejects an unseated endorser before any fold runs, and the fold answers separately |

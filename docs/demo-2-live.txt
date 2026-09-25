@@ -4,8 +4,8 @@
   ------------------------------------------------------------------------------------
   KERNEL  The amendment as hinge
   expects: a document is adopted
-  happens: a seat AID is delegated, a seat credential is issued, and the enactment
-    declares what it disturbs
+  happens: a seat AID is delegated, a seat credential is issued, and the amendment is
+    judged under the law it replaces
 
 
                                                           MEANWHILE, between b5 and d4

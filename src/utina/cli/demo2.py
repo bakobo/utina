@@ -160,8 +160,8 @@ KERNELS = (
     Kernel(
         "The amendment as hinge",
         "a document is adopted",
-        "a seat AID is delegated, a seat credential is issued, and the enactment "
-        "declares what it disturbs",
+        "a seat AID is delegated, a seat credential is issued, and the amendment is "
+        "judged under the law it replaces",
         (
             Beat(
                 "7",
