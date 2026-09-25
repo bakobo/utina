@@ -2562,3 +2562,111 @@ Make Custos's replayable governance useful to a real organization = goal:
         field exists to remove. Tradeoff accepted: the assignment is utina's reading, and the
         second of the covenant cases — an event whose kind carries no act class — could be read
         as an event-seal mismatch instead; that is recorded in Q9.
+
+    A built domain is a Record; Acme is one fixture that builds one = decision:
+      id: s34hkwkv
+      why: >
+        Every command reached its record through `utina.cli.world.world()`, which imported
+        `utina.acme` and built Acme unconditionally, and the type it returned was the class
+        `Acme`. So "the record" and "Acme's record" were one thing in the type system, and a
+        second governed domain could only exist by returning a value of a class named after the
+        first — which is the hardcoding `--domain` exists to remove, one plane above the place
+        it shows. Chose to move the dataclass and its two lookup errors to `utina.domain`, as
+        `Record`, and leave `utina.acme` holding what is genuinely Acme's: its law, its party
+        constants and the `build` that drives its story. `Record` gains two fields a screen and
+        a flag need — `name`, which is what `--domain` takes, and `display`, which is what a
+        screen calls the domain — because `may Acme perform an act of the class ...?` was a
+        module constant in `utina.cli.appraisal` and a constant cannot vary by domain.
+        Rejected keeping the name `Acme` and letting a second fixture return one, which costs
+        nothing at runtime and teaches every later reader that the engine has one domain.
+        Rejected a protocol over the record rather than a shared class: the fields are data, not
+        behaviour, and a protocol would have bought polymorphism nobody needs while losing the
+        one thing a shared class gives — that two fixtures cannot drift in what a record IS.
+        `utina.domain` joins the quarantined planes in tests/test_purity.py, both quarantines,
+        because a plane that moved out of `acme` must not thereby leave the rules `acme` was
+        under.
+
+    `--domain` is its own parent parser, and the demo drivers do not take it = decision:
+      id: rgfxfkvo
+      why: >
+        `--substrate` and `--store` reach every command through a `backend` parent parser, and
+        the obvious move was to add `--domain` beside them. Rejected, because `utina demo` and
+        `utina demo2` walk Acme's story beat by beat with Acme's own labels in their argv, and
+        a `--domain bank` they accepted would either be ignored — a flag that silently does
+        nothing is the worst kind — or need a refusal branch and an error code for a
+        combination argparse can refuse for free. Chose a second parent parser carrying
+        `--domain` alone, applied to the ten commands that read a record generically and
+        withheld from the two that tell one domain's story. The demos then reject the flag as
+        an unrecognized argument, through `_Parser.error` and `e.input.malformed.command.f`,
+        which is the same door every other malformed command leaves by. Tradeoff accepted: the
+        parser now has two parents where it had one, and a future command has to choose. That
+        choice is the point — a command either reads whatever record it is handed or it does
+        not, and the parser is where that has to be said.
+
+    A numeric `--at` is a sequence number, in every domain = decision:
+      id: qtm5ntkg
+      why: >
+        `--at` took a label, `record.at` looked it up in the fixture's table, and an unknown one
+        raised. A domain with no table could then not be addressed at all. Chose to make a
+        `--at` consisting entirely of digits a sequence number wherever it appears, in Acme as
+        much as anywhere else, and to bound it against the record's length with
+        `e.input.range.position.f` rather than folding at a coordinate nothing was committed at.
+        Labels are checked first, so no existing label changes meaning and no Acme coordinate
+        moves; none of them is numeric and none can become numeric without this refusing to
+        build. Rejected accepting a number only in a domain that commits no labels, which would
+        make `--at 4` mean a coordinate in one domain and an error in another — the same
+        argument meaning two things according to a fixture's table, which is precisely the
+        property `--domain` exists to stop mattering. Rejected an unbounded sequence number: a
+        position past the end of the record folds cleanly and answers a question about a
+        coordinate the record does not reach, which is a wrong answer delivered confidently.
+
+    A domain that commits no labels says so, in an error of its own = decision:
+      id: er57yvs7
+      why: >
+        `e.state.label-unknown.f` answers "that is not one of my labels, and here they are",
+        which is the right answer when there are labels and a useless one when there are none:
+        a domain with an empty table would have reported an empty list of alternatives and left
+        a reader to guess that the whole mechanism was a fixture's convenience. A `title` and a
+        `hint` do not vary with the occurrence — `bakobo.errors` fixes both per code — so this
+        cannot be one error wording itself two ways. Chose a second code,
+        `e.state.labels-absent.f`, whose hint says what is true of every domain and is easy to
+        believe of none: the labels are ours, the record commits sequence numbers, and a
+        sequence number is what to type. Rejected widening `label-unknown`'s detail to cover
+        both, which would have put the disclosure where only a reader who already had labels
+        would see it. The wording is the meanwhile card's, deliberately repeated rather than
+        re-invented (@eelnh6dn): a room that has read it once on a screen should meet the same
+        sentence when the CLI refuses.
+
+    The second domain is a bank, and it is deliberately not the bank beat = decision:
+      id: qprzacju
+      why: >
+        A flag that resolves one value is not a flag, so showing the fold domain-agnostic needs
+        a second domain that genuinely exists: its own gAID, its own committed law, its own
+        parties and a handful of real events driven through the same constructor. Chose a
+        minimal bank — one clause, two officers, one act that reaches unity and is certified,
+        one left pending — and deliberately NO label table, because a domain with no labels is
+        the case @er57yvs7 and @qtm5ntkg are about and a fixture that had labels would leave it
+        untested. Rejected building the two-constitution bank beat the demo has wanted since
+        the certification plan: that beat needs cross-domain ground, an evaluation-seal
+        credential and the bank folding Acme's GEL, its design is agreed but not built, and a
+        half-built cross-domain fold committed here would be read by the session that does
+        build it as a decision rather than as scaffolding. Rejected the opposite economy — a
+        synthetic fixture with no story at all — because the criterion is that no command
+        depends on a hardcoded record, and a record no command can ask a real question of does
+        not test that. What this bank is for is written in its own module docstring, so the
+        session that builds the beat finds the boundary where it will be standing.
+
+    A display cast is per domain, and a domain may have none = decision:
+      id: 6exkxbbv
+      why: >
+        `utina.cli.aliases` held one `PARTIES` table keyed by Acme's own party constants and one
+        `SCOPE` of "Acme", so a second domain's parties would have rendered as raw identifiers —
+        not a crash, and not a bug either, since `Aliases.full` is correct to refuse to invent a
+        name it does not have, but indistinguishable from one on screen. Chose a cast per
+        domain, looked up by `Record.name`, and kept the graceful miss underneath it: a domain
+        with no cast still renders, in identifiers, because the alternative is a display plane
+        that can refuse to draw a record the fold can read. Rejected putting the cast on the
+        record itself, which would carry display facts through `utina.domain` and past the
+        quarantine `tests/test_purity.py` holds (@cldspl) — the scope, the flag and the role are
+        COIA's business and COIA's business is the CLI's alone. Rejected deriving a cast from
+        the record's aids, which is where an invented name would come from.
