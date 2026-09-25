@@ -47,6 +47,7 @@ from utina.cli.style import (
     VERDICT_COLOR,
     Style,
 )
+from utina.domain import is_sequence
 from utina.fold import bearing, certification
 from utina.fold.clause import Clause
 from utina.fold.constitution import Constitution
@@ -757,6 +758,13 @@ def meanwhile_screen(
     are committed nowhere — the record has sequence numbers. Saying it here costs two
     lines and is the same disclosure the law screen's alias header already makes about
     party names.
+
+    **It names only the coordinates that really are labels.** A domain with no label
+    table is addressed by sequence number (``this.i`` @qtm5ntkg), and a note telling a
+    reader that ``0`` and ``6`` are this demo's names for coordinates would be false
+    about the two things on the screen it points at — which is a worse failure than the
+    silence it was written to fix. Where both are numbers there is nothing to disclose
+    and the note is absent.
     """
     certifications = sum(1 for one in events if one.kind == certification.CERTIFICATION_KIND)
     lines = [
@@ -771,20 +779,31 @@ def meanwhile_screen(
             f"{MARGIN}{event.position.seq:>3}  {event.kind:<13} "
             f"{abbrev(event.said):<18} {_gloss(event, aliases)}"
         )
-    lines.extend(
-        [
-            "",
-            *wrapped(
-                style,
-                "labels",
-                f"{since} and {upto} are this demo's names for coordinates and are "
-                "committed nowhere. The record has sequence numbers, which is what "
-                "the seq column above shows and what a stranger folding the same log "
-                "would address it by.",
-            ),
-        ]
-    )
+    ours = tuple(one for one in (since, upto) if not is_sequence(one))
+    if ours:
+        lines.extend(["", *wrapped(style, "labels", _labels_are_ours(ours))])
     return _screen(lines)
+
+
+def _labels_are_ours(ours: tuple[str, ...]) -> str:
+    """The closing note, naming the one or two coordinates that are a demo's names.
+
+    The two-coordinate wording is unchanged to the byte, because every tracked demo
+    artifact pins a card that carries it and a rephrasing would move five files to say
+    the same thing.
+    """
+    if len(ours) == 1:
+        return (
+            f"{ours[0]} is this demo's name for a coordinate and is committed nowhere. "
+            "The record has sequence numbers, which is what the seq column above shows "
+            "and what a stranger folding the same log would address it by."
+        )
+    return (
+        f"{ours[0]} and {ours[1]} are this demo's names for coordinates and are "
+        "committed nowhere. The record has sequence numbers, which is what "
+        "the seq column above shows and what a stranger folding the same log "
+        "would address it by."
+    )
 
 
 def _tally(events: int, certifications: int) -> str:

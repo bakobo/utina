@@ -45,10 +45,6 @@ __all__ = [
     "resolve_subject",
 ]
 
-#: The domain's display name. ``utina.acme.GAID`` is the identifier; this is what a
-#: person calls it, and the CLI's whole world is this one domain.
-DOMAIN = "Acme"
-
 #: What the fold hands its slot predicate when nothing of the class has been tabled. No
 #: committed event bears it, so every slot classifies pending, which is the true answer.
 NOTHING_TABLED = ""
@@ -213,8 +209,15 @@ def question_from(
     return Committed(resolve_subject(names, events, str(said)))
 
 
-def appraise(corpus: Corpus, question: Question, *, at: Position, label: str) -> Appraisal:
-    """Answer ``question`` at ``at``, and recover the working behind the answer."""
+def appraise(
+    corpus: Corpus, question: Question, *, at: Position, label: str, domain: str
+) -> Appraisal:
+    """Answer ``question`` at ``at``, and recover the working behind the answer.
+
+    ``domain`` is what a screen calls the governed domain — ``Record.display`` — and it
+    reaches only the headline. It was a module constant reading ``"Acme"`` while there
+    was one fixture, and a constant cannot vary by domain (this.i @s34hkwkv).
+    """
     outcome = evaluate(corpus, question, at=at)
     act, subject, coordinate = _subject(corpus, question, at)
     law = Constitution.at(corpus, coordinate)
@@ -224,7 +227,7 @@ def appraise(corpus: Corpus, question: Question, *, at: Position, label: str) ->
         slots = classify(clause.group, corpus.upto(at), subject or NOTHING_TABLED)
     return Appraisal(
         question=question,
-        headline=_headline(question, subject),
+        headline=_headline(question, subject, domain),
         label=label,
         position=at,
         law=law,
@@ -236,9 +239,9 @@ def appraise(corpus: Corpus, question: Question, *, at: Position, label: str) ->
     )
 
 
-def _headline(question: Question, subject: SAID | None) -> str:
+def _headline(question: Question, subject: SAID | None, domain: str) -> str:
     if isinstance(question, Proposal):
-        return f"may {DOMAIN} perform an act of the class {question.act}?"
+        return f"may {domain} perform an act of the class {question.act}?"
     return f"was the committed act {subject or question.said} lawful?"
 
 

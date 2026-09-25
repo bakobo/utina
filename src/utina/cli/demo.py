@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from utina.acme import LABEL_UNKNOWN
+from utina.cli.errors import BEAT_UNKNOWN
 from utina.cli.render import MARGIN, RULE, WRAP
 from utina.cli.style import SCAFFOLD, Style
 from utina.substrate import FACADE
@@ -133,8 +133,8 @@ def _named(identifier: str) -> Beat:
     for beat in PROLOGUE + BEATS:
         if beat.id == identifier:
             return beat
-    raise LABEL_UNKNOWN(
-        label=identifier,
+    raise BEAT_UNKNOWN(
+        beat=identifier,
         known=", ".join(beat.id for beat in PROLOGUE + BEATS),
     )
 

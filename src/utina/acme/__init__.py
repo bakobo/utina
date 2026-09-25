@@ -1,13 +1,16 @@
 """Acme, Inc. — the demo's governed domain, its law, and its committed log.
 
 ``build`` drives ``utina.enact`` through every beat of ``docs/demo-script.md``
-and returns the record the acceptance oracle reads. It takes the fold's value
-constructors rather than importing the fold (this.i @tvaq2s), so the writing
-plane stays loadable and testable on its own.
+and returns the :class:`~utina.domain.Record` the acceptance oracles read. It takes the
+fold's value constructors rather than importing the fold (this.i @tvaq2s), so the
+writing plane stays loadable and testable on its own.
+
+One fixture among several since ``this.i`` @s34hkwkv: what a record IS lives in
+``utina.domain``, and what is Acme's own — its parties, its clauses, its story — lives
+here. ``utina.bank`` is the other.
 """
 
 from .build import build
-from .errors import LABEL_UNKNOWN, NAME_UNKNOWN
 from .law import (
     AMENDMENT_ACTS,
     BOARD_LAW,
@@ -15,6 +18,8 @@ from .law import (
     DEV,
     DEVICE,
     DEVICE_ROLE,
+    DISPLAY,
+    DOMAIN,
     EQUITY_ACTS,
     FOUNDERS,
     FOUNDING_LAW,
@@ -33,7 +38,6 @@ from .law import (
     UNGOVERNED_ACT,
     lowered_law,
 )
-from .record import Acme
 
 __all__ = [
     "AMENDMENT_ACTS",
@@ -42,14 +46,14 @@ __all__ = [
     "DEV",
     "DEVICE",
     "DEVICE_ROLE",
+    "DISPLAY",
+    "DOMAIN",
     "EQUITY_ACTS",
     "FOUNDERS",
     "FOUNDING_LAW",
     "GAID",
     "GOVERNANCE_REGISTRY",
-    "LABEL_UNKNOWN",
     "MARTA",
-    "NAME_UNKNOWN",
     "ORDINARY_ACTS",
     "Q2_FORECAST",
     "Q3_BUDGET",
@@ -60,7 +64,6 @@ __all__ = [
     "SEAT_OFFICE",
     "SEAT_REGISTRY",
     "UNGOVERNED_ACT",
-    "Acme",
     "build",
     "lowered_law",
 ]

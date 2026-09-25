@@ -252,7 +252,7 @@ def sequence() -> str:
     from utina.cli.world import RealValues
 
     record = build(values=RealValues())
-    aliases = aliases_over(record.aids)
+    aliases = aliases_over(record.aids, record.name)
     lines = [
         "# Demo 2, as a sequence",
         "",

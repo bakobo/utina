@@ -26,7 +26,6 @@ from typing import TextIO
 
 from bakobo.errors import BakoboError  # type: ignore[import-untyped]
 
-from utina.acme import Acme
 from utina.cli.aliases import Aliases, aliases_over
 from utina.cli.appraisal import (
     appraise,
@@ -54,7 +53,8 @@ from utina.cli.render import (
     whois_screen,
 )
 from utina.cli.style import SPENT, Style
-from utina.cli.world import RealValues, world
+from utina.cli.world import DEFAULT_DOMAIN, DOMAINS, RealValues, world
+from utina.domain import Record
 from utina.enact import Constructor
 from utina.fold.constitution import Constitution
 from utina.fold.evaluate import disturbed_by
@@ -68,10 +68,18 @@ __all__ = ["Console", "main", "run"]
 LATEST = "the end of the record"
 
 _EPILOG = """\
+domains
+  --domain acme is the demo's company and the default; --domain bank is Meridian
+  Bank, a second governed domain that exists so the fold can be seen folding a
+  record it was not written around. The demo drivers do not take the flag: they
+  walk Acme's story and its labels.
+
 positions
   inception, d1 ... d9, board-seated -- the beats of docs/demo-script.md, so a
   narrator types something memorable rather than a digest. b5 and b11 are beats
-  of docs/demo-2-script.md, whose numbering is its own.
+  of docs/demo-2-script.md, whose numbering is its own. These labels are OURS:
+  the record commits sequence numbers, and --at takes one of those in any domain
+  -- which is the only way to address a domain that commits no labels at all.
 
 identifiers
   --said and --on take the name the record commits an act under (seat-the-board),
@@ -94,6 +102,7 @@ color
 
 examples
   utina law --at inception
+  utina eval approve-credit-line --domain bank --at 6
   utina eval sign-office-lease --at d3
   utina eval --said seat-the-board --at d4
   utina replay --at board-seated
@@ -211,16 +220,27 @@ def build_parser(console: Console) -> _Parser:
         help="where a keripy key log is kept, for another KERI tool to read",
     )
 
+    # A parent of its own rather than a third argument on ``backend``, because the two
+    # demo drivers walk ONE domain's story with that domain's labels in their argv, and
+    # a --domain they accepted would either be ignored or need a refusal branch for a
+    # combination argparse can refuse for free (this.i @rgfxfkvo).
+    governed = _Parser(add_help=False, out=console.out)
+    governed.add_argument(
+        "--domain", choices=tuple(DOMAINS), default=DEFAULT_DOMAIN, metavar="NAME",
+        help="which governed domain's record to read (default: %(default)s)",
+    )
+    reads = [backend, governed]
+
     commands = parser.add_subparsers(dest="command", metavar="COMMAND")
 
     law = commands.add_parser(
-        "law", out=console.out, parents=[backend],
+        "law", out=console.out, parents=reads,
         help="the law in force at a position",
     )
     law.add_argument("--at", required=True, metavar="POSITION")
 
     evaluate = commands.add_parser(
-        "eval", out=console.out, parents=[backend],
+        "eval", out=console.out, parents=reads,
         help="appraise a proposal or a committed act",
     )
     evaluate.add_argument("act", nargs="?", metavar="ACT-CLASS")
@@ -229,33 +249,33 @@ def build_parser(console: Console) -> _Parser:
     evaluate.add_argument("--brief", action="store_true", help="the same answer in 8-10 lines")
 
     log = commands.add_parser(
-        "log", out=console.out, parents=[backend],
+        "log", out=console.out, parents=reads,
         help="the committed events in canonical order",
     )
     log.add_argument("--at", metavar="POSITION")
 
     meanwhile = commands.add_parser(
-        "meanwhile", out=console.out, parents=[backend],
+        "meanwhile", out=console.out, parents=reads,
         help="what the record committed between two marked coordinates",
     )
     meanwhile.add_argument("--from", dest="since", required=True, metavar="POSITION")
     meanwhile.add_argument("--to", dest="upto", required=True, metavar="POSITION")
 
     replay = commands.add_parser(
-        "replay", out=console.out, parents=[backend],
+        "replay", out=console.out, parents=reads,
         help="refold the log and print the canonical digest",
     )
     replay.add_argument("--at", required=True, metavar="POSITION")
     replay.add_argument("--seed", type=int, default=7, metavar="N")
 
     whois = commands.add_parser(
-        "whois", out=console.out, parents=[backend],
+        "whois", out=console.out, parents=reads,
         help="the full identifier behind an alias",
     )
     whois.add_argument("party", metavar="ALIAS-OR-PREFIX")
 
     enact = commands.add_parser(
-        "enact", out=console.out, parents=[backend],
+        "enact", out=console.out, parents=reads,
         help="commit a signed endorsement or declination",
     )
     enact.add_argument("disposition", choices=("endorse", "decline"))
@@ -264,21 +284,21 @@ def build_parser(console: Console) -> _Parser:
     enact.add_argument("--citing", dest="citing", metavar="TOKEN")
 
     seat = commands.add_parser(
-        "seat", out=console.out, parents=[backend],
+        "seat", out=console.out, parents=reads,
         help="one office, with KERI's binding and ACDC's side by side",
     )
     seat.add_argument("seat", metavar="OFFICE")
     seat.add_argument("--at", metavar="POSITION")
 
     registry = commands.add_parser(
-        "registry", out=console.out, parents=[backend],
+        "registry", out=console.out, parents=reads,
         help="what a credential registry says, folded at a position",
     )
     registry.add_argument("--registry", metavar="SAID")
     registry.add_argument("--at", metavar="POSITION")
 
     disturbance_parser = commands.add_parser(
-        "disturbance", out=console.out, parents=[backend],
+        "disturbance", out=console.out, parents=reads,
         help="which acts in flight an amendment ended",
     )
     disturbance_parser.add_argument("amendment", metavar="TOKEN")
@@ -305,22 +325,25 @@ def build_parser(console: Console) -> _Parser:
 # --- the commands -------------------------------------------------------------
 
 
-def _world(args: argparse.Namespace) -> AbstractContextManager[Acme]:
-    """Acme, built by whichever substrate the command line asked for."""
-    return world(args.substrate, store=args.store)
+def _world(args: argparse.Namespace) -> AbstractContextManager[Record]:
+    """The domain the command line asked for, built by the substrate it asked for."""
+    return world(args.substrate, store=args.store, domain=args.domain)
 
 
-def _aliases(record: Acme) -> Aliases:
+def _aliases(record: Record) -> Aliases:
     """The display names for this record's parties.
 
     The composition root's half of this.i @clcoia. Built here, in the CLI, from the
     identifiers inception returned — which is why an alias cannot reach the fold, the
     constructor or the committed bytes, and why both substrates render identically.
+
+    Which cast is used is the record's own ``name``, not the flag, so a screen cannot
+    label one domain's parties with another's (this.i @6exkxbbv).
     """
-    return aliases_over(record.aids)
+    return aliases_over(record.aids, record.name)
 
 
-def _actor(record: Acme, name: str) -> str:
+def _actor(record: Record, name: str) -> str:
     """The identifier a party is addressed by, from the alias a person typed.
 
     Under the facade they are the same string. Under keripy the alias is a name
@@ -332,7 +355,7 @@ def _actor(record: Acme, name: str) -> str:
     return record.aids.get(name, name)
 
 
-def _position(record: Acme, label: str | None) -> tuple[str, Position]:
+def _position(record: Record, label: str | None) -> tuple[str, Position]:
     """The coordinate a command was pointed at, and what to call it on screen."""
     if label is None:
         return LATEST, record.events[-1].position
@@ -353,7 +376,9 @@ def eval_command(args: argparse.Namespace, console: Console) -> int:
     with _world(args) as record:
         question = question_from(record.saids, record.events, args.act, args.said)
         label, position = _position(record, args.at)
-        appraisal = appraise(record.corpus, question, at=position, label=label)
+        appraisal = appraise(
+            record.corpus, question, at=position, label=label, domain=record.display
+        )
         draw = brief_screen if args.brief else eval_screen
         console.out.write(draw(appraisal, _aliases(record), console.style))
     return 0
@@ -519,7 +544,9 @@ def enact_command(args: argparse.Namespace, console: Console) -> int:
     with _world(args) as record:
         subject = resolve_subject(record.saids, record.events, args.subject)
         _, end = _position(record, None)
-        before = appraise(record.corpus, Committed(subject), at=end, label=LATEST)
+        before = appraise(
+            record.corpus, Committed(subject), at=end, label=LATEST, domain=record.display
+        )
 
         constructor = Constructor.resume(
             record.substrate, record.gaid, values=record.values, events=record.events
@@ -535,7 +562,11 @@ def enact_command(args: argparse.Namespace, console: Console) -> int:
             constructor.emitted, kel=constructor.key_events, gaid=constructor.gaid
         )
         after = appraise(
-            corpus, Committed(subject), at=event.position, label="after this act"
+            corpus,
+            Committed(subject),
+            at=event.position,
+            label="after this act",
+            domain=record.display,
         )
         anchor = record.substrate.anchoring_event(str(event.body["acdc"]["d"]))
         console.out.write(

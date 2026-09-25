@@ -484,7 +484,7 @@ def _law_screen(acme, label: str) -> str:
         Constitution.at(acme.corpus, acme.at(label)),
         label,
         acme.at(label),
-        aliases_over(acme.aids),
+        aliases_over(acme.aids, acme.name),
         Style(enabled=False),
     )
 
@@ -507,7 +507,7 @@ def _seat_screen(acme, label: str) -> str:
             "seal": acme.substrate.anchoring_event(seat),
         },
         held_by(upto, seat),
-        aliases_over(acme.aids),
+        aliases_over(acme.aids, acme.name),
         Style(enabled=False),
     )
 
@@ -521,7 +521,7 @@ def _registry_screen(acme, label: str) -> str:
         label,
         acme.at(label),
         registry_holdings(upto, str(acme.registry)),
-        aliases_over(acme.aids),
+        aliases_over(acme.aids, acme.name),
         Style(enabled=False),
     )
 

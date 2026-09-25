@@ -17,11 +17,12 @@ from typing import Any
 import pytest
 from bakobo.errors import BakoboError  # type: ignore[import-untyped]
 
-from utina import coia
+from utina import acme, coia
 from utina.acme import DEV, DEVICE, GAID, MARTA, QUINN, SEAT
 from utina.cli.aliases import PARTIES, SCOPE, Aliases, aliases_over
 from utina.cli.render import SLOT
-from utina.cli.world import world
+from utina.cli.world import DOMAINS, world
+from utina.fold.constitution import Constitution
 
 #: What the demo's three people must be called on screen, in both forms. Written out
 #: rather than computed, because a test that built its expectation the way the code
@@ -53,7 +54,7 @@ def keripy_aids() -> dict[str, str]:
 
 @pytest.fixture
 def table(facade_aids: dict[str, str]) -> Aliases:
-    return aliases_over(facade_aids)
+    return aliases_over(facade_aids, acme.DOMAIN)
 
 
 # --- the aliases themselves ---------------------------------------------------
@@ -82,11 +83,44 @@ def test_the_short_form_fits_the_slot_column() -> None:
     assert max(len(short) for short in SHORT.values()) <= SLOT
 
 
+@pytest.mark.parametrize("domain", sorted(DOMAINS), ids=sorted(DOMAINS))
+def test_every_slot_any_domain_commits_fits_the_slot_column(domain: str) -> None:
+    """The guard above is Acme's pinned table; this one is every domain that exists.
+
+    A second domain whose slotted parties overflowed the column would be TRUNCATED on
+    screen rather than refused, and a truncated alias beside a name is the thing
+    @clcoia exists to remove. Widening ``SLOT`` is not the remedy — it would move every
+    tracked demo artifact to make room for a fixture — so a cast that does not fit is a
+    cast to reword.
+
+    What is checked is what a slot can NAME, read off each domain's own committed law
+    at the end of its record, rather than every party in its cast: the governed domain
+    itself is in every cast and is slotted by nobody, and its alias is deliberately the
+    long scope-less form (``acme-governed-domain,6``) that no column has to hold.
+    """
+    with world(domain=domain) as record:
+        table = aliases_over(record.aids, record.name)
+        law = Constitution.at(record.corpus, record.at(str(record.last)))
+        named = [
+            slot.office or slot.endorser
+            for clause in law.clauses
+            for slot in clause.group.slots
+        ]
+        assert named, f"{domain} commits no slots, so this guard checks nothing"
+        for one in named:
+            short = table.short(one)
+            assert len(short) <= SLOT, f"{short} is {len(short)} against {SLOT}"
+            assert "..." not in short
+
+
 def test_both_substrates_render_the_same_aliases(
     facade_aids: dict[str, str], keripy_aids: dict[str, str]
 ) -> None:
     """The whole point: a screen must not betray which substrate is underneath."""
-    assert aliases_over(facade_aids).every_alias() == aliases_over(keripy_aids).every_alias()
+    assert (
+        aliases_over(facade_aids, acme.DOMAIN).every_alias()
+        == aliases_over(keripy_aids, acme.DOMAIN).every_alias()
+    )
     # And the identifiers really do differ, or the assertion above is vacuous.
     assert facade_aids[MARTA] != keripy_aids[MARTA]
     assert len(keripy_aids[MARTA]) == 44
@@ -126,7 +160,7 @@ def test_an_identifier_with_no_alias_renders_as_itself_in_full() -> None:
     reintroduce exactly what this commission removed.
     """
     stranger = "E" + "x" * 43
-    empty = aliases_over({})
+    empty = aliases_over({}, acme.DOMAIN)
     assert empty.full(stranger) == stranger
     assert empty.short(stranger) == stranger
     assert empty.every_alias() == ()
@@ -220,7 +254,7 @@ def test_the_table_is_built_from_identifiers_and_carries_no_record(
     table: Aliases, facade_aids: dict[str, str]
 ) -> None:
     """@cldspl, behaviourally: aliases_over sees identifiers, never committed events."""
-    rebuilt: Any = aliases_over(dict(facade_aids))
+    rebuilt: Any = aliases_over(dict(facade_aids), acme.DOMAIN)
     assert rebuilt.every_alias() == table.every_alias()
     assert rebuilt.scope == SCOPE
 

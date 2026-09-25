@@ -7,7 +7,8 @@ finding. That is a structural claim, so it is defended structurally — ``utina.
 ``utina.enact`` and ``utina.acme`` may not import ``utina.coia`` at all, and the same
 AST inspection that catches a lazy KERI import catches a lazy alias import. Unlike the
 KERI rule, ``utina.cli`` is exempt rather than covered, because display is the plane
-whose whole job is display.
+whose whole job is display. Every other plane is covered, including the two a second
+governed domain added (this.i @s34hkwkv, @qprzacju).
 
 The original docstring follows.
 
@@ -19,8 +20,9 @@ keripy is a real dependency that claim widens: not only the fold but every plane
 above the substrate has to stay free of it, or ``--substrate facade`` is a flag
 over an already-loaded dependency rather than a fallback (this.i @343xvm).
 
-So this reads every module of ``utina.fold``, ``utina.enact``, ``utina.acme``
-and ``utina.cli`` as source and fails if any imports a KERI package. Inside
+So this reads every module of ``utina.fold``, ``utina.enact``, ``utina.domain``,
+``utina.acme``, ``utina.bank``, ``utina.replay`` and ``utina.cli`` as source and fails
+if any imports a KERI package. Inside
 ``utina.substrate`` the same rule holds with exactly one exemption: the files
 named ``keri*.py``, which are the implementation the quarantine exists to
 contain.
@@ -43,7 +45,10 @@ from utina.fold import FORBIDDEN_IMPORTS
 SRC = pathlib.Path(__file__).resolve().parent.parent / "src" / "utina"
 
 #: Every plane above the substrate. None of these may name a KERI package.
-QUARANTINED = ("fold", "enact", "acme", "cli", "replay")
+#: ``domain`` and ``bank`` joined the list with this.i @s34hkwkv and @qprzacju: a plane
+#: that moved out of ``acme``, and a second fixture beside it, must not thereby leave
+#: the rules ``acme`` was under.
+QUARANTINED = ("fold", "enact", "domain", "acme", "bank", "cli", "replay")
 
 #: The one place a KERI package may be imported: the substrate's own backend.
 EXEMPT = "keri"
@@ -52,7 +57,7 @@ EXEMPT = "keri"
 def quarantined_modules() -> list[pathlib.Path]:
     """Every source file the quarantine covers, so new ones need no edit here.
 
-    The four planes entirely, plus the substrate minus its keripy backend —
+    Every quarantined plane entirely, plus the substrate minus its keripy backend —
     ``utina.substrate.protocol`` and the facade are as bound by this as the fold
     is, since a KERI import there would load keripy for the facade path too.
     """
@@ -153,7 +158,7 @@ DISPLAY_ONLY = "utina.coia"
 
 #: The planes an alias may not reach. utina.cli is absent on purpose: it is the
 #: display plane, and it is the one that is supposed to import this.
-ALIAS_QUARANTINED = ("fold", "enact", "acme")
+ALIAS_QUARANTINED = ("fold", "enact", "domain", "acme", "bank")
 
 
 def alias_quarantined_modules() -> list[pathlib.Path]:

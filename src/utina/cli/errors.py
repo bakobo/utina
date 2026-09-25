@@ -1,7 +1,7 @@
 """The obstacles only a command line has, and the codes that name them.
 
 Everything else the CLI can fail on already has a code somewhere it belongs: an unknown
-position label is ``utina.acme``'s ``e.state.label-unknown.f``, an unknown party is the
+position label is ``utina.domain``'s ``e.state.label-unknown.f``, an unknown party is the
 substrate's ``e.id.aid-unknown.f``, a disposition against nothing committed is
 ``utina.enact``'s ``e.state.subject-unknown.f``. Classification is by the obstacle rather
 than by the component that noticed, so this module declares a code only where the
@@ -22,9 +22,30 @@ from bakobo.errors import ErrorCode  # type: ignore[import-untyped]
 __all__ = [
     "ALIAS_PREFIX_AMBIGUOUS",
     "ALIAS_UNKNOWN",
+    "BEAT_UNKNOWN",
     "COMMAND_MALFORMED",
     "SAID_PREFIX_AMBIGUOUS",
 ]
+
+BEAT_UNKNOWN = ErrorCode(
+    code="e.state.beat-unknown.f",
+    title="This demo script has no beat by that name.",
+    detail=(
+        "The beat {beat} was asked for, and the beats this script has are {known}."
+    ),
+    args=("beat", "known"),
+    hint=(
+        "Run the whole script with no --beat to see them in order, or ask for one of "
+        "the names above."
+    ),
+)
+"""A beat is a RUN-OF-SHOW position and not a record label, which is why this exists
+rather than reusing ``e.state.label-unknown.f``. The two namespaces are genuinely
+different: demo 2's beats are numbered 1 to 26 and the record's labels are ``b5``,
+``d1``, ``board-seated``. Reusing the label error told a reader that Acme's record
+committed labels called ``1, 2, 3`` — a confident, specific and false answer, which is
+the failure shape this repo refuses (found while widening that error for a second
+domain, this.i @er57yvs7)."""
 
 COMMAND_MALFORMED = ErrorCode(
     code="e.input.malformed.command.f",
