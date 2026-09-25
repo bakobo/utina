@@ -453,9 +453,12 @@ def _falsified(
     where it does not, which is the distinction ``Proof.pair`` was built for: a reader
     holding the finding sees what contradicted what without fetching the package.
     """
-    if certification.schema_for(clause, law.certification) is None:
+    schema = certification.schema_for(clause, law.certification)
+    if schema is None:
         return None
-    found = certification.contradicting(corpus, clause.group, subject.said, at)
+    found = certification.contradicting(
+        corpus, clause.group, subject.said, at, schema
+    )
     if found is None:
         return None
     event, omitted = found
@@ -486,7 +489,7 @@ def _uncertified(
     schema = certification.schema_for(clause, law.certification)
     if schema is None:
         return None
-    if certification.certifying(corpus, subject.said, at) is not None:
+    if certification.certifying(corpus, subject.said, at, schema) is not None:
         return None
     committer = _committer(corpus, subject)
     if not committer:  # pragma: no cover - a satisfied threshold implies a subject

@@ -37,7 +37,7 @@ from utina.fold import threshold
 
 __all__ = [
     "AID",
-    "GROUP_ENDORSER_REPEATED",
+    "GROUP_SEAT_REPEATED",
     "GROUP_SLOTS_MISSING",
     "QUALIFICATION_MALFORMED",
     "SAID",
@@ -128,14 +128,17 @@ QUALIFICATION_MALFORMED = ErrorCode(
     ),
 )
 
-GROUP_ENDORSER_REPEATED = ErrorCode(
+GROUP_SEAT_REPEATED = ErrorCode(
     code="e.input.multi.slot-endorser.f",
-    title="A composition rule slots each endorser at most once.",
+    title="A composition rule slots each seat at most once.",
     detail=(
-        "The {operator} group slots {endorser} more than once, which leaves one identifier "
-        "holding two weights and no committed rule for which of them applies."
+        "The {operator} group slots {seat} more than once, which leaves one seat holding "
+        "two weights and no committed rule for which of them applies. A seat is the office "
+        "a slot seats where it seats one, and the endorser it names otherwise — so two "
+        "slots seating one office collide exactly as two slots naming one party do, and "
+        "two slots seating DIFFERENT offices do not collide at all."
     ),
-    args=("operator", "endorser"),
+    args=("operator", "seat"),
 )
 
 
@@ -260,11 +263,16 @@ class Group:
     def __post_init__(self) -> None:
         if not self.slots:
             raise GROUP_SLOTS_MISSING(operator=self.operator)
-        seen: set[AID] = set()
+        # Keyed by the SEAT and not by the endorser. Every office slot names the empty
+        # string as its endorser, so a law with two distinct offices — or one office and
+        # a directly-entitled party — was refused as a duplicate before it could be
+        # folded, which is the same defect as this.i @qjjlkrxt one layer up. Acme has a
+        # single office so it never fired; a second domain would have met it at once.
+        seen: set[str] = set()
         for slot in self.slots:
-            if slot.endorser in seen:
-                raise GROUP_ENDORSER_REPEATED(operator=self.operator, endorser=slot.endorser)
-            seen.add(slot.endorser)
+            if slot.key in seen:
+                raise GROUP_SEAT_REPEATED(operator=self.operator, seat=slot.key)
+            seen.add(slot.key)
 
     def slot(self, endorser: AID) -> Slot | None:
         """The slot this group gives ``endorser``, or ``None`` if it slots them nowhere."""

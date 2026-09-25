@@ -149,9 +149,18 @@ class Log:
         )
 
     def certify(
-        self, name: str, subject: str, counted: Sequence[tuple[str, str]] = ()
+        self,
+        name: str,
+        subject: str,
+        counted: Sequence[tuple[str, str]] = (),
+        schema: str | None = None,
     ) -> str:
         """The domain admitting a tally: the act becomes consequential here.
+
+        ``schema`` is what the dossier claims to satisfy, defaulting to the one a
+        certifying domain requires. It is a parameter because a tally issued against
+        ANOTHER schema must discharge nothing, and that used to pass (``this.i``
+        @2e2dncfe's field, ``custos-4.2.md:1946-1951``).
 
         ``counted`` is what the sponsor's dossier cites, one edge per disposition with
         the weight claimed for it. It is spelled out at every call site rather than
@@ -172,7 +181,7 @@ class Log:
                 "acdc": {
                     "d": f"E{name}-credential",
                     "i": GAID,
-                    "s": CERT_SCHEMA,
+                    "s": CERT_SCHEMA if schema is None else schema,
                     "a": {"said": subject, "act": "issue"},
                     "e": {"endorsements": members},
                 },
@@ -1533,3 +1542,57 @@ def test_an_event_the_record_cannot_attribute_is_nobodys_artifact():
     assert [one.species for one in finding.requirement] == [
         PendingSpecies.UNRESOLVED_CONFLICT
     ]
+
+
+def test_a_certification_against_the_wrong_schema_discharges_nothing():
+    """The fail-open Copilot found on #9, and the reason a law names a schema at all.
+
+    ``custos-4.2.md:1946-1951`` commits a slot's own schema for exactly this reason, and
+    the certification field is the same sentence applied one level out: "a requirement
+    that could not say which evidence it wanted would be satisfiable by the wrong one."
+    Before the fix, ``certifying`` matched on kind and subject and never looked at the
+    credential's schema — so a tally issued against ANY schema cleared the requirement,
+    was accepted as sound, and could effectuate an enactment.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+    wrong = log.certify("cert", tabled, log.tally(*SOUND), schema=OTHER_SCHEMA)
+
+    finding = evaluate(log.corpus, Committed(tabled), at=log.now)
+
+    assert isinstance(finding, Pending), "a tally against another schema is not this one"
+    assert [one.kind for one in finding.requirement] == ["certification"]
+    assert finding.requirement[0].schema == CERT_SCHEMA
+    assert log.corpus.event(wrong) is not None, "the event is committed; it just does not count"
+
+
+def test_a_wrong_schema_certification_is_skipped_rather_than_taken_as_the_first():
+    """The branch that actually discriminates, which the case above does not reach.
+
+    "The first rather than the last" is a rule about two certifications this law would
+    accept: the first already made the act consequential. An event against ANOTHER schema
+    is not a certification under this law at all, so it is skipped and a later valid one
+    still discharges — rather than the wrong one shadowing it by arriving first, which is
+    what a check that stopped at the first kind-and-subject match would have done.
+
+    Asserted because the single-wrong-certification case passes against an implementation
+    that merely ignores the wrong event, there being nothing else to find. Raised by a
+    cross-model review of the fix diff on PR #9.
+    """
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert-wrong", tabled, log.tally(*SOUND), schema=OTHER_SCHEMA)
+    shadowed = log.now
+    log.certify("cert-right", tabled, log.tally(*SOUND))
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=shadowed), Pending)
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Affirmed)
+
+
+def test_a_certification_whose_credential_names_no_schema_discharges_nothing():
+    """Fail-closed on an unreadable schema, in the shape the rest of the module uses."""
+    log = certifying_domain()
+    tabled = unanimous(log)
+    log.certify("cert", tabled, log.tally(*SOUND), schema="")
+
+    assert isinstance(evaluate(log.corpus, Committed(tabled), at=log.now), Pending)

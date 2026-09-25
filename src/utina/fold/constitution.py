@@ -268,22 +268,29 @@ def _effectuation(
         bundle = tuple(one for one in committed if not candidate.position < one.position)
         if not clause.group.satisfied(dispositions(clause.group, bundle, enactment.said)):
             continue
-        if schema is not None and not _certified(corpus, clause, enactment, candidate.position):
+        if schema is not None and not _certified(
+            corpus, clause, enactment, candidate.position, schema
+        ):
             continue
         return candidate.position
     return None
 
 
-def _certified(corpus: Corpus, clause: Clause, enactment: Event, at: Position) -> bool:
+def _certified(
+    corpus: Corpus, clause: Clause, enactment: Event, at: Position, schema: SAID
+) -> bool:
     """Whether a sound certification of ``enactment`` stands at or before ``at``.
 
     Sound rather than merely present: the same predicate the evaluator convicts on,
     called from here rather than reimplemented, so the law fold and the evaluator
     cannot disagree about whether an enactment was authorized.
     """
-    if certification.certifying(corpus, enactment.said, at) is None:
+    if certification.certifying(corpus, enactment.said, at, schema) is None:
         return False
-    return certification.contradicting(corpus, clause.group, enactment.said, at) is None
+    found = certification.contradicting(
+        corpus, clause.group, enactment.said, at, schema
+    )
+    return found is None
 
 
 def _governing(clauses: tuple[Clause, ...], act: str) -> Clause | None:

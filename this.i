@@ -1858,6 +1858,62 @@ Make Custos's replayable governance useful to a real organization = goal:
         and this beat restores the fourth verdict that removing the declaration duty took
         off the demo (@ow6dzro4). Cutting it costs a quarter of the codomain.
 
+    A law that names a schema is held to it, and a gloss that cannot read a kind says so = decision:
+      id: 45pjebk4
+      why: >
+        Five findings from the review round on PR #9, all five valid, and two of them
+        correctness rather than tidiness. Recorded together because they share one shape:
+        a check or a claim that was written and then not actually applied.
+        THE FAIL-OPEN IS THE ONE THAT MATTERED. `certifying` located a certification by
+        kind and subject and never compared the credential's schema against the one the
+        law names — so a tally issued against ANY schema discharged the requirement, was
+        accepted as sound by the falsity check, and could effectuate an enactment. This
+        module's own docstring cites `:1946-1951` for why a slot commits its schema — "a
+        requirement that could not say which evidence it wanted would be satisfiable by
+        the wrong one" — and then the certification field was read and not checked. The
+        schema is now a required argument at every call site rather than an optional one,
+        because a default would have let the next caller reintroduce exactly this.
+        A WRONG-SCHEMA EVENT IS NOT A LATE CERTIFICATION. "The first rather than the
+        last" is a rule about two tallies this law would accept; an event against another
+        schema is not a certification under this law at all, so it is skipped and a later
+        valid one still discharges. A check that stopped at the first kind-and-subject
+        match would have let a wrong-schema event SHADOW a valid one by arriving first,
+        which is a second fail-open wearing the first one's clothes.
+        THE SEAT COLLISION IS @qjjlkrxt ONE LAYER UP, and it is the same lesson twice in
+        one PR. `Group.__post_init__` deduplicated slots by `endorser`; every office slot
+        names the empty string, so a law with two distinct offices — or one office beside
+        a directly-entitled party — was refused as a duplicate before it could be folded.
+        Acme has a single office, so nothing exercised it, and M7's second domain would
+        have met it immediately. The error is renamed to say seat rather than endorser,
+        because the message a reader gets is part of the fix.
+        A GLOSS THAT GUESSES IS WORSE THAN ONE THAT SAYS NOTHING. The log screen's
+        fall-through rendered any unreadable kind through the disposition path. An earlier
+        pass at this guarded on an EMPTY attributes block, which caught the certification
+        and the duplicity observation and missed the issuance — an issuance has a
+        non-empty block — so `acme-governed-domain,6 declines None` shipped in the tracked
+        transcripts six times over. Now every kind is named explicitly and the
+        fall-through is the em dash. The near-miss is the point: a fix aimed at the
+        symptom rather than the branch left two thirds of the bug on screen.
+        THE ISSUANCE ROW DOES NOT REPEAT THE OFFICE, though the row is about an office
+        being filled. A COIA alias already carries its holder's role, so
+        `nina-board-seat-3,6` names the seat in the same breath as the person; naming it
+        again pushed the row to 105 columns against the projector's 96 for no information.
+        TWO HARD-CODED COUNTS were stale on the day they were written — a docstring saying
+        forty-nine over a record of fifty-three, and "the live thirteen ... the four
+        leave-behind beats" written into a GENERATED artifact that beat 26 contradicted
+        immediately. Both are derived now. Committing a literal count inside the generator
+        is the worst available place for one: the generate-and-pin arrangement exists
+        precisely so a stale number cannot survive a rebuild, and this one was upstream of
+        the mechanism that would have caught it.
+        THE FIX DIFF WAS REVIEWED BY A NON-CLAUDE SEAT before it was committed, and that
+        paid: `ds` accepted four of the five fixes and found the wrong-schema test asserted
+        something weaker than the finding it was meant to pin — it committed one bad
+        certification and asserted pending, which passes against an implementation that
+        merely ignores the bad event, there being nothing else to find. The shadowing case
+        above is that criticism. It also observed that "first" depends on an ordering this
+        function does not itself enforce; it holds because `Corpus` enforces it, and the
+        docstring now says which.
+
     The law creates a seat; a credential fills it = decision:
       id: ftjpdph5
       why: >

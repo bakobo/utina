@@ -42,7 +42,13 @@ from fractions import Fraction
 from utina.fold.clause import Clause
 from utina.fold.corpus import Corpus, Event
 from utina.fold.group import Disposition, Group
-from utina.fold.slots import SlotDisposition, classify, credential, declinations
+from utina.fold.slots import (
+    SCHEMA_FIELD,
+    SlotDisposition,
+    classify,
+    credential,
+    declinations,
+)
 from utina.fold.triple import SAID, Position
 
 __all__ = [
@@ -98,18 +104,32 @@ def schema_for(clause: Clause, default: SAID | None) -> SAID | None:
     return clause.certification if clause.certification is not None else default
 
 
-def certifying(corpus: Corpus, said: SAID, upto: Position) -> Event | None:
+def certifying(corpus: Corpus, said: SAID, upto: Position, schema: SAID) -> Event | None:
     """The committed certification of ``said`` at or before ``upto``, if there is one.
 
     The first rather than the last. A second certification of one subject is not a
     correction — the first one already made the act consequential, and a coordinate
     that moved when a later event arrived would make the moment of authorization a
-    function of when the question was asked.
+    function of when the question was asked. "First" is well defined because
+    ``Corpus`` holds its events in committed order and offers them in no other; this
+    walk does not re-sort and must not, since an order of its own would be a second
+    answer to a question ``corpus.py`` already answers.
+
+    **``schema`` is required and is checked**, because a law that names the schema its
+    tallies must satisfy has said something the fold has to hold it to. Without the
+    check a certification issued against ANY schema discharged the requirement, which
+    is the fail-open ``custos-4.2.md:1946-1951`` exists to prevent — the same sentence a
+    slot's own schema field is committed for, and for the same reason: "a requirement
+    that could not say which evidence it wanted would be satisfiable by the wrong one."
+    Read fail-closed, in the shape the rest of this module uses: a credential whose
+    schema is absent or is not a usable identifier satisfies nothing.
     """
     for event in corpus.upto(upto):
         if event.kind != CERTIFICATION_KIND:
             continue
-        if event.body.get(CERTIFIES_FIELD) == said:
+        if event.body.get(CERTIFIES_FIELD) != said:
+            continue
+        if credential(event).get(SCHEMA_FIELD) == schema:
             return event
     return None
 
@@ -160,7 +180,7 @@ def reached_by(event: Event) -> Fraction:
 
 
 def contradicting(
-    corpus: Corpus, group: Group, subject: SAID, at: Position
+    corpus: Corpus, group: Group, subject: SAID, at: Position, schema: SAID
 ) -> tuple[Event, SAID | None] | None:
     """The committed certification of ``subject`` the record does not support, if any.
 
@@ -186,7 +206,7 @@ def contradicting(
     is the certification's rather than the question's, because what a certification
     claims is that the threshold was met when it was admitted.
     """
-    event = certifying(corpus, subject, at)
+    event = certifying(corpus, subject, at, schema)
     if event is None:
         return None
     if reached_by(event) < 1:

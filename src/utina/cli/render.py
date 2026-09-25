@@ -61,9 +61,14 @@ from utina.fold.finding import (
 from utina.fold.refusal import Refusal
 from utina.fold.slots import (
     ACT_FIELD,
+    ATTRIBUTE_ISSUEE_FIELD,
     DISPOSITION_FIELD,
     ENDORSE,
+    ENDORSEMENT_KIND,
+    ISSUANCE_KIND,
     ISSUER_FIELD,
+    REVOCATION_KIND,
+    REVOKES_FIELD,
     SCHEMA_FIELD,
     SUBJECT_FIELD,
     attributes,
@@ -839,18 +844,46 @@ def _gloss(event: Event, aliases: Aliases) -> str:
         return f"the domain certifies {abbrev(subject)}"
     if event.kind == bearing.DUPLICITY_KIND:
         return f"duplicity observed at {aliases.short(str(bearing.convicted(event)))}"
+    if event.kind == ISSUANCE_KIND:
+        return _issued(event, aliases)
+    if event.kind == REVOCATION_KIND:
+        return f"revokes {abbrev(str(event.body.get(SUBJECT_FIELD, '')))}"
+    if REVOKES_FIELD in event.body:
+        # A retraction, keyed on the field rather than on a kind constant: the fold reads
+        # `revokes` wherever it appears and the substrate commits no dedicated kind for
+        # one (tick 3z6a), so a constant here would be inventing a name for it.
+        who = aliases.short(str(event.body.get(ISSUER_FIELD, "")))
+        return f"{who} withdraws {abbrev(str(event.body.get(REVOKES_FIELD, '')))}"
+    # **Every event kind is named above, and the fall-through is a disposition.** It used
+    # to be the other way round: anything this function had no reading for was rendered
+    # through the disposition path, which put "marta-founder,6 declines …" against a
+    # certification the domain committed, "None declines None" against a duplicity
+    # observation, and "acme-governed-domain,6 declines None" against a credential
+    # issuance — that last one six times over in the tracked transcripts, because an
+    # issuance HAS a non-empty attributes block and an earlier guard on emptiness let it
+    # straight through. A glossary that guesses is worse than one that says nothing, so
+    # an unreadable kind now says so.
     block = attributes(event)
-    if not block:
-        # A kind whose body this gloss has no reading for. Saying so is the honest
-        # answer; the fall-through used to read every such event as a declination,
-        # which put "marta-founder,6 declines …" against a certification the domain
-        # committed and "None declines None" against a duplicity observation.
+    if event.kind != ENDORSEMENT_KIND or not block:
         return "—"
     verb = "endorses" if block.get(DISPOSITION_FIELD) == ENDORSE else "declines"
     return (
         f"{aliases.short(str(credential(event).get(ISSUER_FIELD)))} {verb} "
         f"{abbrev(str(block.get(SUBJECT_FIELD)))}"
     )
+
+
+def _issued(event: Event, aliases: Aliases) -> str:
+    """A credential issuance, named by who holds it.
+
+    The office the credential seats them in is deliberately NOT repeated here, even
+    though the row is about the office being filled: a COIA alias already carries the
+    holder's role, so ``nina-board-seat-3,6`` says the seat in the same breath as the
+    person. Naming it twice pushed this row to 105 columns against the projector's 96
+    (``tests/test_cli.py``), which is a cost paid for no information.
+    """
+    issuee = attributes(event).get(ATTRIBUTE_ISSUEE_FIELD, "")
+    return f"a credential to {aliases.short(str(issuee))}"
 
 
 # --- utina replay -------------------------------------------------------------

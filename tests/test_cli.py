@@ -1633,3 +1633,60 @@ def test_the_live_run_carries_a_meanwhile_card_wherever_the_record_advances():
     assert out.count("MEANWHILE, between") == len(expected)
     for label in expected:
         assert f"and {label}" in out
+
+
+# --- what the log says about each event kind (Copilot, #9) ---------------------
+
+
+def _logged(*events) -> str:
+    """One log screen over hand-built events, for the kinds Acme's record has none of."""
+    from utina.cli.aliases import aliases_over
+    from utina.cli.render import log_screen
+    from utina.cli.style import Style
+    from utina.fold.triple import Position
+
+    return log_screen(
+        events, "here", Position(len(events) - 1), aliases_over({}), Style(False)
+    )
+
+
+def test_the_log_names_a_retraction_by_who_withdrew_what():
+    """Keyed on the ``revokes`` field rather than on a kind constant: the substrate
+    commits no dedicated kind for a retraction (tick ``3z6a``), so the fold reads the
+    field wherever it appears and naming a constant here would be inventing one."""
+    from utina.fold.corpus import Event
+    from utina.fold.triple import Position
+
+    withdrawn = Event(
+        said="EWithdraw",
+        kind="retraction",
+        position=Position(0),
+        body={"i": "acme:marta", "revokes": "EEarlier"},
+    )
+
+    out = _logged(withdrawn)
+
+    assert "withdraws EEarlier" in out
+    assert "declines" not in out, "a retraction is not a disposition"
+
+
+def test_the_log_says_nothing_rather_than_guessing_at_a_kind_it_cannot_read():
+    """A glossary that guesses is worse than one that says nothing.
+
+    Every kind the record commits is now named explicitly, and the fall-through used to
+    be the disposition path — which rendered a certification as "marta-founder,6
+    declines ...", a duplicity observation as "None declines None", and a credential
+    issuance as "acme-governed-domain,6 declines None", six times over in the tracked
+    transcripts (Copilot, PR #9).
+    """
+    from utina.fold.corpus import Event
+    from utina.fold.triple import Position
+
+    unknown = Event(
+        said="EMystery", kind="interpretive-dance", position=Position(0), body={}
+    )
+
+    out = _logged(unknown)
+
+    assert "\u2014" in out
+    assert "declines" not in out and "endorses" not in out
