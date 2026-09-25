@@ -154,6 +154,18 @@ Beats 3 and 5 are deliberately left pending. They are Act II's material.
 | 22 | Lower the ordinary-acts bar (the second amendment) | B2 | Marta E, Dev E, seat 3 E | 1.0 | **affirmed** | unanimous, certified, and entirely lawful, which is the setup: the cost in beat 23 is the cost of a *good* amendment, not of anyone cheating |
 | 23 | `disturbance <the second amendment>` | — | — | — | *(a report, not a verdict)* | the three acts in flight the amendment ended: the retabled budget, the capital plan, the Q3 budget. Nobody voted them down and none can now finish. Any stranger holding the log computes the same list |
 
+### Act V — a certification that lies
+
+**Live: 26.** One beat, and it restores the fourth verdict. Removing the amender's declaration duty took `self-convicted` off the demo (`this.i` @ow6dzro4); this puts it back on a governance failure rather than on a lost key, which is the better story for this audience.
+
+| # | Question | Clause | Slots | Sum | Expected | Ground it must carry |
+|---|---|---|---|---|---|---|
+| 26 | Marta certifies an act that never carried | A3 | Marta E, Dev **D** | 0.5 | **self-convicted** | the proof package naming the contradictory pair — Marta's certification, and the declination it was written around. The tally cites her own half at full weight; the domain admits it because the cited weights do add to one, and the domain does not re-fold its own record before admitting. Any stranger who folds it convicts her on bytes she signed (`this.i` @t3kuqli6, @epztz4wd) |
+
+**Why A3 and why last.** A3 is the one clause neither amendment moves, and under the lowered B1 a single endorsement reaches unity on its own — so the same tally would be *honest* there and there would be no lie to show. Last in the record, so no earlier coordinate moves and beat 20's observation stays where beat 22 needs it. Clear of seat 3, or a convicted cited party would fire the taint succession and the beat would show beat 20's screen a second time.
+
+**Not in the cut list.** Beat 26 is the only place the fourth verdict appears. Cutting it for time costs a quarter of the codomain.
+
 ### Coda
 
 **Leave-behind, both.** They are the cheapest beats in the document and the least surprising to this audience, which is exactly the combination that loses to a question.
