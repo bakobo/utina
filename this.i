@@ -942,6 +942,39 @@ Make Custos's replayable governance useful to a real organization = goal:
         overflows its ten-column field and pushes that one headline to 92, and widening the field
         would move the headline on every eval screen to fix one.
 
+    Demo 3 is demo 2 with beats subtracted, and nothing added = decision:
+      id: ij2rkusn
+      why: >
+        Demo 2 does not fit its slot. Its script budgeted 17 to 19 minutes for the live part on a
+        derived rate, and Daniel measured the real one on 2026-09-26: 20 minutes to narrate the
+        first eight beats, which puts the full demo 2 near an hour. So demo 3 plays eight of demo
+        2's beats — 1, 2, 4, 7, 13, 27, 28, 29 — for 20 to 30 minutes. That's the law, one
+        affirmation, one defeat, the amendment, the same signed no now pending, and the two domains
+        composing. The rate to plan with is about 2.5 minutes a beat, measured, not computed.
+        Chose to subtract rather than rewrite. Demo 3 imports demo 2's `Beat` objects and kernel
+        cards by id and walks them through the same loop, so a beat cannot drift from its demo-2
+        form without a test noticing, and demo 2 stays whole as the leave-behind. Beat numbers
+        keep their demo-2 values with gaps, which Daniel ruled acceptable, because renumbering
+        would force rewriting every narration that cites another beat.
+        Chose beat 4 as the defeat, played before the amendment because the record puts it there,
+        over beat 14's toolchain refusal in the position Daniel first sketched (Q-DYVP). Beats 4
+        and 13 together are demo 2's "same signed no, two answers" kernel, so the pending beat and
+        the defeated beat carry one idea rather than two, and beat 14 would also have needed beat
+        8's seat screen to be legible.
+        One deviation from demo 2, and only one: beat 28's narration cites "beat 12's rule", and
+        beat 12 is not played. Demo 3 carries its own wording for that paragraph. Every other
+        field of every beat is demo 2's, and a test asserts it.
+        Beats 1, 2 and 4 keep demo 2's full screen density, which is how Daniel rehearsed them.
+        Demo 3 does not force a substrate, unlike demo 2's opener: it is one run played live,
+        and the cue card says to run it under keripy, which demo 2's script already recommends for
+        a live run.
+        Rejected a `--part` of demo 2 (for example a `short` part). A part is a slice of one
+        run-of-show; demo 3 has its own cut list, its own card and its own transcript, and folding
+        it into demo 2's module would make every count in demo 2 carry a second meaning.
+        If the clock still runs out, beat 1 goes first and then beat 27, because they are the two
+        law screens and not verdicts. Beat 28's narration explains Meridian's obligation on its
+        own, and the audience will already have been taught what a committed law is.
+
     An identifier is never painted = constraint:
       id: pumwsfto
       why: >
