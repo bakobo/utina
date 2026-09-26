@@ -323,6 +323,13 @@ def build_parser(console: Console) -> _Parser:
     demo2.add_argument("--no-pause", dest="no_pause", action="store_true")
     demo2.add_argument("--beat", metavar="ID")
 
+    demo3 = commands.add_parser(
+        "demo3", out=console.out, parents=[backend],
+        help="walk demo 2 shortened to eight beats: see docs/demo-3-cue-card.md",
+    )
+    demo3.add_argument("--no-pause", dest="no_pause", action="store_true")
+    demo3.add_argument("--beat", metavar="ID")
+
     return parser
 
 
@@ -595,6 +602,18 @@ def demo2_command(args: argparse.Namespace, console: Console) -> int:
     )
 
 
+def demo3_command(args: argparse.Namespace, console: Console) -> int:
+    from utina.cli.demo3 import walk3
+
+    return walk3(
+        console,
+        beat=args.beat,
+        pause=not args.no_pause,
+        substrate=args.substrate,
+        store=args.store,
+    )
+
+
 def demo_command(args: argparse.Namespace, console: Console) -> int:
     from utina.cli.demo import walk
 
@@ -620,6 +639,7 @@ COMMANDS: Mapping[str, Callable[[argparse.Namespace, Console], int]] = {
     "disturbance": disturbance_command,
     "demo": demo_command,
     "demo2": demo2_command,
+    "demo3": demo3_command,
 }
 
 

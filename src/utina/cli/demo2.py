@@ -59,6 +59,8 @@ __all__ = [
     "Beat",
     "Kernel",
     "coordinate_of",
+    "named",
+    "play",
     "walk2",
 ]
 
@@ -496,15 +498,12 @@ def _cursor(beats: tuple[Beat, ...]) -> str:
     return since
 
 
-def _named(identifier: str) -> Beat:
-    """The beat that identifier names, or a refusal naming the ones that exist."""
-    for beat in OPENER + LIVE + LEAVE_BEHIND:
+def named(identifier: str, beats: tuple[Beat, ...]) -> Beat:
+    """The beat among ``beats`` that identifier names, or a refusal naming them all."""
+    for beat in beats:
         if beat.id == identifier:
             return beat
-    raise BEAT_UNKNOWN(
-        beat=identifier,
-        known=", ".join(beat.id for beat in OPENER + LIVE + LEAVE_BEHIND),
-    )
+    raise BEAT_UNKNOWN(beat=identifier, known=", ".join(beat.id for beat in beats))
 
 
 def _kernel_of(beat: Beat) -> Kernel | None:
@@ -531,15 +530,35 @@ def walk2(
     claim, with real prefixes on screen, and a recorded opener that ran on the
     facade would make the claim in words while showing the opposite.
     """
-    from utina.cli.app import run
-
     backend = KERIPY if part == "opener" and substrate == FACADE else substrate
-    sequence = _sequence(part) if beat is None else (_named(beat),)
-    status = 0
+    everything = OPENER + LIVE + LEAVE_BEHIND
+    sequence = _sequence(part) if beat is None else (named(beat, everything),)
     # A part picks up where the in-order beats before it left off, so the live part
     # opens on what was committed after the opener's beat 5. A single --beat has no
     # predecessor to measure from and prints no span.
     since = "" if beat is not None else _cursor(_preceding(part))
+    return play(console, sequence, since=since, pause=pause, backend=backend, store=store)
+
+
+def play(
+    console: Console,
+    sequence: tuple[Beat, ...],
+    *,
+    since: str,
+    pause: bool,
+    backend: str,
+    store: Path | None,
+) -> int:
+    """Echo and run each beat, with a kernel card and a meanwhile span where they apply.
+
+    Shared with ``utina.cli.demo3``, which plays a subset of these beats: one loop means
+    a demo-3 beat is laid out exactly as it is in demo 2 (``this.i`` @ij2rkusn). The kernel
+    cards are demo 2's, found by the beat that opens each one, so a subset that keeps a
+    kernel's first beat keeps its card.
+    """
+    from utina.cli.app import run
+
+    status = 0
     labelled = False
     for index, one in enumerate(sequence):
         kernel = _kernel_of(one)
