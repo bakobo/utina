@@ -96,7 +96,7 @@ def test_a_domain_the_registry_does_not_know_is_refused_by_the_parser() -> None:
     assert "acme" in err and "bank" in err
 
 
-@pytest.mark.parametrize("command", ("demo", "demo2"))
+@pytest.mark.parametrize("command", ("demo", "demo2", "demo3"))
 def test_a_demo_driver_refuses_the_domain_flag(command: str) -> None:
     """@rgfxfkvo: a driver that walks ONE domain's story does not take the flag.
 

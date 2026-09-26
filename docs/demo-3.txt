@@ -1,0 +1,315 @@
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 1     The law Acme committed at inception
+  Three clauses, two founders, half the weight each, and the digest of the semantics the
+  clauses are written in. Nothing is judged yet. A law that did not pin its semantics
+  would be refused rather than read at whatever revision happens to be installed.
+
+  $ utina law --at inception
+
+  LAW IN FORCE AT inception (seq 0)
+  ------------------------------------------------------------------------------------
+
+  semantics   08fd67445b6f1a96...   the dossier specification, pinned
+  head        f3bd6baa1af2...          over 3 clauses, ordered by clause SAID
+  bytes       591 canonical bytes, digested SHA-256
+  parties     acme-governed-domain,6, dev-founder-acme,6, marta-founder-acme,6,
+              nina-board-seat-3-acme,6, nina-board-seat-3-device-acme,6,
+              quinn-cfo-acme,6
+  aliases     Display names, not identifiers, and local to Acme. The slot lists below
+              drop the shared 'at acme'. Run utina whois <alias> for the identifier
+              behind one.
+  requires    a certification of the tally, by the domain itself
+
+  clause A1   MxN, unity 1                          4224df02442b...
+    governs   open-bank-account, hire-vp-sales, sign-office-lease, approve-budget
+    slots     marta-founder,6 1/2, dev-founder,6 1/2
+    weights   the slots sum to 1, so every slot is required
+
+  clause A2   MxN, unity 1                          5b45b63ffdee...
+    governs   amend-operating-agreement
+    slots     marta-founder,6 1/2, dev-founder,6 1/2
+    weights   the slots sum to 1, so every slot is required
+
+  clause A3   MxN, unity 1                          709b5b56f684...
+    governs   release-escrowed-equity
+    slots     marta-founder,6 1/2, dev-founder,6 1/2
+    weights   the slots sum to 1, so every slot is required
+
+
+                                                   MEANWHILE, between inception and d1
+  ------------------------------------------------------------------------------------
+
+  4 committed events, of which 1 is a certification.
+
+  seq  kind          identifier         what it commits
+    1  act           E9LNkisX-EfN...    an act of the class open-bank-account
+    2  endorsement   ETFRV_i1XbrD...    marta-founder,6 endorses E9LNkisX-EfN...
+    3  endorsement   E7rZDgjVNGiJ...    dev-founder,6 endorses E9LNkisX-EfN...
+    4  certification ExBkhZKYrpIG...    the domain certifies E9LNkisX-EfN...
+
+  labels      inception and d1 are this demo's names for coordinates and are committed
+              nowhere. The record has sequence numbers, which is what the seq column
+              above shows and what a stranger folding the same log would address it by.
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 2     Open a bank account
+  Both founders endorse and unity is reached. The affirmation carries the endorsements
+  that reached it rather than asserting that they did.
+
+  $ utina eval open-bank-account --at d1
+
+  AFFIRMED    may Acme perform an act of the class open-bank-account?
+  ------------------------------------------------------------------------------------
+
+  position    d1 (seq 4)
+  law head    f3bd6baa1af2...          clause A1 (MxN), unity 1
+  subject     E9LNkisX-EfNzavJsJmBUx8IyDX_7jmCpAIL6cSvt5kY
+
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      ETFRV_i1XbrD...
+  dev-founder,6          1/2   endorsed      E7rZDgjVNGiJ...
+                      ------
+  endorsed                 1   of 1          unity reached
+  reachable                1   of 1          unity still reachable
+
+  ground
+    clauses     A1
+    reached by  E7rZDgjVNGiJ..., ETFRV_i1XbrD...
+    evidence    fc365b6f434fdafd...
+
+
+                                                          MEANWHILE, between d1 and d3
+  ------------------------------------------------------------------------------------
+
+  5 committed events, and no certification among them.
+
+  seq  kind          identifier         what it commits
+    5  act           EwPiv9MyMf1_...    an act of the class hire-vp-sales
+    6  endorsement   Em4Qjz9_-1qz...    marta-founder,6 endorses EwPiv9MyMf1_...
+    7  act           EzuILyeC7mot...    an act of the class sign-office-lease
+    8  endorsement   E_amgq1fOhOk...    marta-founder,6 endorses EzuILyeC7mot...
+    9  endorsement   EHhTweOdi1Vt...    dev-founder,6 declines EzuILyeC7mot...
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 4     Sign the office lease, after Dev declines
+  A signed no spends its slot, so the weight that could still arrive no longer reaches
+  unity. Watch the reachable row, not the endorsed one.
+
+  $ utina eval sign-office-lease --at d3
+
+  DEFEATED    may Acme perform an act of the class sign-office-lease?
+  ------------------------------------------------------------------------------------
+
+  position    d3 (seq 9)
+  law head    f3bd6baa1af2...          clause A1 (MxN), unity 1
+  subject     EzuILyeC7motQnTOaC5pgoFhs_7LRf68Ik1kV3C0Ibak
+
+  slot                weight   disposition   committed act
+  marta-founder,6        1/2   endorsed      E_amgq1fOhOk...
+  dev-founder,6          1/2   declined      EHhTweOdi1Vt...
+                      ------
+  endorsed               1/2   of 1          unity not reached
+  reachable              1/2   of 1          unity unreachable: a declined slot is spent
+
+  ground
+    clause      A1
+    defeater    authority (the actor lacked the invoked power)
+    subcode     dev-founder-acme,6
+    citation    the declination EHhTweOdi1Vt... committed by dev-founder-acme,6
+    reason      Unity is unreachable under clause A1: dev-founder-acme,6 committed a
+                signed declination, which spends that slot's weight, and the weight that
+                can still arrive no longer reaches unity.
+
+
+
+  ------------------------------------------------------------------------------------
+  KERNEL  The amendment as hinge
+  expects: a document is adopted
+  happens: a seat AID is delegated, a seat credential is issued, and the amendment is
+    judged under the law it replaces
+
+
+                                                          MEANWHILE, between d3 and d4
+  ------------------------------------------------------------------------------------
+
+  6 committed events, of which 1 is a certification.
+
+  seq  kind          identifier         what it commits
+   10  act           Efx7xD35Qc6n...    an act of the class release-escrowed-equity
+   11  endorsement   ETg2KsO0yZ3R...    marta-founder,6 endorses Efx7xD35Qc6n...
+   12  enactment     Ekql3BdJ3m74...    a successor law, enacted as amend-operating-agreement
+   13  endorsement   E5Hz2HbAX_Rf...    marta-founder,6 endorses Ekql3BdJ3m74...
+   14  endorsement   EHYEOkjHGQcp...    dev-founder,6 endorses Ekql3BdJ3m74...
+   15  certification EkaqC8LbtvWx...    the domain certifies Ekql3BdJ3m74...
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 7     Seat the board: the amendment itself
+  The enactment that changes the law is judged under the law it replaces — clause A2,
+  not the B2 it commits. Succession is never retroactive, and everything after this beat
+  uses the board this one creates.
+
+  $ utina eval --said seat-the-board --at d4 --brief
+
+  AFFIRMED    was the committed act Ekql3BdJ3m74NehJAehqKctvs9mrF4V-YK7xufB2Lu-E lawful?
+  ------------------------------------------------------------------------------------
+  d4 (seq 15), clause A2 (MxN), unity 1, law head f3bd6baa1af2...
+
+  marta-founder,6        1/2   endorsed      E5Hz2HbAX_Rf...
+  dev-founder,6          1/2   endorsed      EHYEOkjHGQcp...
+  endorsed 1 of 1, unity reached; reachable 1, still reachable
+
+  ground      clause A2, reached by E5Hz2HbAX_Rf..., EHYEOkjHGQcp...
+
+
+
+  ------------------------------------------------------------------------------------
+  KERNEL  Same signed no, two answers
+  expects: a "no" means no
+  happens: defeat under two slots, pending under three. The Constitution changed; the
+    arithmetic did the rest
+
+
+                                                         MEANWHILE, between d4 and b13
+  ------------------------------------------------------------------------------------
+
+  18 committed events, of which 2 are certifications.
+
+  seq  kind          identifier         what it commits
+   16  issuance      Egg_zDGvfCi4...    a credential to nina-board-seat-3,6
+   17  endorsement   EQfnCxJn58wc...    dev-founder,6 endorses Efx7xD35Qc6n...
+   18  certification EQ20ITrciOU4...    the domain certifies Efx7xD35Qc6n...
+   19  act           E3CkC7KlYyV8...    an act of the class approve-budget
+   20  endorsement   EdWJdTA6J6Uk...    marta-founder,6 endorses E3CkC7KlYyV8...
+   21  endorsement   EMyOnRplLjSS...    nina-board-seat-3,6 endorses E3CkC7KlYyV8...
+   22  certification EuIxLtEoR1AU...    the domain certifies E3CkC7KlYyV8...
+   23  act           EGjUl5wf-EgX...    an act of the class approve-budget
+   24  endorsement   EUW6tAqZbtUY...    marta-founder,6 endorses EGjUl5wf-EgX...
+   25  endorsement   ExxK_2VcUUGv...    dev-founder,6 declines EGjUl5wf-EgX...
+   26  act           EgI-ZVEjrCWQ...    an act of the class amend-operating-agreement
+   27  endorsement   EA9CR8mNUjZS...    marta-founder,6 endorses EgI-ZVEjrCWQ...
+   28  endorsement   E-J1KRVMWmk6...    dev-founder,6 endorses EgI-ZVEjrCWQ...
+   29  endorsement   EHo6kG2k2fsX...    nina-board-seat-3,6 declines EgI-ZVEjrCWQ...
+   30  act           E6z8GBN0AKLe...    an act of the class declare-dividend
+   31  act           E978XZbiieJi...    an act of the class approve-budget
+   32  endorsement   Eqrox0_SoNlQ...    marta-founder,6 endorses E978XZbiieJi...
+   33  endorsement   E3xAA9ue-EBq...    dev-founder,6 declines E978XZbiieJi...
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 13    The Q2 forecast, after Dev declines
+  The same signed no as beat 4, from the same person, under the board's clause. Defeat
+  became pending, because with three slots the ceiling still clears unity. Nothing about
+  the declination changed.
+
+  $ utina eval approve-budget --at b13 --brief
+
+  PENDING     may Acme perform an act of the class approve-budget?
+  ------------------------------------------------------------------------------------
+  b13 (seq 33), clause B1 (MxN), unity 1, law head 94ac5bb73b09...
+
+  marta-founder,6        1/2   endorsed      Eqrox0_SoNlQ...
+  dev-founder,6          1/2   declined      E3xAA9ue-EBq...
+  nina-board-seat-3,6    1/2   pending       -
+  endorsed 1/2 of 1, not reached; reachable 1, still reachable
+
+  ground      board-seat-3 - endorsement under clause B1, absent
+
+
+
+  ------------------------------------------------------------------------------------
+  KERNEL  Governance that composes
+  expects: a governance engine is something each organization runs for itself
+  happens: two organizations transact, neither reads the other's constitution, and both
+    get an answer the room can check
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 27    Meridian Bank's law obliges it to look
+  A second governed domain, and nothing about it is Acme's. Two officers, one clause,
+  one act — and beside the clause, a term saying that opening an account for a customer
+  requires confirming the customer could lawfully take the action. That obligation is
+  Meridian's own, written in Meridian's own law. It names no clause of Acme's, no
+  identifier of Acme's, and no act class of Acme's, because a domain that had to read
+  another domain's constitution to transact with it would not compose; it would merge.
+
+  $ utina law --domain bank --at 5
+
+  LAW IN FORCE AT 5 (seq 5)
+  ------------------------------------------------------------------------------------
+
+  semantics   08fd67445b6f1a96...   the dossier specification, pinned
+  head        0a346343963c...          over 1 clauses, ordered by clause SAID
+  bytes       182 canonical bytes, digested SHA-256
+  parties     acme-customer,6, meridian-governed-domain,6, priya-officer-meridian,6,
+              tomas-officer-meridian,6
+  aliases     Display names, not identifiers, and local to Meridian. The slot lists
+              below drop the shared 'at meridian'. Run utina whois <alias> for the
+              identifier behind one.
+  requires    a certification of the tally, by the domain itself; diligence: the
+              counterparty's own governance, folded and sealed
+
+  clause M1   MxN, unity 1                          0a346343963c...
+    governs   open-customer-account
+    slots     priya-officer,6 1/2, tomas-officer,6 1/2
+    weights   the slots sum to 1, so every slot is required
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 28    Both officers sign, and it is still not enough
+  Unity is reached and the domain has certified the tally, so by Acme's rules this act
+  would be authorized. It is not. Meridian asked more of itself than a count, and the
+  screen names exactly what is outstanding: diligence, under Meridian's own clause,
+  absent. A bank that has not yet looked at the customer's file has not finished, and
+  the record says so rather than the compliance officer saying so.
+
+  $ utina eval open-customer-account --domain bank --at 4 --brief
+
+  PENDING     may Meridian Bank perform an act of the class open-customer-account?
+  ------------------------------------------------------------------------------------
+  4 (seq 4), clause M1 (MxN), unity 1, law head 0a346343963c...
+
+  priya-officer,6        1/2   endorsed      ECf8hE2IFZNL...
+  tomas-officer,6        1/2   endorsed      Elpu5_1Zn7bY...
+  endorsed 1 of 1, unity reached; reachable 1, still reachable
+
+  ground      meridian-governed-domain,6 - diligence under clause M1, absent
+
+
+
+  ------------------------------------------------------------------------------------
+  BEAT 29    Meridian folds Acme's log, and shows you the fold
+  Back at beat 2 you watched Acme approve opening a bank account under its own
+  governance. Meridian now holds a copy of Acme's record up to that coordinate and has
+  committed what it checked: whose domain, which coordinate, which law was in force
+  there, which clause, over which act. It committed no verdict — the standard forbids
+  one, because a sealed answer a stranger cannot recompute is authority smuggled in as
+  evidence. So the last line of this screen is not something Meridian is telling you. It
+  is what Acme's log says when this engine folds it again, now, in front of you, out of
+  Meridian's own record. You do not have to take Acme's word for it, Meridian did not,
+  and you do not have to take Meridian's either.
+
+  $ utina eval open-customer-account --domain bank --at 5 --brief
+
+  AFFIRMED    may Meridian Bank perform an act of the class open-customer-account?
+  ------------------------------------------------------------------------------------
+  5 (seq 5), clause M1 (MxN), unity 1, law head 0a346343963c...
+
+  priya-officer,6        1/2   endorsed      ECf8hE2IFZNL...
+  tomas-officer,6        1/2   endorsed      Elpu5_1Zn7bY...
+  endorsed 1 of 1, unity reached; reachable 1, still reachable
+
+  diligence   acme-customer,6 at their seq 4 under their clause A1, refolded here from
+              their own committed record: AFFIRMED
+  ground      clause M1, reached by ECf8hE2IFZNL..., Elpu5_1Zn7bY...
