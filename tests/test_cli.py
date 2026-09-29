@@ -1712,3 +1712,30 @@ def test_the_log_says_nothing_rather_than_guessing_at_a_kind_it_cannot_read():
 
     assert "\u2014" in out
     assert "declines" not in out and "endorses" not in out
+
+
+# --- a pause with nobody at the keyboard (tick 4ywx) ------------------------------
+#
+# nohup, cron and any harness that closes stdin reach the demo's pause with nothing
+# to read. A traceback on a projector is the one shape the error standard forbids, so
+# end-of-input means nobody is there to press a key and the walk carries on.
+
+
+def test_a_pause_over_a_closed_stdin_returns_instead_of_raising(monkeypatch):
+    monkeypatch.setattr("sys.stdin", StringIO(""))
+    Console.over(StringIO(), StringIO(), environ={}).pause()
+
+
+def test_a_pause_over_a_keypress_consumes_it(monkeypatch):
+    stdin = StringIO("\nnext\n")
+    monkeypatch.setattr("sys.stdin", stdin)
+    Console.over(StringIO(), StringIO(), environ={}).pause()
+    assert stdin.read() == "next\n"
+
+
+def test_the_demo_walks_to_the_end_over_a_closed_stdin(monkeypatch):
+    monkeypatch.setattr("sys.stdin", StringIO(""))
+    out, err = StringIO(), StringIO()
+    status = run(("demo3",), Console.over(out, err, environ={}))
+    assert status == 0, err.getvalue()
+    assert "Traceback" not in err.getvalue()

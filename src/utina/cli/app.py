@@ -115,8 +115,17 @@ def _no_pause() -> None:
     """The pause a non-interactive console takes between demo beats."""
 
 
-def _wait_for_a_keypress() -> None:  # pragma: no cover - stdin belongs to the narrator
-    input()
+def _wait_for_a_keypress() -> None:
+    """Wait for the narrator, unless stdin is closed and nobody is there to press a key.
+
+    End of input is what nohup, cron or a harness that closes stdin looks like, and it
+    carries on as :func:`_no_pause` would rather than leaving through a traceback
+    (tick 4ywx).
+    """
+    try:
+        input()
+    except EOFError:
+        return
 
 
 @dataclass(frozen=True)
