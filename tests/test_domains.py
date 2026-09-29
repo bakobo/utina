@@ -310,14 +310,21 @@ def _an_act_class(record: Record) -> str:
     return law.clauses[0].governs[0]
 
 
-def test_the_bank_builds_over_the_doubles_and_seals_what_the_fold_answered(acme_double):
+def test_the_bank_builds_over_the_doubles_and_seals_what_the_fold_answered():
     """The writing plane is exercisable with no fold at all (this.i @tvaq2s): the
     diligence seal's terms are whatever ``FoldValues.governing`` answered, carried
-    verbatim, and nothing in the bank fixture computes them (tick 3pbr, @3owiqfnz)."""
-    from conftest import DoubleValues
-    from utina.bank import build
+    verbatim, and nothing in the bank fixture computes them (tick 3pbr, @3owiqfnz).
 
-    meridian = build(values=DoubleValues(), counterparty=acme_double)
+    Both domains share one substrate, as ``utina.cli.world`` arranges, because the
+    bank verifies the customer's signatures against their key log before sealing."""
+    from conftest import DoubleValues
+    from utina.acme import build as acme_build
+    from utina.bank import build
+    from utina.substrate import FacadeSubstrate
+
+    shared = FacadeSubstrate()
+    customer = acme_build(values=DoubleValues(), substrate=shared)
+    meridian = build(values=DoubleValues(), substrate=shared, counterparty=customer)
     seal = next(e for e in meridian.events if e.said == meridian.said("diligence"))
     committed = repr(seal.body)
 
