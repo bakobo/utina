@@ -23,6 +23,7 @@ from pathlib import Path
 
 from utina import acme, bank
 from utina.domain import Record
+from utina.fold.constitution import Constitution
 from utina.fold.corpus import Corpus, Event
 from utina.fold.gel import anchored
 from utina.fold.triple import Position
@@ -80,6 +81,11 @@ class RealValues:
         if kel is None:
             return Corpus.load(events)
         return anchored(events, kel, gaid=str(gaid))
+
+    def governing(self, corpus: Corpus, at: Position, act: str) -> tuple[str, str] | None:
+        law = Constitution.at(corpus, at)
+        clause = law.governing(act)
+        return None if clause is None else (clause.id, law.law_head.said)
 
 
 @contextmanager

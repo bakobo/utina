@@ -27,7 +27,6 @@ from fractions import Fraction
 
 from utina.domain import Record
 from utina.enact import Constructor
-from utina.fold.constitution import Constitution
 from utina.substrate import FacadeSubstrate, FoldValues, Substrate
 
 from .law import (
@@ -109,7 +108,7 @@ def build(
     # And here the act is STILL pending, because Meridian's law asks for more than a
     # count. The diligence lands last, and that placement is the beat: a reader who
     # asks the question one coordinate earlier is told exactly what is missing.
-    name("diligence", _diligence(constructor, counterparty))
+    name("diligence", _diligence(constructor, counterparty, values))
 
     events = constructor.emitted
     kel = constructor.key_events
@@ -129,7 +128,7 @@ def build(
     )
 
 
-def _diligence(constructor: Constructor, customer: Record) -> object:
+def _diligence(constructor: Constructor, customer: Record, values: FoldValues) -> object:
     """Meridian folds the customer's log and commits what it relied on.
 
     The seal's terms are read off the customer's own record at the moment of looking —
@@ -145,16 +144,16 @@ def _diligence(constructor: Constructor, customer: Record) -> object:
     """
     at = customer.at(CUSTOMER_COORDINATE)
     subject = customer.said(CUSTOMER_ACT)
-    law = Constitution.at(customer.corpus, at)
-    governing = law.governing(CUSTOMER_ACT)
+    governing = values.governing(customer.corpus, at, CUSTOMER_ACT)
     assert governing is not None, "the customer's law governs the act it committed"
+    clause, head = governing
     return constructor.seal_evaluation(
         constructor.emitted[1].said,
         counterparty=customer.gaid,
-        clause=governing.id,
+        clause=clause,
         on=subject,
         at=at.seq,
-        head=law.law_head.said,
+        head=head,
         events=customer.corpus.upto(at),
         kel=_kel_upto(customer.kel, at.seq),
     )

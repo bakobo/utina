@@ -142,6 +142,11 @@ class RealValues:
 
         return Real().corpus(events, kel=kel, gaid=gaid)
 
+    def governing(self, corpus: Any, at: Any, act: str) -> Any:
+        from utina.cli.world import RealValues as Real
+
+        return Real().governing(corpus, at, act)
+
 
 @pytest.fixture(params=NAMES, scope="session")
 def acme(request: pytest.FixtureRequest) -> Iterator[Any]:
