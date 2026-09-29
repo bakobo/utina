@@ -439,6 +439,31 @@ Make Custos's replayable governance useful to a real organization = goal:
         being built by three sibling commissions, instead of sitting untested
         behind an import that does not resolve yet.
 
+    A fixture that must read the fold asks through the injected values = decision:
+      id: 3owiqfnz
+      why: >
+        Meridian's diligence seal commits the clause that governs the customer's act and the law
+        head in force at the coordinate it relied on, and utina.bank.build got both by importing
+        Constitution and calling it: the writing plane calling the judge, against @tvaq2s (tick
+        3pbr, glm's review of PR #10). The guard that should have caught it named three modules
+        by hand and bank/build.py was not one of them.
+        Chose to give FoldValues one question beside its three constructors, governing(corpus,
+        at, act), answering the governing clause's id and the law head, and to have the
+        composition root answer it with the real fold. A bank genuinely does fold its
+        counterparty before it transacts, so the dependency is the domain's truth and not an
+        accident of layout; what @tvaq2s forbids is the import edge that makes the constructor's
+        plane unloadable without the judge's, and injection removes the edge while keeping the
+        answer the fold's own. Rejected a writing-plane helper that reads the terms off the law
+        event directly, because the law head is a digest over the fold's canonical bytes and a
+        second computation of it would be a second opinion free to drift from the one the
+        stranger re-derives. Rejected a this.i deviation, because the injection costs one
+        method.
+        The guard now finds every fixture's build module rather than listing them, so a third
+        domain inherits the rule. Law modules stay outside it by the existing practice of
+        domain/law.py: they import the fold's field names and pinned values so a law cannot
+        spell a field the fold does not read, and that is a constant shared across the seam, not
+        a call into the judge.
+
     A facade signature names the key state it was made under = decision:
       id: h7l67i
       why: >
