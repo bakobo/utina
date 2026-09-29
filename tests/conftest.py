@@ -98,6 +98,15 @@ class DoubleValues:
     ) -> DoubleCorpus:
         return DoubleCorpus.load(events)
 
+    #: What the double answers when a fixture asks the fold which clause governs an
+    #: act (``FoldValues.governing``, this.i @3owiqfnz). Canned rather than computed:
+    #: the doubles carry no law, and the point is that the writing plane can be
+    #: exercised with no fold at all.
+    GOVERNING = ("double-clause", "double-law-head")
+
+    def governing(self, corpus: DoubleCorpus, at: DoublePosition, act: str) -> tuple[str, str]:
+        return self.GOVERNING
+
 
 # --- Fixtures ----------------------------------------------------------------
 

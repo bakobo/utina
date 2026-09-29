@@ -138,9 +138,12 @@ def test_the_keri_pin_is_the_digest_of_the_vendored_specification():
     assert hashlib.sha256(body).hexdigest() == KERI
 
 
-def test_every_recovery_rule_the_law_dispositions_is_one_the_pinned_revision_names():
+def test_the_law_dispositions_exactly_the_recovery_rules_the_pinned_revision_names():
+    """Both directions: a rule the law names must exist, and a rule the text carries
+    must be named, or it is passed over in silence (custos-4.2.md:2855-2856). The
+    headings A and B are excluded because their numbered members carry them."""
     body = (SCHEMAS / "keri-spec-body.md").read_text(encoding="utf-8")
-    section = body.split("#### Superseding Rules for Recovery", 1)[1].split("\n## ", 1)[0]
+    section = body.split("#### Superseding Rules for Recovery", 1)[1].split("\n#", 1)[0]
+    labelled = set(re.findall(r"^\s*([A-C]\d*)\.", section, re.MULTILINE))
 
-    for rule in RECOVERY_RULES:
-        assert re.search(rf"^\s*{rule}\.", section, re.MULTILINE), rule
+    assert labelled - {"A", "B"} == set(RECOVERY_RULES)

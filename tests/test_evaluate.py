@@ -43,7 +43,15 @@ from utina.fold.finding import (
 )
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal, SealKind
-from utina.fold.semantics import DOSSIER, DOSSIER_KEY, IMPLEMENTED, SEMANTICS_FIELD
+from utina.fold.semantics import (
+    DOSSIER,
+    DOSSIER_KEY,
+    EXCLUDED,
+    IMPLEMENTED,
+    KERI_KEY,
+    RECOVERY_KEY,
+    SEMANTICS_FIELD,
+)
 from utina.fold.triple import Position
 from utina.substrate import ENDORSEMENT_SCHEMA, GCD_SCHEMA
 
@@ -195,12 +203,14 @@ class Log:
         """The edges a certification cites: each party's committed endorsement, weighted."""
         return [(self.said(f"endorse-{who}"), weight) for who, weight in pairs]
 
-    def amend(self, name: str, clauses, act: str = "amend") -> str:
+    def amend(
+        self, name: str, clauses, act: str = "amend", pinned: dict[str, object] | None = None
+    ) -> str:
         body: dict[str, object] = {
             "t": "enact",
             "i": GAID,
             "act": act,
-            "law": {"clauses": clauses, **PINNED},
+            "law": {"clauses": clauses, **(PINNED if pinned is None else pinned)},
         }
         return self._add(name, "enactment", body)
 
@@ -771,6 +781,30 @@ def test_an_amendment_elsewhere_leaves_the_cure_path_open(founded):
     assert isinstance(finding, Pending)
     assert [element.species for element in finding.requirement] == [PendingSpecies.ABSENT]
     assert [element.ground for element in finding.requirement] == [""]
+
+
+def test_an_amendment_that_moves_only_the_keri_dependency_closes_the_cure_path(founded):
+    """The pinned lens includes the KERI dependency (this.i @ehrgtmuj). Same clauses,
+    same dossier pin, one recovery rule excluded: the requirement space the pending act
+    declared at birth was declared under the old dependency, so the path closes and
+    names the amendment."""
+    tabled = founded.act("hire", "hire")
+    founded.endorse(MARTA, tabled)
+    block = semantics_block()
+    keri = dict(block[KERI_KEY])  # type: ignore[call-overload]
+    keri[RECOVERY_KEY] = {**keri[RECOVERY_KEY], "B1": EXCLUDED}
+    moved = {**PINNED, SEMANTICS_FIELD: {**block, KERI_KEY: keri}}
+    seat = founded.amend("amendment", FOUNDERS_LAW, pinned=moved)
+    founded.endorse(MARTA, seat)
+    founded.endorse(DEV, seat)
+
+    finding = evaluate(founded.corpus, Committed(tabled), at=founded.now)
+
+    assert isinstance(finding, Pending)
+    assert [element.species for element in finding.requirement] == [
+        PendingSpecies.EXPIRED_ABANDONED
+    ]
+    assert [element.ground for element in finding.requirement] == [founded.said("amendment")]
 
 
 def test_an_amendment_that_leaves_the_class_ungoverned_closes_the_path_too(founded):

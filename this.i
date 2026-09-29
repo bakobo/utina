@@ -2649,17 +2649,18 @@ Make Custos's replayable governance useful to a real organization = goal:
         Chose to commit, inside the existing semantics block, the SHA-256 of the KERI
         specification's body at trustoverip/kswg-keri-specification@71cb54eb, which is the
         revision the Custos engagement companion pins, vendored beside the dossier body so a
-        test recomputes it; and beside it a disposition for each of the seven rules the recovery
-        section names, A0, A1, A2, B1, B2, B3 and C. Every rule is CONSUMED. The fold runs none
-        of them, since no plane above the substrate may (@yrkrqj), but that is not what the
-        declaration asks. A duplicity observation convicts only 'under the tier's committed
-        rules' (:1680-1683), and the key tier's rules are exactly this calculus: whether two
-        events at one sequence number are duplicity or a lawful supersession is what A through C
-        decide. A law that excluded any of them would leave the observation the bearing module
-        consumes as ordinary evidence rather than a conviction, and beat 20 would lose its
-        ground. So consuming the calculus is what makes @f3pmxu3x's posture coherent, and the
-        facade substrate, which runs none of it either, changes nothing: the declaration fixes
-        what an observation means, not who computed it.
+        test recomputes it; and beside it a disposition for each of the eight rules the recovery
+        section names, A0, A1, A2, B1, B2, B3, C and C1, the headings A and B being carried by
+        their numbered members. Every rule is CONSUMED. The fold runs none of them, since no
+        plane above the substrate may (@yrkrqj), but that is not what the declaration asks. A
+        duplicity observation convicts only 'under the tier's committed rules' (:1680-1683), and
+        the key tier's rules are exactly this calculus: whether two events at one sequence
+        number are duplicity or a lawful supersession is what A0 through C1 decide. A law that
+        excluded any of them would leave the observation the bearing module consumes as ordinary
+        evidence rather than a conviction, and beat 20 would lose its ground. So consuming the
+        calculus is what makes @f3pmxu3x's posture coherent, and the facade substrate, which
+        runs none of it either, changes nothing: the declaration fixes what an observation
+        means, not who computed it.
         The engine recognizes exactly one declaration, the one it implements, and refuses the
         rest as it refuses an unrecognized dossier pin: absent, malformed, a rule left
         undispositioned, a rule excluded, or a revision it does not carry. Rejected accepting an

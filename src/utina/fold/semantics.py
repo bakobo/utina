@@ -155,8 +155,13 @@ The document is ``spec/spec-body.md`` from ``trustoverip/kswg-keri-specification
 engagement companion pins. The whole-file digest stands where the recovery rules
 live, which :2857-2859 confesses as pin granularity rather than design."""
 
-RECOVERY_RULES = ("A0", "A1", "A2", "B1", "B2", "B3", "C")
-"""The superseding-recovery rules the pinned revision names, in its own order."""
+RECOVERY_RULES = ("A0", "A1", "A2", "B1", "B2", "B3", "C", "C1")
+"""The superseding-recovery rules the pinned revision names, in its own order.
+
+Every labelled item of the section except the headings ``A.`` and ``B.``, whose
+content their numbered members carry. ``C`` is a rule in its own right, the recursion
+through delegators, and ``C1`` is its terminal case; ``tests/test_schemas.py`` checks
+the set against the vendored text in both directions."""
 
 CONSUMED = "consumed"
 EXCLUDED = "excluded"

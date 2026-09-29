@@ -308,3 +308,18 @@ def _an_act_class(record: Record) -> str:
     """An act class this record's law actually governs, read off the law itself."""
     law = Constitution.at(record.corpus, record.at(str(record.last)))
     return law.clauses[0].governs[0]
+
+
+def test_the_bank_builds_over_the_doubles_and_seals_what_the_fold_answered(acme_double):
+    """The writing plane is exercisable with no fold at all (this.i @tvaq2s): the
+    diligence seal's terms are whatever ``FoldValues.governing`` answered, carried
+    verbatim, and nothing in the bank fixture computes them (tick 3pbr, @3owiqfnz)."""
+    from conftest import DoubleValues
+    from utina.bank import build
+
+    meridian = build(values=DoubleValues(), counterparty=acme_double)
+    seal = next(e for e in meridian.events if e.said == meridian.said("diligence"))
+    committed = repr(seal.body)
+
+    clause, head = DoubleValues.GOVERNING
+    assert clause in committed and head in committed

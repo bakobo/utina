@@ -110,8 +110,8 @@ def _declaring(spec: str = semantics.KERI, **recovery: str) -> dict[str, object]
     )
 
 
-def test_the_recovery_rules_are_the_seven_the_pinned_revision_names():
-    assert semantics.RECOVERY_RULES == ("A0", "A1", "A2", "B1", "B2", "B3", "C")
+def test_the_recovery_rules_are_the_eight_the_pinned_revision_names():
+    assert semantics.RECOVERY_RULES == ("A0", "A1", "A2", "B1", "B2", "B3", "C", "C1")
 
 
 def test_a_law_that_declares_its_keri_dependency_reads_back_as_that_declaration():
