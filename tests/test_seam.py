@@ -264,7 +264,13 @@ def test_the_writing_plane_imports_nothing_from_the_fold():
     import importlib
     from pathlib import Path
 
-    for name in ("utina.enact.constructor", "utina.acme.build", "utina.substrate.protocol"):
+    # Every fixture's build module, found rather than listed: a hand-kept list missed
+    # utina.bank.build, which called the fold directly (tick 3pbr, this.i @3owiqfnz).
+    root = Path(importlib.import_module("utina").__file__ or "").parent
+    builds = sorted(f"utina.{path.parent.name}.build" for path in root.glob("*/build.py"))
+    assert {"utina.acme.build", "utina.bank.build"} <= set(builds), "the search went vacuous"
+
+    for name in ("utina.enact.constructor", "utina.substrate.protocol", *builds):
         source = importlib.import_module(name).__file__
         assert source is not None
         tree = ast.parse(Path(source).read_text(encoding="utf-8"))
@@ -286,3 +292,22 @@ def test_a_second_build_commits_byte_identical_evidence():
     first, second = build(values=RealValues()), build(values=RealValues())
 
     assert [event.said for event in first.events] == [event.said for event in second.events]
+
+
+def test_the_one_question_a_fixture_may_ask_is_answered_by_the_fold():
+    """``FoldValues.governing`` is the fold's answer carried across the seam, not a
+    second computation of it (tick 3pbr, this.i @3owiqfnz)."""
+    from utina.cli.world import RealValues as Real
+    from utina.fold.constitution import Constitution
+
+    acme = build(values=RealValues())
+    at = acme.at("d1")
+    law = Constitution.at(acme.corpus, at)
+    clause = law.governing("open-bank-account")
+    assert clause is not None
+
+    assert Real().governing(acme.corpus, at, "open-bank-account") == (
+        clause.id,
+        law.law_head.said,
+    )
+    assert Real().governing(acme.corpus, at, "declare-dividend") is None

@@ -419,7 +419,15 @@ class OpenSubstrate(Substrate, Protocol):
 
 
 class FoldValues(Protocol):
-    """Constructors for the three fold value types the writing plane produces."""
+    """Constructors for the three fold value types the writing plane produces, and the
+    one question a fixture may put to the fold.
+
+    The question is :meth:`governing`. A bank folds its counterparty before it
+    transacts, so a diligence seal's terms are the fold's answer and nothing else's;
+    asking through the values injected at the composition root keeps that answer the
+    fold's own without the import edge that would make this plane unloadable without
+    the judge's (this.i @3owiqfnz, tick 3pbr).
+    """
 
     def position(self, seq: int) -> Position:
         """An appraisal coordinate at committed sequence ``seq``."""
@@ -450,4 +458,9 @@ class FoldValues(Protocol):
         taken at the positions they carry, which is the door hand-built fold
         fixtures use.
         """
+        ...
+
+    def governing(self, corpus: Corpus, at: Position, act: str) -> tuple[str, SAID] | None:
+        """The id of the clause governing ``act`` under the law in force at ``at``,
+        and that law's head, or ``None`` where no clause governs it."""
         ...

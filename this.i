@@ -439,6 +439,31 @@ Make Custos's replayable governance useful to a real organization = goal:
         being built by three sibling commissions, instead of sitting untested
         behind an import that does not resolve yet.
 
+    A fixture that must read the fold asks through the injected values = decision:
+      id: 3owiqfnz
+      why: >
+        Meridian's diligence seal commits the clause that governs the customer's act and the law
+        head in force at the coordinate it relied on, and utina.bank.build got both by importing
+        Constitution and calling it: the writing plane calling the judge, against @tvaq2s (tick
+        3pbr, glm's review of PR #10). The guard that should have caught it named three modules
+        by hand and bank/build.py was not one of them.
+        Chose to give FoldValues one question beside its three constructors, governing(corpus,
+        at, act), answering the governing clause's id and the law head, and to have the
+        composition root answer it with the real fold. A bank genuinely does fold its
+        counterparty before it transacts, so the dependency is the domain's truth and not an
+        accident of layout; what @tvaq2s forbids is the import edge that makes the constructor's
+        plane unloadable without the judge's, and injection removes the edge while keeping the
+        answer the fold's own. Rejected a writing-plane helper that reads the terms off the law
+        event directly, because the law head is a digest over the fold's canonical bytes and a
+        second computation of it would be a second opinion free to drift from the one the
+        stranger re-derives. Rejected a this.i deviation, because the injection costs one
+        method.
+        The guard now finds every fixture's build module rather than listing them, so a third
+        domain inherits the rule. Law modules stay outside it by the existing practice of
+        domain/law.py: they import the fold's field names and pinned values so a law cannot
+        spell a field the fold does not read, and that is a constant shared across the seam, not
+        a call into the judge.
+
     A facade signature names the key state it was made under = decision:
       id: h7l67i
       why: >
@@ -629,14 +654,15 @@ Make Custos's replayable governance useful to a real organization = goal:
       id: 6b3ntq
       why: >
         COIA (~/code/me/coia, whose coia.py is the normative oracle) is implemented here because
-        the demo needed human-readable party names, and tick ~6s25 holds the open question of
-        whether it belongs in heti as shared machinery instead. A module built to be moved and a
-        module built in place differ, so the shape was chosen for the move: utina.coia imports
-        nothing from utina, takes who, role and scope as arguments rather than reaching into the
-        Acme record for them, and is tested against the spec's own published examples as
-        hardcoded vectors, so the tests travel with the code rather than staying behind. A
-        fitness test asserts the no-utina-imports property by AST inspection, because it is the
-        property that would rot first and silently.
+        the demo needed human-readable party names, and whether it belonged in heti as shared
+        machinery instead was left open. heti answered it by taking a copy on 2026-08-16 (heti
+        commit 3416c8c); utina keeps its own because it does not depend on heti. A module built
+        to be moved and a module built in place differ, so the shape was chosen for the move:
+        utina.coia imports nothing from utina, takes who, role and scope as arguments rather
+        than reaching into the Acme record for them, and is tested against the spec's own
+        published examples as hardcoded vectors, so the tests travel with the code rather than
+        staying behind. A fitness test asserts the no-utina-imports property by AST inspection,
+        because it is the property that would rot first and silently.
         Chose the standard library over the third-party `regex` package that the oracle uses for
         its \p{...} classes, implementing the same Unicode property tests with unicodedata
         categories and explicit code-point sets for the two binary properties (Dash and
@@ -2610,6 +2636,46 @@ Make Custos's replayable governance useful to a real organization = goal:
         field exists to remove. Tradeoff accepted: the assignment is utina's reading, and the
         second of the covenant cases — an event whose kind carries no act class — could be read
         as an event-seal mismatch instead; that is recorded in Q9.
+
+    The law declares the KERI revision its fold consumes, every recovery rule dispositioned = decision:
+      id: ehrgtmuj
+      why: >
+        custos-4.2.md:2850-2858: a Constitution SHALL commit, as a functional-dependency
+        declaration, the revision digests of every external specification whose semantics its
+        fold consumes, naming the predicate set consumed, KERI's superseding-recovery calculus
+        rule by rule, each consumed or expressly excluded, never in silence (tick 3uv4). Acme's
+        law pinned the dossier specification and nothing else, so the key tier the bearing
+        module convicts under was a lens nobody committed.
+        Chose to commit, inside the existing semantics block, the SHA-256 of the KERI
+        specification's body at trustoverip/kswg-keri-specification@71cb54eb, which is the
+        revision the Custos engagement companion pins, vendored beside the dossier body so a
+        test recomputes it; and beside it a disposition for each of the eight rules the recovery
+        section names, A0, A1, A2, B1, B2, B3, C and C1, the headings A and B being carried by
+        their numbered members. Every rule is CONSUMED. The fold runs none of them, since no
+        plane above the substrate may (@yrkrqj), but that is not what the declaration asks. A
+        duplicity observation convicts only 'under the tier's committed rules' (:1680-1683), and
+        the key tier's rules are exactly this calculus: whether two events at one sequence
+        number are duplicity or a lawful supersession is what A0 through C1 decide. A law that
+        excluded any of them would leave the observation the bearing module consumes as ordinary
+        evidence rather than a conviction, and beat 20 would lose its ground. So consuming the
+        calculus is what makes @f3pmxu3x's posture coherent, and the facade substrate, which
+        runs none of it either, changes nothing: the declaration fixes what an observation
+        means, not who computed it.
+        The engine recognizes exactly one declaration, the one it implements, and refuses the
+        rest as it refuses an unrecognized dossier pin: absent, malformed, a rule left
+        undispositioned, a rule excluded, or a revision it does not carry. Rejected accepting an
+        exclusion the engine cannot honour, because an engine that answered anyway would be
+        assuming at the moment axiom 4 forbids it. The declaration rides as its own Constitution
+        field rather than widening the dossier digest, so acceptance oracle 2's row about the
+        dossier pin stays exactly as written, and it joins the pinned-lens test that closes a
+        cure path when the lens moves.
+        Left out, deliberately. keripy is not pinned by the law: it is an implementation, the
+        clause names specifications, and the default substrate loads no KERI library at all. The
+        dossier pin stays at 5906e8cf rather than moving to the companion's c2d261c, because the
+        two bodies differ only in heading capitalization and three removed comment lines, so
+        they carry one semantics and moving would buy nothing. The Custos edition the engine
+        implements stays unpinned, because the spec's only hook for it, the engine profile, is
+        undefined (:1229-1232).
 
     A built domain is a Record; Acme is one fixture that builds one = decision:
       id: s34hkwkv

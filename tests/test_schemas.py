@@ -18,12 +18,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 from keri.core.coring import Saider  # type: ignore[import-untyped]
 from keri.core.scheming import Schemer  # type: ignore[import-untyped]
 
-from utina.fold.semantics import DOSSIER
+from utina.fold.semantics import DOSSIER, KERI, RECOVERY_RULES
 from utina.substrate import GCD_RULES, GCD_SCHEMA
 
 SCHEMAS = Path(__file__).resolve().parents[1] / "schemas"
@@ -126,3 +127,23 @@ def test_the_vendored_specification_is_the_document_utina_cites():
 
     assert "MxN" in body and "RMxN" in body, "the dossier's threshold operators"
     assert "Endorsed" in body and "Declined" in body, "and its slot dispositions"
+
+
+def test_the_keri_pin_is_the_digest_of_the_vendored_specification():
+    """The functional-dependency declaration's revision, checkable against bytes
+    (custos-4.2.md:2850-2858, this.i @ehrgtmuj). It is the revision the Custos
+    engagement companion pins, trustoverip/kswg-keri-specification@71cb54eb."""
+    body = (SCHEMAS / "keri-spec-body.md").read_bytes()
+
+    assert hashlib.sha256(body).hexdigest() == KERI
+
+
+def test_the_law_dispositions_exactly_the_recovery_rules_the_pinned_revision_names():
+    """Both directions: a rule the law names must exist, and a rule the text carries
+    must be named, or it is passed over in silence (custos-4.2.md:2855-2856). The
+    headings A and B are excluded because their numbered members carry them."""
+    body = (SCHEMAS / "keri-spec-body.md").read_text(encoding="utf-8")
+    section = body.split("#### Superseding Rules for Recovery", 1)[1].split("\n#", 1)[0]
+    labelled = set(re.findall(r"^\s*([A-C]\d*)\.", section, re.MULTILINE))
+
+    assert labelled - {"A", "B"} == set(RECOVERY_RULES)
