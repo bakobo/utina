@@ -629,14 +629,15 @@ Make Custos's replayable governance useful to a real organization = goal:
       id: 6b3ntq
       why: >
         COIA (~/code/me/coia, whose coia.py is the normative oracle) is implemented here because
-        the demo needed human-readable party names, and tick ~6s25 holds the open question of
-        whether it belongs in heti as shared machinery instead. A module built to be moved and a
-        module built in place differ, so the shape was chosen for the move: utina.coia imports
-        nothing from utina, takes who, role and scope as arguments rather than reaching into the
-        Acme record for them, and is tested against the spec's own published examples as
-        hardcoded vectors, so the tests travel with the code rather than staying behind. A
-        fitness test asserts the no-utina-imports property by AST inspection, because it is the
-        property that would rot first and silently.
+        the demo needed human-readable party names, and whether it belonged in heti as shared
+        machinery instead was left open. heti answered it by taking a copy on 2026-08-16 (heti
+        commit 3416c8c); utina keeps its own because it does not depend on heti. A module built
+        to be moved and a module built in place differ, so the shape was chosen for the move:
+        utina.coia imports nothing from utina, takes who, role and scope as arguments rather
+        than reaching into the Acme record for them, and is tested against the spec's own
+        published examples as hardcoded vectors, so the tests travel with the code rather than
+        staying behind. A fitness test asserts the no-utina-imports property by AST inspection,
+        because it is the property that would rot first and silently.
         Chose the standard library over the third-party `regex` package that the oracle uses for
         its \p{...} classes, implementing the same Unicode property tests with unicodedata
         categories and explicit code-point sets for the two binary properties (Dash and
