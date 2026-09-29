@@ -24,6 +24,8 @@ from fractions import Fraction
 
 import pytest
 
+from utina.domain import semantics_block
+from utina.fold.constitution import Constitution
 from utina.fold.corpus import Corpus, Event
 from utina.fold.evaluate import (
     UNREACHABLE_YIELDS,
@@ -41,7 +43,7 @@ from utina.fold.finding import (
 )
 from utina.fold.question import Committed, Proposal
 from utina.fold.refusal import Refusal, SealKind
-from utina.fold.semantics import DOSSIER, DOSSIER_KEY, SEMANTICS_FIELD
+from utina.fold.semantics import DOSSIER, DOSSIER_KEY, IMPLEMENTED, SEMANTICS_FIELD
 from utina.fold.triple import Position
 from utina.substrate import ENDORSEMENT_SCHEMA, GCD_SCHEMA
 
@@ -49,7 +51,7 @@ MARTA, DEV, NINA = "acme:marta", "acme:dev", "acme:nina"
 #: Every synthetic law here pins the semantics its clauses are expressed in,
 #: because axiom 4 refuses one that does not and a fixture without it would be
 #: testing the refusal rather than the rule under test (fold/semantics.py).
-PINNED: dict[str, object] = {SEMANTICS_FIELD: {DOSSIER_KEY: DOSSIER}}
+PINNED: dict[str, object] = {SEMANTICS_FIELD: semantics_block()}
 
 GAID = "acme:gaid"
 
@@ -364,6 +366,32 @@ def test_a_domain_with_no_committed_law_refuses_everything(founded):
     outcome = evaluate(Corpus.load([]), Proposal("hire"), at=Position(0))
 
     assert isinstance(outcome, Refusal)
+
+
+def test_a_law_that_declares_no_keri_dependency_is_refused():
+    """custos-4.2.md:2850-2858, one field along from the dossier pin. A law that says
+    nothing about KERI leaves a duplicity observation no committed rule to convict
+    under, so the question is refused before any clause is read (this.i @ehrgtmuj)."""
+    log = Log()
+    log._add(
+        "inception",
+        "inception",
+        {
+            "t": "inception",
+            "i": GAID,
+            "law": {"clauses": FOUNDERS_LAW, SEMANTICS_FIELD: {DOSSIER_KEY: DOSSIER}},
+        },
+    )
+
+    outcome = evaluate(log.corpus, Proposal("hire"), at=log.now)
+
+    assert isinstance(outcome, Refusal)
+    assert outcome.seal_kind is SealKind.DIGEST
+    assert "functional-dependency declaration" in outcome.missing
+
+
+def test_the_constitution_carries_the_keri_dependency_its_law_declares(founded):
+    assert Constitution.at(founded.corpus, founded.now).dependency == IMPLEMENTED
 
 
 # --- 4. unity reached ----------------------------------------------------------

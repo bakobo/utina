@@ -26,15 +26,27 @@ than legislates" reaches this case: what has run out is law this fold can read.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 
 from utina.fold.refusal import Refusal, SealKind
 
 __all__ = [
+    "CONSUMED",
     "DOSSIER",
     "DOSSIER_KEY",
+    "EXCLUDED",
+    "IMPLEMENTED",
+    "KERI",
+    "KERI_KEY",
+    "KERI_SPEC_KEY",
     "RECOGNIZED",
+    "RECOVERY_KEY",
+    "RECOVERY_RULES",
     "SEMANTICS_FIELD",
+    "Dependency",
     "declared",
+    "dependency",
+    "dependency_refusal_for",
     "refusal_for",
 ]
 
@@ -110,6 +122,132 @@ def refusal_for(pinned: str | None) -> Refusal | None:
                 "implement, so its clauses are expressed in terms this fold cannot read. "
                 "That is a refusal and not a finding: the evidence is not short, the lens "
                 "is one the fold does not have."
+            ),
+        )
+    return None
+
+
+# --- the functional-dependency declaration -----------------------------------------
+#
+# custos-4.2.md:2850-2858: a Constitution SHALL commit the revision digests of every
+# external specification whose semantics its fold consumes, naming the predicate set
+# consumed — KERI's superseding-recovery calculus rule by rule, each consumed or
+# expressly excluded, never in silence. The fold runs none of those rules, since no
+# plane above the substrate may; it consumes them because a duplicity observation
+# convicts only under the key tier's committed rules, and these are those rules
+# (this.i @ehrgtmuj, tick 3uv4).
+
+KERI_KEY = "keri"
+"""Where the semantics block carries the KERI dependency."""
+
+KERI_SPEC_KEY = "spec"
+"""The digest of the KERI specification revision, inside the dependency."""
+
+RECOVERY_KEY = "recovery"
+"""The disposition of each superseding-recovery rule, inside the dependency."""
+
+KERI = "10df5b8ca9395ce8d4270a84fb7338124b0bd8c80dfc27b65601418b3c4533c4"
+"""SHA-256 over the KERI specification's body, as vendored at
+``schemas/keri-spec-body.md`` and recomputed by ``tests/test_schemas.py``.
+
+The document is ``spec/spec-body.md`` from ``trustoverip/kswg-keri-specification`` at
+``71cb54ebb445dd9d8cb33cd29a5f50894fafc569`` (2026-07-28), the revision the Custos
+engagement companion pins. The whole-file digest stands where the recovery rules
+live, which :2857-2859 confesses as pin granularity rather than design."""
+
+RECOVERY_RULES = ("A0", "A1", "A2", "B1", "B2", "B3", "C")
+"""The superseding-recovery rules the pinned revision names, in its own order."""
+
+CONSUMED = "consumed"
+EXCLUDED = "excluded"
+
+
+@dataclass(frozen=True)
+class Dependency:
+    """What a law commits about KERI: which revision, and each recovery rule's fate.
+
+    ``recovery`` is a sorted tuple of pairs rather than a mapping so the value is
+    hashable and two declarations compare equal exactly when they say the same thing.
+    """
+
+    spec: str
+    recovery: tuple[tuple[str, str], ...]
+
+
+IMPLEMENTED = Dependency(KERI, tuple(sorted((rule, CONSUMED) for rule in RECOVERY_RULES)))
+"""The one declaration this engine implements. Closed like :data:`RECOGNIZED`, and
+for the same reason: an exclusion the engine cannot honour is refused, not assumed."""
+
+
+def dependency(law: Mapping[str, object]) -> Dependency | None:
+    """The KERI dependency a law body declares, or ``None`` where it declares none
+    this fold can read. Read fail-closed, like every other committed value."""
+    block = law.get(SEMANTICS_FIELD)
+    if not isinstance(block, Mapping):
+        return None
+    keri = block.get(KERI_KEY)
+    if not isinstance(keri, Mapping):
+        return None
+    spec = keri.get(KERI_SPEC_KEY)
+    recovery = keri.get(RECOVERY_KEY)
+    if not (isinstance(spec, str) and spec and isinstance(recovery, Mapping)):
+        return None
+    if not all(isinstance(k, str) and isinstance(v, str) for k, v in recovery.items()):
+        return None
+    return Dependency(spec, tuple(sorted(recovery.items())))
+
+
+def dependency_refusal_for(declared: Dependency | None) -> Refusal | None:
+    """The refusal a law's KERI dependency earns, or ``None`` where it is applicable.
+
+    Four failures, each refused in its own words, because they are four different
+    mistakes: saying nothing, pinning a revision this engine does not carry, leaving a
+    rule in silence, and declaring dispositions this engine does not implement.
+    """
+    if declared is None:
+        return Refusal(
+            seal_kind=SealKind.DIGEST,
+            missing=(
+                "a functional-dependency declaration naming KERI's revision by digest and "
+                "the fate of each superseding-recovery rule"
+            ),
+            detail=(
+                "Custos requires a Constitution to commit the revision of every external "
+                "specification its fold consumes, and this law says nothing about KERI. A "
+                "duplicity observation convicts only under the key tier's committed rules, "
+                "so without the declaration there is no committed rule for it to convict under."
+            ),
+        )
+    if declared.spec != KERI:
+        return Refusal(
+            seal_kind=SealKind.DIGEST,
+            missing=(
+                f"an implementation of the KERI revision this law pins, {declared.spec[:16]}..."
+            ),
+            detail=(
+                "The law pins a revision of the KERI specification this engine does not carry, "
+                "so the recovery rules it names are rules this fold has not read."
+            ),
+        )
+    named = {rule for rule, _ in declared.recovery}
+    silent = [rule for rule in RECOVERY_RULES if rule not in named]
+    if silent:
+        return Refusal(
+            seal_kind=SealKind.DIGEST,
+            missing=f"a disposition for superseding-recovery rules {', '.join(silent)}",
+            detail=(
+                "Each rule the fold's semantics depend on is to be consumed or expressly "
+                "excluded, never passed over in silence, and this law is silent on some."
+            ),
+        )
+    if declared != IMPLEMENTED:
+        return Refusal(
+            seal_kind=SealKind.DIGEST,
+            missing="an implementation of the recovery dispositions this law declares",
+            detail=(
+                "This engine consumes every superseding-recovery rule and implements no other "
+                "declaration. Answering under an exclusion it cannot honour would be assuming "
+                "at exactly the moment axiom 4 forbids it."
             ),
         )
     return None

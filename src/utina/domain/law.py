@@ -21,7 +21,14 @@ from collections.abc import Mapping, Sequence
 from fractions import Fraction
 
 from utina.fold.certification import REQUIRES_FIELD
-from utina.fold.semantics import DOSSIER, DOSSIER_KEY
+from utina.fold.semantics import (
+    DOSSIER,
+    DOSSIER_KEY,
+    IMPLEMENTED,
+    KERI_KEY,
+    KERI_SPEC_KEY,
+    RECOVERY_KEY,
+)
 from utina.substrate import ENDORSEMENT_SCHEMA, GCD_SCHEMA
 
 __all__ = [
@@ -137,5 +144,16 @@ def semantics_block() -> Mapping[str, object]:
     carried clause is re-committed in every edition: an amendment replaces the edition
     rather than adding to it (this.i @wg3jr6), so a term left out of a successor is a
     term that edition does not carry.
+
+    Beside the dossier pin sits the KERI dependency custos-4.2.md:2850-2858 requires:
+    the revision of the KERI specification the fold's key-tier convictions are read
+    under, and each superseding-recovery rule consumed or expressly excluded, never in
+    silence (this.i @ehrgtmuj, tick 3uv4).
     """
-    return {DOSSIER_KEY: DOSSIER}
+    return {
+        DOSSIER_KEY: DOSSIER,
+        KERI_KEY: {
+            KERI_SPEC_KEY: IMPLEMENTED.spec,
+            RECOVERY_KEY: dict(IMPLEMENTED.recovery),
+        },
+    }

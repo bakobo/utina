@@ -170,7 +170,9 @@ def evaluate(corpus: Corpus, question: Question, *, at: Position) -> Finding | R
     # engine cannot apply is not law this engine may guess at, and the check goes
     # here rather than inside the clause walk so that an unreadable lens refuses
     # the whole question instead of one clause of it (fold/semantics.py).
-    unreadable = semantics.refusal_for(law.semantics)
+    unreadable = semantics.refusal_for(law.semantics) or semantics.dependency_refusal_for(
+        law.dependency
+    )
     if unreadable is not None:
         return unreadable
 
@@ -763,10 +765,12 @@ def _cure_path_closed(
     """
     now = Constitution.at(corpus, at)
     governing = now.governing(subject.act)
+    then = Constitution.at(corpus, subject.coordinate)
     stable = (
         governing is not None
         and governing.said() == clause.said()
-        and now.semantics == Constitution.at(corpus, subject.coordinate).semantics
+        and now.semantics == then.semantics
+        and now.dependency == then.dependency
     )
     return "" if stable else now.source
 

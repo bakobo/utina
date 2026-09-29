@@ -81,3 +81,145 @@ def test_the_recognized_set_is_closed_and_holds_the_revision_this_engine_impleme
     Closed, because anything outside it is refused rather than attempted."""
     assert semantics.DOSSIER in semantics.RECOGNIZED
     assert "e" * 64 not in semantics.RECOGNIZED
+
+
+# --- the functional-dependency declaration (custos-4.2.md:2850-2858, tick 3uv4) ----
+#
+# A Constitution commits the revision of every external specification its fold
+# consumes and names the superseding-recovery rules it consumes, each consumed or
+# expressly excluded, never in silence (this.i @ehrgtmuj).
+
+_EVERY_RULE_CONSUMED = {rule: semantics.CONSUMED for rule in semantics.RECOVERY_RULES}
+
+
+def _law(keri: object) -> dict[str, object]:
+    return {
+        semantics.SEMANTICS_FIELD: {
+            semantics.DOSSIER_KEY: semantics.DOSSIER,
+            semantics.KERI_KEY: keri,
+        }
+    }
+
+
+def _declaring(spec: str = semantics.KERI, **recovery: str) -> dict[str, object]:
+    return _law(
+        {
+            semantics.KERI_SPEC_KEY: spec,
+            semantics.RECOVERY_KEY: {**_EVERY_RULE_CONSUMED, **recovery},
+        }
+    )
+
+
+def test_the_recovery_rules_are_the_seven_the_pinned_revision_names():
+    assert semantics.RECOVERY_RULES == ("A0", "A1", "A2", "B1", "B2", "B3", "C")
+
+
+def test_a_law_that_declares_its_keri_dependency_reads_back_as_that_declaration():
+    dependency = semantics.dependency(_declaring())
+
+    assert dependency == semantics.IMPLEMENTED
+    assert dependency is not None
+    assert dependency.spec == semantics.KERI
+
+
+def test_the_engine_implements_every_rule_consumed():
+    """Excluding any rule would leave a duplicity observation ordinary evidence
+    rather than a conviction, so the engine consumes all of them (@ehrgtmuj)."""
+    assert dict(semantics.IMPLEMENTED.recovery) == _EVERY_RULE_CONSUMED
+
+
+@pytest.mark.parametrize(
+    "law",
+    [
+        {},
+        {semantics.SEMANTICS_FIELD: {semantics.DOSSIER_KEY: semantics.DOSSIER}},
+        _law(None),
+        _law("the KERI specification"),
+        _law({}),
+        _law({semantics.KERI_SPEC_KEY: "", semantics.RECOVERY_KEY: _EVERY_RULE_CONSUMED}),
+        _law({semantics.KERI_SPEC_KEY: semantics.KERI}),
+        _law({semantics.KERI_SPEC_KEY: semantics.KERI, semantics.RECOVERY_KEY: "all"}),
+        _law(
+            {
+                semantics.KERI_SPEC_KEY: semantics.KERI,
+                semantics.RECOVERY_KEY: {**_EVERY_RULE_CONSUMED, "A0": 1},
+            }
+        ),
+    ],
+    ids=[
+        "no-block",
+        "dossier-only",
+        "null",
+        "not-a-block",
+        "empty",
+        "empty-spec",
+        "no-recovery",
+        "recovery-not-a-mapping",
+        "disposition-not-a-string",
+    ],
+)
+def test_a_dependency_this_fold_cannot_read_is_no_declaration(law):
+    assert semantics.dependency(law) is None
+
+
+def test_the_implemented_declaration_is_applicable():
+    assert semantics.dependency_refusal_for(semantics.IMPLEMENTED) is None
+
+
+def test_an_absent_declaration_is_refused_and_says_what_is_missing():
+    refusal = semantics.dependency_refusal_for(None)
+
+    assert isinstance(refusal, Refusal)
+    assert refusal.seal_kind is SealKind.DIGEST
+    assert "functional-dependency declaration" in refusal.missing
+
+
+def test_an_unrecognized_keri_revision_is_refused_and_names_it():
+    refusal = semantics.dependency_refusal_for(semantics.dependency(_declaring(spec="f" * 64)))
+
+    assert isinstance(refusal, Refusal)
+    assert refusal.seal_kind is SealKind.DIGEST
+    assert "ffffffffffffffff" in refusal.missing
+
+
+def test_a_rule_left_in_silence_is_refused_and_named():
+    """'Each consumed or expressly excluded, never in silence' (:2855-2856)."""
+    recovery = {k: v for k, v in _EVERY_RULE_CONSUMED.items() if k not in {"B2", "C"}}
+    law = _law({semantics.KERI_SPEC_KEY: semantics.KERI, semantics.RECOVERY_KEY: recovery})
+
+    refusal = semantics.dependency_refusal_for(semantics.dependency(law))
+
+    assert isinstance(refusal, Refusal)
+    assert refusal.seal_kind is SealKind.DIGEST
+    assert "B2" in refusal.missing and "C" in refusal.missing
+
+
+@pytest.mark.parametrize(
+    "recovery",
+    [{"B1": semantics.EXCLUDED}, {"A0": "partly"}, {"D1": semantics.CONSUMED}],
+    ids=["excluded", "unknown-disposition", "unknown-rule"],
+)
+def test_a_declaration_this_engine_does_not_implement_is_refused(recovery):
+    """An engine that answered under an exclusion it cannot honour would be
+    assuming at exactly the moment axiom 4 forbids it."""
+    refusal = semantics.dependency_refusal_for(semantics.dependency(_declaring(**recovery)))
+
+    assert isinstance(refusal, Refusal)
+    assert refusal.seal_kind is SealKind.DIGEST
+    assert "recovery" in refusal.missing
+
+
+def test_the_four_dependency_failures_refuse_differently():
+    silent = _law({semantics.KERI_SPEC_KEY: semantics.KERI, semantics.RECOVERY_KEY: {}})
+    refusals = [
+        semantics.dependency_refusal_for(declaration)
+        for declaration in (
+            None,
+            semantics.dependency(_declaring(spec="f" * 64)),
+            semantics.dependency(silent),
+            semantics.dependency(_declaring(B1=semantics.EXCLUDED)),
+        )
+    ]
+
+    assert all(isinstance(refusal, Refusal) for refusal in refusals)
+    assert len({refusal.missing for refusal in refusals if refusal is not None}) == 4

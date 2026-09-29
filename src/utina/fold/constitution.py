@@ -57,6 +57,7 @@ from bakobo.errors import ErrorCode  # type: ignore[import-untyped]
 from utina.fold import certification, diligence, semantics
 from utina.fold.clause import MALFORMED_LAW, Clause
 from utina.fold.corpus import Corpus, Event
+from utina.fold.semantics import Dependency
 from utina.fold.slots import dispositions
 from utina.fold.triple import SAID, LawHead, Position
 
@@ -330,10 +331,12 @@ def _diligent(
 
 def _edition_committed_by(
     event: Event,
-) -> tuple[tuple[Clause, ...], str | None, str | None, str | None]:
-    """What a law event commits: clauses, semantics, certification, diligence.
+) -> tuple[
+    tuple[Clause, ...], str | None, Dependency | None, str | None, str | None
+]:
+    """What a law event commits: clauses, semantics, dependency, certification, diligence.
 
-    All four come out of one envelope because they are one commitment: a clause set,
+    All five come out of one envelope because they are one commitment: a clause set,
     the lens it is to be read through, whether a decision under it needs certifying,
     and whether it needs checking against a counterparty's own governance are not
     separable claims, and an edition that carried some without the others would be law
@@ -374,6 +377,7 @@ def _edition_committed_by(
     return (
         Clause.edition_from_committed(law.get(CLAUSES_FIELD)),
         semantics.declared(law),
+        semantics.dependency(law),
         certification.required_by(law),
         diligence.required_by(law),
     )
@@ -405,6 +409,12 @@ class Constitution:
     because folding the law and refusing a question are different jobs: a
     Constitution is the law in force, and whether this engine can apply it is the
     evaluator's question (``fold/semantics.py``, axiom 4, tick 2uhi)."""
+
+    dependency: Dependency | None = None
+    """The KERI revision and superseding-recovery dispositions this edition declares,
+    or ``None`` where it declares none this fold can read. Carried rather than
+    checked, like ``semantics`` and for the same reason (custos-4.2.md:2850-2858,
+    this.i @ehrgtmuj)."""
 
     certification: SAID | None = None
     """The schema this domain's certifications must satisfy, or ``None`` where the
@@ -447,11 +457,14 @@ class Constitution:
         edition: tuple[Clause, ...] = ()
         source = ""
         pinned: str | None = None
+        depends_on: Dependency | None = None
         certifies_by: str | None = None
         diligent_by: str | None = None
         chain = _chain(corpus, position)
         if chain is not None:
-            edition, pinned, certifies_by, diligent_by = _edition_committed_by(chain[0])
+            edition, pinned, depends_on, certifies_by, diligent_by = _edition_committed_by(
+                chain[0]
+            )
             source = chain[0].said
         _refuse_a_contradictory_edition(edition)
         head = hashlib.sha256(_canonical_bytes(edition)).hexdigest()
@@ -460,6 +473,7 @@ class Constitution:
             clauses=edition,
             source=source,
             semantics=pinned,
+            dependency=depends_on,
             certification=certifies_by,
             diligence=diligent_by,
         )
