@@ -177,3 +177,16 @@ KEL_MISMATCH = ErrorCode(
         "the seal relies on."
     ),
 )
+
+EVIDENCE_MISLABELLED = ErrorCode(
+    code="e.proof.evidence-mislabelled.f",
+    title="A counterparty's event is labelled with something its signed bytes do not say.",
+    detail=(
+        "The event {said} at sequence {seq}, admitted as {domain}'s own committed record, is "
+        "labelled {kind} or carries that identifier, and its signed bytes say otherwise. "
+        "The label and the identifier sit outside the signature and the fold reads both, so "
+        "a domain may not seal over either unless the signed bytes agree."
+    ),
+    args=("domain", "said", "seq", "kind"),
+    hint="Admit the counterparty's events exactly as their record commits them.",
+)

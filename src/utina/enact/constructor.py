@@ -14,6 +14,7 @@ endorsement and an untouched slot is not an act at all (this.i @7szbfw).
 
 from __future__ import annotations
 
+import copy
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
 
@@ -42,6 +43,7 @@ from .errors import (
     DOMAIN_INCEPTED,
     DOMAIN_UNINCEPTED,
     EDGE_UNVALIDATED,
+    EVIDENCE_MISLABELLED,
     EVIDENCE_UNVERIFIED,
     KEL_MISMATCH,
     PREDECESSOR_UNKNOWN,
@@ -99,6 +101,23 @@ def gel_identifier(substrate: Substrate, nonce: str = GEL_NONCE) -> SAID:
     """
     return substrate.said({"t": "gel", "ii": GEL_SENTINEL, "u": nonce})
 
+
+
+#: The event kinds the fold reads, by the ilk each signed body commits in ``t``. Spelled
+#: here rather than imported from ``utina.replay``, which reads the fold, for the reason
+#: the seal's field names are spelled (this.i @tvaq2s); ``tests/test_seam.py`` keeps the
+#: two tables equal.
+ILKS: Mapping[str, str] = {
+    "icp": "inception",
+    "enact": "enactment",
+    "act": "act",
+    "end": "endorsement",
+    "ret": "retraction",
+    "iss": "issuance",
+    "rev": "revocation",
+    "dup": "duplicity",
+    "cert": "certification",
+}
 
 class Constructor:
     """The writing plane for one governed domain."""
@@ -549,8 +568,16 @@ class Constructor:
         a stranger with no copy of this package (``fold/diligence.py`` rebuilds them).
         """
         self._require_founded()
-        self._require_held(counterparty, kel)
-        self._require_verified(counterparty, events)
+        # Snapshots, taken before either check and embedded afterwards, so that what is
+        # sealed is exactly what was checked: the caller's own mappings can change after
+        # this returns and the seal does not move with them (Copilot review of #12).
+        admitted = tuple(
+            (one.said, one.kind, one.position.seq, copy.deepcopy(dict(one.body)))
+            for one in events
+        )
+        presented = tuple(copy.deepcopy(dict(event)) for event in kel)
+        self._require_held(counterparty, presented)
+        self._require_verified(counterparty, admitted)
         # The field names are spelled rather than imported from ``utina.fold``. The
         # writing plane does not import the fold (this.i @tvaq2s) — ``certify`` writes
         # its own "certifies" for the same reason — so the seam is a committed byte
@@ -566,10 +593,10 @@ class Constructor:
         }
         evidence = {
             "events": tuple(
-                {"said": one.said, "kind": one.kind, "seq": one.position.seq, "body": one.body}
-                for one in events
+                {"said": said, "kind": kind, "seq": seq, "body": body}
+                for said, kind, seq, body in admitted
             ),
-            "kel": tuple(kel),
+            "kel": presented,
         }
         return self._emit(
             "evaluation",
@@ -603,7 +630,9 @@ class Constructor:
             return
         raise KEL_MISMATCH(domain=domain, presented=len(presented), held=len(held))
 
-    def _require_verified(self, domain: AID, events: Sequence[Event]) -> None:
+    def _require_verified(
+        self, domain: AID, events: Sequence[tuple[SAID, str, int, Mapping[str, object]]]
+    ) -> None:
         """Refuse to seal over a counterparty event whose signature does not stand up.
 
         **This is the ingestion boundary, and it is the answer to a cross-model
@@ -635,22 +664,25 @@ class Constructor:
         than the rest of the engine. It is not as strong as "any stranger recomputes"
         sounds, and that gap is the counterparty's own log to close.
         """
-        for event in events:
-            signer = event.body.get("i")
-            signature = event.body.get("sig")
-            unsigned = {key: value for key, value in event.body.items() if key != "sig"}
-            if (
+        for said, kind, seq, body in events:
+            signer = body.get("i")
+            signature = body.get("sig")
+            unsigned = {key: value for key, value in body.items() if key != "sig"}
+            if not (
                 isinstance(signer, str)
                 and isinstance(signature, str)
                 and self.substrate.verify(signer, unsigned, signature)
             ):
-                continue
-            raise EVIDENCE_UNVERIFIED(
-                domain=domain,
-                said=event.said,
-                seq=event.position.seq,
-                signer=str(signer),
-            )
+                raise EVIDENCE_UNVERIFIED(
+                    domain=domain, said=said, seq=seq, signer=str(signer)
+                )
+            # The label and the identifier sit outside the signature, and the fold reads
+            # both, so each is checked against the signed bytes rather than believed —
+            # the same two checks ``utina.replay`` makes at its own door.
+            if ILKS.get(str(body.get("t"))) != kind or (
+                body.get("d") != said or self.substrate.said(unsigned) != said
+            ):
+                raise EVIDENCE_MISLABELLED(domain=domain, said=said, seq=seq, kind=kind)
 
     def certify(
         self,

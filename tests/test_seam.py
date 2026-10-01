@@ -311,3 +311,12 @@ def test_the_one_question_a_fixture_may_ask_is_answered_by_the_fold():
         law.law_head.said,
     )
     assert Real().governing(acme.corpus, at, "declare-dividend") is None
+
+
+def test_the_writer_and_the_replay_door_agree_on_which_ilk_is_which_kind():
+    """Spelled twice on purpose, so the writing plane need not import the fold through
+    ``utina.replay``; this keeps the spellings together (Copilot review of #12)."""
+    from utina.enact.constructor import ILKS
+    from utina.replay import KINDS
+
+    assert dict(ILKS) == dict(KINDS)

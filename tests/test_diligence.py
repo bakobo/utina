@@ -831,3 +831,54 @@ def test_both_checks_hold_under_real_keri_as_well() -> None:
         with pytest.raises(BakoboError) as mismatched:
             _reseal(record, admitted, kel=[{**kel[0], "x": "rewritten"}, *kel[1:]])
         assert mismatched.value.code == "e.proof.kel-mismatch.f"
+
+
+# --- what is sealed is what was checked (Copilot review of #12) -----------------------
+
+
+def test_relabelling_a_signed_event_outside_its_signature_is_refused(meridian) -> None:
+    """The kind label sits outside every signature, and the fold reads it: an event
+    relabelled as a duplicity observation would convict a party who never forked.
+    Checked against the signed ilk, as ``utina.replay`` checks it at its own door."""
+    admitted = _admitted(meridian)
+    relabelled = [replace(admitted[0], kind="duplicity"), *admitted[1:]]
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, relabelled)
+    assert caught.value.code == "e.proof.evidence-mislabelled.f"
+
+
+def test_an_event_whose_identifier_its_bytes_do_not_derive_is_refused(meridian) -> None:
+    admitted = _admitted(meridian)
+    renamed = [replace(admitted[0], said="E" + "x" * 43), *admitted[1:]]
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, renamed)
+    assert caught.value.code == "e.proof.evidence-mislabelled.f"
+
+
+def test_an_identifier_signed_but_not_derived_from_its_bytes_is_refused(meridian) -> None:
+    """The case the renaming above cannot reach: the signer itself committed an
+    identifier its bytes do not derive, so the signature, the label and ``d`` all
+    agree with each other and only the derivation disagrees."""
+    admitted = _admitted(meridian)
+    first = admitted[0]
+    forged = "E" + "y" * 43
+    unsigned = {key: value for key, value in first.body.items() if key != "sig"}
+    body = {**unsigned, "d": forged}
+    signed = {**body, "sig": meridian.substrate.sign(str(body["i"]), body)}
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, [replace(first, said=forged, body=signed), *admitted[1:]])
+    assert caught.value.code == "e.proof.evidence-mislabelled.f"
+
+
+def test_mutating_the_callers_evidence_after_sealing_changes_nothing_sealed(meridian) -> None:
+    """The seal embeds snapshots of exactly what it verified, so the caller's own
+    mappings cannot be changed underneath it afterwards."""
+    admitted = [replace(one, body=dict(one.body)) for one in _admitted(meridian)]
+    kel = _presented_kel(meridian)
+    sealed = _reseal(meridian, admitted, kel=kel)
+    before = repr(sealed.body)
+
+    admitted[0].body["sig"] = "0" * 88  # type: ignore[index]
+    kel[0]["x"] = "rewritten"
+
+    assert repr(sealed.body) == before
