@@ -72,6 +72,7 @@ KINDS: Mapping[str, str] = {
     "rev": "revocation",
     "dup": "duplicity",
     "cert": "certification",
+    "evl": "evaluation",
 }
 
 #: Bounds on a record, checked before any of it is replayed. Acme's record is 43

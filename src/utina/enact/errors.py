@@ -167,9 +167,9 @@ KEL_MISMATCH = ErrorCode(
     title="A counterparty's presented key log is not the one this domain holds.",
     detail=(
         "The seal would commit {presented} key events as {domain}'s log, and they are not a "
-        "prefix of the {held} this domain has ingested for it. The counterparty's signatures "
-        "are checked against the log this domain holds, so a seal committing any other log "
-        "would hand a later reader a log nobody checked."
+        "prefix of the {held} key events this domain has ingested for it. The counterparty's "
+        "signatures are checked against the log this domain holds, so a seal committing any "
+        "other log would hand a later reader a log nobody checked."
     ),
     args=("domain", "presented", "held"),
     hint=(
@@ -189,4 +189,16 @@ EVIDENCE_MISLABELLED = ErrorCode(
     ),
     args=("domain", "said", "seq", "kind"),
     hint="Admit the counterparty's events exactly as their record commits them.",
+)
+
+EVIDENCE_OVERSIZED = ErrorCode(
+    code="e.input.evidence-oversized.f",
+    title="A seal was asked to admit more evidence than any reader will fold.",
+    detail=(
+        "The seal over {domain}'s record would admit {events} events and {kel} key events, "
+        "and a reader folds at most {bound} of each. A seal past that bound is evidence "
+        "nobody can recompute, so it is refused before any of it is copied or checked."
+    ),
+    args=("domain", "events", "kel", "bound"),
+    hint="Admit the counterparty's record only as far as the coordinate the seal relies on.",
 )

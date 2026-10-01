@@ -882,3 +882,56 @@ def test_mutating_the_callers_evidence_after_sealing_changes_nothing_sealed(meri
     kel[0]["x"] = "rewritten"
 
     assert repr(sealed.body) == before
+
+
+# --- Copilot's second round on #12 ----------------------------------------------------
+
+
+def _resigned(record, event, body):
+    """``event`` with ``body`` re-signed by its own signer and its identifier re-derived,
+    so the outer signature, label and identifier all stand and only what is under test
+    does not."""
+    unsigned = {key: value for key, value in body.items() if key not in {"sig", "d"}}
+    said = record.substrate.said({**unsigned, "d": ""})
+    sealed = {**unsigned, "d": said}
+    signed = {**sealed, "sig": record.substrate.sign(str(sealed["i"]), sealed)}
+    return replace(event, said=said, body=signed)
+
+
+def test_an_embedded_credential_its_issuer_did_not_sign_is_refused(meridian) -> None:
+    """The outer signature is the committer's; a credential embedded in the event carries
+    its issuer's own, and the fold reads the credential. ``utina.replay`` refuses this at
+    its door, and so does the seal."""
+    admitted = _admitted(meridian)
+    index, carrier = next((i, e) for i, e in enumerate(admitted) if "acdc_sig" in e.body)
+    forged = _resigned(meridian, carrier, {**carrier.body, "acdc_sig": "0B0.not-the-issuers"})
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, [*admitted[:index], forged, *admitted[index + 1 :]])
+    assert caught.value.code == "e.proof.evidence-unverified.f"
+
+
+def test_the_control_for_the_credential_case_re_signs_honestly(meridian) -> None:
+    """Without this, the case above could pass because re-signing itself broke the event."""
+    admitted = _admitted(meridian)
+    index, carrier = next((i, e) for i, e in enumerate(admitted) if "acdc_sig" in e.body)
+    honest = _resigned(meridian, carrier, dict(carrier.body))
+    sealed = _reseal(meridian, [*admitted[:index], honest, *admitted[index + 1 :]])
+    assert sealed.kind == diligence.EVALUATION_KIND
+
+
+def test_evidence_past_the_readers_bound_is_refused_before_it_is_copied(meridian) -> None:
+    from utina.enact.constructor import MAX_ADMITTED_EVENTS
+
+    flood = [_admitted(meridian)[0]] * (MAX_ADMITTED_EVENTS + 1)
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, flood)
+    assert caught.value.code == "e.input.evidence-oversized.f"
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, _admitted(meridian), kel=[{}] * (MAX_ADMITTED_EVENTS + 1))
+    assert caught.value.code == "e.input.evidence-oversized.f"
+
+
+def test_an_evaluation_is_a_kind_the_writer_and_the_replay_door_both_know() -> None:
+    from utina.enact.constructor import ILKS
+
+    assert ILKS["evl"] == "evaluation"

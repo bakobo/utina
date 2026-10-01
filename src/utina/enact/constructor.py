@@ -44,6 +44,7 @@ from .errors import (
     DOMAIN_UNINCEPTED,
     EDGE_UNVALIDATED,
     EVIDENCE_MISLABELLED,
+    EVIDENCE_OVERSIZED,
     EVIDENCE_UNVERIFIED,
     KEL_MISMATCH,
     PREDECESSOR_UNKNOWN,
@@ -117,7 +118,14 @@ ILKS: Mapping[str, str] = {
     "rev": "revocation",
     "dup": "duplicity",
     "cert": "certification",
+    "evl": "evaluation",
 }
+
+#: How many events, and how many key events, a seal may admit. The reader's bound
+#: (``fold/diligence.py``), spelled here for the reason ``ILKS`` is and pinned equal by
+#: ``tests/test_seam.py``: a writer that sealed more than the reader folds would emit
+#: evidence nobody can recompute, and would spend unbounded work doing it.
+MAX_ADMITTED_EVENTS = 10_000
 
 class Constructor:
     """The writing plane for one governed domain."""
@@ -568,6 +576,12 @@ class Constructor:
         a stranger with no copy of this package (``fold/diligence.py`` rebuilds them).
         """
         self._require_founded()
+        # Size before shape before meaning (AGENTS.md): bounded before anything is copied,
+        # because the copy is the cost (Copilot review of #12).
+        if len(events) > MAX_ADMITTED_EVENTS or len(kel) > MAX_ADMITTED_EVENTS:
+            raise EVIDENCE_OVERSIZED(
+                domain=counterparty, events=len(events), kel=len(kel), bound=MAX_ADMITTED_EVENTS
+            )
         # Snapshots, taken before either check and embedded afterwards, so that what is
         # sealed is exactly what was checked: the caller's own mappings can change after
         # this returns and the seal does not move with them (Copilot review of #12).
@@ -675,6 +689,19 @@ class Constructor:
             ):
                 raise EVIDENCE_UNVERIFIED(
                     domain=domain, said=said, seq=seq, signer=str(signer)
+                )
+            # A credential embedded in the event carries its issuer's own signature, which
+            # the committer's does not vouch for, and the fold reads the credential. The
+            # same check ``utina.replay`` makes at its door.
+            credential = body.get("acdc")
+            if credential is not None and not (
+                isinstance(credential, Mapping)
+                and isinstance(body.get("acdc_sig"), str)
+                and self.substrate.verify_acdc(credential, str(body["acdc_sig"]))
+            ):
+                issuer = credential.get("i") if isinstance(credential, Mapping) else None
+                raise EVIDENCE_UNVERIFIED(
+                    domain=domain, said=said, seq=seq, signer=str(issuer)
                 )
             # The label and the identifier sit outside the signature, and the fold reads
             # both, so each is checked against the signed bytes rather than believed —
