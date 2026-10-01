@@ -2862,6 +2862,34 @@ Make Custos's replayable governance useful to a real organization = goal:
         is a reason to build it carefully and never a licence to describe the seal as
         ratified. Approved by Daniel 2026-09-25.
 
+    A seal is committed only over evidence the writer verified, against the key log it commits = decision:
+      id: evkafmgh
+      why: >
+        The critical finding of codex's review of PR #10: a domain could commit an evaluation
+        seal over a record attributed to a counterparty's gAID with every signature stripped,
+        zeroed or reattributed, and the fold re-folded it and answered AFFIRMED. f7bd21b closed
+        five of that review's findings and left this one, because the fold cannot close it: no
+        plane above the substrate may import a KERI library (@yrkrqj), and the two substrates do
+        not even compute an identifier the same way.
+        Chose to close it at the ingestion boundary in the writing plane, which already verifies
+        an event's own signature in _emit before recording it. Constructor.seal_evaluation now
+        refuses unless every admitted event's signature verifies through Substrate.verify, which
+        reads the signer's key state out of the key log this domain has ingested rather than out
+        of a keystore, so it checks a party this domain does not control. And it refuses unless
+        the key log the seal commits is a prefix of the counterparty key log the substrate
+        holds, event for event. Without that second check the signatures were verified against
+        one key log and the seal committed another, and the log a stranger re-folds with would
+        be one nobody checked. Prefix rather than equality, because the seal commits the log
+        only as far as the coordinate it relied on.
+        Rejected verifying in the fold, which @yrkrqj forbids. Rejected ingesting the presented
+        key log at sealing time and verifying against that, because a writer that trusted
+        whatever log it was handed would check signatures against keys the forger chose.
+        Tradeoff accepted, and stated where the code states it: a later reader re-folding the
+        record cannot repeat the check, which is already true of every event here, so diligence
+        is no weaker than the rest of the engine but not as strong as 'any stranger recomputes'
+        sounds. utina is a fixture for a deferred construct (@gsli4bea), and this is part of
+        building it carefully.
+
     The answer is recomputed whenever asked, never retrieved = decision:
       id: fsbgamvi
       why: >

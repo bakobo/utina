@@ -14,11 +14,15 @@ endorsement and an untouched slot is not an act at all (this.i @7szbfw).
 
 from __future__ import annotations
 
+import copy
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
 
+from bakobo.errors import BakoboError  # type: ignore[import-untyped]
+
 from utina.substrate import (
     AID,
+    AID_UNKNOWN,
     CERTIFICATION_SCHEMA,
     DI2I,
     EDGE_NODE_FIELD,
@@ -39,6 +43,10 @@ from .errors import (
     DOMAIN_INCEPTED,
     DOMAIN_UNINCEPTED,
     EDGE_UNVALIDATED,
+    EVIDENCE_MISLABELLED,
+    EVIDENCE_OVERSIZED,
+    EVIDENCE_UNVERIFIED,
+    KEL_MISMATCH,
     PREDECESSOR_UNKNOWN,
     RECORD_UNRESUMABLE,
     REGISTRY_UNOPENED,
@@ -94,6 +102,30 @@ def gel_identifier(substrate: Substrate, nonce: str = GEL_NONCE) -> SAID:
     """
     return substrate.said({"t": "gel", "ii": GEL_SENTINEL, "u": nonce})
 
+
+
+#: The event kinds the fold reads, by the ilk each signed body commits in ``t``. Spelled
+#: here rather than imported from ``utina.replay``, which reads the fold, for the reason
+#: the seal's field names are spelled (this.i @tvaq2s); ``tests/test_seam.py`` keeps the
+#: two tables equal.
+ILKS: Mapping[str, str] = {
+    "icp": "inception",
+    "enact": "enactment",
+    "act": "act",
+    "end": "endorsement",
+    "ret": "retraction",
+    "iss": "issuance",
+    "rev": "revocation",
+    "dup": "duplicity",
+    "cert": "certification",
+    "evl": "evaluation",
+}
+
+#: How many events, and how many key events, a seal may admit. The reader's bound
+#: (``fold/diligence.py``), spelled here for the reason ``ILKS`` is and pinned equal by
+#: ``tests/test_seam.py``: a writer that sealed more than the reader folds would emit
+#: evidence nobody can recompute, and would spend unbounded work doing it.
+MAX_ADMITTED_EVENTS = 10_000
 
 class Constructor:
     """The writing plane for one governed domain."""
@@ -544,6 +576,22 @@ class Constructor:
         a stranger with no copy of this package (``fold/diligence.py`` rebuilds them).
         """
         self._require_founded()
+        # Size before shape before meaning (AGENTS.md): bounded before anything is copied,
+        # because the copy is the cost (Copilot review of #12).
+        if len(events) > MAX_ADMITTED_EVENTS or len(kel) > MAX_ADMITTED_EVENTS:
+            raise EVIDENCE_OVERSIZED(
+                domain=counterparty, events=len(events), kel=len(kel), bound=MAX_ADMITTED_EVENTS
+            )
+        # Snapshots, taken before either check and embedded afterwards, so that what is
+        # sealed is exactly what was checked: the caller's own mappings can change after
+        # this returns and the seal does not move with them (Copilot review of #12).
+        admitted = tuple(
+            (one.said, one.kind, one.position.seq, copy.deepcopy(dict(one.body)))
+            for one in events
+        )
+        presented = tuple(copy.deepcopy(dict(event)) for event in kel)
+        self._require_held(counterparty, presented)
+        self._require_verified(counterparty, admitted)
         # The field names are spelled rather than imported from ``utina.fold``. The
         # writing plane does not import the fold (this.i @tvaq2s) — ``certify`` writes
         # its own "certifies" for the same reason — so the seam is a committed byte
@@ -559,16 +607,109 @@ class Constructor:
         }
         evidence = {
             "events": tuple(
-                {"said": one.said, "kind": one.kind, "seq": one.position.seq, "body": one.body}
-                for one in events
+                {"said": said, "kind": kind, "seq": seq, "body": body}
+                for said, kind, seq, body in admitted
             ),
-            "kel": tuple(kel),
+            "kel": presented,
         }
         return self._emit(
             "evaluation",
             {"t": "evl", "for": subject, "seal": seal, "evidence": evidence},
             self.gaid,
         )
+
+    def _require_held(self, domain: AID, kel: Sequence[Mapping[str, object]]) -> None:
+        """Refuse to commit a key log other than the one the signatures are checked against.
+
+        :meth:`_require_verified` checks each admitted event against the counterparty key
+        state this domain ingested, so the log the seal commits has to be that log, or the
+        stranger who re-folds the record is handed one nobody checked (this.i @evkafmgh).
+        A prefix rather than the whole, because the seal commits the log only as far as
+        the coordinate it relied on. A counterparty this domain never ingested holds no
+        log to match, and is refused the same way.
+        """
+        try:
+            held = self.substrate.key_events(domain)
+        except BakoboError as error:
+            # Only "this substrate holds no key state for that identifier" means there is
+            # nothing to match; any other substrate failure keeps its own code and its own
+            # retryability rather than being reported as a mismatch.
+            if error.code != AID_UNKNOWN.code:
+                raise
+            held = ()
+        presented = [dict(event) for event in kel]
+        if held and len(presented) <= len(held) and all(
+            event == dict(known) for event, known in zip(presented, held, strict=False)
+        ):
+            return
+        raise KEL_MISMATCH(domain=domain, presented=len(presented), held=len(held))
+
+    def _require_verified(
+        self, domain: AID, events: Sequence[tuple[SAID, str, int, Mapping[str, object]]]
+    ) -> None:
+        """Refuse to seal over a counterparty event whose signature does not stand up.
+
+        **This is the ingestion boundary, and it is the answer to a cross-model
+        review's first finding.** The fold cannot perform this check: no plane above
+        the substrate may import a KERI library (Custos section 1.4 axiom 2), and the
+        two substrates do not even compute an identifier the same way — the facade
+        takes SHA-256 over canonical JSON and keripy takes BLAKE3 through ``Saider``.
+        So before this existed, a domain could commit a fabricated record attributed to
+        a counterparty's gAID, with every signature stripped or replaced by zeros, and
+        the fold would re-fold it and answer AFFIRMED.
+
+        The writing plane can perform it, because ``Substrate.verify`` reads the
+        signer's establishment event out of the **key log** rather than out of a
+        keystore, so it verifies a party this domain does not control provided that
+        party's key events have been ingested. That is the real-world shape rather than
+        a fixture's convenience: to check a counterparty you take their key log, which
+        is the very thing this seal admits anyway.
+
+        This restores parity rather than inventing a rule. ``_emit`` has always verified
+        an event's own signature before recording it, on the ground that an event whose
+        signature does not stand up confers no authority and must not reach the record.
+        Evidence admitted out of somebody else's record was the first thing to reach it
+        without passing that check, and now it does not.
+
+        **What this does not do**, said plainly because the beat's narration implies
+        otherwise: a later reader re-folding this record cannot repeat the check. That
+        is already true of every event in every record here — the fold reads committed
+        values and never a signature (``this.i`` @yrkrqj) — so diligence is no weaker
+        than the rest of the engine. It is not as strong as "any stranger recomputes"
+        sounds, and that gap is the counterparty's own log to close.
+        """
+        for said, kind, seq, body in events:
+            signer = body.get("i")
+            signature = body.get("sig")
+            unsigned = {key: value for key, value in body.items() if key != "sig"}
+            if not (
+                isinstance(signer, str)
+                and isinstance(signature, str)
+                and self.substrate.verify(signer, unsigned, signature)
+            ):
+                raise EVIDENCE_UNVERIFIED(
+                    domain=domain, said=said, seq=seq, signer=str(signer)
+                )
+            # A credential embedded in the event carries its issuer's own signature, which
+            # the committer's does not vouch for, and the fold reads the credential. The
+            # same check ``utina.replay`` makes at its door.
+            credential = body.get("acdc")
+            if credential is not None and not (
+                isinstance(credential, Mapping)
+                and isinstance(body.get("acdc_sig"), str)
+                and self.substrate.verify_acdc(credential, str(body["acdc_sig"]))
+            ):
+                issuer = credential.get("i") if isinstance(credential, Mapping) else None
+                raise EVIDENCE_UNVERIFIED(
+                    domain=domain, said=said, seq=seq, signer=str(issuer)
+                )
+            # The label and the identifier sit outside the signature, and the fold reads
+            # both, so each is checked against the signed bytes rather than believed —
+            # the same two checks ``utina.replay`` makes at its own door.
+            if ILKS.get(str(body.get("t"))) != kind or (
+                body.get("d") != said or self.substrate.said(unsigned) != said
+            ):
+                raise EVIDENCE_MISLABELLED(domain=domain, said=said, seq=seq, kind=kind)
 
     def certify(
         self,

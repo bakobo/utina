@@ -657,3 +657,281 @@ def test_an_amendment_under_a_law_owing_diligence_does_not_take_force_without_it
         [replace(events[0], body={"law": {"clauses": edition}}), *events[1:]]
     )
     assert Law.at(free, later).law_head != Law.at(free, Position(0)).law_head
+
+
+# --- the ingestion boundary ---------------------------------------------------------
+
+
+def _reseal(record, events, *, kel=None, counterparty=None):
+    """Ask Meridian to commit its diligence again, over ``events``.
+
+    Every other argument is read back off the seal the fixture already built, so what
+    varies between the cases below is the evidence, or the key log presented with it,
+    or whose log it claims to be, and nothing else.
+    """
+    from utina.enact import Constructor
+
+    seal = record.events[SEAL_AT].body[diligence.SEAL_FIELD]
+    if kel is None:
+        kel = _presented_kel(record)
+    constructor = Constructor.resume(
+        record.substrate, record.gaid, values=record.values, events=record.events
+    )
+    return constructor.seal_evaluation(
+        record.events[SEAL_AT].body[diligence.SUPPORTS_FIELD],
+        counterparty=counterparty or str(seal[diligence.DOMAIN_FIELD]),
+        clause=str(seal[diligence.CLAUSE_FIELD]),
+        on=str(seal[diligence.SUBJECT_FIELD]),
+        at=int(seal[diligence.COORDINATE_FIELD]),
+        head=str(seal[diligence.HEAD_FIELD]),
+        events=events,
+        kel=list(kel),
+    )
+
+
+def _presented_kel(record):
+    """The counterparty's key log as the fixture's seal committed it."""
+    return [
+        dict(event)
+        for event in record.events[SEAL_AT].body[diligence.EVIDENCE_FIELD][diligence.KEL_FIELD]
+    ]
+
+
+def _admitted(record):
+    """The counterparty events this record already holds, as Event objects."""
+    corpus = diligence.evidence_of(record.events[SEAL_AT])
+    assert corpus is not None
+    return list(corpus.upto(Position(seq=record.events[SEAL_AT].body[
+        diligence.SEAL_FIELD][diligence.COORDINATE_FIELD])))
+
+
+@pytest.mark.parametrize(
+    ("what", "mutate"),
+    [
+        ("removed", lambda body: {k: v for k, v in body.items() if k != "sig"}),
+        ("replaced with zeros", lambda body: {**body, "sig": "0" * 88}),
+        ("attributed to a stranger", lambda body: {**body, "i": "nobody-who-ever-signed"}),
+        ("left in place over altered content", lambda body: {**body, "x": "added after"}),
+    ],
+    ids=["removed", "zeroed", "misattributed", "content-altered"],
+)
+def test_a_seal_may_not_be_committed_over_evidence_that_does_not_verify(
+    meridian, what, mutate
+) -> None:
+    """The critical finding, closed where it can be closed.
+
+    The fold cannot check this — no plane above the substrate may import a KERI
+    library, and the two substrates do not compute an identifier the same way. The
+    writing plane can, because ``Substrate.verify`` reads the signer's establishment
+    event out of the key log rather than out of a keystore, so it verifies a party
+    this domain does not control.
+
+    Before this guard, all three of these committed without complaint and the fold
+    then answered AFFIRMED over them.
+    """
+    tampered = [replace(one, body=mutate(one.body)) for one in _admitted(meridian)]
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, tampered)
+    assert caught.value.code == "e.proof.evidence-unverified.f"
+    assert not caught.value.retryable, f"a signature {what} does not fix itself"
+
+
+def test_the_honest_evidence_verifies_so_the_guard_is_not_vacuous(meridian) -> None:
+    """A guard that refused everything would pass the three cases above and ship
+    nothing. This is the same call with the evidence left alone."""
+    sealed = _reseal(meridian, _admitted(meridian))
+    assert sealed.kind == diligence.EVALUATION_KIND
+
+
+# --- the key log the seal commits is the one the signatures were checked against -----
+#
+# this.i @evkafmgh. The signatures are verified against the counterparty key log this
+# domain ingested; a seal that committed some other log would hand a stranger a log
+# nobody checked.
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    [
+        lambda kel: [{**kel[0], "x": "rewritten"}, *kel[1:]],
+        lambda kel: [*kel, {**kel[-1], "s": "ff"}],
+        lambda kel: kel[1:],
+    ],
+    ids=["an-event-rewritten", "an-event-fabricated-past-the-end", "the-inception-dropped"],
+)
+def test_a_seal_may_not_commit_a_key_log_the_substrate_does_not_hold(meridian, tamper) -> None:
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, _admitted(meridian), kel=tamper(_presented_kel(meridian)))
+    assert caught.value.code == "e.proof.kel-mismatch.f"
+    assert not caught.value.retryable
+
+
+def test_a_seal_over_a_counterparty_this_domain_never_ingested_is_refused(meridian) -> None:
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, _admitted(meridian), counterparty="a-domain-nobody-ingested")
+    assert caught.value.code == "e.proof.kel-mismatch.f"
+
+
+def test_a_shorter_prefix_of_the_held_log_is_still_the_held_log(meridian) -> None:
+    """Prefix, not equality: a seal commits the log only as far as the coordinate it
+    relied on, so a log the substrate holds more of is still the same log."""
+    presented = _presented_kel(meridian)[:-1]
+    sealed = _reseal(meridian, _admitted(meridian), kel=presented)
+    assert sealed.kind == diligence.EVALUATION_KIND
+    committed = sealed.body[diligence.EVIDENCE_FIELD][diligence.KEL_FIELD]
+    assert [dict(event) for event in committed] == presented, "the presented log is sealed"
+
+
+def test_an_empty_log_for_a_counterparty_never_ingested_is_still_refused(meridian) -> None:
+    """An empty log is trivially a prefix of an empty one; nothing held means nothing
+    to match, so it refuses rather than passing vacuously."""
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, [], kel=[], counterparty="a-domain-nobody-ingested")
+    assert caught.value.code == "e.proof.kel-mismatch.f"
+
+
+def test_a_substrate_failure_other_than_an_unknown_identifier_keeps_its_own_code(
+    meridian, monkeypatch
+) -> None:
+    """Only "no key state for that identifier" means there is nothing to match. Any
+    other failure is the substrate's to report, with its own retryability."""
+    from bakobo.errors import ErrorCode
+
+    flaky = ErrorCode(
+        code="e.state.test-substrate-flaky.r",
+        title="A substrate failure invented for this test.",
+        detail="It is retryable, and must stay so.",
+        args=(),
+        hint="Try again.",
+    )
+
+    def failing(aid):
+        raise flaky()
+
+    monkeypatch.setattr(meridian.substrate, "key_events", failing)
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, _admitted(meridian))
+    assert caught.value.code == "e.state.test-substrate-flaky.r"
+
+
+def test_both_checks_hold_under_real_keri_as_well() -> None:
+    """The facade fixture above carries every case; this pins that keripy's own
+    verification answers the same way, since the guard is only as good as
+    ``Substrate.verify`` and ``Substrate.key_events`` on the substrate in use."""
+    with world(substrate="keripy", domain=bank.DOMAIN) as record:
+        admitted = _admitted(record)
+        assert _reseal(record, admitted).kind == diligence.EVALUATION_KIND
+
+        zeroed = [replace(one, body={**one.body, "sig": "0" * 88}) for one in admitted]
+        with pytest.raises(BakoboError) as unverified:
+            _reseal(record, zeroed)
+        assert unverified.value.code == "e.proof.evidence-unverified.f"
+
+        kel = _presented_kel(record)
+        with pytest.raises(BakoboError) as mismatched:
+            _reseal(record, admitted, kel=[{**kel[0], "x": "rewritten"}, *kel[1:]])
+        assert mismatched.value.code == "e.proof.kel-mismatch.f"
+
+
+# --- what is sealed is what was checked (Copilot review of #12) -----------------------
+
+
+def test_relabelling_a_signed_event_outside_its_signature_is_refused(meridian) -> None:
+    """The kind label sits outside every signature, and the fold reads it: an event
+    relabelled as a duplicity observation would convict a party who never forked.
+    Checked against the signed ilk, as ``utina.replay`` checks it at its own door."""
+    admitted = _admitted(meridian)
+    relabelled = [replace(admitted[0], kind="duplicity"), *admitted[1:]]
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, relabelled)
+    assert caught.value.code == "e.proof.evidence-mislabelled.f"
+
+
+def test_an_event_whose_identifier_its_bytes_do_not_derive_is_refused(meridian) -> None:
+    admitted = _admitted(meridian)
+    renamed = [replace(admitted[0], said="E" + "x" * 43), *admitted[1:]]
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, renamed)
+    assert caught.value.code == "e.proof.evidence-mislabelled.f"
+
+
+def test_an_identifier_signed_but_not_derived_from_its_bytes_is_refused(meridian) -> None:
+    """The case the renaming above cannot reach: the signer itself committed an
+    identifier its bytes do not derive, so the signature, the label and ``d`` all
+    agree with each other and only the derivation disagrees."""
+    admitted = _admitted(meridian)
+    first = admitted[0]
+    forged = "E" + "y" * 43
+    unsigned = {key: value for key, value in first.body.items() if key != "sig"}
+    body = {**unsigned, "d": forged}
+    signed = {**body, "sig": meridian.substrate.sign(str(body["i"]), body)}
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, [replace(first, said=forged, body=signed), *admitted[1:]])
+    assert caught.value.code == "e.proof.evidence-mislabelled.f"
+
+
+def test_mutating_the_callers_evidence_after_sealing_changes_nothing_sealed(meridian) -> None:
+    """The seal embeds snapshots of exactly what it verified, so the caller's own
+    mappings cannot be changed underneath it afterwards."""
+    admitted = [replace(one, body=dict(one.body)) for one in _admitted(meridian)]
+    kel = _presented_kel(meridian)
+    sealed = _reseal(meridian, admitted, kel=kel)
+    before = repr(sealed.body)
+
+    admitted[0].body["sig"] = "0" * 88  # type: ignore[index]
+    kel[0]["x"] = "rewritten"
+
+    assert repr(sealed.body) == before
+
+
+# --- Copilot's second round on #12 ----------------------------------------------------
+
+
+def _resigned(record, event, body):
+    """``event`` with ``body`` re-signed by its own signer and its identifier re-derived,
+    so the outer signature, label and identifier all stand and only what is under test
+    does not."""
+    unsigned = {key: value for key, value in body.items() if key not in {"sig", "d"}}
+    said = record.substrate.said({**unsigned, "d": ""})
+    sealed = {**unsigned, "d": said}
+    signed = {**sealed, "sig": record.substrate.sign(str(sealed["i"]), sealed)}
+    return replace(event, said=said, body=signed)
+
+
+def test_an_embedded_credential_its_issuer_did_not_sign_is_refused(meridian) -> None:
+    """The outer signature is the committer's; a credential embedded in the event carries
+    its issuer's own, and the fold reads the credential. ``utina.replay`` refuses this at
+    its door, and so does the seal."""
+    admitted = _admitted(meridian)
+    index, carrier = next((i, e) for i, e in enumerate(admitted) if "acdc_sig" in e.body)
+    forged = _resigned(meridian, carrier, {**carrier.body, "acdc_sig": "0B0.not-the-issuers"})
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, [*admitted[:index], forged, *admitted[index + 1 :]])
+    assert caught.value.code == "e.proof.evidence-unverified.f"
+
+
+def test_the_control_for_the_credential_case_re_signs_honestly(meridian) -> None:
+    """Without this, the case above could pass because re-signing itself broke the event."""
+    admitted = _admitted(meridian)
+    index, carrier = next((i, e) for i, e in enumerate(admitted) if "acdc_sig" in e.body)
+    honest = _resigned(meridian, carrier, dict(carrier.body))
+    sealed = _reseal(meridian, [*admitted[:index], honest, *admitted[index + 1 :]])
+    assert sealed.kind == diligence.EVALUATION_KIND
+
+
+def test_evidence_past_the_readers_bound_is_refused_before_it_is_copied(meridian) -> None:
+    from utina.enact.constructor import MAX_ADMITTED_EVENTS
+
+    flood = [_admitted(meridian)[0]] * (MAX_ADMITTED_EVENTS + 1)
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, flood)
+    assert caught.value.code == "e.input.evidence-oversized.f"
+    with pytest.raises(BakoboError) as caught:
+        _reseal(meridian, _admitted(meridian), kel=[{}] * (MAX_ADMITTED_EVENTS + 1))
+    assert caught.value.code == "e.input.evidence-oversized.f"
+
+
+def test_an_evaluation_is_a_kind_the_writer_and_the_replay_door_both_know() -> None:
+    from utina.enact.constructor import ILKS
+
+    assert ILKS["evl"] == "evaluation"

@@ -145,3 +145,60 @@ PREDECESSOR_UNKNOWN = ErrorCode(
     args=("gaid", "prior"),
     hint="Cite the identifier of the inception or enactment whose law this amends.",
 )
+
+EVIDENCE_UNVERIFIED = ErrorCode(
+    code="e.proof.evidence-unverified.f",
+    title="A counterparty's committed event does not carry a signature that stands up.",
+    detail=(
+        "The event {said} at sequence {seq}, admitted as {domain}'s own committed record, "
+        "was signed by {signer} and that signature does not verify against the signer's "
+        "key state as this domain has ingested it. A domain may not commit an evaluation "
+        "seal over evidence it has not checked."
+    ),
+    args=("domain", "said", "seq", "signer"),
+    hint=(
+        "Ingest the counterparty's key log before sealing an evaluation over their "
+        "record, and seal only over events that verify under it."
+    ),
+)
+
+KEL_MISMATCH = ErrorCode(
+    code="e.proof.kel-mismatch.f",
+    title="A counterparty's presented key log is not the one this domain holds.",
+    detail=(
+        "The seal would commit {presented} key events as {domain}'s log, and they are not a "
+        "prefix of the {held} key events this domain has ingested for it. The counterparty's "
+        "signatures are checked against the log this domain holds, so a seal committing any "
+        "other log would hand a later reader a log nobody checked."
+    ),
+    args=("domain", "presented", "held"),
+    hint=(
+        "Ingest the counterparty's key log, and commit it as ingested, up to the coordinate "
+        "the seal relies on."
+    ),
+)
+
+EVIDENCE_MISLABELLED = ErrorCode(
+    code="e.proof.evidence-mislabelled.f",
+    title="A counterparty's event is labelled with something its signed bytes do not say.",
+    detail=(
+        "The event {said} at sequence {seq}, admitted as {domain}'s own committed record, is "
+        "labelled {kind} or carries that identifier, and its signed bytes say otherwise. "
+        "The label and the identifier sit outside the signature and the fold reads both, so "
+        "a domain may not seal over either unless the signed bytes agree."
+    ),
+    args=("domain", "said", "seq", "kind"),
+    hint="Admit the counterparty's events exactly as their record commits them.",
+)
+
+EVIDENCE_OVERSIZED = ErrorCode(
+    code="e.input.evidence-oversized.f",
+    title="A seal was asked to admit more evidence than any reader will fold.",
+    detail=(
+        "The seal over {domain}'s record would admit {events} events and {kel} key events, "
+        "and a reader folds at most {bound} of each. A seal past that bound is evidence "
+        "nobody can recompute, so it is refused before any of it is copied or checked."
+    ),
+    args=("domain", "events", "kel", "bound"),
+    hint="Admit the counterparty's record only as far as the coordinate the seal relies on.",
+)
