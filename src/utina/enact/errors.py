@@ -151,13 +151,29 @@ EVIDENCE_UNVERIFIED = ErrorCode(
     title="A counterparty's committed event does not carry a signature that stands up.",
     detail=(
         "The event {said} at sequence {seq}, admitted as {domain}'s own committed record, "
-        "was signed by {signer} and that signature does not verify against the key log "
-        "presented with it. A domain may not commit an evaluation seal over evidence it "
-        "has not checked."
+        "was signed by {signer} and that signature does not verify against the signer's "
+        "key state as this domain has ingested it. A domain may not commit an evaluation "
+        "seal over evidence it has not checked."
     ),
     args=("domain", "said", "seq", "signer"),
     hint=(
         "Ingest the counterparty's key log before sealing an evaluation over their "
         "record, and seal only over events that verify under it."
+    ),
+)
+
+KEL_MISMATCH = ErrorCode(
+    code="e.proof.kel-mismatch.f",
+    title="A counterparty's presented key log is not the one this domain holds.",
+    detail=(
+        "The seal would commit {presented} key events as {domain}'s log, and they are not a "
+        "prefix of the {held} this domain has ingested for it. The counterparty's signatures "
+        "are checked against the log this domain holds, so a seal committing any other log "
+        "would hand a later reader a log nobody checked."
+    ),
+    args=("domain", "presented", "held"),
+    hint=(
+        "Ingest the counterparty's key log, and commit it as ingested, up to the coordinate "
+        "the seal relies on."
     ),
 )

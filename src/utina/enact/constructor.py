@@ -17,8 +17,11 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
 
+from bakobo.errors import BakoboError  # type: ignore[import-untyped]
+
 from utina.substrate import (
     AID,
+    AID_UNKNOWN,
     CERTIFICATION_SCHEMA,
     DI2I,
     EDGE_NODE_FIELD,
@@ -40,6 +43,7 @@ from .errors import (
     DOMAIN_UNINCEPTED,
     EDGE_UNVALIDATED,
     EVIDENCE_UNVERIFIED,
+    KEL_MISMATCH,
     PREDECESSOR_UNKNOWN,
     RECORD_UNRESUMABLE,
     REGISTRY_UNOPENED,
@@ -545,6 +549,7 @@ class Constructor:
         a stranger with no copy of this package (``fold/diligence.py`` rebuilds them).
         """
         self._require_founded()
+        self._require_held(counterparty, kel)
         self._require_verified(counterparty, events)
         # The field names are spelled rather than imported from ``utina.fold``. The
         # writing plane does not import the fold (this.i @tvaq2s) — ``certify`` writes
@@ -571,6 +576,32 @@ class Constructor:
             {"t": "evl", "for": subject, "seal": seal, "evidence": evidence},
             self.gaid,
         )
+
+    def _require_held(self, domain: AID, kel: Sequence[Mapping[str, object]]) -> None:
+        """Refuse to commit a key log other than the one the signatures are checked against.
+
+        :meth:`_require_verified` checks each admitted event against the counterparty key
+        state this domain ingested, so the log the seal commits has to be that log, or the
+        stranger who re-folds the record is handed one nobody checked (this.i @evkafmgh).
+        A prefix rather than the whole, because the seal commits the log only as far as
+        the coordinate it relied on. A counterparty this domain never ingested holds no
+        log to match, and is refused the same way.
+        """
+        try:
+            held = self.substrate.key_events(domain)
+        except BakoboError as error:
+            # Only "this substrate holds no key state for that identifier" means there is
+            # nothing to match; any other substrate failure keeps its own code and its own
+            # retryability rather than being reported as a mismatch.
+            if error.code != AID_UNKNOWN.code:
+                raise
+            held = ()
+        presented = [dict(event) for event in kel]
+        if held and len(presented) <= len(held) and all(
+            event == dict(known) for event, known in zip(presented, held, strict=False)
+        ):
+            return
+        raise KEL_MISMATCH(domain=domain, presented=len(presented), held=len(held))
 
     def _require_verified(self, domain: AID, events: Sequence[Event]) -> None:
         """Refuse to seal over a counterparty event whose signature does not stand up.
