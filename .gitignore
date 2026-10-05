@@ -12,3 +12,7 @@ __pycache__/
 /.tick
 .tick.lock
 .venv/
+
+# mutmut (the mutation-testing pilot): its working copy and the report tools/mutation writes
+mutants/
+mutation-out/

@@ -1,0 +1,70 @@
+name: Mutation (pilot)
+
+# A two-week mutation-testing pilot, from 2026-10-05. The CI gate already holds every line to 100%
+# branch coverage, which shows a line ran; this shows whether any test would notice the line being
+# wrong. It mutates only the modules main changed in the last seven days (tools/mutation/mutate.py
+# picks them from first-parent history), writes the survivors to the job summary, and uploads one
+# record per survivor as the mutation-report artifact, which tools/mutation/ticks.py files as ticks
+# when run by hand.
+#
+# Scheduled and manual only, never on push or pull_request: during the pilot a survivor is a
+# measurement, not a verdict on a change, and a night's run takes hours. Survivors never fail the
+# job; it fails only when the run itself could not be carried out (mutmut crashed, or the unmutated
+# suite failed), since a broken harness that reported success would look exactly like a clean night.
+
+on:
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "How far back main's changes count, in git's --since syntax"
+        default: "7 days ago"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation
+  cancel-in-progress: false
+
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    # GitHub stops a job at 360 minutes and uploads nothing. The run's own budget (300 below)
+    # ends mutmut first, so the mutants that did finish are still reported.
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The module selection reads a week of first-parent history; a shallow clone has none.
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          python-version: "3.14"
+          enable-cache: true
+      - name: Sync dependencies
+        run: uv sync --frozen
+      - name: Mutate the modules main changed recently
+        env:
+          SINCE: ${{ inputs.since || '7 days ago' }}
+        run: uv run python tools/mutation/mutate.py --since "$SINCE" --budget-minutes 300 --out mutation-out
+      - name: Write the job summary
+        if: always()
+        run: |
+          if [ -f mutation-out/summary.md ]; then
+            cat mutation-out/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "The mutation run wrote no summary; see the step above." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutation-report
+          path: mutation-out/
+          if-no-files-found: error
+          retention-days: 30
