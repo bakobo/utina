@@ -20,9 +20,12 @@ mutmut crashed, or the unmutated suite failed — because a harness failure that
 would look exactly like a clean night.
 
 Each record's ``class`` is ``string-only`` when the mutation changes nothing but the text inside
-string literals, which during the pilot is counted rather than ticked, and ``behavioural``
-otherwise. ``classify`` decides from the diff alone and leans behavioural whenever it cannot
-vouch for the change.
+string literals that are message text, which during the pilot is counted rather than ticked,
+and ``behavioural`` otherwise. A literal is message text only when ``message_sink`` traces it,
+in the source, into an exception constructor in a ``raise``, a ``print``, a logging call or
+``warnings.warn``; the record carries that sink as ``message_sink``, null when there is none.
+``classify`` decides from the diff and that sink, and leans behavioural whenever it cannot vouch
+for the change.
 
 A record's ``id`` is a digest of the file, the function and the mutated text, with no line
 number or mutmut ordinal in it, so the same surviving mutation keeps its id across nights while
@@ -49,6 +52,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 SCHEMA = "bakobo.mutation-report/1"
+PASSED = "passed: every test covering this function passed with the mutant in place"
+STRING_NOTE = "only the text of a message literal changed; counted, not ticked"
 # mutmut mangles a method name with U+01C1 (LATIN LETTER LATERAL CLICK) as its separator:
 # x<sep>Class<sep>method. Spelled as an escape so no reader mistakes it for two pipes.
 METHOD_SEP = "\u01c1"
@@ -83,6 +88,7 @@ class Survivor:
     diff: str
     tests: int
     kind: str = BEHAVIOURAL
+    sink: str | None = None
 
     def record(self, pytest_args: list[str]) -> dict:
         return {
@@ -92,13 +98,13 @@ class Survivor:
             "line": self.line,
             "function": self.function,
             "class": self.kind,
+            "message_sink": self.sink,
             "mutation": {"removed": self.removed, "added": self.added, "diff": self.diff},
             "test_result": {
                 "command": " ".join(["pytest", *pytest_args]),
                 "tests_run": self.tests,
                 "exit_code": 0,
-                "outcome": "passed: every test covering this function passed with the mutant "
-                "in place",
+                "outcome": PASSED,
             },
         }
 
@@ -215,8 +221,11 @@ def _tokens(lines: list[str]) -> list[tuple[int, str]] | None:
     return found
 
 
-def classify(removed: list[str], added: list[str]) -> str:
-    """``string-only`` if the mutation changes only the text inside string literals.
+def classify(removed: list[str], added: list[str], sink: str | None) -> str:
+    """``string-only`` if the mutation changes only the text inside message literals.
+
+    ``sink`` is where ``message_sink`` found the mutated lines' literals going; without one, a
+    changed literal is a returned value, an argument, a key or a pattern, and behavioural.
 
     Both sides must tokenize completely to the same sequence, differing only in string-literal
     tokens, none of which sits beside a comparison, a membership test, a subscript or a key.
@@ -225,7 +234,7 @@ def classify(removed: list[str], added: list[str]) -> str:
     behavioural costs a tick someone closes.
     """
     before, after = _tokens(removed), _tokens(added)
-    if not before or not after or len(before) != len(after):
+    if sink is None or not before or not after or len(before) != len(after):
         return BEHAVIOURAL
     changed = [i for i, (old, new) in enumerate(zip(before, after, strict=True)) if old != new]
     if not changed:
@@ -238,6 +247,72 @@ def classify(removed: list[str], added: list[str]) -> str:
         if any(text in DECIDING for _, text in neighbours):
             return BEHAVIOURAL
     return STRING_ONLY
+
+
+LOG_OWNERS = {"logging", "log", "logger", "_log", "_logger", "LOG", "LOGGER"}
+LOG_METHODS = {"debug", "info", "warning", "warn", "error", "exception", "critical", "log"}
+
+
+def _sink_of_call(call: ast.Call, parent: ast.AST | None) -> str | None:
+    """What kind of message a call delivers, or None if it is not a message sink."""
+    func = call.func
+    if isinstance(parent, ast.Raise) and parent.exc is call:
+        return f"raise {ast.unparse(func)}"
+    if isinstance(func, ast.Name) and func.id == "print":
+        return "print"
+    if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
+        owner, method = func.value.id, func.attr
+        if (owner == "warnings" and method == "warn") or (
+                owner in LOG_OWNERS and method in LOG_METHODS):
+            return f"{owner}.{method}"
+    return None
+
+
+def _sink_of_literal(node: ast.AST, parents: dict) -> str | None:
+    """Follow a literal's value up through concatenation and formatting to a call argument."""
+    while True:
+        parent = parents.get(node)
+        if isinstance(parent, ast.BinOp) and isinstance(parent.op, (ast.Add, ast.Mod)):
+            node = parent
+        elif isinstance(parent, ast.Attribute) and parent.attr == "format":
+            call = parents.get(parent)
+            if not (isinstance(call, ast.Call) and call.func is parent):
+                return None
+            node = call
+        elif isinstance(parent, ast.keyword):
+            node = parent
+        elif isinstance(parent, ast.Call) and node is not parent.func:
+            return _sink_of_call(parent, parents.get(parent))
+        else:
+            return None
+
+
+def message_sink(source: str, first: int, last: int) -> str | None:
+    """Where the string literals on lines ``first``..``last`` end up, if all are messages.
+
+    A literal is message text when its value, after any ``+``, ``%`` or ``.format``, is passed
+    straight to an exception constructor in a ``raise``, to ``print``, to a logging method or to
+    ``warnings.warn``. Returns that sink when every literal touching the lines is one, else None
+    — a line holding no literal, or one literal that is anything else, is not vouched for.
+    """
+    tree = ast.parse(source)
+    parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+
+    def inside_fstring(node: ast.AST) -> bool:
+        while (node := parents.get(node)) is not None:
+            if isinstance(node, ast.JoinedStr):
+                return True
+        return False
+
+    literals = [n for n in ast.walk(tree)
+                if (isinstance(n, ast.JoinedStr)
+                    or (isinstance(n, ast.Constant) and isinstance(n.value, str)))
+                and n.lineno <= last and (n.end_lineno or n.lineno) >= first
+                and not inside_fstring(n)]
+    sinks = [_sink_of_literal(n, parents) for n in literals]
+    if not sinks or None in sinks:
+        return None
+    return sinks[0]
 
 
 def function_span(source: str, function: str) -> tuple[int, int] | None:
@@ -335,12 +410,14 @@ def survivor(mutmut: str, root: Path, name: str, path: str, seen: dict) -> Survi
     relative, removed, added = parse_diff(diff)
     function = function_of(name, path)
     source = (root / path).read_text("utf-8")
+    line = locate(source, function, relative, removed)
+    sink = message_sink(source, line, line + max(len(removed), 1) - 1)
     return Survivor(
         id=mutant_id(path, function, removed, added, seen),
-        mutmut_name=name, file=path, line=locate(source, function, relative, removed),
+        mutmut_name=name, file=path, line=line,
         function=function, removed=removed, added=added, diff=diff,
         tests=len([t for t in tests.splitlines() if t.strip()]),
-        kind=classify(removed, added),
+        kind=classify(removed, added, sink), sink=sink,
     )
 
 
@@ -402,9 +479,9 @@ def cell(text: str) -> str:
 
 
 def summary(data: dict) -> str:
-    lines = ["# Mutation testing (pilot)", "",
-             f"Commit `{data['commit'][:12]}`; modules changed since {data['since']}: "
-             f"{len(data['modules'])}.", ""]
+    scope = (f"Commit `{data['commit'][:12]}`; modules changed since {data['since']}: "
+             f"{len(data['modules'])}.")
+    lines = ["# Mutation testing (pilot)", "", scope, ""]
     if data["failure"]:
         lines += ["**The run failed, so nothing below is a result.**", "", "```",
                   data["failure"], "```", ""]
@@ -417,9 +494,9 @@ def summary(data: dict) -> str:
     survivors = data["survivors"]
     if survivors:
         classes = data["classes"]
-        lines += [f"## {len(survivors)} surviving mutants", "",
-                  f"{classes[BEHAVIOURAL]} behavioural, {classes[STRING_ONLY]} string-only "
-                  "(only the text inside a string literal changed; counted, not ticked).", "",
+        split = (f"{classes[BEHAVIOURAL]} behavioural, {classes[STRING_ONLY]} string-only "
+                 f"({STRING_NOTE}).")
+        lines += [f"## {len(survivors)} surviving mutants", "", split, "",
                   "| id | class | where | function | mutation |", "|---|---|---|---|---|"]
         for s in survivors:
             change = " / ".join(cell(x) for x in s["mutation"]["removed"]) or "(nothing)"

@@ -413,6 +413,9 @@ def tick_stub(tmp_path):
               "3def  debt   mutation survivor [m:dddddddddddd] x.py:1 in f  (closed)\n",
         "add": "4ghi  mutation survivor ...\npaste the mark  ~4ghi  wherever this lives\n",
         "note": "noted on 4ghi\n",
+        # 2abc already carries its detail note; a tick without one is retried.
+        "show": {"by_arg": {"2abc": "title: ...\n\nmutant-id: aaaaaaaaaaaa\n"},
+                 "default": "title: ...\n"},
     })
 
 
@@ -430,14 +433,15 @@ def test_ticks_files_only_new_survivors(sample, tmp_path, capsys):
     assert len(notes) == 2 and notes[0][1] == "4ghi"
     assert "commit c0ffee" in notes[0][2] and "-a\n+b" in notes[0][2]
     assert "Test command: pytest -n0 --no-cov" in notes[0][2]
-    assert ("filed 2; 2 already ticked; 0 string-only survivors not ticked; 4 survivors"
-            in capsys.readouterr().out)
+    assert ("filed 2; 2 already ticked; 0 re-noted; 0 string-only survivors not ticked; "
+            "4 survivors" in capsys.readouterr().out)
 
 
 def test_ticks_dry_run_files_nothing(sample, tmp_path, capsys):
     tick = tick_stub(tmp_path)
     assert ticks.main(["--report", str(sample), "--tick", str(tick), "--dry-run"]) == 0
-    assert [c[0] for c in calls(tmp_path / "tickbin")] == ["ls"]
+    # Only the already-ticked survivor's tick is read, to see whether its note landed.
+    assert [c[0] for c in calls(tmp_path / "tickbin")] == ["ls", "show"]
     out = capsys.readouterr().out
     assert "would file: mutation survivor [m:bbbbbbbbbbbb]" in out
     assert "would file 2; 2 already ticked" in out
@@ -501,8 +505,16 @@ REAL = json.loads((Path(__file__).resolve().parent
     (['    raise E("one "'], ['    raise E("ONE "']),
     (['f("a",', '  "b")'], ['f("a",', '  "XXbXX")']),
 ])
-def test_a_change_inside_a_string_literal_is_string_only(removed, added):
-    assert mutate.classify(removed, added) == STRING_ONLY
+def test_a_change_inside_a_message_literal_is_string_only(removed, added):
+    assert mutate.classify(removed, added, "raise ValueError") == STRING_ONLY
+
+
+@pytest.mark.parametrize("removed, added", [
+    (['    raise ValueError("no label")'], ['    raise ValueError("XXno labelXX")']),
+    (['    return "allow"'], ['    return "XXallowXX"']),
+])
+def test_a_string_change_outside_a_message_sink_is_behavioural(removed, added):
+    assert mutate.classify(removed, added, None) == BEHAVIOURAL
 
 
 @pytest.mark.parametrize("removed, added", [
@@ -521,24 +533,24 @@ def test_a_change_inside_a_string_literal_is_string_only(removed, added):
     (['y = 1', 'z = "a"'], ['y = 1']),
 ])
 def test_anything_else_is_behavioural(removed, added):
-    assert mutate.classify(removed, added) == BEHAVIOURAL
+    assert mutate.classify(removed, added, "raise ValueError") == BEHAVIOURAL
 
 
 def test_the_real_heti_survivors_split():
-    classes = {s["id"]: mutate.classify(s["removed"], s["added"]) for s in REAL["heti"]}
+    classes = {s["id"]: mutate.classify(s["removed"], s["added"], s["message_sink"])
+               for s in REAL["heti"]}
     assert sorted(classes.values()).count(STRING_ONLY) == 7
     assert sorted(classes.values()).count(BEHAVIOURAL) == 11
     # `isinstance(value, dict) or True` survives: no test hands _plain a non-dict Mapping.
     assert classes["89165d46d413"] == BEHAVIOURAL
 
 
-def test_the_real_utina_survivors_are_string_only_but_two():
-    classes = {s["id"]: mutate.classify(s["removed"], s["added"]) for s in REAL["utina"]}
-    assert len(classes) == 57
-    # These two change the slice inside an f-string's {...} ([:16] to [:17]), which is an
-    # expression rather than a literal's text, so they are ticked.
-    assert [i for i, c in classes.items() if c == BEHAVIOURAL] == ["e594c88ec0cc",
-                                                                  "3844d16a640a"]
+def test_the_real_utina_survivors_are_all_behavioural():
+    # Every one changes text handed to Refusal(...), which is returned to the caller: a value,
+    # not a message, so it is ticked.
+    classes = [mutate.classify(s["removed"], s["added"], s["message_sink"])
+               for s in REAL["utina"]]
+    assert len(classes) == 57 and set(classes) == {BEHAVIOURAL}
 
 
 def string_spec():
@@ -551,6 +563,7 @@ def string_spec():
 def test_the_report_carries_each_survivors_class(repo, tmp_path):
     _, data, text = run_main(repo, stub(tmp_path / "bin", "mutmut", string_spec()))
     assert [s["class"] for s in data["survivors"]] == [STRING_ONLY, BEHAVIOURAL]
+    assert [s["message_sink"] for s in data["survivors"]] == ["raise ValueError", None]
     assert data["classes"] == {BEHAVIOURAL: 1, STRING_ONLY: 1}
     assert "1 behavioural, 1 string-only" in text
     assert "| string-only |" in text and "| behavioural |" in text
@@ -571,19 +584,20 @@ def real_report(tmp_path, repo_name):
         record.update(file=s["file"], function=s["function"])
         # No "class" field: ticks.py decides from the diff itself, never from a stored label.
         record["mutation"] = {"removed": s["removed"], "added": s["added"], "diff": "-\n+"}
+        record["message_sink"] = s["message_sink"]
         survivors.append(record)
     path = tmp_path / f"{repo_name}.json"
     path.write_text(json.dumps({"commit": "c0ffee", "failure": None, "survivors": survivors}))
     return path
 
 
-def test_ticks_skips_utinas_string_only_survivors(tmp_path, capsys):
+def test_ticks_files_every_utina_survivor(tmp_path, capsys):
     tick = tick_stub(tmp_path)
     assert ticks.main(["--report", str(real_report(tmp_path, "utina")), "--tick",
                        str(tick)]) == 0
-    adds = [c[-1] for c in calls(tmp_path / "tickbin") if c[0] == "add"]
-    assert [a.split()[2] for a in adds] == ["[m:e594c88ec0cc]", "[m:3844d16a640a]"]
-    assert "filed 2; 0 already ticked; 55 string-only survivors not ticked" in (
+    adds = [c for c in calls(tmp_path / "tickbin") if c[0] == "add"]
+    assert len(adds) == 57
+    assert "filed 57; 0 already ticked; 0 re-noted; 0 string-only survivors not ticked" in (
         capsys.readouterr().out)
 
 
@@ -594,5 +608,128 @@ def test_ticks_files_hetis_behavioural_survivors(tmp_path, capsys):
     adds = [c[-1] for c in calls(tmp_path / "tickbin") if c[0] == "add"]
     assert len(adds) == 11
     assert any("[m:89165d46d413]" in title for title in adds)
-    assert "filed 11; 0 already ticked; 7 string-only survivors not ticked" in (
+    assert "filed 11; 0 already ticked; 0 re-noted; 7 string-only survivors not ticked" in (
         capsys.readouterr().out)
+
+
+# --- where a string literal's text goes -------------------------------------------------------
+
+SINKS = """\
+import logging
+import warnings
+log = logging.getLogger(__name__)
+
+
+def f(x, d):
+    raise ValueError("plain")
+    raise TypeError(f"x is {type(x).__name__}")
+    raise KeyError(code="e.x.f", text="keyword")
+    raise ValueError("a long message "
+                     "over two lines")
+    raise ValueError("{} formatted".format(x))
+    raise ValueError("joined " + str(x))
+    raise ValueError("percent %s" % x)
+    print("printed")
+    logging.warning("logged")
+    log.info("logged too")
+    warnings.warn("warned")
+    return "returned"
+    re.compile("pattern")
+    raise ValueError({"key": 1})
+    raise ValueError("a" if x == "b" else "c")
+    x = d["subscript"]
+    other.warn("not warnings")
+    raise ValueError("ok", d["key"])
+    raise ValueError(f"{x:>{'10'}}")
+    "{}".format("argument")
+    raise ValueError("bound".format)
+"""
+
+
+@pytest.mark.parametrize("line, sink", [
+    (7, "raise ValueError"), (8, "raise TypeError"), (9, "raise KeyError"),
+    (10, "raise ValueError"), (11, "raise ValueError"), (12, "raise ValueError"),
+    (13, "raise ValueError"), (14, "raise ValueError"), (15, "print"),
+    (16, "logging.warning"), (17, "log.info"), (18, "warnings.warn"),
+    (19, None), (20, None), (21, None), (22, None), (23, None), (24, None), (25, None),
+    # A literal nested in an f-string's format spec is part of that f-string's text.
+    (26, "raise ValueError"), (27, None), (28, None), (1, None),
+])
+def test_message_sink(line, sink):
+    assert mutate.message_sink(SINKS, line, line) == sink
+
+
+def test_message_sink_needs_every_literal_in_the_lines_to_be_a_message():
+    assert mutate.message_sink(SINKS, 15, 16) == "print"
+    assert mutate.message_sink(SINKS, 18, 19) is None
+
+
+# --- a note that never landed, and records that are not records ------------------------------
+
+
+def test_a_tick_whose_note_never_landed_gets_its_note(tmp_path, capsys):
+    tick = stub(tmp_path / "tickbin", "tick", {
+        "ls": "2abc  debt   mutation survivor [m:aaaaaaaaaaaa] src/pkg/mod.py:6 in saidify\n"
+              "5jkl  debt   a survivor someone filed by hand, with no id\n",
+        "show": "title: mutation survivor [m:aaaaaaaaaaaa]\n",
+        "note": "noted on 2abc\n",
+    })
+    path = tmp_path / "r.json"
+    path.write_text(json.dumps({"commit": "c0ffee", "failure": None,
+                                "survivors": [survivor("aaaaaaaaaaaa")]}))
+    assert ticks.main(["--report", str(path), "--tick", str(tick)]) == 0
+    log = calls(tmp_path / "tickbin")
+    assert [c[0] for c in log] == ["ls", "show", "note"]
+    assert log[1] == ["show", "2abc"]
+    assert log[2][1] == "2abc" and "mutant-id: aaaaaaaaaaaa" in log[2][2]
+    assert "filed 0; 0 already ticked; 1 re-noted;" in capsys.readouterr().out
+
+
+def test_a_retried_note_on_a_dry_run_is_only_reported(tmp_path, capsys):
+    tick = stub(tmp_path / "tickbin", "tick", {
+        "ls": "2abc  debt   mutation survivor [m:aaaaaaaaaaaa] src/pkg/mod.py:6 in saidify\n",
+        "show": "title: ...\n",
+    })
+    path = tmp_path / "r.json"
+    path.write_text(json.dumps({"commit": "c0ffee", "failure": None,
+                                "survivors": [survivor("aaaaaaaaaaaa")]}))
+    assert ticks.main(["--report", str(path), "--tick", str(tick), "--dry-run"]) == 0
+    assert [c[0] for c in calls(tmp_path / "tickbin")] == ["ls", "show"]
+    assert "would re-note 2abc: mutation survivor [m:aaaaaaaaaaaa]" in capsys.readouterr().out
+
+
+def test_every_filed_note_carries_its_mutant_id(sample, tmp_path):
+    tick = tick_stub(tmp_path)
+    ticks.main(["--report", str(sample), "--tick", str(tick)])
+    notes = [c for c in calls(tmp_path / "tickbin") if c[0] == "note"]
+    assert "mutant-id: bbbbbbbbbbbb" in notes[0][2]
+    assert "mutant-id: cccccccccccc" in notes[1][2]
+
+
+def bad(record):
+    return {"commit": "c0ffee", "failure": None,
+            "survivors": [survivor("aaaaaaaaaaaa"), record]}
+
+
+@pytest.mark.parametrize("report_data, named", [
+    (bad({}), "survivor 1"),
+    (bad({**survivor("aaaaaaaaaaaa"), "id": "not-hex"}), "survivor 1"),
+    (bad({**survivor("aaaaaaaaaaaa"), "line": "6"}), "survivor 1"),
+    (bad({**survivor("aaaaaaaaaaaa"), "file": None}), "survivor 1"),
+    (bad({**survivor("aaaaaaaaaaaa"), "mutation": {"removed": "a", "added": []}}),
+     "survivor 1"),
+    (bad({**survivor("aaaaaaaaaaaa"), "test_result": None}), "survivor 1"),
+    (bad({**survivor("aaaaaaaaaaaa"), "message_sink": 3}), "survivor 1"),
+    (bad("a string"), "survivor 1"),
+    ({"commit": "c0ffee", "failure": None, "survivors": {}}, "the report"),
+    ({"failure": None, "survivors": []}, "the report"),
+    ([], "the report"),
+])
+def test_a_malformed_report_is_refused_with_a_code(tmp_path, capsys, report_data, named):
+    tick = tick_stub(tmp_path)
+    path = tmp_path / "r.json"
+    path.write_text(json.dumps(report_data))
+    assert ticks.main(["--report", str(path), "--tick", str(tick)]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith(f"{ticks.MALFORMED}: ") and named in err
+    assert calls(tmp_path / "tickbin") == []
