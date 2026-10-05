@@ -58,6 +58,7 @@ STRING_NOTE = "only the text of a message literal changed; counted, not ticked"
 # x<sep>Class<sep>method. Spelled as an escape so no reader mistakes it for two pipes.
 METHOD_SEP = "\u01c1"
 NOTHING_MATCHES = "Filtered for specific mutants, but nothing matches"
+CLEAN_TEST_FAILED = "Failed to run clean test"
 # Seconds mutmut gets to stop its workers after SIGTERM before the group is killed outright.
 TERM_GRACE = 30
 
@@ -401,6 +402,23 @@ def statuses(mutmut: str, root: Path) -> dict[str, str]:
     return result
 
 
+def nothing_to_run(mutmut: str, root: Path, code: int, output: str, globs: list[str]) -> bool:
+    """Whether a non-zero exit means only that the changed modules have no mutants.
+
+    mutmut says so by failing an assertion (exit 1) whose text is NOTHING_MATCHES, but that
+    text proves nothing on its own: it can sit in the same output as a failed clean-test run.
+    So the claim is accepted only with positive evidence from mutmut's own record, that it
+    holds no mutant at all matching the changed modules. Anything else is a failed run.
+    """
+    if code != 1 or NOTHING_MATCHES not in output or CLEAN_TEST_FAILED in output:
+        return False
+    try:
+        names = statuses(mutmut, root)
+    except subprocess.CalledProcessError:
+        return False
+    return not any(fnmatch.fnmatch(name, g) for name in names for g in globs)
+
+
 def survivor(mutmut: str, root: Path, name: str, path: str, seen: dict) -> Survivor:
     diff = subprocess.run([mutmut, "show", name], cwd=root, capture_output=True, text=True,
                           check=True).stdout
@@ -438,7 +456,7 @@ def mutate(root: Path, modules: list[str], mutmut: str, budget: float, out: Path
         outcome.note = f"The {budget / 60:.0f}-minute budget ran out; mutants still marked " \
                        "'not checked' were never run."
     elif code != 0:
-        if NOTHING_MATCHES in output:
+        if nothing_to_run(mutmut, root, code, output, globs):
             outcome.note = "mutmut generated no mutants for the changed modules."
             return outcome
         outcome.failure = f"mutmut exited {code}; see mutmut-run.log. The last lines were:\n" \

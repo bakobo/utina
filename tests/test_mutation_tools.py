@@ -343,8 +343,10 @@ def test_modules_without_functions(repo, tmp_path):
 
 
 def test_no_mutants_generated(repo, tmp_path):
-    mutmut = stub(tmp_path / "bin", "mutmut",
-                  run_spec(exit=1, out=f"AssertionError: {mutate.NOTHING_MATCHES}\n"))
+    spec = run_spec(exit=1, out=f"AssertionError: {mutate.NOTHING_MATCHES}\n")
+    # The proof: mutmut holds no mutant at all for the changed modules.
+    spec["results"] = "    pkg.other.x_f__mutmut_1: survived\n"
+    mutmut = stub(tmp_path / "bin", "mutmut", spec)
     code, data, _ = run_main(repo, mutmut)
     assert code == 0 and data["failure"] is None
     assert data["note"] == "mutmut generated no mutants for the changed modules."
@@ -733,3 +735,39 @@ def test_a_malformed_report_is_refused_with_a_code(tmp_path, capsys, report_data
     err = capsys.readouterr().err
     assert err.startswith(f"{ticks.MALFORMED}: ") and named in err
     assert calls(tmp_path / "tickbin") == []
+
+
+# --- a failed run is never "no mutants" (heti#33 hostile 1) -----------------------------------
+
+
+def test_nothing_matches_beside_a_clean_test_failure_is_a_failure(repo, tmp_path):
+    out = f"Failed to run clean test\nAssertionError: {mutate.NOTHING_MATCHES}\n"
+    mutmut = stub(tmp_path / "bin", "mutmut", run_spec(exit=1, out=out))
+    code, data, text = run_main(repo, mutmut)
+    assert code == 2 and data["failure"].startswith("mutmut exited 1")
+    assert data["note"] is None and "The run failed" in text
+
+
+def test_nothing_matches_with_mutants_on_record_is_a_failure(repo, tmp_path):
+    # RESULTS lists mutants of pkg.mod, so the "nothing matches" text is not the whole story.
+    mutmut = stub(tmp_path / "bin", "mutmut",
+                  run_spec(exit=1, out=f"AssertionError: {mutate.NOTHING_MATCHES}\n"))
+    code, data, _ = run_main(repo, mutmut)
+    assert code == 2 and data["failure"].startswith("mutmut exited 1")
+
+
+def test_nothing_matches_without_readable_results_is_a_failure(repo, tmp_path):
+    spec = run_spec(exit=1, out=f"AssertionError: {mutate.NOTHING_MATCHES}\n")
+    spec["results"] = {"exit": 1, "out": ""}
+    code, data, _ = run_main(repo, stub(tmp_path / "bin", "mutmut", spec))
+    assert code == 2 and data["failure"].startswith("mutmut exited 1")
+
+
+# --- an assignment is a value, not a message (heti#33 hostile 2) ------------------------------
+
+
+def test_a_string_assigned_to_a_name_is_behavioural():
+    source = 'def f(observed):\n    outcome = "kept"\n    return outcome\n'
+    assert mutate.message_sink(source, 2, 2) is None
+    assert mutate.classify(['    outcome = "kept"'], ['    outcome = "XXkeptXX"'],
+                           mutate.message_sink(source, 2, 2)) == BEHAVIOURAL
