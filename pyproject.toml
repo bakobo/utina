@@ -102,4 +102,4 @@ bakobo-errors = { git = "https://github.com/bakobo/errors" }
 # proves nothing. Repin to the fork's main once the PR lands upstream; the ported
 # commits keep their identity, so that merge will be recognized rather than
 # replayed. ~4z5c
-keri = { git = "https://github.com/bakobo/keripy", rev = "0af11b4a52fd09e9a6abf952e6f241c959a859d9" }
+keri = { git = "https://github.com/bakobo/keripy", rev = "0108056b9cf2d8d5417095f707bbc727c909e292" }
