@@ -1,0 +1,909 @@
+{
+ "source": "the first local runs of tools/mutation/mutate.py, 2026-10-05: heti over src/heti/anchored/consume/saids.py, utina over src/utina/fold/semantics.py",
+ "survivors": {
+  "heti": [
+   {
+    "id": "e4c2a22a174f",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 63,
+    "function": "_plain",
+    "removed": [
+     "            raise ValueError(\"JSON cannot carry a NaN or an infinity\")"
+    ],
+    "added": [
+     "            raise ValueError(None)"
+    ]
+   },
+   {
+    "id": "a7b8dd48126b",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 63,
+    "function": "_plain",
+    "removed": [
+     "            raise ValueError(\"JSON cannot carry a NaN or an infinity\")"
+    ],
+    "added": [
+     "            raise ValueError(\"XXJSON cannot carry a NaN or an infinityXX\")"
+    ]
+   },
+   {
+    "id": "c1f7a45dc5b9",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 63,
+    "function": "_plain",
+    "removed": [
+     "            raise ValueError(\"JSON cannot carry a NaN or an infinity\")"
+    ],
+    "added": [
+     "            raise ValueError(\"json cannot carry a nan or an infinity\")"
+    ]
+   },
+   {
+    "id": "3c34c3659657",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 63,
+    "function": "_plain",
+    "removed": [
+     "            raise ValueError(\"JSON cannot carry a NaN or an infinity\")"
+    ],
+    "added": [
+     "            raise ValueError(\"JSON CANNOT CARRY A NAN OR AN INFINITY\")"
+    ]
+   },
+   {
+    "id": "33d2f3573601",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 69,
+    "function": "_plain",
+    "removed": [
+     "    raise TypeError(f\"JSON cannot carry a {type(value).__name__}\")"
+    ],
+    "added": [
+     "    raise TypeError(None)"
+    ]
+   },
+   {
+    "id": "89165d46d413",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 44,
+    "function": "_plain",
+    "removed": [
+     "        pairs = dict.items(value) if isinstance(value, dict) else value.items()"
+    ],
+    "added": [
+     "        pairs = dict.items(value) if (isinstance(value, dict)) or True else value.items()"
+    ]
+   },
+   {
+    "id": "5dea4b9d37be",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 69,
+    "function": "_plain",
+    "removed": [
+     "    raise TypeError(f\"JSON cannot carry a {type(value).__name__}\")"
+    ],
+    "added": [
+     "    raise TypeError(f\"JSON cannot carry a {type(None).__name__}\")"
+    ]
+   },
+   {
+    "id": "7cf8355d53e4",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 48,
+    "function": "_plain",
+    "removed": [
+     "                raise TypeError(f\"a JSON key is text, not {type(key).__name__}\")"
+    ],
+    "added": [
+     "                raise TypeError(None)"
+    ]
+   },
+   {
+    "id": "6d95fed2d7f4",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 48,
+    "function": "_plain",
+    "removed": [
+     "                raise TypeError(f\"a JSON key is text, not {type(key).__name__}\")"
+    ],
+    "added": [
+     "                raise TypeError(f\"a JSON key is text, not {type(None).__name__}\")"
+    ]
+   },
+   {
+    "id": "f23745f753cc",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 30,
+    "function": "saidify",
+    "removed": [
+     "        raise ValueError(\"a top-level 'v' is read as a KERI version string, so a plain mapping \""
+    ],
+    "added": [
+     "        raise ValueError(\"XXa top-level 'v' is read as a KERI version string, so a plain mapping XX\""
+    ]
+   },
+   {
+    "id": "9a3d401dbd24",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 30,
+    "function": "saidify",
+    "removed": [
+     "        raise ValueError(\"a top-level 'v' is read as a KERI version string, so a plain mapping \""
+    ],
+    "added": [
+     "        raise ValueError(\"a top-level 'v' is read as a keri version string, so a plain mapping \""
+    ]
+   },
+   {
+    "id": "02a581d4d623",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 31,
+    "function": "saidify",
+    "removed": [
+     "                         \"cannot carry one\")"
+    ],
+    "added": [
+     "                         \"XXcannot carry oneXX\")"
+    ]
+   },
+   {
+    "id": "91a79be5f653",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 31,
+    "function": "saidify",
+    "removed": [
+     "                         \"cannot carry one\")"
+    ],
+    "added": [
+     "                         \"CANNOT CARRY ONE\")"
+    ]
+   },
+   {
+    "id": "f880c3021c3a",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 32,
+    "function": "saidify",
+    "removed": [
+     "    _, done = Saider.saidify(sad=plain, label=label, kind=Kinds.json)"
+    ],
+    "added": [
+     "    _, done = Saider.saidify(sad=plain, label=label, kind=None)"
+    ]
+   },
+   {
+    "id": "ae78128b51be",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 32,
+    "function": "saidify",
+    "removed": [
+     "    _, done = Saider.saidify(sad=plain, label=label, kind=Kinds.json)"
+    ],
+    "added": [
+     "    _, done = Saider.saidify(sad=plain, label=label, )"
+    ]
+   },
+   {
+    "id": "cb4d31705dfd",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 24,
+    "function": "saidify",
+    "removed": [
+     "        raise TypeError(f\"a SAID is computed over a mapping, not {type(sad).__name__}\")"
+    ],
+    "added": [
+     "        raise TypeError(None)"
+    ]
+   },
+   {
+    "id": "dd94e47ef3ca",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 24,
+    "function": "saidify",
+    "removed": [
+     "        raise TypeError(f\"a SAID is computed over a mapping, not {type(sad).__name__}\")"
+    ],
+    "added": [
+     "        raise TypeError(f\"a SAID is computed over a mapping, not {type(None).__name__}\")"
+    ]
+   },
+   {
+    "id": "bfdba644384d",
+    "file": "src/heti/anchored/consume/saids.py",
+    "line": 27,
+    "function": "saidify",
+    "removed": [
+     "        raise ValueError(f\"the mapping has no {label!r} field to hold its SAID\")"
+    ],
+    "added": [
+     "        raise ValueError(None)"
+    ]
+   }
+  ],
+  "utina": [
+   {
+    "id": "ef9c3e0beb99",
+    "file": "src/utina/fold/semantics.py",
+    "line": 217,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"the fate of each superseding-recovery rule\""
+    ],
+    "added": [
+     "                \"XXthe fate of each superseding-recovery ruleXX\""
+    ]
+   },
+   {
+    "id": "a4b02d431c26",
+    "file": "src/utina/fold/semantics.py",
+    "line": 217,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"the fate of each superseding-recovery rule\""
+    ],
+    "added": [
+     "                \"THE FATE OF EACH SUPERSEDING-RECOVERY RULE\""
+    ]
+   },
+   {
+    "id": "64fbb8245a0d",
+    "file": "src/utina/fold/semantics.py",
+    "line": 220,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"Custos requires a Constitution to commit the revision of every external \""
+    ],
+    "added": [
+     "                \"XXCustos requires a Constitution to commit the revision of every external XX\""
+    ]
+   },
+   {
+    "id": "b08e12b24ddf",
+    "file": "src/utina/fold/semantics.py",
+    "line": 220,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"Custos requires a Constitution to commit the revision of every external \""
+    ],
+    "added": [
+     "                \"custos requires a constitution to commit the revision of every external \""
+    ]
+   },
+   {
+    "id": "e09817a55d61",
+    "file": "src/utina/fold/semantics.py",
+    "line": 220,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"Custos requires a Constitution to commit the revision of every external \""
+    ],
+    "added": [
+     "                \"CUSTOS REQUIRES A CONSTITUTION TO COMMIT THE REVISION OF EVERY EXTERNAL \""
+    ]
+   },
+   {
+    "id": "8952f7ca26c7",
+    "file": "src/utina/fold/semantics.py",
+    "line": 221,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"specification its fold consumes, and this law says nothing about KERI. A \""
+    ],
+    "added": [
+     "                \"XXspecification its fold consumes, and this law says nothing about KERI. A XX\""
+    ]
+   },
+   {
+    "id": "1b95e069a72e",
+    "file": "src/utina/fold/semantics.py",
+    "line": 221,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"specification its fold consumes, and this law says nothing about KERI. A \""
+    ],
+    "added": [
+     "                \"specification its fold consumes, and this law says nothing about keri. a \""
+    ]
+   },
+   {
+    "id": "8d154f56f9c1",
+    "file": "src/utina/fold/semantics.py",
+    "line": 221,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"specification its fold consumes, and this law says nothing about KERI. A \""
+    ],
+    "added": [
+     "                \"SPECIFICATION ITS FOLD CONSUMES, AND THIS LAW SAYS NOTHING ABOUT KERI. A \""
+    ]
+   },
+   {
+    "id": "bb20ce4c3770",
+    "file": "src/utina/fold/semantics.py",
+    "line": 222,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"duplicity observation convicts only under the key tier's committed rules, \""
+    ],
+    "added": [
+     "                \"XXduplicity observation convicts only under the key tier's committed rules, XX\""
+    ]
+   },
+   {
+    "id": "2c4d0c8f859c",
+    "file": "src/utina/fold/semantics.py",
+    "line": 222,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"duplicity observation convicts only under the key tier's committed rules, \""
+    ],
+    "added": [
+     "                \"DUPLICITY OBSERVATION CONVICTS ONLY UNDER THE KEY TIER'S COMMITTED RULES, \""
+    ]
+   },
+   {
+    "id": "fb93a7f988ab",
+    "file": "src/utina/fold/semantics.py",
+    "line": 223,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"so without the declaration there is no committed rule for it to convict under.\""
+    ],
+    "added": [
+     "                \"XXso without the declaration there is no committed rule for it to convict under.XX\""
+    ]
+   },
+   {
+    "id": "0e5116e35d20",
+    "file": "src/utina/fold/semantics.py",
+    "line": 223,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"so without the declaration there is no committed rule for it to convict under.\""
+    ],
+    "added": [
+     "                \"SO WITHOUT THE DECLARATION THERE IS NO COMMITTED RULE FOR IT TO CONVICT UNDER.\""
+    ]
+   },
+   {
+    "id": "e594c88ec0cc",
+    "file": "src/utina/fold/semantics.py",
+    "line": 230,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                f\"an implementation of the KERI revision this law pins, {declared.spec[:16]}...\""
+    ],
+    "added": [
+     "                f\"an implementation of the KERI revision this law pins, {declared.spec[:17]}...\""
+    ]
+   },
+   {
+    "id": "ab3f3365fb4f",
+    "file": "src/utina/fold/semantics.py",
+    "line": 233,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"The law pins a revision of the KERI specification this engine does not carry, \""
+    ],
+    "added": [
+     "                \"XXThe law pins a revision of the KERI specification this engine does not carry, XX\""
+    ]
+   },
+   {
+    "id": "d66ea4445fc6",
+    "file": "src/utina/fold/semantics.py",
+    "line": 233,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"The law pins a revision of the KERI specification this engine does not carry, \""
+    ],
+    "added": [
+     "                \"the law pins a revision of the keri specification this engine does not carry, \""
+    ]
+   },
+   {
+    "id": "83102065ad4b",
+    "file": "src/utina/fold/semantics.py",
+    "line": 233,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"The law pins a revision of the KERI specification this engine does not carry, \""
+    ],
+    "added": [
+     "                \"THE LAW PINS A REVISION OF THE KERI SPECIFICATION THIS ENGINE DOES NOT CARRY, \""
+    ]
+   },
+   {
+    "id": "b89e5b6a7009",
+    "file": "src/utina/fold/semantics.py",
+    "line": 234,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"so the recovery rules it names are rules this fold has not read.\""
+    ],
+    "added": [
+     "                \"XXso the recovery rules it names are rules this fold has not read.XX\""
+    ]
+   },
+   {
+    "id": "722daac0e308",
+    "file": "src/utina/fold/semantics.py",
+    "line": 234,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"so the recovery rules it names are rules this fold has not read.\""
+    ],
+    "added": [
+     "                \"SO THE RECOVERY RULES IT NAMES ARE RULES THIS FOLD HAS NOT READ.\""
+    ]
+   },
+   {
+    "id": "eb3b234984ca",
+    "file": "src/utina/fold/semantics.py",
+    "line": 242,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "            missing=f\"a disposition for superseding-recovery rules {', '.join(silent)}\","
+    ],
+    "added": [
+     "            missing=f\"a disposition for superseding-recovery rules {'XX, XX'.join(silent)}\","
+    ]
+   },
+   {
+    "id": "58bb82ee19f9",
+    "file": "src/utina/fold/semantics.py",
+    "line": 244,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"Each rule the fold's semantics depend on is to be consumed or expressly \""
+    ],
+    "added": [
+     "                \"XXEach rule the fold's semantics depend on is to be consumed or expressly XX\""
+    ]
+   },
+   {
+    "id": "24219820d758",
+    "file": "src/utina/fold/semantics.py",
+    "line": 244,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"Each rule the fold's semantics depend on is to be consumed or expressly \""
+    ],
+    "added": [
+     "                \"each rule the fold's semantics depend on is to be consumed or expressly \""
+    ]
+   },
+   {
+    "id": "f2e35e3cdd88",
+    "file": "src/utina/fold/semantics.py",
+    "line": 244,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"Each rule the fold's semantics depend on is to be consumed or expressly \""
+    ],
+    "added": [
+     "                \"EACH RULE THE FOLD'S SEMANTICS DEPEND ON IS TO BE CONSUMED OR EXPRESSLY \""
+    ]
+   },
+   {
+    "id": "1a8e340b98e9",
+    "file": "src/utina/fold/semantics.py",
+    "line": 245,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"excluded, never passed over in silence, and this law is silent on some.\""
+    ],
+    "added": [
+     "                \"XXexcluded, never passed over in silence, and this law is silent on some.XX\""
+    ]
+   },
+   {
+    "id": "4b62c9ca51c4",
+    "file": "src/utina/fold/semantics.py",
+    "line": 245,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"excluded, never passed over in silence, and this law is silent on some.\""
+    ],
+    "added": [
+     "                \"EXCLUDED, NEVER PASSED OVER IN SILENCE, AND THIS LAW IS SILENT ON SOME.\""
+    ]
+   },
+   {
+    "id": "fea7e0a5dec0",
+    "file": "src/utina/fold/semantics.py",
+    "line": 251,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "            missing=\"an implementation of the recovery dispositions this law declares\","
+    ],
+    "added": [
+     "            missing=\"XXan implementation of the recovery dispositions this law declaresXX\","
+    ]
+   },
+   {
+    "id": "80e12c218c4e",
+    "file": "src/utina/fold/semantics.py",
+    "line": 253,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"This engine consumes every superseding-recovery rule and implements no other \""
+    ],
+    "added": [
+     "                \"XXThis engine consumes every superseding-recovery rule and implements no other XX\""
+    ]
+   },
+   {
+    "id": "32824d7c5e76",
+    "file": "src/utina/fold/semantics.py",
+    "line": 253,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"This engine consumes every superseding-recovery rule and implements no other \""
+    ],
+    "added": [
+     "                \"this engine consumes every superseding-recovery rule and implements no other \""
+    ]
+   },
+   {
+    "id": "19bac856b5ce",
+    "file": "src/utina/fold/semantics.py",
+    "line": 253,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"This engine consumes every superseding-recovery rule and implements no other \""
+    ],
+    "added": [
+     "                \"THIS ENGINE CONSUMES EVERY SUPERSEDING-RECOVERY RULE AND IMPLEMENTS NO OTHER \""
+    ]
+   },
+   {
+    "id": "7bcef5a4510b",
+    "file": "src/utina/fold/semantics.py",
+    "line": 254,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"declaration. Answering under an exclusion it cannot honour would be assuming \""
+    ],
+    "added": [
+     "                \"XXdeclaration. Answering under an exclusion it cannot honour would be assuming XX\""
+    ]
+   },
+   {
+    "id": "c8b7bcebb451",
+    "file": "src/utina/fold/semantics.py",
+    "line": 254,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"declaration. Answering under an exclusion it cannot honour would be assuming \""
+    ],
+    "added": [
+     "                \"declaration. answering under an exclusion it cannot honour would be assuming \""
+    ]
+   },
+   {
+    "id": "0f0ca6af147f",
+    "file": "src/utina/fold/semantics.py",
+    "line": 254,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"declaration. Answering under an exclusion it cannot honour would be assuming \""
+    ],
+    "added": [
+     "                \"DECLARATION. ANSWERING UNDER AN EXCLUSION IT CANNOT HONOUR WOULD BE ASSUMING \""
+    ]
+   },
+   {
+    "id": "c458a671351f",
+    "file": "src/utina/fold/semantics.py",
+    "line": 255,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"at exactly the moment axiom 4 forbids it.\""
+    ],
+    "added": [
+     "                \"XXat exactly the moment axiom 4 forbids it.XX\""
+    ]
+   },
+   {
+    "id": "85f7425022af",
+    "file": "src/utina/fold/semantics.py",
+    "line": 255,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"at exactly the moment axiom 4 forbids it.\""
+    ],
+    "added": [
+     "                \"AT EXACTLY THE MOMENT AXIOM 4 FORBIDS IT.\""
+    ]
+   },
+   {
+    "id": "75a758e5b29a",
+    "file": "src/utina/fold/semantics.py",
+    "line": 216,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"a functional-dependency declaration naming KERI's revision by digest and \""
+    ],
+    "added": [
+     "                \"XXa functional-dependency declaration naming KERI's revision by digest and XX\""
+    ]
+   },
+   {
+    "id": "1fed0bd8e334",
+    "file": "src/utina/fold/semantics.py",
+    "line": 216,
+    "function": "dependency_refusal_for",
+    "removed": [
+     "                \"a functional-dependency declaration naming KERI's revision by digest and \""
+    ],
+    "added": [
+     "                \"a functional-dependency declaration naming keri's revision by digest and \""
+    ]
+   },
+   {
+    "id": "6216f65e508c",
+    "file": "src/utina/fold/semantics.py",
+    "line": 110,
+    "function": "refusal_for",
+    "removed": [
+     "                \"This law's composition rule is expressed in an external semantics and the \""
+    ],
+    "added": [
+     "                \"XXThis law's composition rule is expressed in an external semantics and the XX\""
+    ]
+   },
+   {
+    "id": "5b2669a4c797",
+    "file": "src/utina/fold/semantics.py",
+    "line": 110,
+    "function": "refusal_for",
+    "removed": [
+     "                \"This law's composition rule is expressed in an external semantics and the \""
+    ],
+    "added": [
+     "                \"this law's composition rule is expressed in an external semantics and the \""
+    ]
+   },
+   {
+    "id": "0cf4f388f834",
+    "file": "src/utina/fold/semantics.py",
+    "line": 110,
+    "function": "refusal_for",
+    "removed": [
+     "                \"This law's composition rule is expressed in an external semantics and the \""
+    ],
+    "added": [
+     "                \"THIS LAW'S COMPOSITION RULE IS EXPRESSED IN AN EXTERNAL SEMANTICS AND THE \""
+    ]
+   },
+   {
+    "id": "5eb67ea3342e",
+    "file": "src/utina/fold/semantics.py",
+    "line": 111,
+    "function": "refusal_for",
+    "removed": [
+     "                \"law does not say which revision of it the clauses mean. Axiom 4 requires an \""
+    ],
+    "added": [
+     "                \"XXlaw does not say which revision of it the clauses mean. Axiom 4 requires an XX\""
+    ]
+   },
+   {
+    "id": "c5eea18d50f5",
+    "file": "src/utina/fold/semantics.py",
+    "line": 111,
+    "function": "refusal_for",
+    "removed": [
+     "                \"law does not say which revision of it the clauses mean. Axiom 4 requires an \""
+    ],
+    "added": [
+     "                \"law does not say which revision of it the clauses mean. axiom 4 requires an \""
+    ]
+   },
+   {
+    "id": "9394cb6ae25d",
+    "file": "src/utina/fold/semantics.py",
+    "line": 111,
+    "function": "refusal_for",
+    "removed": [
+     "                \"law does not say which revision of it the clauses mean. Axiom 4 requires an \""
+    ],
+    "added": [
+     "                \"LAW DOES NOT SAY WHICH REVISION OF IT THE CLAUSES MEAN. AXIOM 4 REQUIRES AN \""
+    ]
+   },
+   {
+    "id": "e8238641f351",
+    "file": "src/utina/fold/semantics.py",
+    "line": 112,
+    "function": "refusal_for",
+    "removed": [
+     "                \"external semantics to be pinned by committed digest; a fold that assumed \""
+    ],
+    "added": [
+     "                \"XXexternal semantics to be pinned by committed digest; a fold that assumed XX\""
+    ]
+   },
+   {
+    "id": "9bcd50b27dbb",
+    "file": "src/utina/fold/semantics.py",
+    "line": 112,
+    "function": "refusal_for",
+    "removed": [
+     "                \"external semantics to be pinned by committed digest; a fold that assumed \""
+    ],
+    "added": [
+     "                \"EXTERNAL SEMANTICS TO BE PINNED BY COMMITTED DIGEST; A FOLD THAT ASSUMED \""
+    ]
+   },
+   {
+    "id": "fc1f4803c0b8",
+    "file": "src/utina/fold/semantics.py",
+    "line": 113,
+    "function": "refusal_for",
+    "removed": [
+     "                \"its own revision would answer under a lens nobody committed.\""
+    ],
+    "added": [
+     "                \"XXits own revision would answer under a lens nobody committed.XX\""
+    ]
+   },
+   {
+    "id": "0ba42ef26565",
+    "file": "src/utina/fold/semantics.py",
+    "line": 113,
+    "function": "refusal_for",
+    "removed": [
+     "                \"its own revision would answer under a lens nobody committed.\""
+    ],
+    "added": [
+     "                \"ITS OWN REVISION WOULD ANSWER UNDER A LENS NOBODY COMMITTED.\""
+    ]
+   },
+   {
+    "id": "3844d16a640a",
+    "file": "src/utina/fold/semantics.py",
+    "line": 119,
+    "function": "refusal_for",
+    "removed": [
+     "            missing=f\"an implementation of the semantics this law pins, {pinned[:16]}...\","
+    ],
+    "added": [
+     "            missing=f\"an implementation of the semantics this law pins, {pinned[:17]}...\","
+    ]
+   },
+   {
+    "id": "919d8e147d91",
+    "file": "src/utina/fold/semantics.py",
+    "line": 121,
+    "function": "refusal_for",
+    "removed": [
+     "                \"The law pins a revision of the dossier specification this engine does not \""
+    ],
+    "added": [
+     "                \"XXThe law pins a revision of the dossier specification this engine does not XX\""
+    ]
+   },
+   {
+    "id": "6f28a8d36dd9",
+    "file": "src/utina/fold/semantics.py",
+    "line": 121,
+    "function": "refusal_for",
+    "removed": [
+     "                \"The law pins a revision of the dossier specification this engine does not \""
+    ],
+    "added": [
+     "                \"the law pins a revision of the dossier specification this engine does not \""
+    ]
+   },
+   {
+    "id": "0fa6e5896413",
+    "file": "src/utina/fold/semantics.py",
+    "line": 121,
+    "function": "refusal_for",
+    "removed": [
+     "                \"The law pins a revision of the dossier specification this engine does not \""
+    ],
+    "added": [
+     "                \"THE LAW PINS A REVISION OF THE DOSSIER SPECIFICATION THIS ENGINE DOES NOT \""
+    ]
+   },
+   {
+    "id": "ee085ff1eb91",
+    "file": "src/utina/fold/semantics.py",
+    "line": 122,
+    "function": "refusal_for",
+    "removed": [
+     "                \"implement, so its clauses are expressed in terms this fold cannot read. \""
+    ],
+    "added": [
+     "                \"XXimplement, so its clauses are expressed in terms this fold cannot read. XX\""
+    ]
+   },
+   {
+    "id": "9afcb3069b79",
+    "file": "src/utina/fold/semantics.py",
+    "line": 122,
+    "function": "refusal_for",
+    "removed": [
+     "                \"implement, so its clauses are expressed in terms this fold cannot read. \""
+    ],
+    "added": [
+     "                \"IMPLEMENT, SO ITS CLAUSES ARE EXPRESSED IN TERMS THIS FOLD CANNOT READ. \""
+    ]
+   },
+   {
+    "id": "5a22e0bb988c",
+    "file": "src/utina/fold/semantics.py",
+    "line": 123,
+    "function": "refusal_for",
+    "removed": [
+     "                \"That is a refusal and not a finding: the evidence is not short, the lens \""
+    ],
+    "added": [
+     "                \"XXThat is a refusal and not a finding: the evidence is not short, the lens XX\""
+    ]
+   },
+   {
+    "id": "cdbaeeb55b16",
+    "file": "src/utina/fold/semantics.py",
+    "line": 123,
+    "function": "refusal_for",
+    "removed": [
+     "                \"That is a refusal and not a finding: the evidence is not short, the lens \""
+    ],
+    "added": [
+     "                \"that is a refusal and not a finding: the evidence is not short, the lens \""
+    ]
+   },
+   {
+    "id": "6ba69bcdc5b3",
+    "file": "src/utina/fold/semantics.py",
+    "line": 123,
+    "function": "refusal_for",
+    "removed": [
+     "                \"That is a refusal and not a finding: the evidence is not short, the lens \""
+    ],
+    "added": [
+     "                \"THAT IS A REFUSAL AND NOT A FINDING: THE EVIDENCE IS NOT SHORT, THE LENS \""
+    ]
+   },
+   {
+    "id": "7a6ee23f3621",
+    "file": "src/utina/fold/semantics.py",
+    "line": 124,
+    "function": "refusal_for",
+    "removed": [
+     "                \"is one the fold does not have.\""
+    ],
+    "added": [
+     "                \"XXis one the fold does not have.XX\""
+    ]
+   },
+   {
+    "id": "571eafe35c53",
+    "file": "src/utina/fold/semantics.py",
+    "line": 124,
+    "function": "refusal_for",
+    "removed": [
+     "                \"is one the fold does not have.\""
+    ],
+    "added": [
+     "                \"IS ONE THE FOLD DOES NOT HAVE.\""
+    ]
+   },
+   {
+    "id": "c9a68e126551",
+    "file": "src/utina/fold/semantics.py",
+    "line": 108,
+    "function": "refusal_for",
+    "removed": [
+     "            missing=\"a semantics declaration naming the dossier specification by digest\","
+    ],
+    "added": [
+     "            missing=\"XXa semantics declaration naming the dossier specification by digestXX\","
+    ]
+   }
+  ]
+ }
+}

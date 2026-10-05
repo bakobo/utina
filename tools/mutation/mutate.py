@@ -19,6 +19,11 @@ changed or the time budget ran out; exits 2 only when the run itself could not b
 mutmut crashed, or the unmutated suite failed — because a harness failure that reported success
 would look exactly like a clean night.
 
+Each record's ``class`` is ``string-only`` when the mutation changes nothing but the text inside
+string literals, which during the pilot is counted rather than ticked, and ``behavioural``
+otherwise. ``classify`` decides from the diff alone and leans behavioural whenever it cannot
+vouch for the change.
+
 A record's ``id`` is a digest of the file, the function and the mutated text, with no line
 number or mutmut ordinal in it, so the same surviving mutation keeps its id across nights while
 the code around it moves. ``tools/mutation/ticks.py`` dedupes on it.
@@ -31,12 +36,14 @@ import ast
 import datetime
 import fnmatch
 import hashlib
+import io
 import json
 import os
 import shutil
 import signal
 import subprocess
 import sys
+import tokenize
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -48,6 +55,20 @@ METHOD_SEP = "\u01c1"
 NOTHING_MATCHES = "Filtered for specific mutants, but nothing matches"
 # Seconds mutmut gets to stop its workers after SIGTERM before the group is killed outright.
 TERM_GRACE = 30
+
+BEHAVIOURAL = "behavioural"
+STRING_ONLY = "string-only"
+# Tokens whose text is a string literal's content.
+STRING_TOKENS = {tokenize.STRING, tokenize.FSTRING_MIDDLE, tokenize.TSTRING_MIDDLE}
+# Tokens that carry no meaning a mutation could change.
+LAYOUT_TOKENS = {tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT,
+                 tokenize.ENDMARKER, tokenize.COMMENT}
+# A literal next to one of these is compared, tested for membership, used as a key or used as
+# an index, so changing its text can change what the code does.
+DECIDING = {"==", "!=", "<", ">", "<=", ">=", "in", "is", "[", "]", ":"}
+# The one tokenize failure that still yields every token: a fragment of a call whose closing
+# bracket is on a line the diff did not show.
+OPEN_BRACKET = "unexpected EOF in multi-line statement"
 
 
 @dataclass
@@ -61,6 +82,7 @@ class Survivor:
     added: list[str]
     diff: str
     tests: int
+    kind: str = BEHAVIOURAL
 
     def record(self, pytest_args: list[str]) -> dict:
         return {
@@ -69,6 +91,7 @@ class Survivor:
             "file": self.file,
             "line": self.line,
             "function": self.function,
+            "class": self.kind,
             "mutation": {"removed": self.removed, "added": self.added, "diff": self.diff},
             "test_result": {
                 "command": " ".join(["pytest", *pytest_args]),
@@ -178,6 +201,45 @@ def parse_diff(diff: str) -> tuple[int, list[str], list[str]]:
     return first, removed, added
 
 
+def _tokens(lines: list[str]) -> list[tuple[int, str]] | None:
+    """The meaningful tokens of a diff fragment, or None if tokenize could not read it all."""
+    text = "\n".join(line.strip() for line in lines)
+    found = []
+    try:
+        for tok in tokenize.generate_tokens(io.StringIO(text).readline):
+            if tok.type not in LAYOUT_TOKENS:
+                found.append((tok.type, tok.string))
+    except tokenize.TokenError as error:
+        if error.args[0] != OPEN_BRACKET:
+            return None
+    return found
+
+
+def classify(removed: list[str], added: list[str]) -> str:
+    """``string-only`` if the mutation changes only the text inside string literals.
+
+    Both sides must tokenize completely to the same sequence, differing only in string-literal
+    tokens, none of which sits beside a comparison, a membership test, a subscript or a key.
+    Anything else, including a change too fragmentary to read, is ``behavioural``: a survivor
+    wrongly called string-only is a test gap nobody hears about, while one wrongly called
+    behavioural costs a tick someone closes.
+    """
+    before, after = _tokens(removed), _tokens(added)
+    if not before or not after or len(before) != len(after):
+        return BEHAVIOURAL
+    changed = [i for i, (old, new) in enumerate(zip(before, after, strict=True)) if old != new]
+    if not changed:
+        return BEHAVIOURAL
+    for i in changed:
+        (old_type, _), (new_type, _) = before[i], after[i]
+        if old_type != new_type or old_type not in STRING_TOKENS:
+            return BEHAVIOURAL
+        neighbours = before[max(i - 1, 0):i] + before[i + 1:i + 2]
+        if any(text in DECIDING for _, text in neighbours):
+            return BEHAVIOURAL
+    return STRING_ONLY
+
+
 def function_span(source: str, function: str) -> tuple[int, int] | None:
     """First and last line of ``function`` (``name`` or ``Class.name``), decorators included."""
     tree = ast.parse(source)
@@ -278,6 +340,7 @@ def survivor(mutmut: str, root: Path, name: str, path: str, seen: dict) -> Survi
         mutmut_name=name, file=path, line=locate(source, function, relative, removed),
         function=function, removed=removed, added=added, diff=diff,
         tests=len([t for t in tests.splitlines() if t.strip()]),
+        kind=classify(removed, added),
     )
 
 
@@ -327,6 +390,8 @@ def report(outcome: Outcome, cfg: dict, commit: str, since: str) -> dict:
         "failure": outcome.failure,
         "note": outcome.note,
         "counts": outcome.counts,
+        "classes": {kind: sum(s.kind == kind for s in outcome.survivors)
+                    for kind in (BEHAVIOURAL, STRING_ONLY)},
         "survivors": [s.record(cfg.get("pytest_add_cli_args", [])) for s in outcome.survivors],
     }
 
@@ -351,14 +416,17 @@ def summary(data: dict) -> str:
         lines.append("")
     survivors = data["survivors"]
     if survivors:
+        classes = data["classes"]
         lines += [f"## {len(survivors)} surviving mutants", "",
-                  "| id | where | function | mutation |", "|---|---|---|---|"]
+                  f"{classes[BEHAVIOURAL]} behavioural, {classes[STRING_ONLY]} string-only "
+                  "(only the text inside a string literal changed; counted, not ticked).", "",
+                  "| id | class | where | function | mutation |", "|---|---|---|---|---|"]
         for s in survivors:
             change = " / ".join(cell(x) for x in s["mutation"]["removed"]) or "(nothing)"
             change += " &rarr; " + (" / ".join(cell(x) for x in s["mutation"]["added"])
                                     or "(removed)")
-            lines.append(f"| `{s['id']}` | `{s['file']}:{s['line']}` | `{s['function']}` | "
-                         f"{change} |")
+            lines.append(f"| `{s['id']}` | {s['class']} | `{s['file']}:{s['line']}` | "
+                         f"`{s['function']}` | {change} |")
         lines.append("")
     elif not data["failure"]:
         lines += ["No mutant survived.", ""]

@@ -13,7 +13,10 @@ tick at all is one of the things the pilot is measuring.
 Each survivor becomes ``tick add --kind debt --tag mutation-survivor "<title>"`` followed by
 ``tick note <id> <detail>``. The title carries the survivor's stable id as ``[m:<id>]``, and a
 survivor whose id already appears in any ``mutation-survivor`` tick, open or closed, is skipped:
-a survivor someone dismissed stays dismissed. No tick mark is placed in the code, since a
+a survivor someone dismissed stays dismissed. A survivor whose mutation only changes the text
+inside a string literal is counted in the closing summary and not ticked; that is decided from
+the record's own diff by ``mutate.classify``, never from a label stored in the report, and it
+leans towards filing whenever it cannot tell. No tick mark is placed in the code, since a
 survivor is a question about the tests and the line it names moves.
 """
 
@@ -26,6 +29,9 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from mutate import STRING_ONLY, classify  # a sibling script, not a package
 
 TAG = "mutation-survivor"
 WORKFLOW = "mutation.yml"
@@ -74,12 +80,15 @@ def detail(s: dict, data: dict) -> str:
     ])
 
 
-def file_ticks(data: dict, tick: str, dry_run: bool) -> tuple[list[str], int]:
-    """Returns (ids filed, count skipped as already ticked)."""
+def file_ticks(data: dict, tick: str, dry_run: bool) -> tuple[list[str], int, int]:
+    """Returns (ids filed, count skipped as already ticked, count skipped as string-only)."""
     have = ticked(tick)
     filed: list[str] = []
-    skipped = 0
+    skipped = strings = 0
     for s in data["survivors"]:
+        if classify(s["mutation"]["removed"], s["mutation"]["added"]) == STRING_ONLY:
+            strings += 1
+            continue
         if s["id"] in have:
             skipped += 1
             continue
@@ -92,7 +101,7 @@ def file_ticks(data: dict, tick: str, dry_run: bool) -> tuple[list[str], int]:
             run([tick, "note", tick_id, detail(s, data)])
             print(f"filed {tick_id}: {title(s)}")
         filed.append(s["id"])
-    return filed, skipped
+    return filed, skipped, strings
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -112,10 +121,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"the run that produced this report failed, so it holds no results:\n"
               f"{data['failure']}", file=sys.stderr)
         return 1
-    filed, skipped = file_ticks(data, args.tick, args.dry_run)
+    filed, skipped, strings = file_ticks(data, args.tick, args.dry_run)
     verb = "would file" if args.dry_run else "filed"
-    print(f"{verb} {len(filed)}; {skipped} already ticked; "
-          f"{len(data['survivors'])} survivors in the report")
+    print(f"{verb} {len(filed)}; {skipped} already ticked; {strings} string-only survivors not "
+          f"ticked; {len(data['survivors'])} survivors in the report")
     return 0
 
 

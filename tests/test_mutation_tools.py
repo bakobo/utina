@@ -430,7 +430,8 @@ def test_ticks_files_only_new_survivors(sample, tmp_path, capsys):
     assert len(notes) == 2 and notes[0][1] == "4ghi"
     assert "commit c0ffee" in notes[0][2] and "-a\n+b" in notes[0][2]
     assert "Test command: pytest -n0 --no-cov" in notes[0][2]
-    assert "filed 2; 2 already ticked; 4 survivors" in capsys.readouterr().out
+    assert ("filed 2; 2 already ticked; 0 string-only survivors not ticked; 4 survivors"
+            in capsys.readouterr().out)
 
 
 def test_ticks_dry_run_files_nothing(sample, tmp_path, capsys):
@@ -480,3 +481,118 @@ def test_ticks_entry_point(sample, tmp_path, monkeypatch):
     with pytest.raises(SystemExit) as exit_:
         runpy.run_path(str(TOOLS / "ticks.py"), run_name="__main__")
     assert exit_.value.code == 0
+
+
+# --- string-only survivors --------------------------------------------------------------------
+#
+# A survivor whose mutation only changes the text inside a string literal is counted, not
+# ticked. The class is decided from the diff alone, and conservatively: anything the token
+# comparison cannot vouch for is behavioural.
+
+BEHAVIOURAL, STRING_ONLY = "behavioural", "string-only"
+REAL = json.loads((Path(__file__).resolve().parent
+                   / "mutation_survivors_2026-10-05.json").read_text("utf-8"))["survivors"]
+
+
+@pytest.mark.parametrize("removed, added", [
+    (['    raise ValueError("no label")'], ['    raise ValueError("XXno labelXX")']),
+    (['raise E(f"a {x} b")'], ['raise E(f"A {x} B")']),
+    (['        "cannot carry one")'], ['        "CANNOT CARRY ONE")']),
+    (['    raise E("one "'], ['    raise E("ONE "']),
+    (['f("a",', '  "b")'], ['f("a",', '  "XXbXX")']),
+])
+def test_a_change_inside_a_string_literal_is_string_only(removed, added):
+    assert mutate.classify(removed, added) == STRING_ONLY
+
+
+@pytest.mark.parametrize("removed, added", [
+    (['raise E("no label")'], ['raise E(None)']),
+    (['raise E(f"a {type(x).__name__}")'], ['raise E(f"a {type(None).__name__}")']),
+    (['y = x + 1'], ['y = x - 1']),
+    (['y = 1'], []),
+    ([], ['y = 1']),
+    (['y = "a"'], ['y = "a"']),
+    (['y = "a"'], ['y = "a", "b"']),
+    (['if "v" in plain:'], ['if "XXvXX" in plain:']),
+    (['if kind == "json":'], ['if kind == "JSON":']),
+    (['x = d["key"]'], ['x = d["KEY"]']),
+    (['x = {"key": 1}'], ['x = {"KEY": 1}']),
+    (['y = "abc'], ['y = "ABC']),
+    (['y = 1', 'z = "a"'], ['y = 1']),
+])
+def test_anything_else_is_behavioural(removed, added):
+    assert mutate.classify(removed, added) == BEHAVIOURAL
+
+
+def test_the_real_heti_survivors_split():
+    classes = {s["id"]: mutate.classify(s["removed"], s["added"]) for s in REAL["heti"]}
+    assert sorted(classes.values()).count(STRING_ONLY) == 7
+    assert sorted(classes.values()).count(BEHAVIOURAL) == 11
+    # `isinstance(value, dict) or True` survives: no test hands _plain a non-dict Mapping.
+    assert classes["89165d46d413"] == BEHAVIOURAL
+
+
+def test_the_real_utina_survivors_are_string_only_but_two():
+    classes = {s["id"]: mutate.classify(s["removed"], s["added"]) for s in REAL["utina"]}
+    assert len(classes) == 57
+    # These two change the slice inside an f-string's {...} ([:16] to [:17]), which is an
+    # expression rather than a literal's text, so they are ticked.
+    assert [i for i, c in classes.items() if c == BEHAVIOURAL] == ["e594c88ec0cc",
+                                                                  "3844d16a640a"]
+
+
+def string_spec():
+    spec = run_spec()
+    diff = DIFF_SAIDIFY.replace('raise ValueError(None)', 'raise ValueError("NO LABEL")')
+    spec["show"]["by_arg"][NAME_SAIDIFY] = diff + "\n"
+    return spec
+
+
+def test_the_report_carries_each_survivors_class(repo, tmp_path):
+    _, data, text = run_main(repo, stub(tmp_path / "bin", "mutmut", string_spec()))
+    assert [s["class"] for s in data["survivors"]] == [STRING_ONLY, BEHAVIOURAL]
+    assert data["classes"] == {BEHAVIOURAL: 1, STRING_ONLY: 1}
+    assert "1 behavioural, 1 string-only" in text
+    assert "| string-only |" in text and "| behavioural |" in text
+
+
+def test_a_report_without_survivors_has_empty_classes(repo, tmp_path):
+    spec = run_spec()
+    spec["results"] = "    pkg.mod.x_saidify__mutmut_1: killed\n"
+    _, data, text = run_main(repo, stub(tmp_path / "bin", "mutmut", spec))
+    assert data["classes"] == {BEHAVIOURAL: 0, STRING_ONLY: 0}
+    assert "string-only" not in text
+
+
+def real_report(tmp_path, repo_name):
+    survivors = []
+    for s in REAL[repo_name]:
+        record = survivor(s["id"], s["line"])
+        record.update(file=s["file"], function=s["function"])
+        # No "class" field: ticks.py decides from the diff itself, never from a stored label.
+        record["mutation"] = {"removed": s["removed"], "added": s["added"], "diff": "-\n+"}
+        survivors.append(record)
+    path = tmp_path / f"{repo_name}.json"
+    path.write_text(json.dumps({"commit": "c0ffee", "failure": None, "survivors": survivors}))
+    return path
+
+
+def test_ticks_skips_utinas_string_only_survivors(tmp_path, capsys):
+    tick = tick_stub(tmp_path)
+    assert ticks.main(["--report", str(real_report(tmp_path, "utina")), "--tick",
+                       str(tick)]) == 0
+    adds = [c[-1] for c in calls(tmp_path / "tickbin") if c[0] == "add"]
+    assert [a.split()[2] for a in adds] == ["[m:e594c88ec0cc]", "[m:3844d16a640a]"]
+    assert "filed 2; 0 already ticked; 55 string-only survivors not ticked" in (
+        capsys.readouterr().out)
+
+
+def test_ticks_files_hetis_behavioural_survivors(tmp_path, capsys):
+    tick = tick_stub(tmp_path)
+    assert ticks.main(["--report", str(real_report(tmp_path, "heti")), "--tick",
+                       str(tick)]) == 0
+    adds = [c[-1] for c in calls(tmp_path / "tickbin") if c[0] == "add"]
+    assert len(adds) == 11
+    assert any("[m:89165d46d413]" in title for title in adds)
+    assert "filed 11; 0 already ticked; 7 string-only survivors not ticked" in (
+        capsys.readouterr().out)
