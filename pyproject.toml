@@ -42,6 +42,7 @@ dev = [
     "pytest-cov>=5",
     "ruff>=0.9",
     "mypy>=1.14",
+    "mutmut>=3.8",
 ]
 
 [build-system]
@@ -53,7 +54,7 @@ packages = ["src/utina"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=utina --cov-branch --cov-report=term-missing --cov-fail-under=100"
+addopts = "--cov=utina --cov=tools/mutation --cov-branch --cov-report=term-missing --cov-fail-under=100"
 
 [tool.coverage.run]
 branch = true
@@ -64,6 +65,32 @@ source = ["utina"]
 # editing it — making this the seventh implementation nobody checks — or writing tests
 # for branches the specification already pins.
 omit = ["*/utina/coia.py"]
+
+[tool.mutmut]
+# A two-week mutation-testing pilot, from 2026-10-05: .github/workflows/mutation.yml runs it
+# nightly over the modules main changed in the last seven days (tools/mutation/mutate.py picks
+# them; mutmut is handed their names). Branch coverage shows a line ran; a surviving mutant shows
+# no test would notice it being wrong.
+source_paths = ["src/utina"]
+# Vendored byte for byte and pinned to the spec repo's vectors, as in the coverage omit above: a
+# surviving mutant there would be a finding against somebody else's code.
+do_not_mutate = ["*/utina/coia.py"]
+# mutmut runs the suite inside a copy of the tree under mutants/, which holds only src/ and
+# tests/ unless told otherwise; these are the directories the tests read from the repo root.
+also_copy = ["docs/", "schemas/", "tools/"]
+# Without the coverage gate, which a mutated copy of the package cannot meet. The tests of the
+# mutation tooling itself are left out: they exercise no utina code. So is the one wall-clock
+# assertion (the law fold in under 5s), which mutmut's per-call instrumentation makes several
+# times slower and would fail on every run regardless of the mutant. So is the one test that
+# enumerates a class's attributes: mutmut adds its trampolines to every class it instruments, so
+# that test sees names no source declares. These were found by running the whole suite against
+# mutmut's unmutated, instrumented copy (MUTANT_UNDER_TEST=""), where nothing else fails.
+pytest_add_cli_args = [
+    "--no-cov",
+    "--ignore=tests/test_mutation_tools.py",
+    "--deselect=tests/test_constitution.py::test_many_unratified_enactments_do_not_make_the_law_fold_explode",
+    "--deselect=tests/test_enact.py::test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it",
+]
 
 [tool.ruff]
 line-length = 96
