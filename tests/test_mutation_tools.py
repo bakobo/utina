@@ -1307,6 +1307,20 @@ def test_the_pyproject_limit_is_generous():
     assert shared.MAX_PYPROJECT_BYTES == 1024 * 1024
 
 
+def test_a_deeply_nested_pyproject_is_a_coded_refusal(tmp_path, capsys, monkeypatch):
+    # hostile pass on the message-sinks PRs: tomllib's RecursionError escaped the coded refusal.
+    def too_deep(text):
+        raise RecursionError("maximum recursion depth exceeded")
+
+    monkeypatch.setattr(shared.tomllib, "loads", too_deep)
+    root = sinks_root(tmp_path, "[tool.mutation]\nmessage_sinks = []\n")
+    path = declared_report(tmp_path, None)
+    assert ticks.main(["--report", str(path), "--tick", "/nonexistent", "--root",
+                       str(root)]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith(f"{mutate.SINKS_MALFORMED.code}: ") and "nested too deeply" in err
+
+
 def test_a_missing_pyproject_is_a_coded_refusal(tmp_path, capsys):
     root = tmp_path / "empty"
     root.mkdir()

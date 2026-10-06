@@ -116,7 +116,10 @@ def read_pyproject(path: Path) -> dict:
         raw = handle.read(MAX_PYPROJECT_BYTES + 1)
     if len(raw) > MAX_PYPROJECT_BYTES:
         raise SinkConfigError(f"{path.name} is larger than {MAX_PYPROJECT_BYTES} bytes")
-    return tomllib.loads(raw.decode("utf-8"))
+    try:
+        return tomllib.loads(raw.decode("utf-8"))
+    except RecursionError:  # small enough, but nested deeper than the parser's stack
+        raise SinkConfigError(f"{path.name} is nested too deeply to parse") from None
 
 
 class UnreadableReportError(Exception):
