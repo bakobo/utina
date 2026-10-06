@@ -68,6 +68,7 @@ from shared import (  # a sibling script, not a package
     classify,
     message_sink,
     message_sinks,
+    read_pyproject,
 )
 
 PASSED = "passed: every test covering this function passed with the mutant in place"
@@ -169,7 +170,7 @@ def load_config(root: Path) -> dict:
 def declared_sinks(root: Path) -> tuple[str, ...]:
     """The repo's [tool.mutation] message_sinks, or the SINKS_MALFORMED error saying why not."""
     try:
-        return message_sinks(tomllib.loads((root / "pyproject.toml").read_text("utf-8")))
+        return message_sinks(read_pyproject(root / "pyproject.toml"))
     except (OSError, ValueError, SinkConfigError) as error:  # ValueError: TOML or UTF-8
         raise SINKS_MALFORMED(problem=str(error)) from None
 

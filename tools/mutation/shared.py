@@ -11,8 +11,10 @@ from __future__ import annotations
 import ast
 import io
 import json
+import keyword
 import re
 import tokenize
+import tomllib
 from pathlib import Path
 
 SCHEMA = "bakobo.mutation-report/1"
@@ -46,9 +48,19 @@ OPEN_BRACKET = "unexpected EOF in multi-line statement"
 # ``Name`` makes every string argument of a call spelled exactly ``Name(...)`` message text;
 # ``Name.kwarg`` makes only that keyword argument so. A survivor whose literal reached one is
 # recorded with the sink ``declared <entry>``.
-SINK_ENTRY = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?")
+# pyproject.toml is read at most this far, 1 MiB, and refused unread beyond it.
+MAX_PYPROJECT_BYTES = 1024 * 1024
 DECLARED = "declared "
 DOTTED = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*")
+
+
+def sink_entry(entry: object) -> bool:
+    """Whether ``entry`` is Name or Name.kwarg: one or two identifiers, neither a keyword."""
+    if not isinstance(entry, str):
+        return False
+    parts = entry.split(".")
+    return len(parts) <= 2 and all(
+        part.isidentifier() and not keyword.iskeyword(part) for part in parts)
 
 
 class SinkConfigError(Exception):
@@ -67,7 +79,7 @@ def message_sinks(pyproject: dict) -> tuple[str, ...]:
     if not isinstance(sinks, list):
         raise SinkConfigError(f"[tool.mutation] message_sinks is not a list: {sinks!r}")
     for entry in sinks:
-        if not (isinstance(entry, str) and SINK_ENTRY.fullmatch(entry)):
+        if not sink_entry(entry):
             raise SinkConfigError(
                 f"[tool.mutation] message_sinks holds {entry!r}, which is neither Name nor "
                 "Name.kwarg")
@@ -89,9 +101,22 @@ def known_sink(sink: object) -> bool:
     if sink.startswith("raise "):
         return bool(DOTTED.fullmatch(sink.removeprefix("raise ")))
     if sink.startswith(DECLARED):
-        return bool(SINK_ENTRY.fullmatch(sink.removeprefix(DECLARED)))
+        return sink_entry(sink.removeprefix(DECLARED))
     owner, dot, method = sink.partition(".")
     return bool(dot) and owner in LOG_OWNERS and method in LOG_METHODS
+
+
+def read_pyproject(path: Path) -> dict:
+    """A pyproject.toml, parsed, read no further than MAX_PYPROJECT_BYTES.
+
+    Raises SinkConfigError for a file over the limit, and lets OSError and ValueError (not
+    UTF-8, not TOML) through for the caller to code.
+    """
+    with open(path, "rb") as handle:
+        raw = handle.read(MAX_PYPROJECT_BYTES + 1)
+    if len(raw) > MAX_PYPROJECT_BYTES:
+        raise SinkConfigError(f"{path.name} is larger than {MAX_PYPROJECT_BYTES} bytes")
+    return tomllib.loads(raw.decode("utf-8"))
 
 
 class UnreadableReportError(Exception):
@@ -285,6 +310,6 @@ def message_sink(source: str, first: int, last: int,
                 and n.lineno <= last and (n.end_lineno or n.lineno) >= first
                 and not inside_fstring(n)]
     found = [_sink_of_literal(n, parents, sinks) for n in literals]
-    if not found or None in found:
-        return None
+    if not found or None in found or len(set(found)) > 1:
+        return None  # a literal that is no message, or two sinks, neither vouching for both
     return found[0]

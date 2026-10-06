@@ -698,7 +698,9 @@ def test_message_sink(line, sink):
 
 
 def test_message_sink_needs_every_literal_in_the_lines_to_be_a_message():
-    assert mutate.message_sink(SINKS, 15, 16) == "print"
+    # Lines 15 and 16 are both messages, but to two sinks, which no one record can name.
+    assert mutate.message_sink(SINKS, 15, 16) is None
+    assert mutate.message_sink(SINKS, 10, 11) == "raise ValueError"
     assert mutate.message_sink(SINKS, 18, 19) is None
 
 
@@ -1271,3 +1273,61 @@ def test_mutate_refuses_a_non_table_tool_before_reading_mutmut_config(repo, tmp_
 def test_a_literal_python_cannot_evaluate_is_behavioural():
     assert mutate.classify(['    raise E("\\N{NO SUCH NAME} a")'],
                            ['    raise E("\\N{NO SUCH NAME} b")'], "raise E") == BEHAVIOURAL
+
+
+# --- Copilot on message sinks ----------------------------------------------------------------
+
+
+@pytest.mark.parametrize("entry", ["for", "None", "Refusal.for", "class.missing", "True"])
+def test_a_reserved_word_is_no_sink_name(entry):
+    # Each component must be an identifier and not a keyword (utina 4191350233).
+    with pytest.raises(shared.SinkConfigError, match=re.escape(repr(entry))):
+        shared.message_sinks({"tool": {"mutation": {"message_sinks": [entry]}}})
+    assert not shared.known_sink(f"declared {entry}")
+
+
+def test_soft_keywords_and_unicode_identifiers_are_names():
+    assert shared.message_sinks({"tool": {"mutation": {"message_sinks": [
+        "match.case", "Réfus"]}}}) == ("match.case", "Réfus")
+
+
+def test_an_oversized_pyproject_is_refused_before_it_is_decoded(tmp_path, capsys,
+                                                                 monkeypatch):
+    # heti 4191426374: read at most the limit plus one byte.
+    monkeypatch.setattr(shared, "MAX_PYPROJECT_BYTES", 64)
+    root = sinks_root(tmp_path, "# " + "x" * 100 + "\n")
+    path = declared_report(tmp_path, None)
+    assert ticks.main(["--report", str(path), "--tick", "/nonexistent", "--root",
+                       str(root)]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith(f"{mutate.SINKS_MALFORMED.code}: ") and "larger than 64 bytes" in err
+
+
+def test_the_pyproject_limit_is_generous():
+    assert shared.MAX_PYPROJECT_BYTES == 1024 * 1024
+
+
+def test_a_missing_pyproject_is_a_coded_refusal(tmp_path, capsys):
+    root = tmp_path / "empty"
+    root.mkdir()
+    path = declared_report(tmp_path, None)
+    assert ticks.main(["--report", str(path), "--tick", "/nonexistent", "--root",
+                       str(root)]) == 2
+    assert capsys.readouterr().err.startswith(f"{mutate.SINKS_MALFORMED.code}: ")
+
+
+MIXED = """\
+def f(x):
+    print("a"); log.info("b")
+    print("a", "b")
+    raise ValueError("a" + str(print("b")))
+"""
+
+
+@pytest.mark.parametrize("line, sink", [
+    (2, None),  # two sinks on one line: no single one vouches for both (heti 4191426409)
+    (3, "print"),
+    (4, None),
+])
+def test_literals_reaching_different_sinks_are_not_message_text(line, sink):
+    assert mutate.message_sink(MIXED, line, line) == sink
