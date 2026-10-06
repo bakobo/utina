@@ -895,3 +895,38 @@ def test_a_survivors_id_does_not_depend_on_its_twin_surviving(repo, tmp_path):
     both = twin_ids(repo, tmp_path, {1, 2})
     alone = twin_ids(repo, tmp_path, {2})
     assert both["1"] != both["2"] and alone == {"2": both["2"]}
+
+
+# --- fix-diff hostile pass: failure fields and nesting (heti#33 2 and 3, utina#14 3) ---------
+
+
+@pytest.mark.parametrize("fields, named", [
+    ({"failure": ""}, "failure"),
+    ({"failure": 3}, "failure"),
+    ({"failure": None, "failure_code": 5}, "failure_code"),
+    ({"failure": None, "failure_retryable": "no"}, "failure_retryable"),
+    ({"failure": None, "failure_hint": []}, "failure_hint"),
+])
+def test_an_invalid_failure_field_is_refused(tmp_path, capsys, fields, named):
+    tick = tick_stub(tmp_path)
+    data = {**bad(survivor("bbbbbbbbbbbb")), **fields}
+    path = tmp_path / "r.json"
+    path.write_text(json.dumps(data))
+    assert ticks.main(["--report", str(path), "--tick", str(tick)]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith(f"{ticks.MALFORMED.code}: ") and named in err
+    assert calls(tmp_path / "tickbin") == []
+
+
+def test_a_report_without_the_optional_failure_fields_is_read(sample, tmp_path):
+    # Reports written before failure_code existed carry only "failure": null.
+    assert ticks.main(["--report", str(sample), "--tick", str(tick_stub(tmp_path)),
+                       "--dry-run"]) == 0
+
+
+def test_deeply_nested_json_is_refused_not_a_crash(tmp_path, capsys):
+    path = tmp_path / "r.json"
+    path.write_text("[" * 100_000 + "]" * 100_000)
+    assert ticks.main(["--report", str(path), "--tick", "/nonexistent"]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith(f"{ticks.MALFORMED.code}: ") and "nested too deeply" in err

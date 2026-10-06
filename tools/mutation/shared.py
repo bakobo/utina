@@ -57,6 +57,8 @@ def read_report(path: Path) -> object:
         return json.loads(text)
     except ValueError:
         raise UnreadableReportError("the report is not JSON") from None
+    except RecursionError:  # small enough, but nested deeper than the parser's stack
+        raise UnreadableReportError("the report is nested too deeply to parse") from None
 
 
 def _tokens(lines: list[str]) -> list[tuple[int, str]] | None:

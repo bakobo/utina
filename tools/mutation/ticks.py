@@ -132,12 +132,29 @@ def check_record(s: object) -> None:
         raise MalformedReportError("its message_sink is neither text nor null")
 
 
-def check_report(data: object) -> None:
+def check_header(data: object) -> None:
+    """The report is an object of this schema, and its failure fields are what mutate writes.
+
+    ``failure`` is null for a run that worked and a non-empty sentence for one that did not;
+    anything else would let a broken report pass for a clean one.
+    """
     if not isinstance(data, dict):
         raise MalformedReportError(f"the report is a {type(data).__name__}, not an object")
     if data.get("schema") != SCHEMA:
         raise MalformedReportError(
             f"the report's schema is {data.get('schema')!r}, and only {SCHEMA!r} is read")
+    failure = data.get("failure")
+    if not (failure is None or (isinstance(failure, str) and failure.strip())):
+        raise MalformedReportError("the report's failure is neither null nor a sentence")
+    for key, kinds in (("failure_code", str), ("failure_retryable", bool),
+                       ("failure_hint", str)):
+        if not isinstance(data.get(key), (kinds, type(None))):
+            raise MalformedReportError(f"the report's {key} is not a {kinds.__name__} or null")
+
+
+def check_report(data: object) -> None:
+    check_header(data)
+    assert isinstance(data, dict)  # check_header refused anything else
     if not isinstance(data.get("commit"), str):
         raise MalformedReportError("the report names no commit")
     if not isinstance(data.get("survivors"), list):
@@ -247,8 +264,10 @@ def load(args: argparse.Namespace) -> dict:
         except UnreadableReportError as error:
             raise MALFORMED(problem=str(error)) from None
     try:
-        if isinstance(data, dict) and data.get("schema") == SCHEMA and data.get("failure"):
-            raise FAILED_RUN(failure=str(data["failure"]).splitlines()[0])
+        check_header(data)
+        failure = data.get("failure")  # type: ignore[union-attr]
+        if failure:
+            raise FAILED_RUN(failure=failure.strip().splitlines()[0])
         check_report(data)
     except MalformedReportError as error:
         raise MALFORMED(problem=str(error)) from None
