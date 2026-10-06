@@ -20,7 +20,11 @@ landed (``tick note`` failed after ``tick add`` succeeded), and it is added now.
 A survivor whose mutation only changes the text of a message literal is counted in the closing
 summary and not ticked. That is decided by ``mutate.classify`` from the record's own diff and
 its ``message_sink``, never from the stored ``class``, and it files whenever it cannot tell: a
-record without a sink is behavioural.
+record without a sink is behavioural. A sink the repo declares (``[tool.mutation]
+message_sinks``, read from ``--root``'s pyproject.toml) counts only while the repo still
+declares it: the record's ``declared <entry>`` must name an entry there, so the report and the
+repo agree, and a malformed declaration is refused with ``SINKS_MALFORMED`` before the ledger
+is touched.
 
 A report is read at most 16 MiB (``shared.MAX_REPORT_BYTES``) and refused unread beyond that.
 One that cannot be read, is not UTF-8 JSON, carries any schema but ``shared.SCHEMA``, or is not
@@ -44,11 +48,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from bakobo.errors import BakoboError, ErrorCode  # type: ignore[import-untyped]
+from mutate import SINKS_MALFORMED, declared_sinks  # the same reading of the same table
 from shared import (  # a sibling script, not a package
+    DECLARED,
     SCHEMA,
     STRING_ONLY,
     UnreadableReportError,
     classify,
+    known_sink,
     read_report,
 )
 
@@ -128,8 +135,9 @@ def check_record(s: object) -> None:
     if not (isinstance(result, dict) and isinstance(result.get("command"), str)
             and _integer(result.get("tests_run")) and _integer(result.get("exit_code"))):
         raise MalformedReportError("its test_result lacks a command, tests_run or exit_code")
-    if not isinstance(s.get("message_sink"), (str, type(None))):
-        raise MalformedReportError("its message_sink is neither text nor null")
+    if not known_sink(s.get("message_sink")):
+        raise MalformedReportError(
+            f"its message_sink {s.get('message_sink')!r} is not a form mutate.py records")
 
 
 def check_header(data: object) -> None:
@@ -216,7 +224,21 @@ def detail(s: dict, data: dict) -> str:
     ])
 
 
-def file_ticks(data: dict, tick: str, dry_run: bool) -> tuple[list[str], int, int, int]:
+def vouched(sink: str | None, sinks: tuple[str, ...]) -> str | None:
+    """A record's sink if it can still vouch for message text, else None.
+
+    Every sink is re-checked, not only declared ones: it must be a form mutate.py records, and
+    a declared one must be a sink this repo still declares.
+    """
+    if sink is None or not known_sink(sink):
+        return None
+    if sink.startswith(DECLARED) and sink.removeprefix(DECLARED) not in sinks:
+        return None
+    return sink
+
+
+def file_ticks(data: dict, tick: str, dry_run: bool,
+               sinks: tuple[str, ...] = ()) -> tuple[list[str], int, int, int]:
     """Returns (ids filed, count already ticked, count re-noted, count string-only)."""
     have = ticked(tick)
     done: set[str] = set()
@@ -224,7 +246,8 @@ def file_ticks(data: dict, tick: str, dry_run: bool) -> tuple[list[str], int, in
     skipped = renoted = strings = 0
     for s in data["survivors"]:
         mutation = s["mutation"]
-        kind = classify(mutation["removed"], mutation["added"], s.get("message_sink"))
+        kind = classify(mutation["removed"], mutation["added"],
+                        vouched(s.get("message_sink"), sinks))
         if kind == STRING_ONLY:
             strings += 1
             continue
@@ -274,7 +297,7 @@ def load(args: argparse.Namespace) -> dict:
     return data  # type: ignore[return-value]
 
 
-def main(argv: list[str] | None = None) -> int:
+def parse(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     source = parser.add_mutually_exclusive_group()
     source.add_argument("--report", type=Path, help="a mutation-report.json already on disk")
@@ -282,14 +305,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--gh", default="gh")
     parser.add_argument("--tick", default="tick")
-    args = parser.parse_args(argv)
+    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2],
+                        help="the repo whose pyproject.toml declares its message sinks")
+    return parser.parse_args(argv)
 
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse(argv)
     try:
+        sinks = declared_sinks(args.root)
         data = load(args)
     except BakoboError as error:
         print(f"{error.code}: {error.detail}\nHint: {error.hint}", file=sys.stderr)
-        return 2 if error.code == MALFORMED.code else 1
-    filed, skipped, renoted, strings = file_ticks(data, args.tick, args.dry_run)
+        return 2 if error.code in (MALFORMED.code, SINKS_MALFORMED.code) else 1
+    filed, skipped, renoted, strings = file_ticks(data, args.tick, args.dry_run, sinks)
     verb = "would file" if args.dry_run else "filed"
     print(f"{verb} {len(filed)}; {skipped} already ticked; {renoted} re-noted; {strings} "
           f"string-only survivors not ticked; {len(data['survivors'])} survivors in the report")
