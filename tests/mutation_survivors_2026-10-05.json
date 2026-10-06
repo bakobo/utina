@@ -1,5 +1,5 @@
 {
- "source": "the first local runs of tools/mutation/mutate.py, 2026-10-05: heti over src/heti/anchored/consume/saids.py, utina over src/utina/fold/semantics.py. message_sink is what mutate.message_sink finds for each survivor's line in the source at those commits.",
+ "source": "the first local runs of tools/mutation/mutate.py, 2026-10-05: heti over src/heti/anchored/consume/saids.py, utina over src/utina/fold/semantics.py. message_sink is what mutate.message_sink finds for each survivor's line in the source at those commits, with utina's declared sinks (Refusal.missing, Refusal.detail).",
  "survivors": {
   "heti": [
    {
@@ -249,7 +249,7 @@
     "added": [
      "                \"XXthe fate of each superseding-recovery ruleXX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.missing"
    },
    {
     "id": "a4b02d431c26",
@@ -262,7 +262,7 @@
     "added": [
      "                \"THE FATE OF EACH SUPERSEDING-RECOVERY RULE\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.missing"
    },
    {
     "id": "64fbb8245a0d",
@@ -275,7 +275,7 @@
     "added": [
      "                \"XXCustos requires a Constitution to commit the revision of every external XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "b08e12b24ddf",
@@ -288,7 +288,7 @@
     "added": [
      "                \"custos requires a constitution to commit the revision of every external \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "e09817a55d61",
@@ -301,7 +301,7 @@
     "added": [
      "                \"CUSTOS REQUIRES A CONSTITUTION TO COMMIT THE REVISION OF EVERY EXTERNAL \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "8952f7ca26c7",
@@ -314,7 +314,7 @@
     "added": [
      "                \"XXspecification its fold consumes, and this law says nothing about KERI. A XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "1b95e069a72e",
@@ -327,7 +327,7 @@
     "added": [
      "                \"specification its fold consumes, and this law says nothing about keri. a \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "8d154f56f9c1",
@@ -340,7 +340,7 @@
     "added": [
      "                \"SPECIFICATION ITS FOLD CONSUMES, AND THIS LAW SAYS NOTHING ABOUT KERI. A \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "bb20ce4c3770",
@@ -353,7 +353,7 @@
     "added": [
      "                \"XXduplicity observation convicts only under the key tier's committed rules, XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "2c4d0c8f859c",
@@ -366,7 +366,7 @@
     "added": [
      "                \"DUPLICITY OBSERVATION CONVICTS ONLY UNDER THE KEY TIER'S COMMITTED RULES, \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "fb93a7f988ab",
@@ -379,7 +379,7 @@
     "added": [
      "                \"XXso without the declaration there is no committed rule for it to convict under.XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "0e5116e35d20",
@@ -392,7 +392,7 @@
     "added": [
      "                \"SO WITHOUT THE DECLARATION THERE IS NO COMMITTED RULE FOR IT TO CONVICT UNDER.\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "e594c88ec0cc",
@@ -405,7 +405,7 @@
     "added": [
      "                f\"an implementation of the KERI revision this law pins, {declared.spec[:17]}...\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.missing"
    },
    {
     "id": "ab3f3365fb4f",
@@ -418,7 +418,7 @@
     "added": [
      "                \"XXThe law pins a revision of the KERI specification this engine does not carry, XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "d66ea4445fc6",
@@ -431,7 +431,7 @@
     "added": [
      "                \"the law pins a revision of the keri specification this engine does not carry, \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "83102065ad4b",
@@ -444,7 +444,7 @@
     "added": [
      "                \"THE LAW PINS A REVISION OF THE KERI SPECIFICATION THIS ENGINE DOES NOT CARRY, \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "b89e5b6a7009",
@@ -457,7 +457,7 @@
     "added": [
      "                \"XXso the recovery rules it names are rules this fold has not read.XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "722daac0e308",
@@ -470,7 +470,7 @@
     "added": [
      "                \"SO THE RECOVERY RULES IT NAMES ARE RULES THIS FOLD HAS NOT READ.\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "eb3b234984ca",
@@ -483,7 +483,7 @@
     "added": [
      "            missing=f\"a disposition for superseding-recovery rules {'XX, XX'.join(silent)}\","
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.missing"
    },
    {
     "id": "58bb82ee19f9",
@@ -496,7 +496,7 @@
     "added": [
      "                \"XXEach rule the fold's semantics depend on is to be consumed or expressly XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "24219820d758",
@@ -509,7 +509,7 @@
     "added": [
      "                \"each rule the fold's semantics depend on is to be consumed or expressly \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "f2e35e3cdd88",
@@ -522,7 +522,7 @@
     "added": [
      "                \"EACH RULE THE FOLD'S SEMANTICS DEPEND ON IS TO BE CONSUMED OR EXPRESSLY \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "1a8e340b98e9",
@@ -535,7 +535,7 @@
     "added": [
      "                \"XXexcluded, never passed over in silence, and this law is silent on some.XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "4b62c9ca51c4",
@@ -548,7 +548,7 @@
     "added": [
      "                \"EXCLUDED, NEVER PASSED OVER IN SILENCE, AND THIS LAW IS SILENT ON SOME.\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "fea7e0a5dec0",
@@ -561,7 +561,7 @@
     "added": [
      "            missing=\"XXan implementation of the recovery dispositions this law declaresXX\","
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.missing"
    },
    {
     "id": "80e12c218c4e",
@@ -574,7 +574,7 @@
     "added": [
      "                \"XXThis engine consumes every superseding-recovery rule and implements no other XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "32824d7c5e76",
@@ -587,7 +587,7 @@
     "added": [
      "                \"this engine consumes every superseding-recovery rule and implements no other \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "19bac856b5ce",
@@ -600,7 +600,7 @@
     "added": [
      "                \"THIS ENGINE CONSUMES EVERY SUPERSEDING-RECOVERY RULE AND IMPLEMENTS NO OTHER \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "7bcef5a4510b",
@@ -613,7 +613,7 @@
     "added": [
      "                \"XXdeclaration. Answering under an exclusion it cannot honour would be assuming XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "c8b7bcebb451",
@@ -626,7 +626,7 @@
     "added": [
      "                \"declaration. answering under an exclusion it cannot honour would be assuming \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "0f0ca6af147f",
@@ -639,7 +639,7 @@
     "added": [
      "                \"DECLARATION. ANSWERING UNDER AN EXCLUSION IT CANNOT HONOUR WOULD BE ASSUMING \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "c458a671351f",
@@ -652,7 +652,7 @@
     "added": [
      "                \"XXat exactly the moment axiom 4 forbids it.XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "85f7425022af",
@@ -665,7 +665,7 @@
     "added": [
      "                \"AT EXACTLY THE MOMENT AXIOM 4 FORBIDS IT.\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "75a758e5b29a",
@@ -678,7 +678,7 @@
     "added": [
      "                \"XXa functional-dependency declaration naming KERI's revision by digest and XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.missing"
    },
    {
     "id": "1fed0bd8e334",
@@ -691,7 +691,7 @@
     "added": [
      "                \"a functional-dependency declaration naming keri's revision by digest and \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.missing"
    },
    {
     "id": "6216f65e508c",
@@ -704,7 +704,7 @@
     "added": [
      "                \"XXThis law's composition rule is expressed in an external semantics and the XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "5b2669a4c797",
@@ -717,7 +717,7 @@
     "added": [
      "                \"this law's composition rule is expressed in an external semantics and the \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "0cf4f388f834",
@@ -730,7 +730,7 @@
     "added": [
      "                \"THIS LAW'S COMPOSITION RULE IS EXPRESSED IN AN EXTERNAL SEMANTICS AND THE \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "5eb67ea3342e",
@@ -743,7 +743,7 @@
     "added": [
      "                \"XXlaw does not say which revision of it the clauses mean. Axiom 4 requires an XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "c5eea18d50f5",
@@ -756,7 +756,7 @@
     "added": [
      "                \"law does not say which revision of it the clauses mean. axiom 4 requires an \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "9394cb6ae25d",
@@ -769,7 +769,7 @@
     "added": [
      "                \"LAW DOES NOT SAY WHICH REVISION OF IT THE CLAUSES MEAN. AXIOM 4 REQUIRES AN \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "e8238641f351",
@@ -782,7 +782,7 @@
     "added": [
      "                \"XXexternal semantics to be pinned by committed digest; a fold that assumed XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "9bcd50b27dbb",
@@ -795,7 +795,7 @@
     "added": [
      "                \"EXTERNAL SEMANTICS TO BE PINNED BY COMMITTED DIGEST; A FOLD THAT ASSUMED \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "fc1f4803c0b8",
@@ -808,7 +808,7 @@
     "added": [
      "                \"XXits own revision would answer under a lens nobody committed.XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "0ba42ef26565",
@@ -821,7 +821,7 @@
     "added": [
      "                \"ITS OWN REVISION WOULD ANSWER UNDER A LENS NOBODY COMMITTED.\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "3844d16a640a",
@@ -834,7 +834,7 @@
     "added": [
      "            missing=f\"an implementation of the semantics this law pins, {pinned[:17]}...\","
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.missing"
    },
    {
     "id": "919d8e147d91",
@@ -847,7 +847,7 @@
     "added": [
      "                \"XXThe law pins a revision of the dossier specification this engine does not XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "6f28a8d36dd9",
@@ -860,7 +860,7 @@
     "added": [
      "                \"the law pins a revision of the dossier specification this engine does not \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "0fa6e5896413",
@@ -873,7 +873,7 @@
     "added": [
      "                \"THE LAW PINS A REVISION OF THE DOSSIER SPECIFICATION THIS ENGINE DOES NOT \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "ee085ff1eb91",
@@ -886,7 +886,7 @@
     "added": [
      "                \"XXimplement, so its clauses are expressed in terms this fold cannot read. XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "9afcb3069b79",
@@ -899,7 +899,7 @@
     "added": [
      "                \"IMPLEMENT, SO ITS CLAUSES ARE EXPRESSED IN TERMS THIS FOLD CANNOT READ. \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "5a22e0bb988c",
@@ -912,7 +912,7 @@
     "added": [
      "                \"XXThat is a refusal and not a finding: the evidence is not short, the lens XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "cdbaeeb55b16",
@@ -925,7 +925,7 @@
     "added": [
      "                \"that is a refusal and not a finding: the evidence is not short, the lens \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "6ba69bcdc5b3",
@@ -938,7 +938,7 @@
     "added": [
      "                \"THAT IS A REFUSAL AND NOT A FINDING: THE EVIDENCE IS NOT SHORT, THE LENS \""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "7a6ee23f3621",
@@ -951,7 +951,7 @@
     "added": [
      "                \"XXis one the fold does not have.XX\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "571eafe35c53",
@@ -964,7 +964,7 @@
     "added": [
      "                \"IS ONE THE FOLD DOES NOT HAVE.\""
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.detail"
    },
    {
     "id": "c9a68e126551",
@@ -977,7 +977,7 @@
     "added": [
      "            missing=\"XXa semantics declaration naming the dossier specification by digestXX\","
     ],
-    "message_sink": null
+    "message_sink": "declared Refusal.missing"
    }
   ]
  }

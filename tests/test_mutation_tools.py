@@ -11,6 +11,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import re
 import runpy
 import subprocess
 import sys
@@ -571,12 +572,17 @@ def test_the_real_heti_survivors_split():
     assert classes["89165d46d413"] == BEHAVIOURAL
 
 
-def test_the_real_utina_survivors_are_all_behavioural():
-    # Every one changes text handed to Refusal(...), which is returned to the caller: a value,
-    # not a message, so it is ticked.
-    classes = [mutate.classify(s["removed"], s["added"], s["message_sink"])
-               for s in REAL["utina"]]
-    assert len(classes) == 57 and set(classes) == {BEHAVIOURAL}
+def test_the_real_utina_survivors_split_under_its_declared_sinks():
+    # Every one changes text handed to Refusal(...). utina declares Refusal's missing and
+    # detail as message sinks, so 55 are string-only; the two that change the slice inside an
+    # f-string's {...} ([:16] to [:17]) change an expression, not text, and stay behavioural.
+    classes = {s["id"]: mutate.classify(s["removed"], s["added"], s["message_sink"])
+               for s in REAL["utina"]}
+    assert len(classes) == 57
+    assert sorted(i for i, c in classes.items() if c == BEHAVIOURAL) == [
+        "3844d16a640a", "e594c88ec0cc"]
+    assert {s["message_sink"] for s in REAL["utina"]} == {
+        "declared Refusal.missing", "declared Refusal.detail"}
 
 
 def string_spec():
@@ -618,20 +624,22 @@ def real_report(tmp_path, repo_name):
     return path
 
 
-def test_ticks_files_every_utina_survivor(tmp_path, capsys):
+def test_ticks_files_utinas_behavioural_survivors(tmp_path, capsys):
+    root = sinks_root(tmp_path, f"[tool.mutation]\nmessage_sinks = {list(UTINA_SINKS)!r}\n")
     tick = tick_stub(tmp_path)
     assert ticks.main(["--report", str(real_report(tmp_path, "utina")), "--tick",
-                       str(tick)]) == 0
-    adds = [c for c in calls(tmp_path / "tickbin") if c[0] == "add"]
-    assert len(adds) == 57
-    assert "filed 57; 0 already ticked; 0 re-noted; 0 string-only survivors not ticked" in (
+                       str(tick), "--root", str(root)]) == 0
+    adds = [c[-1] for c in calls(tmp_path / "tickbin") if c[0] == "add"]
+    assert [a.split()[2] for a in adds] == ["[m:e594c88ec0cc]", "[m:3844d16a640a]"]
+    assert "filed 2; 0 already ticked; 0 re-noted; 55 string-only survivors not ticked" in (
         capsys.readouterr().out)
 
 
 def test_ticks_files_hetis_behavioural_survivors(tmp_path, capsys):
     tick = tick_stub(tmp_path)
+    root = sinks_root(tmp_path, '[project]\nname = "heti"\n')
     assert ticks.main(["--report", str(real_report(tmp_path, "heti")), "--tick",
-                       str(tick)]) == 0
+                       str(tick), "--root", str(root)]) == 0
     adds = [c[-1] for c in calls(tmp_path / "tickbin") if c[0] == "add"]
     assert len(adds) == 11
     assert any("[m:89165d46d413]" in title for title in adds)
@@ -944,3 +952,194 @@ def test_deeply_nested_json_is_refused_not_a_crash(tmp_path, capsys):
     assert ticks.main(["--report", str(path), "--tick", "/nonexistent"]) == 2
     # Refused either as too deep for this parser or as a list rather than an object.
     assert capsys.readouterr().err.startswith(f"{ticks.MALFORMED.code}: ")
+
+
+# --- message sinks a repo declares ([tool.mutation] message_sinks) ----------------------------
+
+UTINA_SINKS = ("Refusal.missing", "Refusal.detail")
+
+
+def sinks_root(tmp_path, body):
+    root = tmp_path / "root"
+    root.mkdir(exist_ok=True)
+    (root / "pyproject.toml").write_text(body)
+    return root
+
+
+@pytest.mark.parametrize("data, sinks", [
+    ({}, ()),
+    ({"tool": {"mutation": {}}}, ()),
+    ({"tool": {"mutation": {"message_sinks": ["Refusal.missing", "Note"]}}},
+     ("Refusal.missing", "Note")),
+])
+def test_declared_sinks_are_read(data, sinks):
+    assert shared.message_sinks(data) == sinks
+
+
+@pytest.mark.parametrize("data, problem", [
+    ({"tool": {"mutation": "sinks"}}, "[tool.mutation] is not a table"),
+    ({"tool": {"mutation": {"message_sinks": "Refusal"}}}, "is not a list"),
+    ({"tool": {"mutation": {"message_sinks": [3]}}}, "3"),
+    ({"tool": {"mutation": {"message_sinks": [""]}}}, "''"),
+    ({"tool": {"mutation": {"message_sinks": ["a.b.c"]}}}, "'a.b.c'"),
+    ({"tool": {"mutation": {"message_sinks": ["1x"]}}}, "'1x'"),
+    ({"tool": {"mutation": {"message_sinks": ["Refusal.missing "]}}}, "'Refusal.missing '"),
+])
+def test_a_malformed_sink_declaration_is_refused(data, problem):
+    with pytest.raises(shared.SinkConfigError, match=re.escape(problem)):
+        shared.message_sinks(data)
+
+
+def test_this_repos_own_declaration_is_well_formed():
+    import tomllib
+
+    pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+    shared.message_sinks(tomllib.loads(pyproject.read_text("utf-8")))
+
+
+DECLARED = """\
+def f(kind, x):
+    return Refusal(seal_kind="digest", missing="what is missing", detail="why")
+    return Refusal(kind, "positional text", "more")
+    return Refusal(missing="joined " + str(x))
+    return other.Refusal(missing="attribute call")
+    return Note("noted", flag="also noted")
+    return Note(tag="label".upper())
+"""
+
+
+@pytest.mark.parametrize("line, sinks, sink", [
+    (2, UTINA_SINKS, None),  # seal_kind's literal is on the line too, and it is behaviour
+    (3, UTINA_SINKS, None),  # Refusal.missing names the keyword only
+    (4, UTINA_SINKS, "declared Refusal.missing"),
+    (5, UTINA_SINKS, None),  # the call must be spelled exactly as declared
+    (6, ("Note",), "declared Note"),  # a bare name takes every string argument
+    (6, ("Note.flag",), None),
+    (7, ("Note",), None),  # a method call's result is not the literal itself
+    (4, (), None),
+])
+def test_message_sink_with_declared_sinks(line, sinks, sink):
+    assert mutate.message_sink(DECLARED, line, line, sinks) == sink
+
+
+def test_each_keyword_of_a_declared_sink_counts_on_its_own_line():
+    source = ('def f(kind):\n    return Refusal(\n        seal_kind=kind,\n'
+              '        missing="what is missing",\n        detail="why",\n    )\n')
+    assert mutate.message_sink(source, 4, 4, UTINA_SINKS) == "declared Refusal.missing"
+    assert mutate.message_sink(source, 5, 5, UTINA_SINKS) == "declared Refusal.detail"
+    assert mutate.message_sink(source, 4, 4, ()) is None
+
+
+REFUSING = '''\
+"""A module that refuses."""
+
+
+def refuse(kind):
+    return Refusal(
+        seal_kind=kind,
+        missing="a rule for this act",
+        detail="nothing in the law governs it",
+    )
+'''
+
+DIFF_REFUSE = """\
+--- src/pkg/mod.py
++++ src/pkg/mod.py
+@@ -1,6 +1,6 @@
+ def refuse(kind):
+     return Refusal(
+         seal_kind=kind,
+-        missing="a rule for this act",
++        missing="XXa rule for this actXX",
+         detail="nothing in the law governs it",
+     )"""
+
+
+def refusing_spec():
+    name = "pkg.mod.x_refuse__mutmut_1"
+    return {"run": {"out": "done\n"}, "results": f"    {name}: survived\n",
+            "show": {"by_arg": {name: DIFF_REFUSE + "\n"}},
+            "tests-for-mutant": {"default": "tests/t.py::t\n"}}
+
+
+def declare(repo, body):
+    with (repo / "pyproject.toml").open("a") as handle:
+        handle.write(body)
+
+
+def test_mutate_reads_the_declared_sinks(repo, tmp_path):
+    (repo / "src" / "pkg" / "mod.py").write_text(REFUSING)
+    declare(repo, '\n[tool.mutation]\nmessage_sinks = ["Refusal.missing"]\n')
+    _, data, _ = run_main(repo, stub(tmp_path / "bin", "mutmut", refusing_spec()))
+    (record,) = data["survivors"]
+    assert record["line"] == 7 and record["message_sink"] == "declared Refusal.missing"
+    assert record["class"] == STRING_ONLY
+
+
+def test_without_a_declaration_the_same_survivor_is_behavioural(repo, tmp_path):
+    (repo / "src" / "pkg" / "mod.py").write_text(REFUSING)
+    _, data, _ = run_main(repo, stub(tmp_path / "bin", "mutmut", refusing_spec()))
+    (record,) = data["survivors"]
+    assert record["message_sink"] is None and record["class"] == BEHAVIOURAL
+
+
+def test_a_malformed_declaration_fails_the_run_before_mutmut(repo, tmp_path):
+    declare(repo, '\n[tool.mutation]\nmessage_sinks = "Refusal"\n')
+    code, data, text = run_main(repo, stub(tmp_path / "bin", "mutmut", refusing_spec()))
+    assert code == 2 and calls(tmp_path / "bin") == []
+    assert data["failure_code"] == mutate.SINKS_MALFORMED.code
+    assert mutate.SINKS_MALFORMED.code == "e.self.config.message-sinks.f"
+    assert "message_sinks" in data["failure"] and data["survivors"] == []
+    assert "`e.self.config.message-sinks.f`" in text
+
+
+def declared_report(tmp_path, sink):
+    record = survivor("aaaaaaaaaaaa")
+    record["mutation"] = {"removed": ['    missing="a rule"'],
+                          "added": ['    missing="XXa ruleXX"'], "diff": "-\n+"}
+    record["message_sink"] = sink
+    path = tmp_path / "r.json"
+    path.write_text(json.dumps({"schema": mutate.SCHEMA, "commit": "c0ffee", "failure": None,
+                                "survivors": [record]}))
+    return path
+
+
+def test_ticks_honours_a_sink_this_repo_declares(tmp_path, capsys):
+    root = sinks_root(tmp_path, '[tool.mutation]\nmessage_sinks = ["Refusal.missing"]\n')
+    tick = stub(tmp_path / "tickbin", "tick", {"ls": "(no ticks)\n"})
+    path = declared_report(tmp_path, "declared Refusal.missing")
+    assert ticks.main(["--report", str(path), "--tick", str(tick), "--root", str(root)]) == 0
+    assert [c[0] for c in calls(tmp_path / "tickbin")] == ["ls"]
+    assert "1 string-only survivors not ticked" in capsys.readouterr().out
+
+
+def test_ticks_files_a_survivor_whose_sink_is_no_longer_declared(tmp_path):
+    # The report and the repo must agree: a sink the repo does not declare vouches for nothing.
+    root = sinks_root(tmp_path, '[project]\nname = "x"\n')
+    tick = stub(tmp_path / "tickbin", "tick", {"ls": "(no ticks)\n", "add": "4ghi  t\n"})
+    path = declared_report(tmp_path, "declared Refusal.missing")
+    assert ticks.main(["--report", str(path), "--tick", str(tick), "--root", str(root)]) == 0
+    assert [c[0] for c in calls(tmp_path / "tickbin")] == ["ls", "add", "note"]
+
+
+def test_ticks_refuses_a_malformed_declaration_before_the_ledger(tmp_path, capsys):
+    root = sinks_root(tmp_path, '[tool.mutation]\nmessage_sinks = [1]\n')
+    tick = tick_stub(tmp_path)
+    path = declared_report(tmp_path, "declared Refusal.missing")
+    assert ticks.main(["--report", str(path), "--tick", str(tick), "--root", str(root)]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith(f"{mutate.SINKS_MALFORMED.code}: ")
+    assert f"Hint: {mutate.SINKS_MALFORMED.hint}" in err
+    assert calls(tmp_path / "tickbin") == []
+
+
+def test_ticks_refuses_an_unreadable_pyproject(tmp_path, capsys):
+    root = sinks_root(tmp_path, "this is = not [toml")
+    path = declared_report(tmp_path, None)
+    assert ticks.main(["--report", str(path), "--tick", "/nonexistent", "--root",
+                       str(root)]) == 2
+    assert capsys.readouterr().err.startswith(f"{mutate.SINKS_MALFORMED.code}: ")
+
+
+def test_ticks_finds_the_repo_root_by_default():
+    assert ticks.parse([]).root == Path(__file__).resolve().parent.parent

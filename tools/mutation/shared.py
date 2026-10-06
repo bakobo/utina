@@ -11,6 +11,7 @@ from __future__ import annotations
 import ast
 import io
 import json
+import re
 import tokenize
 from pathlib import Path
 
@@ -33,6 +34,36 @@ DECIDING = {"==", "!=", "<", ">", "<=", ">=", "in", "is", "[", "]", ":"}
 # The one tokenize failure that still yields every token: a fragment of a call whose closing
 # bracket is on a line the diff did not show.
 OPEN_BRACKET = "unexpected EOF in multi-line statement"
+
+
+# A repo may declare more message sinks than the built-in ones, in pyproject.toml:
+#     [tool.mutation]
+#     message_sinks = ["Refusal.missing", "Note"]
+# ``Name`` makes every string argument of a call spelled exactly ``Name(...)`` message text;
+# ``Name.kwarg`` makes only that keyword argument so. A survivor whose literal reached one is
+# recorded with the sink ``declared <entry>``.
+SINK_ENTRY = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?")
+DECLARED = "declared "
+
+
+class SinkConfigError(Exception):
+    """[tool.mutation] message_sinks is not a list of Name or Name.kwarg entries."""
+
+
+def message_sinks(pyproject: dict) -> tuple[str, ...]:
+    """The message sinks a parsed pyproject.toml declares, or SinkConfigError saying why not."""
+    table = pyproject.get("tool", {}).get("mutation", {})
+    if not isinstance(table, dict):
+        raise SinkConfigError("[tool.mutation] is not a table")
+    sinks = table.get("message_sinks", [])
+    if not isinstance(sinks, list):
+        raise SinkConfigError(f"[tool.mutation] message_sinks is not a list: {sinks!r}")
+    for entry in sinks:
+        if not (isinstance(entry, str) and SINK_ENTRY.fullmatch(entry)):
+            raise SinkConfigError(
+                f"[tool.mutation] message_sinks holds {entry!r}, which is neither Name nor "
+                "Name.kwarg")
+    return tuple(sinks)
 
 
 class UnreadableReportError(Exception):
@@ -107,8 +138,13 @@ LOG_OWNERS = {"logging", "log", "logger", "_log", "_logger", "LOG", "LOGGER"}
 LOG_METHODS = {"debug", "info", "warning", "warn", "error", "exception", "critical", "log"}
 
 
-def _sink_of_call(call: ast.Call, parent: ast.AST | None) -> str | None:
-    """What kind of message a call delivers, or None if it is not a message sink."""
+def _sink_of_call(call: ast.Call, parent: ast.AST | None, kwarg: str | None,
+                  sinks: tuple[str, ...]) -> str | None:
+    """What kind of message a call delivers, or None if it is not a message sink.
+
+    ``kwarg`` is the keyword the literal was passed as, None for a positional argument, and
+    ``sinks`` the repo's declared ones, which are matched after the built-in ones.
+    """
     func = call.func
     if isinstance(parent, ast.Raise) and parent.exc is call:
         return f"raise {ast.unparse(func)}"
@@ -119,11 +155,17 @@ def _sink_of_call(call: ast.Call, parent: ast.AST | None) -> str | None:
         if (owner == "warnings" and method == "warn") or (
                 owner in LOG_OWNERS and method in LOG_METHODS):
             return f"{owner}.{method}"
+    callee = ast.unparse(func)
+    for sink in sinks:
+        name, _, keyword = sink.partition(".")
+        if callee == name and (not keyword or keyword == kwarg):
+            return DECLARED + sink
     return None
 
 
-def _sink_of_literal(node: ast.AST, parents: dict) -> str | None:
+def _sink_of_literal(node: ast.AST, parents: dict, sinks: tuple[str, ...]) -> str | None:
     """Follow a literal's value up through concatenation and formatting to a call argument."""
+    kwarg = None
     while True:
         parent = parents.get(node)
         if isinstance(parent, ast.BinOp) and isinstance(parent.op, (ast.Add, ast.Mod)):
@@ -134,19 +176,22 @@ def _sink_of_literal(node: ast.AST, parents: dict) -> str | None:
                 return None
             node = call
         elif isinstance(parent, ast.keyword):
+            kwarg = parent.arg
             node = parent
         elif isinstance(parent, ast.Call) and node is not parent.func:
-            return _sink_of_call(parent, parents.get(parent))
+            return _sink_of_call(parent, parents.get(parent), kwarg, sinks)
         else:
             return None
 
 
-def message_sink(source: str, first: int, last: int) -> str | None:
+def message_sink(source: str, first: int, last: int,
+                 sinks: tuple[str, ...] = ()) -> str | None:
     """Where the string literals on lines ``first``..``last`` end up, if all are messages.
 
     A literal is message text when its value, after any ``+``, ``%`` or ``.format``, is passed
-    straight to an exception constructor in a ``raise``, to ``print``, to a logging method or to
-    ``warnings.warn``. Returns that sink when every literal touching the lines is one, else None
+    straight to an exception constructor in a ``raise``, to ``print``, to a logging method, to
+    ``warnings.warn``, or to one of ``sinks``, the repo's declared ones (see ``message_sinks``).
+    Returns that sink when every literal touching the lines is one, else None
     — a line holding no literal, or one literal that is anything else, is not vouched for.
     """
     tree = ast.parse(source)
@@ -163,7 +208,7 @@ def message_sink(source: str, first: int, last: int) -> str | None:
                     or (isinstance(n, ast.Constant) and isinstance(n.value, str)))
                 and n.lineno <= last and (n.end_lineno or n.lineno) >= first
                 and not inside_fstring(n)]
-    sinks = [_sink_of_literal(n, parents) for n in literals]
-    if not sinks or None in sinks:
+    found = [_sink_of_literal(n, parents, sinks) for n in literals]
+    if not found or None in found:
         return None
-    return sinks[0]
+    return found[0]

@@ -22,8 +22,11 @@ would look exactly like a clean night.
 Each record's ``class`` is ``string-only`` when the mutation changes nothing but the text inside
 string literals that are message text, which during the pilot is counted rather than ticked,
 and ``behavioural`` otherwise. A literal is message text only when ``message_sink`` traces it,
-in the source, into an exception constructor in a ``raise``, a ``print``, a logging call or
-``warnings.warn``; the record carries that sink as ``message_sink``, null when there is none.
+in the source, into an exception constructor in a ``raise``, a ``print``, a logging call,
+``warnings.warn``, or a sink the repo declares as ``[tool.mutation] message_sinks`` in
+pyproject.toml (``Name`` or ``Name.kwarg``, see ``shared.message_sinks``); the record carries
+that sink as ``message_sink``, null when there is none. A malformed declaration fails the run
+with ``SINKS_MALFORMED`` before mutmut starts.
 ``classify`` decides from the diff and that sink, and leans behavioural whenever it cannot vouch
 for the change.
 
@@ -61,8 +64,10 @@ from shared import (  # a sibling script, not a package
     BEHAVIOURAL,
     SCHEMA,
     STRING_ONLY,
+    SinkConfigError,
     classify,
     message_sink,
+    message_sinks,
 )
 
 PASSED = "passed: every test covering this function passed with the mutant in place"
@@ -90,6 +95,17 @@ RESULTS_UNREADABLE = ErrorCode(
     hint=(
         "Run the workflow again. If it fails the same way, run that mutmut command in a local "
         "checkout of the commit, where its full error is visible."
+    ),
+)
+SINKS_MALFORMED = ErrorCode(
+    code="e.self.config.message-sinks.f",
+    title="This repo's declared message sinks cannot be read, so nothing was classified.",
+    detail="{problem}.",
+    args=("problem",),
+    hint=(
+        "Fix [tool.mutation] message_sinks in pyproject.toml: each entry is a callable's name, "
+        "Name, or that name and one keyword argument, Name.kwarg. Running again before then "
+        "will fail the same way."
     ),
 )
 # mutmut mangles a method name with U+01C1 (LATIN LETTER LATERAL CLICK) as its separator:
@@ -148,6 +164,14 @@ class Outcome:
 def load_config(root: Path) -> dict:
     data = tomllib.loads((root / "pyproject.toml").read_text("utf-8"))
     return data.get("tool", {}).get("mutmut", {})
+
+
+def declared_sinks(root: Path) -> tuple[str, ...]:
+    """The repo's [tool.mutation] message_sinks, or the SINKS_MALFORMED error saying why not."""
+    try:
+        return message_sinks(tomllib.loads((root / "pyproject.toml").read_text("utf-8")))
+    except (OSError, tomllib.TOMLDecodeError, SinkConfigError) as error:
+        raise SINKS_MALFORMED(problem=str(error)) from None
 
 
 def changed_modules(root: Path, ref: str, since: str, cfg: dict, git: str = "git") -> list[str]:
@@ -351,7 +375,8 @@ def nothing_to_run(mutmut: str, root: Path, code: int, output: str, globs: list[
     return not any(fnmatch.fnmatch(name, g) for name in names for g in globs)
 
 
-def survivor(mutmut: str, root: Path, name: str, path: str) -> Survivor:
+def survivor(mutmut: str, root: Path, name: str, path: str,
+             sinks: tuple[str, ...] = ()) -> Survivor:
     diff = subprocess.run([mutmut, "show", name], cwd=root, capture_output=True, text=True,
                           check=True).stdout
     diff = "\n".join(line for line in diff.splitlines() if not line.startswith("# "))
@@ -361,7 +386,7 @@ def survivor(mutmut: str, root: Path, name: str, path: str) -> Survivor:
     function = function_of(name, path)
     source = (root / path).read_text("utf-8")
     line = locate(source, function, relative, removed)
-    sink = message_sink(source, line, line + max(len(removed), 1) - 1)
+    sink = message_sink(source, line, line + max(len(removed), 1) - 1, sinks)
     return Survivor(
         id=mutant_id(path, function, removed, added,
                      occurrence(source, function, line, removed)),
@@ -372,7 +397,8 @@ def survivor(mutmut: str, root: Path, name: str, path: str) -> Survivor:
     )
 
 
-def mutate(root: Path, modules: list[str], mutmut: str, budget: float, out: Path) -> Outcome:
+def mutate(root: Path, modules: list[str], mutmut: str, budget: float, out: Path,
+           sinks: tuple[str, ...] = ()) -> Outcome:
     outcome = Outcome(modules=modules)
     if not modules:
         outcome.note = "No source module changed in the window, so there was nothing to mutate."
@@ -402,7 +428,7 @@ def mutate(root: Path, modules: list[str], mutmut: str, budget: float, out: Path
                 continue
             outcome.counts[status] = outcome.counts.get(status, 0) + 1
             if status == "survived":
-                outcome.survivors.append(survivor(mutmut, root, name, path))
+                outcome.survivors.append(survivor(mutmut, root, name, path, sinks))
     except subprocess.CalledProcessError as error:
         outcome.counts, outcome.survivors = {}, []
         outcome.failure = RESULTS_UNREADABLE(
@@ -500,7 +526,13 @@ def main(argv: list[str] | None = None) -> int:
     modules = sorted(args.module) or changed_modules(root, args.ref, args.since, cfg, args.git)
     commit = subprocess.run([args.git, "rev-parse", args.ref], cwd=root, capture_output=True,
                             text=True, check=True).stdout.strip()
-    outcome = mutate(root, modules, args.mutmut or find_mutmut(), args.budget_minutes * 60, out)
+    try:
+        sinks = declared_sinks(root)
+    except BakoboError as error:
+        outcome = Outcome(modules=modules, failure=error)
+    else:
+        outcome = mutate(root, modules, args.mutmut or find_mutmut(), args.budget_minutes * 60,
+                         out, sinks)
     since = "an explicit module list" if args.module else args.since
     data = report(outcome, cfg, commit, since)
     (out / "mutation-report.json").write_text(json.dumps(data, indent=2) + "\n")

@@ -92,6 +92,14 @@ pytest_add_cli_args = [
     "--deselect=tests/test_enact.py::test_the_constructor_offers_no_way_to_record_a_decision_without_signing_it",
 ]
 
+[tool.mutation]
+# Calls whose string arguments are message text, beyond the built-in ones (an exception in a
+# raise, print, logging, warnings.warn); a survivor that only changes such text is counted, not
+# ticked (tools/mutation/shared.py, message_sinks). Refusal.missing and Refusal.detail are prose
+# for a human reader: the fold only requires missing to be non-empty, and the CLI renders both.
+# seal_kind is not here, because the conformance predicate compares it.
+message_sinks = ["Refusal.missing", "Refusal.detail"]
+
 [tool.ruff]
 line-length = 96
 src = ["src", "tests"]
