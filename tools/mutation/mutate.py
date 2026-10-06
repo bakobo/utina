@@ -170,7 +170,7 @@ def declared_sinks(root: Path) -> tuple[str, ...]:
     """The repo's [tool.mutation] message_sinks, or the SINKS_MALFORMED error saying why not."""
     try:
         return message_sinks(tomllib.loads((root / "pyproject.toml").read_text("utf-8")))
-    except (OSError, tomllib.TOMLDecodeError, SinkConfigError) as error:
+    except (OSError, ValueError, SinkConfigError) as error:  # ValueError: TOML or UTF-8
         raise SINKS_MALFORMED(problem=str(error)) from None
 
 
@@ -522,15 +522,17 @@ def main(argv: list[str] | None = None) -> int:
     root = args.root.resolve()
     out = args.out if args.out.is_absolute() else root / args.out
     out.mkdir(parents=True, exist_ok=True)
-    cfg = load_config(root)
-    modules = sorted(args.module) or changed_modules(root, args.ref, args.since, cfg, args.git)
     commit = subprocess.run([args.git, "rev-parse", args.ref], cwd=root, capture_output=True,
                             text=True, check=True).stdout.strip()
-    try:
+    try:  # first, since a pyproject.toml that cannot declare sinks cannot be read for mutmut
         sinks = declared_sinks(root)
     except BakoboError as error:
-        outcome = Outcome(modules=modules, failure=error)
+        cfg: dict = {}
+        outcome = Outcome(modules=sorted(args.module), failure=error)
     else:
+        cfg = load_config(root)
+        modules = sorted(args.module) or changed_modules(root, args.ref, args.since, cfg,
+                                                         args.git)
         outcome = mutate(root, modules, args.mutmut or find_mutmut(), args.budget_minutes * 60,
                          out, sinks)
     since = "an explicit module list" if args.module else args.since

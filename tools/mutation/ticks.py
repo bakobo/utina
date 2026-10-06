@@ -55,6 +55,7 @@ from shared import (  # a sibling script, not a package
     STRING_ONLY,
     UnreadableReportError,
     classify,
+    known_sink,
     read_report,
 )
 
@@ -134,8 +135,9 @@ def check_record(s: object) -> None:
     if not (isinstance(result, dict) and isinstance(result.get("command"), str)
             and _integer(result.get("tests_run")) and _integer(result.get("exit_code"))):
         raise MalformedReportError("its test_result lacks a command, tests_run or exit_code")
-    if not isinstance(s.get("message_sink"), (str, type(None))):
-        raise MalformedReportError("its message_sink is neither text nor null")
+    if not known_sink(s.get("message_sink")):
+        raise MalformedReportError(
+            f"its message_sink {s.get('message_sink')!r} is not a form mutate.py records")
 
 
 def check_header(data: object) -> None:
@@ -223,8 +225,14 @@ def detail(s: dict, data: dict) -> str:
 
 
 def vouched(sink: str | None, sinks: tuple[str, ...]) -> str | None:
-    """A record's sink, unless it is a declared one this repo no longer declares."""
-    if sink and sink.startswith(DECLARED) and sink.removeprefix(DECLARED) not in sinks:
+    """A record's sink if it can still vouch for message text, else None.
+
+    Every sink is re-checked, not only declared ones: it must be a form mutate.py records, and
+    a declared one must be a sink this repo still declares.
+    """
+    if sink is None or not known_sink(sink):
+        return None
+    if sink.startswith(DECLARED) and sink.removeprefix(DECLARED) not in sinks:
         return None
     return sink
 

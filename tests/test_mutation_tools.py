@@ -574,13 +574,13 @@ def test_the_real_heti_survivors_split():
 
 def test_the_real_utina_survivors_split_under_its_declared_sinks():
     # Every one changes text handed to Refusal(...). utina declares Refusal's missing and
-    # detail as message sinks, so 55 are string-only; the two that change the slice inside an
-    # f-string's {...} ([:16] to [:17]) change an expression, not text, and stay behavioural.
+    # detail as message sinks, so 54 are string-only. Three change a literal or a slice inside
+    # an f-string's {...} (', '.join, [:16] to [:17]), which is code, and stay behavioural.
     classes = {s["id"]: mutate.classify(s["removed"], s["added"], s["message_sink"])
                for s in REAL["utina"]}
     assert len(classes) == 57
     assert sorted(i for i, c in classes.items() if c == BEHAVIOURAL) == [
-        "3844d16a640a", "e594c88ec0cc"]
+        "3844d16a640a", "e594c88ec0cc", "eb3b234984ca"]
     assert {s["message_sink"] for s in REAL["utina"]} == {
         "declared Refusal.missing", "declared Refusal.detail"}
 
@@ -630,8 +630,9 @@ def test_ticks_files_utinas_behavioural_survivors(tmp_path, capsys):
     assert ticks.main(["--report", str(real_report(tmp_path, "utina")), "--tick",
                        str(tick), "--root", str(root)]) == 0
     adds = [c[-1] for c in calls(tmp_path / "tickbin") if c[0] == "add"]
-    assert [a.split()[2] for a in adds] == ["[m:e594c88ec0cc]", "[m:3844d16a640a]"]
-    assert "filed 2; 0 already ticked; 0 re-noted; 55 string-only survivors not ticked" in (
+    assert sorted(a.split()[2] for a in adds) == [
+        "[m:3844d16a640a]", "[m:e594c88ec0cc]", "[m:eb3b234984ca]"]
+    assert "filed 3; 0 already ticked; 0 re-noted; 54 string-only survivors not ticked" in (
         capsys.readouterr().out)
 
 
@@ -683,11 +684,13 @@ def f(x, d):
 
 @pytest.mark.parametrize("line, sink", [
     (7, "raise ValueError"), (8, "raise TypeError"), (9, "raise KeyError"),
-    (10, "raise ValueError"), (11, "raise ValueError"), (12, "raise ValueError"),
-    (13, "raise ValueError"), (14, "raise ValueError"), (15, "print"),
+    # 12 and 14 are format strings with placeholders: a mutation there can break formatting.
+    (10, "raise ValueError"), (11, "raise ValueError"), (12, None),
+    (13, "raise ValueError"), (14, None), (15, "print"),
     (16, "logging.warning"), (17, "log.info"), (18, "warnings.warn"),
     (19, None), (20, None), (21, None), (22, None), (23, None), (24, None), (25, None),
-    # A literal nested in an f-string's format spec is part of that f-string's text.
+    # The f-string goes to the raise; a change to the literal inside its {...} is caught by
+    # classify, which reads the replacement field as code.
     (26, "raise ValueError"), (27, None), (28, None), (1, None),
 ])
 def test_message_sink(line, sink):
@@ -1143,3 +1146,128 @@ def test_ticks_refuses_an_unreadable_pyproject(tmp_path, capsys):
 
 def test_ticks_finds_the_repo_root_by_default():
     assert ticks.parse([]).root == Path(__file__).resolve().parent.parent
+
+
+# --- second hostile pass on message sinks ----------------------------------------------------
+
+
+@pytest.mark.parametrize("removed, added", [
+    (['    return Refusal(missing="a rule")'], ['    return Refusal(missing="")']),
+    (['    return Refusal(missing="")'], ['    return Refusal(missing="XXXX")']),
+    (["    return Refusal(missing='a rule')"], ["    return Refusal(missing=b'a rule')"]),
+])
+def test_emptying_or_filling_a_literal_is_behavioural(removed, added):
+    # Validators refuse empty text, so whether a literal is empty is behaviour (utina#15 1).
+    assert mutate.classify(removed, added, "declared Refusal.missing") == BEHAVIOURAL
+
+
+def test_a_raw_literal_changing_case_is_still_string_only():
+    assert mutate.classify(['    raise E(r"a rule")'], ['    raise E(r"A RULE")'],
+                           "raise E") == STRING_ONLY
+
+
+FORMATTED = """\
+def f(x, fmt):
+    raise ValueError("missing %s" % x)
+    raise ValueError("missing {}".format(x))
+    raise ValueError("100 percent" % ())
+    raise ValueError("no braces".format())
+    raise ValueError(fmt % "an argument")
+    raise ValueError(("a %s" + "b") % x)
+    return Refusal(missing="ground %(name)s" % {"name": x})
+"""
+
+
+@pytest.mark.parametrize("line, sink", [
+    (2, None), (3, None),  # a format string with placeholders is behaviour (utina#15 2)
+    (4, "raise ValueError"), (5, "raise ValueError"),  # no placeholder to break
+    (6, "raise ValueError"),  # an argument to % is the text that gets substituted
+    (7, None),
+    (8, None),
+])
+def test_a_format_string_with_placeholders_is_not_message_text(line, sink):
+    assert mutate.message_sink(FORMATTED, line, line, UTINA_SINKS) == sink
+
+
+@pytest.mark.parametrize("removed, added", [
+    (["""    return Refusal(missing=f"{grant('admin')}")"""],
+     ["""    return Refusal(missing=f"{grant('XXadminXX')}")"""]),
+    (['    raise E(f"{x:>10}")'], ['    raise E(f"{x:>20}")']),
+    (['    raise E(f"a {f(\'b\')} c")'], ['    raise E(f"a {f(\'B\')} c")']),
+])
+def test_a_literal_inside_an_fstring_expression_is_behavioural(removed, added):
+    # The replacement field is code; a literal there is an argument, not text (heti#35 1).
+    assert mutate.classify(removed, added, "raise E") == BEHAVIOURAL
+
+
+def test_fstring_text_around_an_expression_is_still_string_only():
+    assert mutate.classify(['    raise E(f"a {f(\'b\')} c")'],
+                           ['    raise E(f"A {f(\'b\')} C")'],
+                           "raise E") == STRING_ONLY
+
+
+def test_a_raise_through_a_computed_callable_is_no_sink():
+    assert mutate.message_sink('def f(m):\n    raise m.make()("text")\n', 2, 2) is None
+
+
+@pytest.mark.parametrize("sink, known", [
+    (None, True), ("print", True), ("warnings.warn", True), ("logging.warning", True),
+    ("log.info", True), ("raise ValueError", True), ("raise errors.Refused", True),
+    ("declared Refusal.missing", True), ("declared Note", True),
+    ("Refusal.missing", False), ("declared a.b.c", False), ("declared ", False),
+    ("raise make()", False), ("raise ", False), ("warnings.info", False),
+    ("logger.send", False), ("printf", False), (3, False),
+])
+def test_known_sink_forms(sink, known):
+    assert shared.known_sink(sink) is known
+
+
+def test_the_report_validator_refuses_an_unknown_sink(tmp_path, capsys):
+    tick = tick_stub(tmp_path)
+    path = declared_report(tmp_path, "Refusal.missing")
+    assert ticks.main(["--report", str(path), "--tick", str(tick)]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith(f"{ticks.MALFORMED.code}: ") and "message_sink" in err
+    assert calls(tmp_path / "tickbin") == []
+
+
+@pytest.mark.parametrize("sink, sinks, vouched", [
+    ("raise ValueError", (), "raise ValueError"),
+    ("declared Refusal.missing", ("Refusal.missing",), "declared Refusal.missing"),
+    ("declared Refusal.missing", (), None),
+    ("Refusal.missing", ("Refusal.missing",), None),
+    (None, (), None),
+])
+def test_ticks_rechecks_every_sink(sink, sinks, vouched):
+    assert ticks.vouched(sink, sinks) == vouched
+
+
+@pytest.mark.parametrize("body, problem", [
+    ('tool = "bad"\n', "[tool] is not a table"),
+    (b"[tool.mutation]\nmessage_sinks = ['\xff']\n", "utf-8"),
+])
+def test_every_malformed_config_is_a_coded_refusal(tmp_path, capsys, body, problem):
+    root = tmp_path / "root"
+    root.mkdir()
+    pyproject = root / "pyproject.toml"
+    if isinstance(body, bytes):
+        pyproject.write_bytes(body)
+    else:
+        pyproject.write_text(body)
+    path = declared_report(tmp_path, None)
+    assert ticks.main(["--report", str(path), "--tick", "/nonexistent", "--root",
+                       str(root)]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith(f"{mutate.SINKS_MALFORMED.code}: ") and problem in err
+
+
+def test_mutate_refuses_a_non_table_tool_before_reading_mutmut_config(repo, tmp_path):
+    (repo / "pyproject.toml").write_text('tool = "bad"\n')
+    code, data, _ = run_main(repo, stub(tmp_path / "bin", "mutmut", refusing_spec()))
+    assert code == 2 and calls(tmp_path / "bin") == []
+    assert data["failure_code"] == mutate.SINKS_MALFORMED.code
+
+
+def test_a_literal_python_cannot_evaluate_is_behavioural():
+    assert mutate.classify(['    raise E("\\N{NO SUCH NAME} a")'],
+                           ['    raise E("\\N{NO SUCH NAME} b")'], "raise E") == BEHAVIOURAL

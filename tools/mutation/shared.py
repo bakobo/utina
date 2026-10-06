@@ -31,6 +31,10 @@ LAYOUT_TOKENS = {tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT
 # A literal next to one of these is compared, tested for membership, used as a key or used as
 # an index, so changing its text can change what the code does.
 DECIDING = {"==", "!=", "<", ">", "<=", ">=", "in", "is", "[", "]", ":"}
+# A string token found inside an f-string's {...}: an argument or a format spec, never text.
+CODE_LITERAL = -1
+FSTRING_STARTS = {tokenize.FSTRING_START, tokenize.TSTRING_START}
+FSTRING_ENDS = {tokenize.FSTRING_END, tokenize.TSTRING_END}
 # The one tokenize failure that still yields every token: a fragment of a call whose closing
 # bracket is on a line the diff did not show.
 OPEN_BRACKET = "unexpected EOF in multi-line statement"
@@ -44,6 +48,7 @@ OPEN_BRACKET = "unexpected EOF in multi-line statement"
 # recorded with the sink ``declared <entry>``.
 SINK_ENTRY = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?")
 DECLARED = "declared "
+DOTTED = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*")
 
 
 class SinkConfigError(Exception):
@@ -52,7 +57,10 @@ class SinkConfigError(Exception):
 
 def message_sinks(pyproject: dict) -> tuple[str, ...]:
     """The message sinks a parsed pyproject.toml declares, or SinkConfigError saying why not."""
-    table = pyproject.get("tool", {}).get("mutation", {})
+    tool = pyproject.get("tool", {})
+    if not isinstance(tool, dict):
+        raise SinkConfigError("[tool] is not a table")
+    table = tool.get("mutation", {})
     if not isinstance(table, dict):
         raise SinkConfigError("[tool.mutation] is not a table")
     sinks = table.get("message_sinks", [])
@@ -64,6 +72,26 @@ def message_sinks(pyproject: dict) -> tuple[str, ...]:
                 f"[tool.mutation] message_sinks holds {entry!r}, which is neither Name nor "
                 "Name.kwarg")
     return tuple(sinks)
+
+
+def known_sink(sink: object) -> bool:
+    """Whether ``sink`` is a form message_sink records: null, built-in, or ``declared <entry>``.
+
+    A report is someone else's output, so a sink field it carries is checked against these
+    forms before it can vouch for anything.
+    """
+    if sink is None:
+        return True
+    if not isinstance(sink, str):
+        return False
+    if sink in ("print", "warnings.warn"):
+        return True
+    if sink.startswith("raise "):
+        return bool(DOTTED.fullmatch(sink.removeprefix("raise ")))
+    if sink.startswith(DECLARED):
+        return bool(SINK_ENTRY.fullmatch(sink.removeprefix(DECLARED)))
+    owner, dot, method = sink.partition(".")
+    return bool(dot) and owner in LOG_OWNERS and method in LOG_METHODS
 
 
 class UnreadableReportError(Exception):
@@ -93,13 +121,28 @@ def read_report(path: Path) -> object:
 
 
 def _tokens(lines: list[str]) -> list[tuple[int, str]] | None:
-    """The meaningful tokens of a diff fragment, or None if tokenize could not read it all."""
+    """The meaningful tokens of a diff fragment, or None if tokenize could not read it all.
+
+    A string token inside an f-string's replacement field, ``{...}`` and its format spec
+    included, is code rather than text, so it is given the type CODE_LITERAL, which classify
+    never treats as text.
+    """
     text = "\n".join(line.strip() for line in lines)
     found = []
+    depths: list[int] = []  # brace depth inside each f-string still open
     try:
         for tok in tokenize.generate_tokens(io.StringIO(text).readline):
-            if tok.type not in LAYOUT_TOKENS:
-                found.append((tok.type, tok.string))
+            kind = tok.type
+            if kind in FSTRING_STARTS:
+                depths.append(0)
+            elif kind in FSTRING_ENDS and depths:
+                depths.pop()
+            elif kind == tokenize.OP and depths and tok.string in "{}":
+                depths[-1] += 1 if tok.string == "{" else -1
+            if kind in STRING_TOKENS and any(depth > 0 for depth in depths):
+                kind = CODE_LITERAL
+            if kind not in LAYOUT_TOKENS:
+                found.append((kind, tok.string))
     except tokenize.TokenError as error:
         if error.args[0] != OPEN_BRACKET:
             return None
@@ -125,13 +168,28 @@ def classify(removed: list[str], added: list[str], sink: str | None) -> str:
     if not changed:
         return BEHAVIOURAL
     for i in changed:
-        (old_type, _), (new_type, _) = before[i], after[i]
+        (old_type, old), (new_type, new) = before[i], after[i]
         if old_type != new_type or old_type not in STRING_TOKENS:
+            return BEHAVIOURAL
+        if old_type == tokenize.STRING and not _same_kind_of_text(old, new):
             return BEHAVIOURAL
         neighbours = before[max(i - 1, 0):i] + before[i + 1:i + 2]
         if any(text in DECIDING for _, text in neighbours):
             return BEHAVIOURAL
     return STRING_ONLY
+
+
+def _same_kind_of_text(old: str, new: str) -> bool:
+    """Both literals evaluate to text of one type, and neither or both are empty.
+
+    Emptiness is behaviour: a validator that requires a non-empty ground refuses "" (utina's
+    Refusal does), so a mutation into or out of the empty string is never just text.
+    """
+    try:
+        before, after = ast.literal_eval(old), ast.literal_eval(new)
+    except (ValueError, SyntaxError):
+        return False
+    return type(before) is type(after) and bool(before) == bool(after)
 
 
 LOG_OWNERS = {"logging", "log", "logger", "_log", "_logger", "LOG", "LOGGER"}
@@ -147,7 +205,8 @@ def _sink_of_call(call: ast.Call, parent: ast.AST | None, kwarg: str | None,
     """
     func = call.func
     if isinstance(parent, ast.Raise) and parent.exc is call:
-        return f"raise {ast.unparse(func)}"
+        callee = ast.unparse(func)
+        return f"raise {callee}" if DOTTED.fullmatch(callee) else None
     if isinstance(func, ast.Name) and func.id == "print":
         return "print"
     if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
@@ -163,14 +222,31 @@ def _sink_of_call(call: ast.Call, parent: ast.AST | None, kwarg: str | None,
     return None
 
 
+def _text_of(node: ast.AST) -> str:
+    """The literal text of a string constant or of an f-string's literal parts."""
+    if isinstance(node, ast.JoinedStr):
+        return "".join(v.value for v in node.values if isinstance(v, ast.Constant))
+    return node.value  # type: ignore[attr-defined]
+
+
 def _sink_of_literal(node: ast.AST, parents: dict, sinks: tuple[str, ...]) -> str | None:
-    """Follow a literal's value up through concatenation and formatting to a call argument."""
+    """Follow a literal's value up through concatenation and formatting to a call argument.
+
+    A literal that becomes a format string, the left of ``%`` or the receiver of ``.format``,
+    is not message text if it carries that formatting's placeholders: changing them can make
+    the formatting itself fail.
+    """
+    text = _text_of(node)
     kwarg = None
     while True:
         parent = parents.get(node)
         if isinstance(parent, ast.BinOp) and isinstance(parent.op, (ast.Add, ast.Mod)):
+            if isinstance(parent.op, ast.Mod) and parent.left is node and "%" in text:
+                return None
             node = parent
         elif isinstance(parent, ast.Attribute) and parent.attr == "format":
+            if "{" in text or "}" in text:
+                return None
             call = parents.get(parent)
             if not (isinstance(call, ast.Call) and call.func is parent):
                 return None
