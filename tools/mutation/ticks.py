@@ -5,7 +5,7 @@ RUN BY HAND during the mutation-testing pilot (two weeks from 2026-10-05); nothi
 Survivors are triaged by a person before they become anyone's work, and whether they deserve a
 tick at all is one of the things the pilot is measuring.
 
-    uv run python tools/mutation/ticks.py               # latest successful mutation.yml run
+    uv run python tools/mutation/ticks.py               # latest scheduled run on main
     uv run python tools/mutation/ticks.py --run-id N    # a particular run
     uv run python tools/mutation/ticks.py --report F    # a report already on disk
     ... --dry-run                                       # say what would be filed, file nothing
@@ -20,16 +20,22 @@ landed (``tick note`` failed after ``tick add`` succeeded), and it is added now.
 A survivor whose mutation only changes the text of a message literal is counted in the closing
 summary and not ticked. That is decided by ``mutate.classify`` from the record's own diff and
 its ``message_sink``, never from the stored ``class``, and it files whenever it cannot tell: a
-record without a sink is behavioural. A report that is not the shape ``mutate.py`` writes is
-refused whole, with the code below and the record it tripped on, before anything is filed. No
-tick mark is placed in the code, since a survivor is a question about the tests and the line it
-names moves.
+record without a sink is behavioural.
+
+A report is read at most 16 MiB (``shared.MAX_REPORT_BYTES``) and refused unread beyond that.
+One that cannot be read, is not UTF-8 JSON, carries any schema but ``shared.SCHEMA``, or is not
+the shape ``mutate.py`` writes is refused whole with ``MALFORMED``, naming the record it tripped
+on, before the ledger is touched. Every refusal below is printed as ``<code>: <detail>`` with
+the code's hint. No tick mark is placed in the code, since a survivor is a question about the
+tests and the line it names moves.
+
+Without ``--run-id`` the report comes from the latest successful SCHEDULED run on main, so a
+manual run of a feature branch never becomes "the latest"; name such a run explicitly.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import subprocess
 import sys
@@ -37,7 +43,14 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from mutate import STRING_ONLY, classify  # a sibling script, not a package
+from bakobo.errors import BakoboError, ErrorCode  # type: ignore[import-untyped]
+from shared import (  # a sibling script, not a package
+    SCHEMA,
+    STRING_ONLY,
+    UnreadableReportError,
+    classify,
+    read_report,
+)
 
 TAG = "mutation-survivor"
 WORKFLOW = "mutation.yml"
@@ -45,7 +58,40 @@ ARTIFACT = "mutation-report"
 REPORT = "mutation-report.json"
 ID_IN_TITLE = re.compile(r"\[m:([0-9a-f]{12})\]")
 MUTANT_ID = re.compile(r"[0-9a-f]{12}")
-MALFORMED = "e.input.malformed.mutation-report.f"
+MALFORMED = ErrorCode(
+    code="e.input.format.mutation-report.f",
+    title=(
+        "The mutation report is not one tools/mutation/mutate.py writes, so nothing was "
+        "filed."
+    ),
+    detail="{problem}. Nothing was filed and the ledger was not read.",
+    args=("problem",),
+    hint=(
+        "Download the report again or regenerate it with tools/mutation/mutate.py; running "
+        "this again on the same file will fail the same way."
+    ),
+)
+NO_REPORT = ErrorCode(
+    code="e.state.mutation-report-missing.r",
+    title="There is no nightly mutation report to file ticks from yet.",
+    detail=(
+        "No scheduled mutation.yml run on main has succeeded, so there is no report to fetch."
+    ),
+    hint=(
+        "Wait for the next scheduled run on main and run this again, or name a particular run "
+        "with --run-id."
+    ),
+)
+FAILED_RUN = ErrorCode(
+    code="e.state.mutation-run-failed.f",
+    title="The mutation run behind this report failed, so the report holds no results.",
+    detail="The report records the failure as: {failure}",
+    args=("failure",),
+    hint=(
+        "Fix what that failure names and run the workflow again, then file from the new run; "
+        "this report will never hold results."
+    ),
+)
 NEXT_STEP = ("Either a test is missing an assertion that would notice this, or the mutation is "
              "equivalent and the tick can be closed with a note saying why.")
 
@@ -89,6 +135,9 @@ def check_record(s: object) -> None:
 def check_report(data: object) -> None:
     if not isinstance(data, dict):
         raise MalformedReportError(f"the report is a {type(data).__name__}, not an object")
+    if data.get("schema") != SCHEMA:
+        raise MalformedReportError(
+            f"the report's schema is {data.get('schema')!r}, and only {SCHEMA!r} is read")
     if not isinstance(data.get("commit"), str):
         raise MalformedReportError("the report names no commit")
     if not isinstance(data.get("survivors"), list):
@@ -108,10 +157,11 @@ def run(argv: list[str]) -> str:
 def download(gh: str, run_id: str | None, into: Path) -> Path:
     if run_id is None:
         run_id = run([gh, "run", "list", "--workflow", WORKFLOW, "--status", "success",
-                      "--limit", "1", "--json", "databaseId", "--jq", ".[0].databaseId"])
+                      "--branch", "main", "--event", "schedule", "--limit", "1", "--json",
+                      "databaseId", "--jq", ".[0].databaseId"])
         run_id = run_id.strip()
         if not run_id:
-            raise SystemExit(f"no successful {WORKFLOW} run to download a report from")
+            raise NO_REPORT()
     run([gh, "run", "download", run_id, "--name", ARTIFACT, "--dir", str(into)])
     return into / REPORT
 
@@ -188,6 +238,23 @@ def file_ticks(data: dict, tick: str, dry_run: bool) -> tuple[list[str], int, in
     return filed, skipped, renoted, strings
 
 
+def load(args: argparse.Namespace) -> dict:
+    """The report, checked; or the BakoboError that says why there is nothing to file."""
+    with tempfile.TemporaryDirectory() as scratch:
+        path = args.report or download(args.gh, args.run_id, Path(scratch))
+        try:
+            data = read_report(path)
+        except UnreadableReportError as error:
+            raise MALFORMED(problem=str(error)) from None
+    try:
+        if isinstance(data, dict) and data.get("schema") == SCHEMA and data.get("failure"):
+            raise FAILED_RUN(failure=str(data["failure"]).splitlines()[0])
+        check_report(data)
+    except MalformedReportError as error:
+        raise MALFORMED(problem=str(error)) from None
+    return data  # type: ignore[return-value]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     source = parser.add_mutually_exclusive_group()
@@ -198,19 +265,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--tick", default="tick")
     args = parser.parse_args(argv)
 
-    with tempfile.TemporaryDirectory() as scratch:
-        path = args.report or download(args.gh, args.run_id, Path(scratch))
-        data = json.loads(path.read_text("utf-8"))
-    if isinstance(data, dict) and data.get("failure"):
-        print(f"the run that produced this report failed, so it holds no results:\n"
-              f"{data['failure']}", file=sys.stderr)
-        return 1
     try:
-        check_report(data)
-    except MalformedReportError as error:
-        print(f"{MALFORMED}: {error}. Nothing was filed; regenerate the report with "
-              "tools/mutation/mutate.py.", file=sys.stderr)
-        return 2
+        data = load(args)
+    except BakoboError as error:
+        print(f"{error.code}: {error.detail}\nHint: {error.hint}", file=sys.stderr)
+        return 2 if error.code == MALFORMED.code else 1
     filed, skipped, renoted, strings = file_ticks(data, args.tick, args.dry_run)
     verb = "would file" if args.dry_run else "filed"
     print(f"{verb} {len(filed)}; {skipped} already ticked; {renoted} re-noted; {strings} "

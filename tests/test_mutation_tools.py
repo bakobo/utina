@@ -32,6 +32,8 @@ def load(name):
 
 mutate = load("mutate")
 ticks = load("ticks")
+# The one instance the tools import by name, so a monkeypatch here is one they see.
+shared = sys.modules["shared"]
 
 SEP = "\u01c1"
 
@@ -225,12 +227,21 @@ def test_locate_without_the_function():
 
 
 def test_mutant_ids_are_stable_and_distinguish_repeats():
-    first = mutate.mutant_id("f.py", "g", ["a"], ["b"], {})
-    assert first == mutate.mutant_id("f.py", "g", ["  a"], ["b  "], {})
-    seen: dict = {}
-    twice = [mutate.mutant_id("f.py", "g", ["a"], ["b"], seen) for _ in range(2)]
-    assert twice[0] == first and twice[1] != first
-    assert mutate.mutant_id("f.py", "h", ["a"], ["b"], {}) != first
+    first = mutate.mutant_id("f.py", "g", ["a"], ["b"], 0)
+    assert first == mutate.mutant_id("f.py", "g", ["  a"], ["b  "], 0)
+    assert mutate.mutant_id("f.py", "g", ["a"], ["b"], 1) != first
+    assert mutate.mutant_id("f.py", "h", ["a"], ["b"], 0) != first
+
+
+TWIN = "def twin(x):\n    y = x + 1\n    y = x + 1\n    return y\n"
+
+
+def test_occurrence_counts_identical_lines_in_source_order():
+    assert mutate.occurrence(TWIN, "twin", 2, ["    y = x + 1"]) == 0
+    assert mutate.occurrence(TWIN, "twin", 3, ["    y = x + 1"]) == 1
+    # A mutation that removes nothing is placed by its offset in the function.
+    assert mutate.occurrence(TWIN, "twin", 4, []) == 3
+    assert mutate.occurrence(TWIN, "missing", 2, ["y"]) == 0
 
 
 def test_cell_escapes_and_truncates():
@@ -359,7 +370,12 @@ def test_a_harness_failure_fails_the_run(repo, tmp_path):
     assert code == 2
     assert data["failure"].startswith("mutmut exited 1")
     assert "Failed to run clean test" in data["failure"]
+    assert data["failure_code"] == mutate.RUN_FAILED.code == "e.env.mutmut-run.f"
+    assert data["failure_retryable"] is False
+    assert data["failure_hint"] == mutate.RUN_FAILED.hint
     assert "The run failed" in text and "No mutant survived." not in text
+    assert "`e.env.mutmut-run.f`" in text and "Running it again will not help" in text
+    assert mutate.RUN_FAILED.hint in text
 
 
 def test_the_budget_stops_the_run_and_keeps_what_finished(repo, tmp_path):
@@ -456,6 +472,9 @@ def test_ticks_downloads_the_latest_run(sample, tmp_path):
     assert ticks.main(["--gh", str(gh), "--tick", str(tick), "--dry-run"]) == 0
     first, second = calls(tmp_path / "ghbin")
     assert first[:4] == ["run", "list", "--workflow", "mutation.yml"]
+    # Only scheduled runs on main: a manual run of a feature branch is never "the latest".
+    assert first[first.index("--branch") + 1] == "main"
+    assert first[first.index("--event") + 1] == "schedule"
     assert second[:5] == ["run", "download", "123", "--name", "mutation-report"]
 
 
@@ -467,17 +486,22 @@ def test_ticks_downloads_a_named_run(sample, tmp_path):
     assert calls(tmp_path / "ghbin")[0][:3] == ["run", "download", "77"]
 
 
-def test_ticks_without_a_successful_run(tmp_path):
+def test_ticks_without_a_successful_run(tmp_path, capsys):
     gh = stub(tmp_path / "ghbin", "gh", {"run": {"out": "\n"}})
-    with pytest.raises(SystemExit, match=r"no successful mutation\.yml run"):
-        ticks.main(["--gh", str(gh)])
+    assert ticks.main(["--gh", str(gh)]) == 1
+    err = capsys.readouterr().err
+    assert err.startswith(f"{ticks.NO_REPORT.code}: ") and ticks.NO_REPORT.code.endswith(".r")
+    assert f"Hint: {ticks.NO_REPORT.hint}" in err
 
 
 def test_ticks_refuses_a_failed_report(tmp_path, capsys):
     path = tmp_path / "r.json"
-    path.write_text(json.dumps({"failure": "mutmut exited 1", "survivors": []}))
+    path.write_text(json.dumps({"schema": mutate.SCHEMA, "failure": "mutmut exited 1",
+                                "survivors": []}))
     assert ticks.main(["--report", str(path), "--tick", "/nonexistent"]) == 1
-    assert "mutmut exited 1" in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert err.startswith(f"{ticks.FAILED_RUN.code}: ") and "mutmut exited 1" in err
+    assert f"Hint: {ticks.FAILED_RUN.hint}" in err
 
 
 def test_ticks_entry_point(sample, tmp_path, monkeypatch):
@@ -589,7 +613,8 @@ def real_report(tmp_path, repo_name):
         record["message_sink"] = s["message_sink"]
         survivors.append(record)
     path = tmp_path / f"{repo_name}.json"
-    path.write_text(json.dumps({"commit": "c0ffee", "failure": None, "survivors": survivors}))
+    path.write_text(json.dumps({"schema": mutate.SCHEMA, "commit": "c0ffee", "failure": None,
+                                "survivors": survivors}))
     return path
 
 
@@ -677,7 +702,7 @@ def test_a_tick_whose_note_never_landed_gets_its_note(tmp_path, capsys):
         "note": "noted on 2abc\n",
     })
     path = tmp_path / "r.json"
-    path.write_text(json.dumps({"commit": "c0ffee", "failure": None,
+    path.write_text(json.dumps({"schema": mutate.SCHEMA, "commit": "c0ffee", "failure": None,
                                 "survivors": [survivor("aaaaaaaaaaaa")]}))
     assert ticks.main(["--report", str(path), "--tick", str(tick)]) == 0
     log = calls(tmp_path / "tickbin")
@@ -693,7 +718,7 @@ def test_a_retried_note_on_a_dry_run_is_only_reported(tmp_path, capsys):
         "show": "title: ...\n",
     })
     path = tmp_path / "r.json"
-    path.write_text(json.dumps({"commit": "c0ffee", "failure": None,
+    path.write_text(json.dumps({"schema": mutate.SCHEMA, "commit": "c0ffee", "failure": None,
                                 "survivors": [survivor("aaaaaaaaaaaa")]}))
     assert ticks.main(["--report", str(path), "--tick", str(tick), "--dry-run"]) == 0
     assert [c[0] for c in calls(tmp_path / "tickbin")] == ["ls", "show"]
@@ -709,7 +734,7 @@ def test_every_filed_note_carries_its_mutant_id(sample, tmp_path):
 
 
 def bad(record):
-    return {"commit": "c0ffee", "failure": None,
+    return {"schema": mutate.SCHEMA, "commit": "c0ffee", "failure": None,
             "survivors": [survivor("aaaaaaaaaaaa"), record]}
 
 
@@ -725,6 +750,11 @@ def bad(record):
     (bad("a string"), "survivor 1"),
     ({"commit": "c0ffee", "failure": None, "survivors": {}}, "the report"),
     ({"failure": None, "survivors": []}, "the report"),
+    ({"schema": "bakobo.mutation-report/2", "commit": "c0ffee", "failure": None,
+      "survivors": []}, "the report's schema"),
+    ({"schema": mutate.SCHEMA, "failure": None, "survivors": []}, "names no commit"),
+    ({"schema": mutate.SCHEMA, "commit": "c0ffee", "failure": None, "survivors": {}},
+     "the report"),
     ([], "the report"),
 ])
 def test_a_malformed_report_is_refused_with_a_code(tmp_path, capsys, report_data, named):
@@ -733,7 +763,8 @@ def test_a_malformed_report_is_refused_with_a_code(tmp_path, capsys, report_data
     path.write_text(json.dumps(report_data))
     assert ticks.main(["--report", str(path), "--tick", str(tick)]) == 2
     err = capsys.readouterr().err
-    assert err.startswith(f"{ticks.MALFORMED}: ") and named in err
+    assert err.startswith(f"{ticks.MALFORMED.code}: ") and named in err
+    assert f"Hint: {ticks.MALFORMED.hint}" in err
     assert calls(tmp_path / "tickbin") == []
 
 
@@ -771,3 +802,96 @@ def test_a_string_assigned_to_a_name_is_behavioural():
     assert mutate.message_sink(source, 2, 2) is None
     assert mutate.classify(['    outcome = "kept"'], ['    outcome = "XXkeptXX"'],
                            mutate.message_sink(source, 2, 2)) == BEHAVIOURAL
+
+
+# --- reports are bounded and read defensively (utina 4190230259, heti 4190318577) ------------
+
+
+@pytest.mark.parametrize("raw, reason", [
+    (b"\xff\xfe not utf-8", "not UTF-8"),
+    (b'{"schema": "bakobo.mutation-re', "not JSON"),
+])
+def test_an_unreadable_report_is_refused_before_the_ledger(tmp_path, capsys, raw, reason):
+    tick = tick_stub(tmp_path)
+    path = tmp_path / "r.json"
+    path.write_bytes(raw)
+    assert ticks.main(["--report", str(path), "--tick", str(tick)]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith(f"{ticks.MALFORMED.code}: ") and reason in err
+    assert calls(tmp_path / "tickbin") == []
+
+
+def test_an_oversized_report_is_refused_unread(tmp_path, capsys, monkeypatch):
+    monkeypatch.setattr(shared, "MAX_REPORT_BYTES", 64)
+    tick = tick_stub(tmp_path)
+    path = tmp_path / "r.json"
+    path.write_text(json.dumps({"schema": mutate.SCHEMA, "pad": "x" * 100}))
+    assert ticks.main(["--report", str(path), "--tick", str(tick)]) == 2
+    assert "larger than 64 bytes" in capsys.readouterr().err
+    assert calls(tmp_path / "tickbin") == []
+
+
+def test_a_missing_report_is_refused(tmp_path, capsys):
+    absent = str(tmp_path / "absent.json")
+    assert ticks.main(["--report", absent, "--tick", "/nonexistent"]) == 2
+    assert "could not be read" in capsys.readouterr().err
+
+
+def test_the_report_limit_is_documented_and_generous():
+    assert shared.MAX_REPORT_BYTES == 16 * 1024 * 1024
+    assert "16 MiB" in ticks.__doc__
+
+
+# --- post-processing failures are recorded (utina 4190230124) ---------------------------------
+
+
+@pytest.mark.parametrize("command", ["results", "show", "tests-for-mutant"])
+def test_a_failing_mutmut_query_is_a_recorded_failure(repo, tmp_path, command):
+    spec = run_spec()
+    spec[command] = {"exit": 1, "out": ""}
+    code, data, text = run_main(repo, stub(tmp_path / "bin", "mutmut", spec))
+    assert code == 2
+    assert data["failure_code"] == mutate.RESULTS_UNREADABLE.code == "e.env.mutmut-results.r"
+    assert data["failure_retryable"] is True and f"mutmut {command}" in data["failure"]
+    assert data["survivors"] == [] and "Running it again may help" in text
+
+
+# --- ids come from the source, not from what survived (utina 4190230161, heti 4190318656) -----
+
+
+DIFF_TWIN_1 = """\
+--- src/pkg/mod.py
++++ src/pkg/mod.py
+@@ -1,4 +1,4 @@
+ def twin(x):
+-    y = x + 1
++    y = x - 1
+     y = x + 1
+     return y"""
+
+DIFF_TWIN_2 = """\
+--- src/pkg/mod.py
++++ src/pkg/mod.py
+@@ -1,4 +1,4 @@
+ def twin(x):
+     y = x + 1
+-    y = x + 1
++    y = x - 1
+     return y"""
+
+
+def twin_ids(repo, tmp_path, survived):
+    (repo / "src" / "pkg" / "mod.py").write_text(TWIN)
+    names = {1: "pkg.mod.x_twin__mutmut_1", 2: "pkg.mod.x_twin__mutmut_2"}
+    spec = run_spec()
+    spec["results"] = "".join(
+        f"    {names[n]}: {'survived' if n in survived else 'killed'}\n" for n in (1, 2))
+    spec["show"] = {"by_arg": {names[1]: DIFF_TWIN_1 + "\n", names[2]: DIFF_TWIN_2 + "\n"}}
+    _, data, _ = run_main(repo, stub(tmp_path / f"bin{len(survived)}", "mutmut", spec))
+    return {s["mutmut_name"][-1]: s["id"] for s in data["survivors"]}
+
+
+def test_a_survivors_id_does_not_depend_on_its_twin_surviving(repo, tmp_path):
+    both = twin_ids(repo, tmp_path, {1, 2})
+    alone = twin_ids(repo, tmp_path, {2})
+    assert both["1"] != both["2"] and alone == {"2": both["2"]}

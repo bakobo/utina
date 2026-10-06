@@ -29,7 +29,12 @@ for the change.
 
 A record's ``id`` is a digest of the file, the function and the mutated text, with no line
 number or mutmut ordinal in it, so the same surviving mutation keeps its id across nights while
-the code around it moves. ``tools/mutation/ticks.py`` dedupes on it.
+the code around it moves. Two identical mutations in one function are told apart by which
+occurrence of the mutated line they sit on, counted in the source, so an id never depends on
+which of them happened to survive. ``tools/mutation/ticks.py`` dedupes on it.
+
+A failed run carries one of the two codes below, ``failure_code``, whether retrying can help
+(``failure_retryable``), and the code's ``failure_hint``, in the report and its summary.
 """
 
 from __future__ import annotations
@@ -39,21 +44,54 @@ import ast
 import datetime
 import fnmatch
 import hashlib
-import io
 import json
 import os
 import shutil
 import signal
 import subprocess
 import sys
-import tokenize
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-SCHEMA = "bakobo.mutation-report/1"
+from bakobo.errors import BakoboError, ErrorCode  # type: ignore[import-untyped]
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from shared import (  # a sibling script, not a package
+    BEHAVIOURAL,
+    SCHEMA,
+    STRING_ONLY,
+    classify,
+    message_sink,
+)
+
 PASSED = "passed: every test covering this function passed with the mutant in place"
 STRING_NOTE = "only the text of a message literal changed; counted, not ticked"
+
+RUN_FAILED = ErrorCode(
+    code="e.env.mutmut-run.f",
+    title="mutmut could not finish the mutation run.",
+    detail=(
+        "mutmut exited {exit_code} before its mutants could be judged. The last lines of its "
+        "output, all of which are in mutmut-run.log, were:\n{tail}"
+    ),
+    args=("exit_code", "tail"),
+    hint=(
+        "Run the suite on the same commit with the [tool.mutmut] pytest arguments: mutmut "
+        "needs it to pass unmutated, and running the workflow again on this commit will fail "
+        "the same way."
+    ),
+)
+RESULTS_UNREADABLE = ErrorCode(
+    code="e.env.mutmut-results.r",
+    title="mutmut finished, but its results could not be read back.",
+    detail="mutmut {command} exited {exit_code} while its results were being read: {stderr}",
+    args=("command", "exit_code", "stderr"),
+    hint=(
+        "Run the workflow again. If it fails the same way, run that mutmut command in a local "
+        "checkout of the commit, where its full error is visible."
+    ),
+)
 # mutmut mangles a method name with U+01C1 (LATIN LETTER LATERAL CLICK) as its separator:
 # x<sep>Class<sep>method. Spelled as an escape so no reader mistakes it for two pipes.
 METHOD_SEP = "\u01c1"
@@ -62,19 +100,6 @@ CLEAN_TEST_FAILED = "Failed to run clean test"
 # Seconds mutmut gets to stop its workers after SIGTERM before the group is killed outright.
 TERM_GRACE = 30
 
-BEHAVIOURAL = "behavioural"
-STRING_ONLY = "string-only"
-# Tokens whose text is a string literal's content.
-STRING_TOKENS = {tokenize.STRING, tokenize.FSTRING_MIDDLE, tokenize.TSTRING_MIDDLE}
-# Tokens that carry no meaning a mutation could change.
-LAYOUT_TOKENS = {tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT,
-                 tokenize.ENDMARKER, tokenize.COMMENT}
-# A literal next to one of these is compared, tested for membership, used as a key or used as
-# an index, so changing its text can change what the code does.
-DECIDING = {"==", "!=", "<", ">", "<=", ">=", "in", "is", "[", "]", ":"}
-# The one tokenize failure that still yields every token: a fragment of a call whose closing
-# bracket is on a line the diff did not show.
-OPEN_BRACKET = "unexpected EOF in multi-line statement"
 
 
 @dataclass
@@ -114,7 +139,7 @@ class Survivor:
 class Outcome:
     modules: list[str]
     complete: bool = True
-    failure: str | None = None
+    failure: BakoboError | None = None
     note: str | None = None
     counts: dict[str, int] = field(default_factory=dict)
     survivors: list[Survivor] = field(default_factory=list)
@@ -208,114 +233,6 @@ def parse_diff(diff: str) -> tuple[int, list[str], list[str]]:
     return first, removed, added
 
 
-def _tokens(lines: list[str]) -> list[tuple[int, str]] | None:
-    """The meaningful tokens of a diff fragment, or None if tokenize could not read it all."""
-    text = "\n".join(line.strip() for line in lines)
-    found = []
-    try:
-        for tok in tokenize.generate_tokens(io.StringIO(text).readline):
-            if tok.type not in LAYOUT_TOKENS:
-                found.append((tok.type, tok.string))
-    except tokenize.TokenError as error:
-        if error.args[0] != OPEN_BRACKET:
-            return None
-    return found
-
-
-def classify(removed: list[str], added: list[str], sink: str | None) -> str:
-    """``string-only`` if the mutation changes only the text inside message literals.
-
-    ``sink`` is where ``message_sink`` found the mutated lines' literals going; without one, a
-    changed literal is a returned value, an argument, a key or a pattern, and behavioural.
-
-    Both sides must tokenize completely to the same sequence, differing only in string-literal
-    tokens, none of which sits beside a comparison, a membership test, a subscript or a key.
-    Anything else, including a change too fragmentary to read, is ``behavioural``: a survivor
-    wrongly called string-only is a test gap nobody hears about, while one wrongly called
-    behavioural costs a tick someone closes.
-    """
-    before, after = _tokens(removed), _tokens(added)
-    if sink is None or not before or not after or len(before) != len(after):
-        return BEHAVIOURAL
-    changed = [i for i, (old, new) in enumerate(zip(before, after, strict=True)) if old != new]
-    if not changed:
-        return BEHAVIOURAL
-    for i in changed:
-        (old_type, _), (new_type, _) = before[i], after[i]
-        if old_type != new_type or old_type not in STRING_TOKENS:
-            return BEHAVIOURAL
-        neighbours = before[max(i - 1, 0):i] + before[i + 1:i + 2]
-        if any(text in DECIDING for _, text in neighbours):
-            return BEHAVIOURAL
-    return STRING_ONLY
-
-
-LOG_OWNERS = {"logging", "log", "logger", "_log", "_logger", "LOG", "LOGGER"}
-LOG_METHODS = {"debug", "info", "warning", "warn", "error", "exception", "critical", "log"}
-
-
-def _sink_of_call(call: ast.Call, parent: ast.AST | None) -> str | None:
-    """What kind of message a call delivers, or None if it is not a message sink."""
-    func = call.func
-    if isinstance(parent, ast.Raise) and parent.exc is call:
-        return f"raise {ast.unparse(func)}"
-    if isinstance(func, ast.Name) and func.id == "print":
-        return "print"
-    if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
-        owner, method = func.value.id, func.attr
-        if (owner == "warnings" and method == "warn") or (
-                owner in LOG_OWNERS and method in LOG_METHODS):
-            return f"{owner}.{method}"
-    return None
-
-
-def _sink_of_literal(node: ast.AST, parents: dict) -> str | None:
-    """Follow a literal's value up through concatenation and formatting to a call argument."""
-    while True:
-        parent = parents.get(node)
-        if isinstance(parent, ast.BinOp) and isinstance(parent.op, (ast.Add, ast.Mod)):
-            node = parent
-        elif isinstance(parent, ast.Attribute) and parent.attr == "format":
-            call = parents.get(parent)
-            if not (isinstance(call, ast.Call) and call.func is parent):
-                return None
-            node = call
-        elif isinstance(parent, ast.keyword):
-            node = parent
-        elif isinstance(parent, ast.Call) and node is not parent.func:
-            return _sink_of_call(parent, parents.get(parent))
-        else:
-            return None
-
-
-def message_sink(source: str, first: int, last: int) -> str | None:
-    """Where the string literals on lines ``first``..``last`` end up, if all are messages.
-
-    A literal is message text when its value, after any ``+``, ``%`` or ``.format``, is passed
-    straight to an exception constructor in a ``raise``, to ``print``, to a logging method or to
-    ``warnings.warn``. Returns that sink when every literal touching the lines is one, else None
-    — a line holding no literal, or one literal that is anything else, is not vouched for.
-    """
-    tree = ast.parse(source)
-    parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
-
-    def inside_fstring(node: ast.AST) -> bool:
-        while (node := parents.get(node)) is not None:
-            if isinstance(node, ast.JoinedStr):
-                return True
-        return False
-
-    literals = [n for n in ast.walk(tree)
-                if (isinstance(n, ast.JoinedStr)
-                    or (isinstance(n, ast.Constant) and isinstance(n.value, str)))
-                and n.lineno <= last and (n.end_lineno or n.lineno) >= first
-                and not inside_fstring(n)]
-    sinks = [_sink_of_literal(n, parents) for n in literals]
-    if not sinks or None in sinks:
-        return None
-    return sinks[0]
-
-
 def function_span(source: str, function: str) -> tuple[int, int] | None:
     """First and last line of ``function`` (``name`` or ``Class.name``), decorators included."""
     tree = ast.parse(source)
@@ -353,17 +270,32 @@ def locate(source: str, function: str, relative: int, removed: list[str]) -> int
     return min(guess, end)
 
 
+def occurrence(source: str, function: str, line: int, removed: list[str]) -> int:
+    """Which occurrence, within its function, of the line it removes a mutation sits on.
+
+    Counted in the source, so it is the same whether or not any identical twin survived. A
+    mutation that removes nothing is placed by its offset from the function's first line.
+    """
+    span = function_span(source, function)
+    if span is None:
+        return 0
+    start, _ = span
+    if not removed:
+        return line - start
+    lines = source.splitlines()
+    target = removed[0].strip()
+    return sum(1 for n in range(start, line) if lines[n - 1].strip() == target)
+
+
 def mutant_id(path: str, function: str, removed: list[str], added: list[str],
-              seen: dict) -> str:
+              ordinal: int) -> str:
     """Stable across nights: no line number and no mutmut ordinal goes into it.
 
     Two identical mutations in one function (the same line written twice) are told apart by
-    their order of appearance, which is the one thing that distinguishes them.
+    ``ordinal``, the occurrence of the mutated line in the source (see ``occurrence``).
     """
     key = "\0".join([path, function, "\n".join(s.strip() for s in removed),
                      "\n".join(s.strip() for s in added)])
-    ordinal = seen.get(key, 0)
-    seen[key] = ordinal + 1
     if ordinal:
         key += f"\0{ordinal}"
     return hashlib.sha256(key.encode()).hexdigest()[:12]
@@ -419,7 +351,7 @@ def nothing_to_run(mutmut: str, root: Path, code: int, output: str, globs: list[
     return not any(fnmatch.fnmatch(name, g) for name in names for g in globs)
 
 
-def survivor(mutmut: str, root: Path, name: str, path: str, seen: dict) -> Survivor:
+def survivor(mutmut: str, root: Path, name: str, path: str) -> Survivor:
     diff = subprocess.run([mutmut, "show", name], cwd=root, capture_output=True, text=True,
                           check=True).stdout
     diff = "\n".join(line for line in diff.splitlines() if not line.startswith("# "))
@@ -431,7 +363,8 @@ def survivor(mutmut: str, root: Path, name: str, path: str, seen: dict) -> Survi
     line = locate(source, function, relative, removed)
     sink = message_sink(source, line, line + max(len(removed), 1) - 1)
     return Survivor(
-        id=mutant_id(path, function, removed, added, seen),
+        id=mutant_id(path, function, removed, added,
+                     occurrence(source, function, line, removed)),
         mutmut_name=name, file=path, line=line,
         function=function, removed=removed, added=added, diff=diff,
         tests=len([t for t in tests.splitlines() if t.strip()]),
@@ -459,22 +392,27 @@ def mutate(root: Path, modules: list[str], mutmut: str, budget: float, out: Path
         if nothing_to_run(mutmut, root, code, output, globs):
             outcome.note = "mutmut generated no mutants for the changed modules."
             return outcome
-        outcome.failure = f"mutmut exited {code}; see mutmut-run.log. The last lines were:\n" \
-                          + "\n".join(output.splitlines()[-15:])
+        outcome.failure = RUN_FAILED(exit_code=code, tail="\n".join(output.splitlines()[-15:]))
         return outcome
     owner = {g: m for m in mutable for g in globs_for(m)}
-    seen: dict = {}
-    for name, status in sorted(statuses(mutmut, root).items()):
-        path = next((owner[g] for g in owner if fnmatch.fnmatch(name, g)), None)
-        if path is None:
-            continue
-        outcome.counts[status] = outcome.counts.get(status, 0) + 1
-        if status == "survived":
-            outcome.survivors.append(survivor(mutmut, root, name, path, seen))
+    try:
+        for name, status in sorted(statuses(mutmut, root).items()):
+            path = next((owner[g] for g in owner if fnmatch.fnmatch(name, g)), None)
+            if path is None:
+                continue
+            outcome.counts[status] = outcome.counts.get(status, 0) + 1
+            if status == "survived":
+                outcome.survivors.append(survivor(mutmut, root, name, path))
+    except subprocess.CalledProcessError as error:
+        outcome.counts, outcome.survivors = {}, []
+        outcome.failure = RESULTS_UNREADABLE(
+            command=error.cmd[1], exit_code=error.returncode,
+            stderr=(error.stderr or "").strip() or "(it printed nothing)")
     return outcome
 
 
 def report(outcome: Outcome, cfg: dict, commit: str, since: str) -> dict:
+    failure = outcome.failure
     return {
         "schema": SCHEMA,
         "commit": commit,
@@ -482,7 +420,10 @@ def report(outcome: Outcome, cfg: dict, commit: str, since: str) -> dict:
         "since": since,
         "modules": outcome.modules,
         "complete": outcome.complete,
-        "failure": outcome.failure,
+        "failure": failure.detail if failure else None,
+        "failure_code": failure.code if failure else None,
+        "failure_retryable": failure.retryable if failure else None,
+        "failure_hint": failure.hint if failure else None,
         "note": outcome.note,
         "counts": outcome.counts,
         "classes": {kind: sum(s.kind == kind for s in outcome.survivors)
@@ -501,8 +442,10 @@ def summary(data: dict) -> str:
              f"{len(data['modules'])}.")
     lines = ["# Mutation testing (pilot)", "", scope, ""]
     if data["failure"]:
-        lines += ["**The run failed, so nothing below is a result.**", "", "```",
-                  data["failure"], "```", ""]
+        again = "may help" if data["failure_retryable"] else "will not help"
+        lines += [f"**The run failed (`{data['failure_code']}`), so nothing below is a result."
+                  f"** Running it again {again}.", "", "```", data["failure"], "```", "",
+                  f"Hint: {data['failure_hint']}", ""]
     if data["note"]:
         lines += [data["note"], ""]
     if data["counts"]:

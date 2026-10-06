@@ -30,7 +30,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The pilot runs nightly until 2026-10-25 and no longer: after that a scheduled run skips the
+  # mutation job with a notice, and a manual dispatch still runs it.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - id: decide
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = schedule ] && [ "$(date -u +%F)" \> "2026-10-25" ]; then
+            echo "::notice title=Mutation pilot over::The two-week mutation pilot ended on 2026-10-25, so the nightly run is skipped. Run this workflow by hand to mutate anyway, and remove the schedule once the pilot's evaluation is settled."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   mutate:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     # GitHub stops a job at 360 minutes and uploads nothing. The run's own budget (300 below)
     # ends mutmut first, so the mutants that did finish are still reported.
@@ -42,7 +62,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           python-version: "3.14"
           enable-cache: true
