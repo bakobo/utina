@@ -924,9 +924,23 @@ def test_a_report_without_the_optional_failure_fields_is_read(sample, tmp_path):
                        "--dry-run"]) == 0
 
 
+def test_a_parser_recursion_error_is_a_coded_refusal(tmp_path, capsys, monkeypatch):
+    # Whether real nesting overflows the parser depends on the Python build, so the overflow
+    # itself is simulated here; the test below feeds real nesting and asks only for a refusal.
+    def overflow(text):
+        raise RecursionError("maximum recursion depth exceeded")
+
+    monkeypatch.setattr(shared.json, "loads", overflow)
+    path = tmp_path / "r.json"
+    path.write_text("[]")
+    assert ticks.main(["--report", str(path), "--tick", "/nonexistent"]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith(f"{ticks.MALFORMED.code}: ") and "nested too deeply" in err
+
+
 def test_deeply_nested_json_is_refused_not_a_crash(tmp_path, capsys):
     path = tmp_path / "r.json"
     path.write_text("[" * 100_000 + "]" * 100_000)
     assert ticks.main(["--report", str(path), "--tick", "/nonexistent"]) == 2
-    err = capsys.readouterr().err
-    assert err.startswith(f"{ticks.MALFORMED.code}: ") and "nested too deeply" in err
+    # Refused either as too deep for this parser or as a list rather than an object.
+    assert capsys.readouterr().err.startswith(f"{ticks.MALFORMED.code}: ")
